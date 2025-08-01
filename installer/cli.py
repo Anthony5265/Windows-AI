@@ -1,6 +1,6 @@
 """Command-line entry point for the prototype installer.
 
-The CLI reports basic system information, including GPU model and VRAM when
+The CLI reports basic system information, including GPU name and VRAM when
 available, and optionally prompts the user to store API keys.
 """
 from __future__ import annotations
@@ -51,9 +51,9 @@ def main() -> None:
     info = system_info.detect_system()
     print("Detected system info:")
     print(json.dumps(info, indent=2))
-    if info.get("gpu_model"):
+    if info.get("gpu_name"):
         print(
-            f"GPU: {info['gpu_model']} (VRAM: {info.get('gpu_vram_gb', 'unknown')} GB)"
+            f"GPU: {info['gpu_name']} (VRAM: {info.get('gpu_vram_gb', 'unknown')} GB)"
         )
 
     if args.show_config_dir:
