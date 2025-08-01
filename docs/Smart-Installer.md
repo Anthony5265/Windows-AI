@@ -23,7 +23,6 @@ This document sketches a design for an automated installer that sets up an AI ec
    - For remote services, install the necessary SDKs or Python packages.
    - For local models, download compatible model weights in the background. Use progress indicators and verify checksums.
    - Install open-source tools like Transformers, LangChain, and other community packages. Include optional paid services if the user wants them.
-   - Wrap installation calls in `try/except` blocks. Log failures to `%AppData%\Logs` and offer retry or rollback options.
 
 4. **Environment Setup**
    - Create separate virtual environments (for example, with `venv` or Conda) to avoid library conflicts.
@@ -41,7 +40,6 @@ This document sketches a design for an automated installer that sets up an AI ec
 # detect system info
 import wmi
 import subprocess
-import sys
 
 def detect_specs():
     c = wmi.WMI()
@@ -55,23 +53,6 @@ def detect_specs():
 # install a Python package
 subprocess.check_call([sys.executable, "-m", "pip", "install", "transformers"])
 ```
-
-### Handling Installation Failures
-```python
-import logging, os, subprocess, sys
-from pathlib import Path
-
-log_dir = Path(os.environ["APPDATA"]) / "Logs"
-log_dir.mkdir(exist_ok=True)
-logging.basicConfig(filename=log_dir / "installer.log", level=logging.INFO)
-
-try:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "transformers"])
-except subprocess.CalledProcessError as e:
-    logging.error("Installation failed: %s", e)
-    print("Installation failed. Check %AppData%\Logs and retry or run rollback instructions.")
-```
-
 
 This pseudocode only scratches the surface but illustrates how the installer might check hardware details and install dependencies programmatically.
 
