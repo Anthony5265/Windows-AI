@@ -40,7 +40,7 @@ def main() -> None:
 
     def run_install_all() -> None:
         try:
-            cli.main()
+            cli.install_all()
             messagebox.showinfo("Install", "Install all completed")
         except Exception as exc:  # pragma: no cover - GUI path
             messagebox.showerror("Install", f"Install failed: {exc}")
