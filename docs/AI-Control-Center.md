@@ -24,6 +24,33 @@ This guide outlines how you might design a downloadable application that integra
    - Package the software using installers like MSIX or traditional setup executables.
    - Offer automatic updates that download new plugins or model weights.
 
+## Configuration Examples
+
+You can launch the control center with custom backends. The snippet below wires
+a local model alongside a remote API service:
+
+```python
+from control_center.gui import ChatGUI
+from control_center.backends import LocalBackend, RemoteBackend
+
+backends = {
+    "Local": LocalBackend(model_path="C:/models/ggml-base.bin"),
+    "OpenAI": RemoteBackend(api_key="sk-YOURKEY"),
+}
+
+ChatGUI(backends=backends).run()
+```
+
+Configuration files can be used to store default settings:
+
+```json
+// %USERPROFILE%/.windows_ai/control_center.json
+{
+  "default_backend": "OpenAI",
+  "chat_history": true
+}
+```
+
 ## Example Skeleton (Python)
 
 ```python
@@ -56,6 +83,22 @@ if __name__ == '__main__':
 ```
 
 This code omits error handling and advanced features, but it shows a minimal approach for connecting a GUI to a language model backend.
+
+## Troubleshooting
+
+- **Window does not appear** – Verify that ``tkinter`` is installed and that you
+  have access to a display. On Windows, ``python -m pip install tk`` installs the
+  required libraries.
+- **Backend errors** – Ensure API keys are stored using the installer or
+  environment variables. For local models, confirm the model path is correct and
+  that dependencies such as ``transformers`` are installed.
+- **Plugins missing** – Run the Smart Installer or its CLI variant with
+  ``--install-all`` so that plugin environments are created under
+  ``%USERPROFILE%\.windows_ai``.
+- **Network problems** – Firewalls or proxy settings may block remote API
+  calls. Test connectivity with a simple ``curl`` command.
+
+*Screenshots and GIFs will be added once the GUI is finalized.*
 
 ## Disclaimer
 

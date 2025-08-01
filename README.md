@@ -15,6 +15,22 @@ This repository provides a high-level outline for experimenting with AI integrat
 For an example of building a chat-centric control center that connects to local or remote language models, see [docs/AI-Control-Center.md](docs/AI-Control-Center.md).
 For an outline of a smart installer that automates hardware detection and AI tool setup, see [docs/Smart-Installer.md](docs/Smart-Installer.md).
 
+## Using the GUI Tools
+
+Run the graphical installer directly from the source tree:
+
+```bash
+python -m installer.gui
+```
+
+After completing installation, launch the AI Control Center:
+
+```bash
+python -m control_center.gui
+```
+
+These commands open Tkinter-based windows for managing plugin installations and interacting with language models. *Screenshots will be added once the interfaces are finalized.*
+
 ## Packaging on Windows
 
 To generate standalone executables on Windows:
