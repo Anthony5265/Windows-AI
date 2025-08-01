@@ -23,6 +23,11 @@ To generate standalone executables on Windows:
 2. From the repository root, run `python scripts/package_windows.py cli` to package the command-line interface or `python scripts/package_windows.py gui` for the GUI.
 3. The resulting `.exe` files will be placed in `dist`. Run `dist\windows_ai_cli.exe --help` or double-click `dist\windows_ai_gui.exe` to test.
 
+## Running Tests
+
+1. Install pytest: `pip install pytest`
+2. Run the tests: `pytest`
+
 ## Disclaimer
 
 This repository does not contain any modified Windows binaries or installation media. It only offers guidance for building user-space software that runs on top of a genuine Windows 11 installation. Always follow Microsoft licensing terms and local regulations when customizing or distributing software.
