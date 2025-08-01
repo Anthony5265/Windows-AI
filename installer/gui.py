@@ -33,17 +33,17 @@ class InstallerGUI:
         )
 
         # Component selection
-        registry = plugins.discover_plugins()
+        self.registry = plugins.discover_plugins()
         self.component_vars: dict[str, tk.BooleanVar] = {}
         component_frame = tk.LabelFrame(self.root, text="Components")
         component_frame.pack(fill="x", padx=10, pady=5)
-        for dep in sorted(registry.dependencies):
+        for plugin_name in sorted(self.registry.dependencies.keys()):
             var = tk.BooleanVar(value=True)
-            self.component_vars[dep] = var
-            ttk.Checkbutton(component_frame, text=dep, variable=var).pack(
+            self.component_vars[plugin_name] = var
+            ttk.Checkbutton(component_frame, text=plugin_name, variable=var).pack(
                 anchor="w"
             )
-        if not registry.dependencies:
+        if not self.registry.dependencies:
             tk.Label(component_frame, text="No plugin dependencies found.").pack(
                 padx=5, pady=5
             )
@@ -85,8 +85,8 @@ class InstallerGUI:
     def install_selected(self) -> None:
         """Install the components chosen by the user."""
 
-        packages = [pkg for pkg, var in self.component_vars.items() if var.get()]
-        if not packages:
+        selected_plugins = [p for p, var in self.component_vars.items() if var.get()]
+        if not selected_plugins:
             messagebox.showinfo("Install", "No components selected")
             return
 
@@ -106,14 +106,17 @@ class InstallerGUI:
                     messagebox.showerror("API Key", str(exc))
 
         self.install_btn.config(state=tk.DISABLED)
-        self.progress.config(maximum=len(packages))
-        threading.Thread(target=self._run_install, args=(packages,), daemon=True).start()
+        self.progress.config(maximum=len(selected_plugins))
+        threading.Thread(
+            target=self._run_install, args=(selected_plugins,), daemon=True
+        ).start()
 
-    def _run_install(self, packages: list[str]) -> None:
+    def _run_install(self, selected_plugins: list[str]) -> None:
         try:
-            env_path = env.create_env("plugins")
-            for pkg in packages:
-                env.install_packages(env_path, [pkg])
+            for plugin_name in selected_plugins:
+                env_path = env.create_env(plugin_name)
+                deps = self.registry.dependencies.get(plugin_name, [])
+                env.install_packages(env_path, deps)
                 self.root.after(0, self.progress.step, 1)
             self.root.after(0, lambda: messagebox.showinfo("Install", "Installation complete"))
         except Exception as exc:  # pragma: no cover - subprocess path

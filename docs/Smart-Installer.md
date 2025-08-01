@@ -39,8 +39,9 @@ This document sketches a design for an automated installer that sets up an AI ec
 
 Plugins and toolsets are installed into isolated Python environments managed by
 ``installer.env``. Each plugin can request dependencies and the installer will
-create a dedicated ``venv`` under ``~/.windows_ai/venvs/<name>`` to avoid
-package conflicts.
+create a dedicated environment under ``~/.windows_ai/venvs/<name>`` using
+``venv`` or Conda.  The helper records created environments in
+``~/.windows_ai/envs.json`` so the AI Control Center can activate them later.
 
 ```python
 from installer import env

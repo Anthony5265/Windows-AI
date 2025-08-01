@@ -15,13 +15,16 @@ def install_all() -> None:
     """Discover plugins and install their requested dependencies."""
 
     registry = plugins.discover_plugins()
-    deps = sorted(registry.dependencies)
-    if not deps:
+    if not registry.dependencies:
         print("No plugin dependencies to install.")
         return
-    env_path = env.create_env("plugins")
-    env.install_packages(env_path, deps)
-    print(f"Installed {len(deps)} packages into {env_path}")
+
+    for plugin_name, deps in sorted(registry.dependencies.items()):
+        env_path = env.create_env(plugin_name)
+        env.install_packages(env_path, sorted(deps))
+        print(
+            f"Installed {len(deps)} packages for {plugin_name} into {env_path}"
+        )
 
 
 def main() -> None:
