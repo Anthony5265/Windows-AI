@@ -17,7 +17,8 @@ Plugins are discovered in two ways:
 ## Writing a Plugin
 
 A plugin is simply a callable that accepts a `PluginRegistry` instance. Most
-modules expose a `register(registry)` function:
+modules expose a `register(registry)` function.  Dependencies are recorded per
+plugin so the installer can create an isolated environment for each one:
 
 ```python
 # my_plugin.py
@@ -42,7 +43,7 @@ Use :func:`discover_plugins` to load all available plugins:
 from installer.plugins import discover_plugins
 
 registry = discover_plugins("./local_plugins")
-print(registry.dependencies)
+print(registry.dependencies)  # mapping of plugin name -> set(dependencies)
 print(registry.ui_components)
 ```
 
