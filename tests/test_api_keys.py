@@ -24,14 +24,17 @@ def setup_dummy_keyring(monkeypatch):
     return store
 
 
-def test_save_load_delete_key(monkeypatch):
+def test_save_list_load_delete_key(monkeypatch):
     monkeypatch.setattr(api_keys, "_migrate_file_to_keyring", lambda: None)
     store = setup_dummy_keyring(monkeypatch)
+    monkeypatch.setenv("WINDOWS_AI_SERVICES", "svc")
 
     api_keys.save_key("svc", "secret")
     assert store[("svc", api_keys._USERNAME)] == "secret"
+    assert api_keys.list_keys() == {"svc": "secret"}
     assert api_keys.load_key("svc") == "secret"
     assert api_keys.delete_key("svc") is True
+    assert api_keys.list_keys() == {}
     assert api_keys.load_key("svc") is None
 
 
