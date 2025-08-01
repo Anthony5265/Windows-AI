@@ -78,7 +78,25 @@ def main() -> None:
         performed_action = True
 
     if not performed_action:
-        if input("Would you like to add an API key? (y/N) ").strip().lower() == "y":
+        choice = input(
+            "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
+        ).strip().lower()
+
+        if choice == "l":
+            keys = api_keys.list_keys()
+            if keys:
+                print("Stored API keys:")
+                for service in keys:
+                    print(f"- {service}")
+            else:
+                print("No API keys stored.")
+        elif choice == "d":
+            service = input("Service to delete: ").strip()
+            if api_keys.delete_key(service):
+                print(f"Deleted key for {service}")
+            else:
+                print(f"No key stored for {service}")
+        elif choice in {"a", "y"}:  # support legacy 'y' for yes to add
             api_keys.prompt_and_save()
         else:
             print("No API key stored.")

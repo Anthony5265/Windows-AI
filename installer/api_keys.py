@@ -126,18 +126,26 @@ def save_key(service: str, key: str) -> None:
 def list_keys() -> Dict[str, str]:
     """Return a mapping of stored API keys.
 
-    Only keys stored in the legacy JSON file backend can be listed.  When the
-    system keyring is used, the backend does not offer a portable way to
-    enumerate stored secrets so an empty dictionary is returned.
+    The ``keyring`` package does not expose a cross-platform API for
+    enumerating stored secrets.  To keep behaviour consistent across storage
+    backends we simply delegate to :func:`load_keys`, which relies on the
+    ``WINDOWS_AI_SERVICES`` environment variable to know which services to
+    query from the secure storage.  When using the legacy JSON file backend the
+    contents of that file are returned.
     """
 
+    # ``load_keys`` already handles migration from the legacy file backend and
+    # queries the system keyring when available.
     return load_keys()
 
 
 def delete_key(service: str) -> bool:
     """Remove a stored API key for ``service``.
 
-    Returns ``True`` if a key was removed, otherwise ``False``.
+    The function returns ``True`` when a key existed and was removed.  When the
+    system keyring backend is unavailable the legacy JSON file is used as a
+    fallback.  The migration helper is invoked so callers always interact with
+    the secure storage when possible.
     """
 
     _migrate_file_to_keyring()
