@@ -19,13 +19,3 @@ For an outline of a smart installer that automates hardware detection and AI too
 
 This repository does not contain any modified Windows binaries or installation media. It only offers guidance for building user-space software that runs on top of a genuine Windows 11 installation. Always follow Microsoft licensing terms and local regulations when customizing or distributing software.
 
-## Prototype Installer Script
-
-A minimal Python proof-of-concept lives in the `installer` directory. It detects basic system information and can store API keys under the user's home directory. Run it with:
-
-```bash
-python -m installer.cli --show-config-dir
-```
-
-This script does not modify Windows itself; it is an early experiment in automating setup steps.
-
