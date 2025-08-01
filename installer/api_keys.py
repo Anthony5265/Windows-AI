@@ -106,6 +106,60 @@ def save_key(service: str, key: str) -> None:
     keyring.set_password(service, _USERNAME, key)
 
 
+def list_keys() -> Dict[str, str]:
+    """Return a mapping of stored API keys.
+
+    Only keys stored in the legacy JSON file backend can be listed.  When the
+    system keyring is used, the backend does not offer a portable way to
+    enumerate stored secrets so an empty dictionary is returned.
+    """
+
+    return load_keys()
+
+
+def delete_key(service: str) -> bool:
+    """Remove a stored API key for ``service``.
+
+    Returns ``True`` if a key was removed, otherwise ``False``.
+    """
+
+    _migrate_file_to_keyring()
+
+    if keyring is not None:
+        try:
+            keyring.delete_password(service, _USERNAME)
+            return True
+        except KeyringError:
+            return False
+
+    # Fallback to file-based storage
+    if not os.path.exists(KEYS_FILE):
+        return False
+
+    try:
+        with open(KEYS_FILE, "r", encoding="utf-8") as f:
+            data: Dict[str, str] = json.load(f)
+    except Exception:
+        return False
+
+    if service not in data:
+        return False
+
+    del data[service]
+
+    if data:
+        with open(KEYS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    else:
+        try:
+            os.remove(KEYS_FILE)
+            if not os.listdir(CONFIG_DIR):
+                os.rmdir(CONFIG_DIR)
+        except OSError:
+            pass
+    return True
+
+
 def prompt_and_save() -> None:
     """Interactively ask the user for an API key and save it."""
 
