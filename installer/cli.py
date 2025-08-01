@@ -8,7 +8,20 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import system_info, api_keys
+from . import system_info, api_keys, plugins, env
+
+
+def install_all() -> None:
+    """Discover plugins and install their requested dependencies."""
+
+    registry = plugins.discover_plugins()
+    deps = sorted(registry.dependencies)
+    if not deps:
+        print("No plugin dependencies to install.")
+        return
+    env_path = env.create_env("plugins")
+    env.install_packages(env_path, deps)
+    print(f"Installed {len(deps)} packages into {env_path}")
 
 
 def main() -> None:
@@ -27,6 +40,11 @@ def main() -> None:
         "--delete-key",
         metavar="SERVICE",
         help="delete the stored API key for SERVICE",
+    )
+    parser.add_argument(
+        "--install-all",
+        action="store_true",
+        help="install plugin dependencies in their own environment",
     )
     args = parser.parse_args()
 
@@ -64,6 +82,9 @@ def main() -> None:
             api_keys.prompt_and_save()
         else:
             print("No API key stored.")
+
+    if args.install_all:
+        install_all()
 
 
 if __name__ == "__main__":

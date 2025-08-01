@@ -35,6 +35,30 @@ This document sketches a design for an automated installer that sets up an AI ec
 6. **Updates and Plugins**
    - Check periodically for new plugins or tools. Allow users to review and install updates within the GUI.
 
+## Plugin Environments
+
+Plugins and toolsets are installed into isolated Python environments managed by
+``installer.env``. Each plugin can request dependencies and the installer will
+create a dedicated ``venv`` under ``~/.windows_ai/venvs/<name>`` to avoid
+package conflicts.
+
+```python
+from installer import env
+
+# ensure a virtual environment for "example-plugin"
+env_path = env.create_env("example-plugin")
+env.install_packages(env_path, ["requests"])
+```
+
+Run the CLI with ``--install-all`` to discover plugins and install their
+dependencies in the ``plugins`` environment:
+
+```
+python -m installer.cli --install-all
+```
+
+The GUI's **Install All** button performs the same operation.
+
 ## Example Pseudocode
 ```python
 # detect system info
