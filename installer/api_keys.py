@@ -59,22 +59,39 @@ _migrate_file_to_keyring()
 def load_keys() -> Dict[str, str]:
     """Best-effort retrieval of all stored API keys.
 
-    The keyring backend does not provide a portable way to list stored
-    secrets, so this function returns an empty dictionary once keys have been
-    migrated.  It is kept for backward compatibility with the original
-    file-based implementation.
+    Because the `keyring` module does not offer a cross-platform way to
+    enumerate stored secrets, callers can provide a comma-separated list of
+    services through the ``WINDOWS_AI_SERVICES`` environment variable.  Any
+    keys found for those services will be returned.  If no services are
+    specified, or if the keyring backend is unavailable, the legacy JSON file
+    is used as a fallback when present.
     """
 
     _migrate_file_to_keyring()
 
-    if keyring is None and os.path.exists(KEYS_FILE):
+    services_env = os.getenv("WINDOWS_AI_SERVICES", "")
+    services = [s.strip() for s in services_env.split(",") if s.strip()]
+    keys: Dict[str, str] = {}
+
+    if keyring is not None and services:
+        for svc in services:
+            try:
+                value = keyring.get_password(svc, _USERNAME)
+            except KeyringError:
+                value = None
+            if value:
+                keys[svc] = value
+        if keys:
+            return keys
+
+    if os.path.exists(KEYS_FILE):
         try:
             with open(KEYS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {}
 
-    return {}
+    return keys
 
 
 def load_key(service: str) -> Optional[str]:
