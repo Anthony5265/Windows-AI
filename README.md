@@ -18,3 +18,7 @@ For an outline of a smart installer that automates hardware detection and AI too
 ## Disclaimer
 
 This repository does not contain any modified Windows binaries or installation media. It only offers guidance for building user-space software that runs on top of a genuine Windows 11 installation. Always follow Microsoft licensing terms and local regulations when customizing or distributing software.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
