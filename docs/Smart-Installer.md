@@ -40,6 +40,7 @@ This document sketches a design for an automated installer that sets up an AI ec
 # detect system info
 import wmi
 import subprocess
+import sys
 
 def detect_specs():
     c = wmi.WMI()
