@@ -15,6 +15,14 @@ This repository provides a high-level outline for experimenting with AI integrat
 For an example of building a chat-centric control center that connects to local or remote language models, see [docs/AI-Control-Center.md](docs/AI-Control-Center.md).
 For an outline of a smart installer that automates hardware detection and AI tool setup, see [docs/Smart-Installer.md](docs/Smart-Installer.md).
 
+## Packaging on Windows
+
+To generate standalone executables on Windows:
+
+1. Install PyInstaller: `pip install pyinstaller`
+2. From the repository root, run `python scripts/package_windows.py cli` to package the command-line interface or `python scripts/package_windows.py gui` for the GUI.
+3. The resulting `.exe` files will be placed in `dist`. Run `dist\windows_ai_cli.exe --help` or double-click `dist\windows_ai_gui.exe` to test.
+
 ## Disclaimer
 
 This repository does not contain any modified Windows binaries or installation media. It only offers guidance for building user-space software that runs on top of a genuine Windows 11 installation. Always follow Microsoft licensing terms and local regulations when customizing or distributing software.
