@@ -4,7 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
-from . import api_keys, env, plugins, system_info
+from . import api_keys, env, model_selector, plugins, system_info
 
 
 class InstallerGUI:
@@ -48,6 +48,27 @@ class InstallerGUI:
                 padx=5, pady=5
             )
 
+        # Backend selection
+        backend_frame = tk.LabelFrame(self.root, text="Model Backend")
+        backend_frame.pack(fill="x", padx=10, pady=5)
+        recommended = model_selector.select_backend("default", {})
+        self.backend_var = tk.StringVar(value=recommended)
+        ttk.Radiobutton(
+            backend_frame,
+            text="Use Local Models",
+            value="local",
+            variable=self.backend_var,
+        ).pack(anchor="w")
+        ttk.Radiobutton(
+            backend_frame,
+            text="Use Remote APIs",
+            value="remote",
+            variable=self.backend_var,
+        ).pack(anchor="w")
+        tk.Label(
+            backend_frame, text=f"Recommended: {recommended}", justify="left"
+        ).pack(anchor="w", padx=5)
+
         # Buttons
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
@@ -89,6 +110,10 @@ class InstallerGUI:
         if not selected_plugins:
             messagebox.showinfo("Install", "No components selected")
             return
+
+        # Allow user override of the model backend
+        backend = self.backend_var.get()
+        print(f"Backend chosen: {backend}")
 
         # Prompt for API key before installation
         service = simpledialog.askstring(
