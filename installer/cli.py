@@ -107,6 +107,16 @@ def main() -> None:
     if args.install_all:
         install_all()
 
+    # Offer to launch the Control Center after setup completes
+    launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
+    if launch in {"y", "yes"}:
+        try:
+            from control_center.gui import main as launch_gui
+
+            launch_gui()
+        except Exception as exc:  # pragma: no cover - runtime path
+            print(f"Failed to launch Control Center: {exc}")
+
 
 if __name__ == "__main__":
     main()

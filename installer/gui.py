@@ -112,17 +112,39 @@ class InstallerGUI:
         ).start()
 
     def _run_install(self, selected_plugins: list[str]) -> None:
+        """Background worker that performs the actual installation."""
+
         try:
             for plugin_name in selected_plugins:
                 env_path = env.create_env(plugin_name)
                 deps = self.registry.dependencies.get(plugin_name, [])
                 env.install_packages(env_path, deps)
                 self.root.after(0, self.progress.step, 1)
-            self.root.after(0, lambda: messagebox.showinfo("Install", "Installation complete"))
+            # Signal successful completion
+            self.root.after(0, self._install_complete, None)
         except Exception as exc:  # pragma: no cover - subprocess path
-            self.root.after(0, lambda: messagebox.showerror("Install", f"Install failed: {exc}"))
-        finally:
-            self.root.after(0, lambda: self.install_btn.config(state=tk.NORMAL))
+            # Pass the exception to the main thread for display
+            self.root.after(0, self._install_complete, exc)
+
+    def _install_complete(self, error: Exception | None) -> None:
+        """Handle completion of the install worker."""
+
+        self.install_btn.config(state=tk.NORMAL)
+        if error:
+            messagebox.showerror("Install", f"Install failed: {error}")
+            return
+
+        # Offer to launch the Control Center after a successful install
+        if messagebox.askyesno(
+            "Install", "Installation complete. Launch Control Center now?"
+        ):
+            try:
+                from control_center.gui import main as launch_gui
+
+                self.root.destroy()
+                launch_gui()
+            except Exception as exc:  # pragma: no cover - runtime path
+                messagebox.showerror("Control Center", f"Failed to launch: {exc}")
 
 
 def main() -> None:
