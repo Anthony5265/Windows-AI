@@ -1,3 +1,10 @@
+"""Minimal Tkinter-based installer front end.
+
+The GUI exposes system detection and API-key storage through a couple of
+buttons and a progress bar. It intentionally keeps dependencies light so
+it can run in constrained environments.
+"""
+
 from __future__ import annotations
 
 import threading
@@ -5,6 +12,8 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
 from . import api_keys, system_info
+
+__all__ = ["GUIInstaller", "main"]
 
 
 class GUIInstaller:
@@ -36,11 +45,15 @@ class GUIInstaller:
 
     # --- System detection -------------------------------------------------
     def detect_system(self) -> None:
+        """Run system detection in the background and show the results."""
+
         self.progress.config(mode="indeterminate")
         self.progress.start()
         threading.Thread(target=self._detect_worker, daemon=True).start()
 
     def _detect_worker(self) -> None:
+        """Worker thread to gather system info and update the text widget."""
+
         info = system_info.detect_system()
 
         def update() -> None:
@@ -56,6 +69,7 @@ class GUIInstaller:
 
     # --- API key handling -------------------------------------------------
     def add_api_key(self) -> None:
+        """Prompt the user for an API key and store it on disk."""
         service = simpledialog.askstring("API Key", "Service name:", parent=self.root)
         if not service:
             return
