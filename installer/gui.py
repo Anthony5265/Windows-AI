@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import threading
 import tkinter as tk
-from tkinter import messagebox, simpledialog, ttk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 
-from . import api_keys, env, model_selector, plugins, system_info
+from . import api_keys, env, model_selector, models, plugins, system_info
 
 
 class InstallerGUI:
@@ -68,6 +68,30 @@ class InstallerGUI:
         tk.Label(
             backend_frame, text=f"Recommended: {recommended}", justify="left"
         ).pack(anchor="w", padx=5)
+
+        # Model selection
+        model_frame = tk.LabelFrame(self.root, text="Models")
+        model_frame.pack(fill="x", padx=10, pady=5)
+        self.available_models = models.compatible_models(info)
+        if self.available_models:
+            names = [m.name for m in self.available_models]
+            self.model_var = tk.StringVar(value=names[0])
+            ttk.Combobox(
+                model_frame,
+                textvariable=self.model_var,
+                values=names,
+                state="readonly",
+            ).pack(anchor="w", padx=5, pady=5)
+            self.download_btn = ttk.Button(
+                model_frame,
+                text="Download Selected Model",
+                command=self.download_selected_model,
+            )
+            self.download_btn.pack(anchor="w", padx=5, pady=5)
+        else:
+            tk.Label(
+                model_frame, text="No compatible models available."
+            ).pack(anchor="w", padx=5, pady=5)
 
         # Buttons
         button_frame = tk.Frame(self.root)
@@ -170,6 +194,37 @@ class InstallerGUI:
                 launch_gui()
             except Exception as exc:  # pragma: no cover - runtime path
                 messagebox.showerror("Control Center", f"Failed to launch: {exc}")
+
+    # --- Model downloads -------------------------------------------------
+    def download_selected_model(self) -> None:
+        """Download the model chosen in the combo box."""
+
+        model_name = getattr(self, "model_var", None)
+        if not model_name:
+            return
+        model_name = self.model_var.get()
+        dest = filedialog.askdirectory(title="Select download directory") or "."
+        self.download_btn.config(state=tk.DISABLED)
+        self.progress.config(mode="determinate", maximum=100, value=0)
+
+        def progress(downloaded: int, total: int) -> None:
+            percent = int(downloaded / total * 100) if total else 0
+            self.root.after(0, lambda: self.progress.config(value=percent))
+
+        def worker() -> None:
+            try:
+                models.download_model(model_name, dest, progress)
+                self.root.after(0, lambda: messagebox.showinfo("Download", "Model downloaded"))
+            except Exception as exc:  # pragma: no cover - network path
+                self.root.after(0, lambda: messagebox.showerror("Download", str(exc)))
+            finally:
+                self.root.after(0, self._download_complete)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _download_complete(self) -> None:
+        self.download_btn.config(state=tk.NORMAL)
+        self.progress.config(value=0)
 
 
 def main() -> None:
