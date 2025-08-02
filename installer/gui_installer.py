@@ -36,6 +36,9 @@ class GUIInstaller:
         ttk.Button(button_frame, text="Add API Key", command=self.add_api_key).pack(
             side=tk.LEFT, padx=5
         )
+        ttk.Button(button_frame, text="Check API Key", command=self.check_api_key).pack(
+            side=tk.LEFT, padx=5
+        )
 
         self.info = tk.Text(self.root, width=60, height=10, state="disabled")
         self.info.pack(padx=10, pady=5)
@@ -85,6 +88,24 @@ class GUIInstaller:
             messagebox.showinfo("API Key", f"Saved key for {service}")
         except Exception as exc:  # pragma: no cover - GUI path
             messagebox.showerror("API Key", str(exc))
+        finally:
+            self.progress.stop()
+            self.progress.config(mode="determinate", value=0)
+
+    def check_api_key(self) -> None:
+        """Verify whether a stored key exists for a service."""
+
+        service = simpledialog.askstring("API Key", "Service name:", parent=self.root)
+        if not service:
+            return
+        self.progress.config(mode="indeterminate")
+        self.progress.start()
+        try:
+            key = api_keys.load_key(service)
+            if key:
+                messagebox.showinfo("API Key", f"Key stored for {service}")
+            else:
+                messagebox.showinfo("API Key", f"No key stored for {service}")
         finally:
             self.progress.stop()
             self.progress.config(mode="determinate", value=0)
