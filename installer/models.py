@@ -7,31 +7,47 @@ from typing import Callable, Dict, List
 import urllib.request
 
 
+# ``ModelInfo`` captures metadata about downloadable model files.  Instead of
+# storing a full URL directly, each model references a host key along with a
+# filename.  ``MODEL_HOSTS`` maps host keys to their base URLs, allowing the
+# download location to be adjusted in one place (for mirrors or testing).
+MODEL_HOSTS: Dict[str, str] = {"default": "https://example.com"}
+
+
 @dataclass
 class ModelInfo:
     """Metadata describing a downloadable model."""
 
     name: str
-    url: str
+    filename: str
     checksum: str
+    host: str = "default"
     requires_gpu: bool = False
     min_ram_gb: float | None = None
     min_vram_gb: float | None = None
 
+    @property
+    def url(self) -> str:
+        """Resolved URL for the model file based on its host and filename."""
 
-# Default registry with placeholder models. In a real application these
-# would point to actual model files hosted online.
+        base = MODEL_HOSTS.get(self.host, "")
+        return f"{base.rstrip('/')}/{self.filename}"
+
+
+# Default registry with placeholder models. In a real application these would
+# point to actual model files hosted online.  The filenames are joined with a
+# base host URL from ``MODEL_HOSTS`` to produce the full download address.
 MODEL_REGISTRY: Dict[str, ModelInfo] = {
     "tiny-cpu": ModelInfo(
         name="tiny-cpu",
-        url="https://example.com/tiny-cpu.bin",
+        filename="tiny-cpu.bin",
         checksum="0" * 64,
         requires_gpu=False,
         min_ram_gb=4,
     ),
     "medium-gpu": ModelInfo(
         name="medium-gpu",
-        url="https://example.com/medium-gpu.bin",
+        filename="medium-gpu.bin",
         checksum="0" * 64,
         requires_gpu=True,
         min_ram_gb=8,
@@ -102,8 +118,7 @@ def download_model(
     info = get_model(name)
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
-    filename = Path(info.url).name
-    dest_path = dest_dir / filename
+    dest_path = dest_dir / info.filename
 
     with urllib.request.urlopen(info.url) as resp:
         total = int(resp.getheader("Content-Length", 0))
