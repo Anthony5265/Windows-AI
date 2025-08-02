@@ -1,4 +1,23 @@
+# Byte-compiled / cache
 __pycache__/
+*.py[cod]
+
+# Logs
+*.log
+AI/Logs/
+
+# Virtual environments
+.venv/
+
+# Installer secrets
+installer/keys.json
+
+# Build artifacts
 build/
 dist/
 *.spec
+
+# Test & coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
