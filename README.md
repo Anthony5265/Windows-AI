@@ -17,7 +17,8 @@ For an outline of a smart installer that automates hardware detection and AI too
 
 ## Using the GUI Tools
 
-Run the graphical installer directly from the source tree:
+Run the graphical installer directly from the source tree. It detects system
+information and lets you store API keys through a simple Tkinter interface:
 
 ```bash
 python -m installer.gui_installer
