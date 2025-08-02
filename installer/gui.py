@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
 from . import api_keys, env, model_selector, models, plugins, system_info
+from .assistant import Assistant, ToolTip
 
 
 class InstallerGUI:
@@ -17,13 +18,16 @@ class InstallerGUI:
     4. Progress indicators
     """
 
-    def __init__(self) -> None:
+    def __init__(self, enable_voice: bool = False) -> None:
         try:
             self.root = tk.Tk()
         except tk.TclError as exc:  # pragma: no cover - environment specific
             raise RuntimeError("tkinter is not available or no display is found") from exc
 
         self.root.title("Windows AI Installer")
+
+        # Assistant provides guidance and optional voice output
+        self.assistant = Assistant(enable_voice=enable_voice)
 
         # System scan
         info = system_info.detect_system()
@@ -88,6 +92,7 @@ class InstallerGUI:
                 command=self.download_selected_model,
             )
             self.download_btn.pack(anchor="w", padx=5, pady=5)
+            ToolTip(self.download_btn, "Download the chosen model")
         else:
             tk.Label(
                 model_frame, text="No compatible models available."
@@ -96,13 +101,17 @@ class InstallerGUI:
         # Buttons
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
-        ttk.Button(button_frame, text="Add API Key", command=self.add_api_key).pack(
-            side=tk.LEFT, padx=5
-        )
+        api_btn = ttk.Button(button_frame, text="Add API Key", command=self.add_api_key)
+        api_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(api_btn, "Store a service API key")
         self.install_btn = ttk.Button(
             button_frame, text="Install Selected", command=self.install_selected
         )
         self.install_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(self.install_btn, "Install chosen components")
+        ask_btn = ttk.Button(button_frame, text="Ask Assistant", command=self.ask_assistant)
+        ask_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(ask_btn, "Ask questions or get step-by-step help")
 
         # Progress indicator
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
@@ -138,6 +147,16 @@ class InstallerGUI:
         # Allow user override of the model backend
         backend = self.backend_var.get()
         print(f"Backend chosen: {backend}")
+
+        # Warn about missing dependencies before starting
+        deps_to_check: list[str] = []
+        for plugin_name in selected_plugins:
+            deps_to_check.extend(self.registry.dependencies.get(plugin_name, []))
+        missing = self.assistant.check_dependencies(deps_to_check)
+        if missing:
+            msg = "Missing dependencies: " + ", ".join(missing)
+            self.assistant.speak(msg)
+            messagebox.showinfo("Dependencies", msg)
 
         # Prompt for API key before installation
         service = simpledialog.askstring(
@@ -225,6 +244,17 @@ class InstallerGUI:
     def _download_complete(self) -> None:
         self.download_btn.config(state=tk.NORMAL)
         self.progress.config(value=0)
+
+    # --- Assistant -------------------------------------------------------
+    def ask_assistant(self) -> None:
+        """Prompt the user for a question and show the assistant's reply."""
+
+        question = simpledialog.askstring("Assistant", "How can I help?", parent=self.root)
+        if not question:
+            return
+        reply = self.assistant.answer(question)
+        self.assistant.speak(reply)
+        messagebox.showinfo("Assistant", reply)
 
 
 def main() -> None:
