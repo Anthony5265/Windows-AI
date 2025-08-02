@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    {
+      "name": "LangChain",
+      "description": "Framework for building LLM-powered applications.",
+      "command": "pip install langchain",
+      "paid": false
+    },
+    {
+      "name": "n8n",
+      "description": "Workflow automation and integration platform.",
+      "command": "npm install -g n8n",
+      "paid": true
+    },
+    {
+      "name": "Warp Terminal",
+      "description": "GPU-accelerated terminal with modern features.",
+      "command": "brew install warp",
+      "paid": false
+    }
+  ]
+}
