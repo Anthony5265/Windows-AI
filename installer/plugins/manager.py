@@ -72,8 +72,12 @@ class PluginManager:
         for plugin in self.plugins:
             var = tk.BooleanVar(value=False)
             selections[plugin.name] = var
-            label = f"{plugin.name} ({'Paid' if plugin.paid else 'Free'})"
-            ttk.Checkbutton(frame, text=label, variable=var).pack(anchor="w")
+            label = (
+                f"{plugin.name} ({'Paid' if plugin.paid else 'Free'})\n{plugin.description}"
+            )
+            ttk.Checkbutton(
+                frame, text=label, variable=var, justify="left"
+            ).pack(anchor="w", fill="x", padx=5, pady=2)
 
         def _install() -> None:
             chosen = [p for p in self.plugins if selections[p.name].get()]
