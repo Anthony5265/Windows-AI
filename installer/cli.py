@@ -9,6 +9,10 @@ import argparse
 import json
 
 from . import system_info, api_keys, plugins, env
+from .logging_config import get_logger
+
+
+logger = get_logger(__name__)
 
 
 def install_all() -> None:
@@ -81,9 +85,13 @@ def main() -> None:
         performed_action = True
 
     if not performed_action:
-        choice = input(
-            "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
-        ).strip().lower()
+        try:
+            choice = input(
+                "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
+            ).strip().lower()
+        except Exception:
+            logger.exception("Failed to read API key choice")
+            choice = "n"
 
         if choice == "l":
             keys = api_keys.list_keys()
@@ -94,11 +102,16 @@ def main() -> None:
             else:
                 print("No API keys stored.")
         elif choice == "d":
-            service = input("Service to delete: ").strip()
-            if api_keys.delete_key(service):
-                print(f"Deleted key for {service}")
-            else:
-                print(f"No key stored for {service}")
+            try:
+                service = input("Service to delete: ").strip()
+            except Exception:
+                logger.exception("Failed to read service to delete")
+                service = ""
+            if service:
+                if api_keys.delete_key(service):
+                    print(f"Deleted key for {service}")
+                else:
+                    print(f"No key stored for {service}")
         elif choice in {"a", "y"}:  # support legacy 'y' for yes to add
             api_keys.prompt_and_save()
         else:
@@ -108,14 +121,18 @@ def main() -> None:
         install_all()
 
     # Offer to launch the Control Center after setup completes
-    launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
+    try:
+        launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
+    except Exception:
+        logger.exception("Failed to read launch choice")
+        launch = "n"
     if launch in {"y", "yes"}:
         try:
             from control_center.gui import main as launch_gui
 
             launch_gui()
-        except Exception as exc:  # pragma: no cover - runtime path
-            print(f"Failed to launch Control Center: {exc}")
+        except Exception:  # pragma: no cover - runtime path
+            logger.exception("Failed to launch Control Center")
 
 
 if __name__ == "__main__":
