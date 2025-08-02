@@ -20,7 +20,7 @@ For an outline of a smart installer that automates hardware detection and AI too
 Run the graphical installer directly from the source tree:
 
 ```bash
-python -m installer.gui
+python -m installer.gui_installer
 ```
 
 After completing installation, launch the AI Control Center:
