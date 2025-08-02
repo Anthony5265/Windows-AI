@@ -1,4 +1,8 @@
-"""Tkinter based chat interface for Windows AI Control Center."""
+"""Tkinter-based chat interface for the Windows AI Control Center.
+
+The GUI presents a minimal chat window and a backend selector allowing users
+to switch between local models and remote APIs.
+"""
 
 from __future__ import annotations
 
