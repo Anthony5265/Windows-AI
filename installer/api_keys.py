@@ -19,10 +19,13 @@ except Exception:  # pragma: no cover - keyring not installed
     keyring = None  # type: ignore[assignment]
     KeyringError = Exception  # type: ignore[misc]
 
+from .logging_config import get_logger
 
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".windows_ai")
 KEYS_FILE = os.path.join(CONFIG_DIR, "keys.json")
 _USERNAME = "api_key"
+
+logger = get_logger(__name__)
 
 
 def _migrate_file_to_keyring() -> None:
@@ -35,6 +38,7 @@ def _migrate_file_to_keyring() -> None:
         with open(KEYS_FILE, "r", encoding="utf-8") as f:
             data: Dict[str, str] = json.load(f)
     except Exception:
+        logger.exception("Failed to read legacy keys file %s", KEYS_FILE)
         return
 
     for service, value in data.items():
@@ -42,6 +46,9 @@ def _migrate_file_to_keyring() -> None:
             keyring.set_password(service, _USERNAME, value)
         except Exception:
             # If any write fails keep the file so migration can retry later.
+            logger.exception(
+                "Failed to store key for %s in system keyring", service
+            )
             return
 
     try:
@@ -49,7 +56,7 @@ def _migrate_file_to_keyring() -> None:
         if not os.listdir(CONFIG_DIR):
             os.rmdir(CONFIG_DIR)
     except OSError:
-        pass
+        logger.exception("Failed to clean up legacy key files")
 
 
 # Run migration as soon as the module is imported.
@@ -78,6 +85,7 @@ def load_keys() -> Dict[str, str]:
             try:
                 value = keyring.get_password(svc, _USERNAME)
             except KeyringError:
+                logger.exception("Failed to load key for %s", svc)
                 value = None
             if value:
                 keys[svc] = value
@@ -89,6 +97,7 @@ def load_keys() -> Dict[str, str]:
             with open(KEYS_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
+            logger.exception("Failed to read keys file %s", KEYS_FILE)
             return {}
 
     return keys
@@ -109,6 +118,7 @@ def load_key(service: str) -> Optional[str]:
     try:
         return keyring.get_password(service, _USERNAME)
     except KeyringError:
+        logger.exception("Failed to load key for %s", service)
         return None
 
 
@@ -120,7 +130,11 @@ def save_key(service: str, key: str) -> None:
     if keyring is None:
         raise RuntimeError("No system keyring backend available")
 
-    keyring.set_password(service, _USERNAME, key)
+    try:
+        keyring.set_password(service, _USERNAME, key)
+    except Exception:
+        logger.exception("Failed to save key for %s", service)
+        raise
 
 
 def list_keys() -> Dict[str, str]:
@@ -155,6 +169,7 @@ def delete_key(service: str) -> bool:
             keyring.delete_password(service, _USERNAME)
             return True
         except KeyringError:
+            logger.exception("Failed to delete key for %s", service)
             return False
 
     # Fallback to file-based storage
@@ -165,6 +180,7 @@ def delete_key(service: str) -> bool:
         with open(KEYS_FILE, "r", encoding="utf-8") as f:
             data: Dict[str, str] = json.load(f)
     except Exception:
+        logger.exception("Failed to read keys file %s", KEYS_FILE)
         return False
 
     if service not in data:
@@ -173,22 +189,34 @@ def delete_key(service: str) -> bool:
     del data[service]
 
     if data:
-        with open(KEYS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+        try:
+            with open(KEYS_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except Exception:
+            logger.exception("Failed to write keys file %s", KEYS_FILE)
+            return False
     else:
         try:
             os.remove(KEYS_FILE)
             if not os.listdir(CONFIG_DIR):
                 os.rmdir(CONFIG_DIR)
         except OSError:
-            pass
+            logger.exception("Failed to remove keys file %s", KEYS_FILE)
     return True
 
 
 def prompt_and_save() -> None:
     """Interactively ask the user for an API key and save it."""
 
-    service = input("Service name: ")
-    key = getpass("API key: ")
-    save_key(service, key)
+    try:
+        service = input("Service name: ")
+        key = getpass("API key: ")
+    except Exception:
+        logger.exception("Failed to read API key input")
+        return
+    try:
+        save_key(service, key)
+    except Exception:
+        logger.exception("Failed to save key for %s", service)
+        return
     print(f"Saved {service} key to the system keyring")
