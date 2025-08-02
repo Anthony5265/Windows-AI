@@ -39,6 +39,9 @@ class GUIInstaller:
         ttk.Button(button_frame, text="Check API Key", command=self.check_api_key).pack(
             side=tk.LEFT, padx=5
         )
+        ttk.Button(
+            button_frame, text="Install Dependencies", command=self.install_all
+        ).pack(side=tk.LEFT, padx=5)
 
         self.info = tk.Text(self.root, width=60, height=10, state="disabled")
         self.info.pack(padx=10, pady=5)
@@ -109,6 +112,28 @@ class GUIInstaller:
         finally:
             self.progress.stop()
             self.progress.config(mode="determinate", value=0)
+
+    # --- Dependency installation -----------------------------------------
+    def install_all(self) -> None:
+        """Install plugin/tool dependencies with one click."""
+
+        self.progress.config(mode="indeterminate")
+        self.progress.start()
+        threading.Thread(target=self._install_worker, daemon=True).start()
+
+    def _install_worker(self) -> None:
+        from . import env_setup
+
+        env_setup.setup_all()
+
+        def update() -> None:
+            self.progress.stop()
+            self.progress.config(mode="determinate", value=0)
+            messagebox.showinfo(
+                "Installer", "Plugin and tool dependencies installed"
+            )
+
+        self.root.after(0, update)
 
 
 def main() -> None:
