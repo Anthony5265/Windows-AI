@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import { ValidationError } from './errors';
 
-const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd']);
+const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd', 'dir', 'type']);
 
 export interface ActionRequest {
   action: string;
@@ -22,8 +22,9 @@ export async function executeAction(req: ActionRequest): Promise<any> {
       if (!ALLOWED_COMMANDS.has(program)) {
         throw new ValidationError(`Command not allowed: ${program}`);
       }
+      const isWindows = process.platform === 'win32';
       return await new Promise((resolve, reject) => {
-        const child = spawn(program, args);
+        const child = spawn(program, args, isWindows ? { shell: true } : undefined);
         let stdout = '';
         let stderr = '';
         child.stdout.on('data', (d) => (stdout += d));
