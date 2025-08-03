@@ -83,6 +83,30 @@ def compatible_models(info: Dict[str, float | str | None]) -> List[ModelInfo]:
     return results
 
 
+def select_inference_mode(task: str, policy: str = "hybrid") -> str:
+    """Return the desired inference mode for ``task``.
+
+    Parameters
+    ----------
+    task:
+        Identifier of the task or model.  For ``"hybrid"`` policy this is used
+        to determine whether a local model exists.
+    policy:
+        ``"local"`` forces local execution, ``"cloud"`` forces remote
+        execution and ``"hybrid"`` prefers local models but falls back to a
+        cloud API when none are available.
+    """
+
+    if policy == "local":
+        return "local"
+    if policy == "cloud":
+        return "cloud"
+    # Hybrid mode prefers local models when they exist
+    if task in MODEL_REGISTRY:
+        return "local"
+    return "cloud"
+
+
 def verify_checksum(path: str | Path, expected: str) -> bool:
     """Check the SHA256 hash of ``path`` against ``expected``."""
 
