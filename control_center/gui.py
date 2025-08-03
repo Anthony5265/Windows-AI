@@ -51,6 +51,9 @@ class ChatGUI:
         }
         self.backend_var = tk.StringVar(value=next(iter(self.backends)))
         self.mesh_node: MeshNode | None = None
+        # Sync settings
+        self.sync_frequency = 60  # minutes
+        self.conflict_resolution = "ask"
 
         self._build_widgets()
 
@@ -96,6 +99,9 @@ class ChatGUI:
         )
         ttk.Button(
             input_frame, text="Pair Mobile", command=self._open_mobile_pair_window
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Sync Settings", command=self._open_sync_settings
         ).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
@@ -202,6 +208,38 @@ class ChatGUI:
         response = backend.generate(prompt)
         self.chat.insert("end", f"Bot: {response}\n")
         self.chat.see("end")
+
+    # ---------------------------------------------------------- Sync settings
+    def _open_sync_settings(self) -> None:
+        win = tk.Toplevel(self.root)
+        win.title("Sync Settings")
+        freq_var = tk.IntVar(value=self.sync_frequency)
+        strat_var = tk.StringVar(value=self.conflict_resolution)
+
+        ttk.Label(win, text="Frequency (min):").grid(
+            row=0, column=0, padx=5, pady=5, sticky="w"
+        )
+        ttk.Entry(win, textvariable=freq_var, width=10).grid(
+            row=0, column=1, padx=5, pady=5, sticky="ew"
+        )
+        ttk.Label(win, text="On conflict:").grid(
+            row=1, column=0, padx=5, pady=5, sticky="w"
+        )
+        ttk.Combobox(
+            win,
+            textvariable=strat_var,
+            values=["ask", "local", "remote"],
+            state="readonly",
+        ).grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+        def save() -> None:
+            self.sync_frequency = freq_var.get()
+            self.conflict_resolution = strat_var.get()
+            win.destroy()
+
+        ttk.Button(win, text="Save", command=save).grid(
+            row=2, column=0, columnspan=2, pady=5
+        )
 
     def run(self) -> None:  # pragma: no cover - GUI loop
         """Start the Tk event loop."""
