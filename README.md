@@ -1,3 +1,15 @@
+## Start here (for code assistants)
+
+| Purpose | Path |
+|---------|------|
+| **Latest spec** | [specs/WindowsAI_MasterSpec_latest.md](specs/WindowsAI_MasterSpec_latest.md) |
+| **All specs** | [specs/](specs/) |
+| **Manifest (machine-readable)** | [codex/codex_manifest.json](codex/codex_manifest.json) |
+| **Task cards** | [codex/TASKS/](codex/TASKS/) |
+| **State tracker** | [codex/STATE.json](codex/STATE.json) |
+| **Actions API (OpenAPI)** | [openapi/windows-ai.yaml](openapi/windows-ai.yaml) |
+| **Docs landing** | [docs/index.md](docs/index.md) |
+
 # Windows-AI
 
 This repository provides a high-level outline for experimenting with AI integrations on Windows 11.
