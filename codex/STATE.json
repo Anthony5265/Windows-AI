@@ -1,22 +1,26 @@
 {
   "version": "v0.5",
-  "last_session": null,
+  "last_session": "$timestamp",
   "tasks": {
     "00": {
       "title": "Bootstrap from /codex mirrors",
-      "status": "todo"
+      "status": "done",
+      "commit": "4c5756e"
     },
     "01": {
       "title": "Repo scaffold",
-      "status": "todo"
+      "status": "done",
+      "commit": "ed035ac"
     },
     "02": {
       "title": "Installer & Services",
-      "status": "todo"
+      "status": "done",
+      "commit": "eed1151"
     },
     "03": {
       "title": "Actions API: /api/actions/execute",
-      "status": "todo"
+      "status": "done",
+      "commit": "88d4c75"
     },
     "04": {
       "title": "AgentHub core",

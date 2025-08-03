@@ -13,6 +13,7 @@ AI/Logs/
 installer/keys.json
 
 # Build artifacts
+node_modules/
 build/
 dist/
 *.spec

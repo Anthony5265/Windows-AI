@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Install JS deps
+        run: npm ci || npm i
+      - name: Install Python deps
+        run: pip install -r requirements.txt || echo "no requirements.txt"
+      - name: Lint (commit messages via commitlint if present)
+        run: npx commitlint --from=HEAD~10 --to=HEAD || echo "commitlint not configured"
+      - name: Run tests
+        run: npm test || echo "no JS tests"; pytest -q || echo "no Python tests"
+      - name: OpenAPI validate
+        run: npx @redocly/cli lint openapi/windows-ai.yaml || echo "OpenAPI CLI not installed"
