@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - environment specific
 
 from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
+from mesh import MeshNode
 
 __all__ = ["ChatGUI", "main"]
 
@@ -42,6 +43,7 @@ class ChatGUI:
             "Remote": RemoteBackend(),
         }
         self.backend_var = tk.StringVar(value=next(iter(self.backends)))
+        self.mesh_node: MeshNode | None = None
 
         self._build_widgets()
 
@@ -78,6 +80,36 @@ class ChatGUI:
 
         ttk.Button(input_frame, text="Send", command=self.send_message).pack(
             side="left", padx=5
+        )
+        ttk.Button(input_frame, text="Mesh", command=self._open_mesh_config).pack(
+            side="left", padx=5
+        )
+
+    # ----------------------------------------------------------------- Chat
+    def _open_mesh_config(self) -> None:
+        """Open a simple window to configure mesh networking."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Mesh Configuration")
+        host_var = tk.StringVar(value="127.0.0.1")
+        port_var = tk.StringVar(value="0")
+
+        ttk.Label(win, text="Hub host:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        ttk.Entry(win, textvariable=host_var).grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(win, text="Hub port:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Entry(win, textvariable=port_var).grid(row=1, column=1, padx=5, pady=5)
+
+        def connect() -> None:
+            if self.mesh_node:
+                self.mesh_node.stop()
+            def handler(task: str) -> None:
+                self.chat.insert("end", f"[Mesh] {task}\n")
+                self.chat.see("end")
+            self.mesh_node = MeshNode(handler)
+            self.mesh_node.connect((host_var.get(), int(port_var.get())))
+
+        ttk.Button(win, text="Connect", command=connect).grid(
+            row=2, column=0, columnspan=2, pady=5
         )
 
     # ----------------------------------------------------------------- Chat
