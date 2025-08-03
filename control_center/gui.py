@@ -117,6 +117,9 @@ class ChatGUI:
         ttk.Button(
             input_frame, text="Logs", command=self._open_audit_log
         ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Automation", command=self._open_automation_builder
+        ).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
     def _open_mesh_config(self) -> None:
@@ -298,6 +301,14 @@ class ChatGUI:
         text.pack(fill="both", expand=True, padx=5, pady=5)
         text.insert("end", self.audit_logger.read())
         text.config(state="disabled")
+
+    def _open_automation_builder(self) -> None:
+        """Launch the workflow builder."""
+
+        from automation.builder import WorkflowBuilder
+
+        backend = self.backends[self.backend_var.get()]
+        WorkflowBuilder(backend=backend)
 
     # ----------------------------------------------------------------- Chat
     def send_message(self, event: object | None = None) -> None:
