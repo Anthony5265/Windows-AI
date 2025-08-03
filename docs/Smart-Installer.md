@@ -14,10 +14,12 @@ This document sketches a design for an automated installer that sets up an AI ec
 1. **System Scan**
    - Use PowerShell or a Python script with the `wmi` package to collect specs such as GPU model, available RAM, and disk space.
    - Determine whether the machine meets optional GPU requirements for accelerated inference.
+   - The GUI's *Detect System* button performs these checks and automatically evaluates whether the machine can run local models.
 
 2. **User Choices**
    - Offer presets ("Minimal", "Full", "Custom") in the installer GUI.
    - Ask whether to use remote APIs or install local LLMs. When using remote services, prompt for one or more API keys.
+   - A configuration panel lets users opt out of automatic model selection, choose a backend manually, or adjust advanced requirements like minimum RAM/VRAM.
 
 3. **Download and Installation**
    - For remote services, install the necessary SDKs or Python packages.
@@ -109,6 +111,7 @@ This pseudocode only scratches the surface but illustrates how the installer mig
   or run the installer with elevated privileges.
 - **Missing GPU detection** – Update graphics drivers and confirm that Python's
   ``wmi`` package has access to system information.
+- **Unexpected backend choice** – If the installer suggests a remote backend despite having a capable GPU, review the values in the configuration panel. Tight requirements for RAM or VRAM can force the selector to prefer a remote model.
 
 *Screenshots and GIFs will be added once the GUI is finalized.*
 
