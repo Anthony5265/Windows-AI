@@ -28,6 +28,21 @@ class OverlayWidget:
         self.visible = False
 
 
+class WorkflowPanel:
+    """Representation of an external workflow builder panel."""
+
+    def __init__(self, tool: str, url: str):
+        self.tool = tool
+        self.url = url
+        self.active = False
+
+    def open(self) -> None:
+        self.active = True
+
+    def close(self) -> None:
+        self.active = False
+
+
 class HotkeyManager:
     """Register and trigger hotkey callbacks."""
 
@@ -56,6 +71,7 @@ class GuiCore:
         self.hotkeys = HotkeyManager()
         self.search_engine: Optional[SearchEngine] = None
         self._search_actions: Dict[str, Callable[[], None]] = {}
+        self.workflow_panels: Dict[str, WorkflowPanel] = {}
 
     def launch(self) -> bool:
         """Launch the GUI and record the event.
@@ -132,4 +148,22 @@ class GuiCore:
         if action is None:
             return False
         action()
+        return True
+
+    # ---- workflow panels ---------------------------------------------------
+
+    def add_workflow_panel(self, tool: str, url: str) -> WorkflowPanel:
+        """Register an external workflow builder like n8n or LangFlow."""
+
+        panel = WorkflowPanel(tool, url)
+        self.workflow_panels[tool] = panel
+        return panel
+
+    def open_workflow(self, tool: str) -> bool:
+        """Open a previously registered workflow panel."""
+
+        panel = self.workflow_panels.get(tool)
+        if panel is None:
+            return False
+        panel.open()
         return True
