@@ -6,9 +6,14 @@ to switch between local models and remote APIs.
 
 from __future__ import annotations
 
-import tkinter as tk
-from tkinter import ttk
 from typing import Dict, Optional
+
+try:  # pragma: no cover - import may fail on headless systems
+    import tkinter as tk  # type: ignore
+    from tkinter import ttk  # type: ignore
+except Exception:  # pragma: no cover - environment specific
+    tk = None  # type: ignore[assignment]
+    ttk = None  # type: ignore[assignment]
 
 from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
@@ -21,9 +26,11 @@ class ChatGUI:
 
     def __init__(
         self,
-        root: Optional[tk.Tk] = None,
+        root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
     ) -> None:
+        if tk is None or ttk is None:
+            raise RuntimeError("tkinter is not available")
         try:
             self.root = root or tk.Tk()
         except tk.TclError as exc:  # pragma: no cover - environment specific
