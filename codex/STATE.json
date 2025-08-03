@@ -1,125 +1,69 @@
 {
   "version": "v0.5",
-  "last_session": "$timestamp",
+  "last_session": null,
   "tasks": {
-    "00": {
-      "title": "Bootstrap from /codex mirrors",
-      "status": "done",
-      "commit": "4c5756e"
-    },
     "01": {
       "title": "Repo scaffold",
-      "status": "done",
-      "commit": "ed035ac"
+      "status": "todo"
     },
     "02": {
-      "title": "Installer & Services",
-      "status": "done",
-      "commit": "eed1151"
+      "title": "Installer & services",
+      "status": "todo"
     },
     "03": {
-      "title": "Actions API: /api/actions/execute",
-      "status": "done",
-      "commit": "88d4c75"
+      "title": "Router/act API",
+      "status": "todo"
     },
     "04": {
-      "title": "AgentHub core",
+      "title": "AgentHub",
       "status": "todo"
     },
     "05": {
-      "title": "LiteLLM Proxy config",
+      "title": "LiteLLM proxy",
       "status": "todo"
     },
     "06": {
-      "title": "Electron GUI shell",
+      "title": "GUI core",
       "status": "todo"
     },
     "07": {
-      "title": "Model discovery & downloads",
+      "title": "Model discovery",
       "status": "todo"
     },
     "08": {
-      "title": "CI/CD pipeline",
+      "title": "Testing & CI",
       "status": "todo"
     },
     "09": {
-      "title": "Terminal engine (xterm.js + node-pty)",
+      "title": "Terminal engine",
       "status": "todo"
     },
     "10": {
-      "title": "Themes & Keysets (YAML)",
+      "title": "Themes & keysets",
       "status": "todo"
     },
     "11": {
-      "title": "Workflow Catalog & Runner",
+      "title": "Workflow catalog & runner",
       "status": "todo"
     },
     "12": {
-      "title": "Terminal Settings + Import/Export",
+      "title": "Terminal settings + import/export",
       "status": "todo"
     },
     "13": {
-      "title": "Test pack for Terminal & Workflows",
+      "title": "Tests for terminal & workflows",
       "status": "todo"
     },
     "14": {
-      "title": "Sample assets (themes/keysets/workflows)",
+      "title": "Sample assets pack",
       "status": "todo"
     },
     "15": {
-      "title": "AgentHub /workflows/run",
+      "title": "AgentHub /workflows/run endpoint",
       "status": "todo"
     },
     "16": {
-      "title": "Expanded tests (Unicode/env guard/E2E)",
-      "status": "todo"
-    },
-    "17": {
-      "title": "Conventional Commits + commitlint + Husky",
-      "status": "todo"
-    },
-    "18": {
-      "title": "semantic-release (automated versioning/changelog)",
-      "status": "todo"
-    },
-    "19": {
-      "title": "Docs: GitHub Pages /docs + index",
-      "status": "todo"
-    },
-    "20": {
-      "title": "CODEOWNERS + issue/PR templates",
-      "status": "todo"
-    },
-    "21": {
-      "title": "Dependency bots (Dependabot or Renovate)",
-      "status": "todo"
-    },
-    "22": {
-      "title": "Prettier + ESLint + Ruff baselines",
-      "status": "todo"
-    },
-    "23": {
-      "title": "pre-commit hooks (multi-language)",
-      "status": "todo"
-    },
-    "24": {
-      "title": "OpenAPI validation in CI",
-      "status": "todo"
-    },
-    "25": {
-      "title": "Orchestrator prompt + session logger",
-      "status": "todo"
-    },
-    "26": {
-      "title": "Security baseline (npm audit/pip-audit/Bandit)",
-      "status": "todo"
-    },
-    "27": {
-      "title": "Release pipeline: build MSI/EXE + artifacts",
-      "status": "todo"
-    },
-    "28": {
-      "title": "Telemetry & structured logs wiring",
+      "title": "Expanded tests",
       "status": "todo"
     }
   }
