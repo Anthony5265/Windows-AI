@@ -1,12 +1,14 @@
 import express from 'express';
 import { executeAction } from './actions';
+import { normalize } from './normalize';
 
 const app = express();
 app.use(express.json());
 
 app.post('/api/actions/execute', async (req, res) => {
   try {
-    const result = await executeAction(req.body);
+    const norm = normalize(req.body);
+    const result = await executeAction(norm);
     res.json({ ok: true, result });
   } catch (err: any) {
     console.error(JSON.stringify({ level: 'error', message: err.message }));
