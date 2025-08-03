@@ -9,6 +9,18 @@ test('shell executes command', async () => {
   assert.strictEqual(result.stdout.trim(), 'hello');
 });
 
+test('shell rejects command with disallowed characters', async () => {
+  await assert.rejects(
+    executeAction({ action: 'shell', params: { command: 'echo hello; ls' } })
+  );
+});
+
+test('shell rejects command not in whitelist', async () => {
+  await assert.rejects(
+    executeAction({ action: 'shell', params: { command: 'rm -rf /' } })
+  );
+});
+
 test('write_file and read_file', async () => {
   const tmp = path.join(process.cwd(), 'tmp.txt');
   await executeAction({ action: 'write_file', params: { path: tmp, content: 'hi' } });
