@@ -7,6 +7,7 @@ will invoke the associated installation commands.
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -89,12 +90,20 @@ class PluginManager:
         ttk.Button(root, text="Install Selected", command=_install).pack(pady=5)
         root.mainloop()
 
+    ALLOWED_COMMANDS = {"pip", "npm", "brew"}
+
     # --- Installation ----------------------------------------------------
     def install(self, plugin: Plugin, messagebox=None) -> None:
         """Run the installation command for a plugin."""
 
         try:
-            subprocess.run(plugin.command, shell=True, check=True)
+            args = shlex.split(plugin.command)
+            if not args:
+                raise ValueError("Empty command")
+            executable = Path(args[0])
+            if not executable.is_absolute() and executable.name not in self.ALLOWED_COMMANDS:
+                raise ValueError("Command not allowed")
+            subprocess.run(args, shell=False, check=True)
         except Exception as exc:  # pragma: no cover - subprocess path
             if messagebox is not None:
                 messagebox.showerror(
