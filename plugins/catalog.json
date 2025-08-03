@@ -4,19 +4,28 @@
       "name": "LangChain",
       "description": "Framework for building LLM-powered applications.",
       "command": "pip install langchain",
-      "paid": false
+      "paid": false,
+      "metadata": {"version": "0.1.0", "author": "LangChain"},
+      "rating": 4.5,
+      "dependencies": []
     },
     {
       "name": "n8n",
       "description": "Workflow automation and integration platform.",
       "command": "npm install -g n8n",
-      "paid": true
+      "paid": true,
+      "metadata": {"version": "1.2.0", "author": "n8n"},
+      "rating": 4.0,
+      "dependencies": []
     },
     {
       "name": "Warp Terminal",
       "description": "GPU-accelerated terminal with modern features.",
       "command": "brew install warp",
-      "paid": false
+      "paid": false,
+      "metadata": {"version": "0.5.0", "author": "Warp"},
+      "rating": 4.2,
+      "dependencies": []
     }
   ]
 }
