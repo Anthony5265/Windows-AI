@@ -200,16 +200,21 @@ For each task:
 ──────────────────────────────────────────────────────────────────────────────
 10) SESSION CLOSEOUT
 ──────────────────────────────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────────────────────────
+10) SESSION CLOSEOUT
+──────────────────────────────────────────────────────────────────────────────
 POST:
   TS="$(date +%Y-%m-%d_%H-%M)"
   mkdir -p codex/HISTORY
   {
     echo "# Codex Session ${TS}"
+    echo
     echo "- Tasks completed: numbers + SHAs"
     echo "- Notable changes: bullets"
     echo "- CI status: summary"
     echo "- Follow-ups: bullets"
   } > codex/HISTORY/${TS}.md
+
   git add codex/HISTORY/${TS}.md
   git commit -m "docs(history): log Codex session ${TS}" || true
   git push origin HEAD:main || true
