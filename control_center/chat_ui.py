@@ -16,7 +16,7 @@ except Exception:  # pragma: no cover - headless environment
     tk = None
     ttk = None
 
-from backends import Backend, load_backend
+from .backends import Backend, load_backend
 from . import get_plugins
 
 __all__ = ["ChatUI", "main"]
