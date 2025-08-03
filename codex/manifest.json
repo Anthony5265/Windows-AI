@@ -2,10 +2,15 @@
   "entry": "specs/WindowsAI_MasterSpec_latest.md",
   "fallbacks": [
     "specs/WindowsAI_MasterSpec_v0.0.md",
+    "specs/WindowsAI_MasterSpec_v0.10.md",
     "specs/WindowsAI_MasterSpec_v0.2.md",
     "specs/WindowsAI_MasterSpec_v0.3.md",
     "specs/WindowsAI_MasterSpec_v0.4.md",
-    "specs/WindowsAI_MasterSpec_v0.5.md"
+    "specs/WindowsAI_MasterSpec_v0.5.md",
+    "specs/WindowsAI_MasterSpec_v0.6.md",
+    "specs/WindowsAI_MasterSpec_v0.7.md",
+    "specs/WindowsAI_MasterSpec_v0.8.md",
+    "specs/WindowsAI_MasterSpec_v0.9.md"
   ],
   "endpoints": {
     "actions": "/api/actions/execute",
@@ -16,7 +21,7 @@
     "tasks": "codex/TASKS/",
     "state": "codex/STATE.json",
     "history": "codex/HISTORY/",
-    "openapi": "codex/openapi/",
+    "openapi": "openapi/",
     "schemas": "codex/SCHEMAS/",
     "root_files": "codex/ROOT_FILES/",
     "workflows": "codex/GITHUB_WORKFLOWS/"
