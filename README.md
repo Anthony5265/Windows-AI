@@ -1,3 +1,16 @@
+<!-- Windows AI — Codex Mega Prompt quick links -->
+<p align="center">
+  <a href="codex/RUN_MEGA.md">
+    <img src="https://img.shields.io/badge/Run%20the%20Mega%20Prompt-%F0%9F%9A%80%20Build%20Windows%20AI-blueviolet?style=for-the-badge" alt="Run the Mega Prompt">
+  </a>
+</p>
+
+> **How to use**  
+> 1) Open the linked file, copy its full contents, and paste into your Codex session.  
+> 2) For `RUN_MEGA.md`, replace `YOUR_FINE_GRAINED_PAT` with your GitHub fine-grained token to enable automatic pushes/PRs.  
+> 3) If you prefer not to use a token, use **RUN_MEGA_NO_REMOTE.md** — it will output a Base64 ZIP patch you can upload via GitHub’s web UI.
+
+
 ## Start here (for code assistants)
 
 | Purpose | Path |
