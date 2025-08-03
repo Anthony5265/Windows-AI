@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Protocol, List, Dict, Callable
+from typing import Protocol, List, Dict, Callable, Optional
+
+from search import SearchEngine
 
 
 class Model(Protocol):
@@ -52,6 +54,8 @@ class GuiCore:
         self._logs: List[str] = []
         self.overlays: Dict[str, OverlayWidget] = {}
         self.hotkeys = HotkeyManager()
+        self.search_engine: Optional[SearchEngine] = None
+        self._search_actions: Dict[str, Callable[[], None]] = {}
 
     def launch(self) -> bool:
         """Launch the GUI and record the event.
@@ -95,3 +99,37 @@ class GuiCore:
         """Return the collected logs."""
 
         return list(self._logs)
+
+    # ---- search integration -------------------------------------------------
+
+    def enable_search(self, engine: SearchEngine) -> None:
+        """Attach a search engine and prepare the search overlay."""
+
+        self.search_engine = engine
+        self.add_overlay("search", "")
+
+    def search(self, query: str) -> List[str]:
+        """Execute a query and display results in the search overlay."""
+
+        if self.search_engine is None:
+            return []
+        results = self.search_engine.search(query)
+        overlay = self.overlays.get("search")
+        if overlay:
+            overlay.content = "\n".join(results)
+            overlay.show()
+        return results
+
+    def register_search_action(self, result_id: str, action: Callable[[], None]) -> None:
+        """Link a search result to an executable action."""
+
+        self._search_actions[result_id] = action
+
+    def activate_search_result(self, result_id: str) -> bool:
+        """Execute the action associated with a search result."""
+
+        action = self._search_actions.get(result_id)
+        if action is None:
+            return False
+        action()
+        return True
