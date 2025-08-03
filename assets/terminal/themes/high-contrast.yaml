@@ -1,0 +1,25 @@
+id: high-contrast
+name: High Contrast
+cursorStyle: block
+fontFamily: "Consolas, 'Fira Code', monospace"
+fontSize: 16
+opacity: 1.0
+palette:
+  background: "#000000"
+  foreground: "#ffffff"
+  black: "#000000"
+  red: "#ff0000"
+  green: "#00ff00"
+  yellow: "#ffff00"
+  blue: "#00a2ff"
+  magenta: "#ff00ff"
+  cyan: "#00ffff"
+  white: "#ffffff"
+  brightBlack: "#333333"
+  brightRed: "#ff4d4d"
+  brightGreen: "#4dff4d"
+  brightYellow: "#ffff4d"
+  brightBlue: "#4db8ff"
+  brightMagenta: "#ff4dff"
+  brightCyan: "#4dffff"
+  brightWhite: "#ffffff"
