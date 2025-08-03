@@ -49,3 +49,12 @@ To generate standalone executables on Windows:
 
 This repository does not contain any modified Windows binaries or installation media. It only offers guidance for building user-space software that runs on top of a genuine Windows 11 installation. Always follow Microsoft licensing terms and local regulations when customizing or distributing software.
 
+Start here (for code assistants)
+
+    Latest spec: specs/WindowsAI_MasterSpec_latest.md
+    All specs: specs/
+    Manifest: codex/manifest.json
+    Task list: codex/TASKS/
+    Actions API (OpenAPI): openapi/windows-ai.yaml
+    Docs landing page: docs/index.md
+
