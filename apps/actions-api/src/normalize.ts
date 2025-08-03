@@ -1,3 +1,5 @@
+import { ValidationError } from './errors';
+
 export interface NormalizedRequest {
   action: string;
   params?: Record<string, any>;
@@ -7,7 +9,7 @@ const allowed = new Set(['shell', 'read_file', 'write_file', 'get_system_info'])
 
 export function normalize(input: any): NormalizedRequest {
   if (!input || typeof input.action !== 'string' || !allowed.has(input.action)) {
-    throw new Error('Invalid action');
+    throw new ValidationError('Invalid action');
   }
   const params = input.params && typeof input.params === 'object' ? input.params : {};
   return { action: input.action, params };
