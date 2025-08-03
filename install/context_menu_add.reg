@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\*\shell\WindowsAI]
+@="Ask Windows AI"
+
+[HKEY_CLASSES_ROOT\*\shell\WindowsAI\command]
+@="\"%PROGRAMFILES%\\WindowsAI\\windows_ai.exe\" \"%1\""
