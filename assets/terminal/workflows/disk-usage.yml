@@ -1,0 +1,19 @@
+id: disk-usage
+title: Disk usage by top folders
+tags: ["system","files"]
+description: Shows top 10 folders by size under a path.
+inputs:
+  - name: path
+    type: path
+    default: "C:\\"
+run:
+  mode: action
+  action:
+    name: shell
+    params:
+      command: >
+        powershell -NoProfile -Command "Get-ChildItem -Path \"${{path}}\" |
+          Where-Object {{$_.PSIsContainer}} | ForEach-Object {{
+            $size = (Get-ChildItem $_.FullName -Recurse -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum;
+            [pscustomobject]@{{Name=$_.Name; SizeGB=[math]::Round(($size/1GB),2)}} }} |
+          Sort-Object SizeGB -Descending | Select-Object -First 10 | Format-Table"

@@ -1,0 +1,20 @@
+id: cleanup-downloads
+title: Clean up Downloads older than N days
+tags: ["files", "cleanup"]
+description: Moves files older than N days from Downloads to Archive.
+inputs:
+  - name: days
+    type: number
+    default: 30
+  - name: target
+    type: path
+    default: "C:\\Users\\%USERNAME%\\Downloads"
+run:
+  mode: action
+  action:
+    name: shell
+    params:
+      command: >
+        powershell -NoProfile -Command "Get-ChildItem -Path \"${{target}}\" -File |
+          Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-${{days}}) } |
+          Move-Item -Destination \"${{target}}\\Archive\" -Force"

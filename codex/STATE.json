@@ -1,0 +1,122 @@
+{
+  "version": "v0.5",
+  "last_session": null,
+  "tasks": {
+    "00": {
+      "title": "Bootstrap from /codex mirrors",
+      "status": "todo"
+    },
+    "01": {
+      "title": "Repo scaffold",
+      "status": "todo"
+    },
+    "02": {
+      "title": "Installer & Services",
+      "status": "todo"
+    },
+    "03": {
+      "title": "Actions API: /api/actions/execute",
+      "status": "todo"
+    },
+    "04": {
+      "title": "AgentHub core",
+      "status": "todo"
+    },
+    "05": {
+      "title": "LiteLLM Proxy config",
+      "status": "todo"
+    },
+    "06": {
+      "title": "Electron GUI shell",
+      "status": "todo"
+    },
+    "07": {
+      "title": "Model discovery & downloads",
+      "status": "todo"
+    },
+    "08": {
+      "title": "CI/CD pipeline",
+      "status": "todo"
+    },
+    "09": {
+      "title": "Terminal engine (xterm.js + node-pty)",
+      "status": "todo"
+    },
+    "10": {
+      "title": "Themes & Keysets (YAML)",
+      "status": "todo"
+    },
+    "11": {
+      "title": "Workflow Catalog & Runner",
+      "status": "todo"
+    },
+    "12": {
+      "title": "Terminal Settings + Import/Export",
+      "status": "todo"
+    },
+    "13": {
+      "title": "Test pack for Terminal & Workflows",
+      "status": "todo"
+    },
+    "14": {
+      "title": "Sample assets (themes/keysets/workflows)",
+      "status": "todo"
+    },
+    "15": {
+      "title": "AgentHub /workflows/run",
+      "status": "todo"
+    },
+    "16": {
+      "title": "Expanded tests (Unicode/env guard/E2E)",
+      "status": "todo"
+    },
+    "17": {
+      "title": "Conventional Commits + commitlint + Husky",
+      "status": "todo"
+    },
+    "18": {
+      "title": "semantic-release (automated versioning/changelog)",
+      "status": "todo"
+    },
+    "19": {
+      "title": "Docs: GitHub Pages /docs + index",
+      "status": "todo"
+    },
+    "20": {
+      "title": "CODEOWNERS + issue/PR templates",
+      "status": "todo"
+    },
+    "21": {
+      "title": "Dependency bots (Dependabot or Renovate)",
+      "status": "todo"
+    },
+    "22": {
+      "title": "Prettier + ESLint + Ruff baselines",
+      "status": "todo"
+    },
+    "23": {
+      "title": "pre-commit hooks (multi-language)",
+      "status": "todo"
+    },
+    "24": {
+      "title": "OpenAPI validation in CI",
+      "status": "todo"
+    },
+    "25": {
+      "title": "Orchestrator prompt + session logger",
+      "status": "todo"
+    },
+    "26": {
+      "title": "Security baseline (npm audit/pip-audit/Bandit)",
+      "status": "todo"
+    },
+    "27": {
+      "title": "Release pipeline: build MSI/EXE + artifacts",
+      "status": "todo"
+    },
+    "28": {
+      "title": "Telemetry & structured logs wiring",
+      "status": "todo"
+    }
+  }
+}
