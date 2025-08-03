@@ -20,6 +20,7 @@ from . import get_plugins
 from mesh import MeshNode
 from iot import ADAPTERS, discover_devices, pair_device
 from secrets import token_urlsafe
+from plugins.manager import PluginManager
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -102,6 +103,9 @@ class ChatGUI:
         ).pack(side="left", padx=5)
         ttk.Button(
             input_frame, text="Sync Settings", command=self._open_sync_settings
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Plugins", command=self._open_plugin_marketplace
         ).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
@@ -194,6 +198,41 @@ class ChatGUI:
             )
             tk.Label(win, font=("Courier", 1), text=ascii_qr).pack(padx=5, pady=5)
         ttk.Label(win, text=f"Token: {token}").pack(padx=5, pady=5)
+
+    # -------------------------------------------------------------- Marketplace
+    def _open_plugin_marketplace(self) -> None:
+        """Simple plugin marketplace for browsing and installing plugins."""
+
+        pm = PluginManager()
+        win = tk.Toplevel(self.root)
+        win.title("Plugin Marketplace")
+
+        tree = ttk.Treeview(win, columns=("description", "rating"), show="headings")
+        tree.heading("description", text="Description")
+        tree.heading("rating", text="Rating")
+        for plugin in pm.plugins:
+            tree.insert(
+                "",
+                "end",
+                iid=plugin.name,
+                values=(plugin.description, plugin.rating or "-"),
+            )
+        tree.pack(fill="both", expand=True, padx=5, pady=5)
+
+        def install() -> None:
+            for sel in tree.selection():
+                plugin = pm.get_plugin(sel)
+                if plugin:
+                    pm.install(plugin)
+
+        def update() -> None:
+            # For now update simply reinstalls the plugin
+            install()
+
+        btn_frame = ttk.Frame(win)
+        btn_frame.pack(pady=5)
+        ttk.Button(btn_frame, text="Install", command=install).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Update", command=update).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
     def send_message(self, event: object | None = None) -> None:
