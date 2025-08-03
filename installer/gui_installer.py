@@ -11,7 +11,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
-from . import api_keys, system_info
+from . import api_keys, model_selector, system_info
 
 __all__ = ["GUIInstaller", "main"]
 
@@ -19,13 +19,22 @@ __all__ = ["GUIInstaller", "main"]
 class GUIInstaller:
     """Minimal Tkinter-based installer front end."""
 
-    def __init__(self) -> None:
+    def __init__(self, root: tk.Tk | None = None) -> None:
         try:
-            self.root = tk.Tk()
+            self.root = root or tk.Tk()
         except tk.TclError as exc:  # pragma: no cover - environment specific
             raise RuntimeError("tkinter is not available or no display is found") from exc
 
         self.root.title("Windows AI Installer")
+
+        # configuration defaults
+        self.auto_select: bool = True
+        self.backend: str | None = None
+        self.model_specs = {
+            "requires_gpu": True,
+            "min_vram_gb": 4.0,
+            "min_ram_gb": 8.0,
+        }
 
         button_frame = tk.Frame(self.root)
         button_frame.pack(padx=10, pady=10)
@@ -42,6 +51,9 @@ class GUIInstaller:
         ttk.Button(
             button_frame, text="Install Dependencies", command=self.install_all
         ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Configure", command=self.open_config).pack(
+            side=tk.LEFT, padx=5
+        )
 
         self.info = tk.Text(self.root, width=60, height=10, state="disabled")
         self.info.pack(padx=10, pady=5)
@@ -69,6 +81,12 @@ class GUIInstaller:
             self.info.delete("1.0", tk.END)
             for k, v in info.items():
                 self.info.insert(tk.END, f"{k}: {v}\n")
+            if self.auto_select:
+                backend = model_selector.select_backend("default", self.model_specs)
+                self.backend = backend
+                self.info.insert(tk.END, f"Recommended backend: {backend}\n")
+            else:
+                self.info.insert(tk.END, f"Manual backend: {self.backend}\n")
             self.info.config(state="disabled")
 
         self.root.after(0, update)
@@ -134,6 +152,74 @@ class GUIInstaller:
             )
 
         self.root.after(0, update)
+
+    # --- Configuration ----------------------------------------------------
+    def open_config(self) -> None:
+        """Open the advanced configuration panel."""
+
+        top = tk.Toplevel(self.root)
+        top.title("Configuration")
+
+        auto_var = tk.BooleanVar(value=self.auto_select)
+        ttk.Checkbutton(
+            top, text="Automatic model selection", variable=auto_var
+        ).pack(anchor="w", padx=10, pady=5)
+
+        manual_var = tk.StringVar(value=self.backend or "remote")
+        manual_frame = ttk.LabelFrame(top, text="Manual backend")
+        manual_frame.pack(fill="x", padx=10, pady=5)
+        ttk.Radiobutton(
+            manual_frame, text="Local", variable=manual_var, value="local"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            manual_frame, text="Remote", variable=manual_var, value="remote"
+        ).pack(side=tk.LEFT, padx=5)
+
+        specs_frame = ttk.LabelFrame(top, text="Advanced requirements")
+        specs_frame.pack(fill="x", padx=10, pady=5)
+        req_gpu_var = tk.BooleanVar(value=self.model_specs.get("requires_gpu", True))
+        ttk.Checkbutton(specs_frame, text="Requires GPU", variable=req_gpu_var).grid(
+            row=0, column=0, columnspan=2, sticky="w"
+        )
+
+        ttk.Label(specs_frame, text="Min VRAM (GB)").grid(row=1, column=0, sticky="w")
+        vram_var = tk.StringVar(
+            value=(
+                "" if self.model_specs.get("min_vram_gb") is None else str(self.model_specs.get("min_vram_gb"))
+            )
+        )
+        ttk.Entry(specs_frame, textvariable=vram_var, width=7).grid(
+            row=1, column=1, sticky="w"
+        )
+
+        ttk.Label(specs_frame, text="Min RAM (GB)").grid(row=2, column=0, sticky="w")
+        ram_var = tk.StringVar(
+            value=(
+                "" if self.model_specs.get("min_ram_gb") is None else str(self.model_specs.get("min_ram_gb"))
+            )
+        )
+        ttk.Entry(specs_frame, textvariable=ram_var, width=7).grid(
+            row=2, column=1, sticky="w"
+        )
+
+        def apply_config() -> None:
+            self.auto_select = auto_var.get()
+            self.backend = manual_var.get()
+
+            def _to_float(val: str) -> float | None:
+                try:
+                    return float(val)
+                except Exception:
+                    return None
+
+            self.model_specs = {
+                "requires_gpu": req_gpu_var.get(),
+                "min_vram_gb": _to_float(vram_var.get()),
+                "min_ram_gb": _to_float(ram_var.get()),
+            }
+            top.destroy()
+
+        ttk.Button(top, text="Apply", command=apply_config).pack(pady=5)
 
 
 def main() -> None:
