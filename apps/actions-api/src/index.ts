@@ -1,8 +1,9 @@
 import express from 'express';
 import { executeAction } from './actions';
 import { normalize } from './normalize';
+import { ValidationError } from './errors';
 
-const app = express();
+export const app = express();
 app.use(express.json());
 
 app.post('/api/actions/execute', async (req, res) => {
@@ -11,12 +12,26 @@ app.post('/api/actions/execute', async (req, res) => {
     const result = await executeAction(norm);
     res.json({ ok: true, result });
   } catch (err: any) {
-    console.error(JSON.stringify({ level: 'error', message: err.message }));
-    res.status(400).json({ ok: false, error: { message: err.message } });
+    if (err instanceof ValidationError) {
+      res.status(400).json({ ok: false, error: { message: err.message } });
+    } else {
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack
+        })
+      );
+      res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
+    }
   }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(JSON.stringify({ level: 'info', message: 'actions api listening', port }));
-});
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(
+      JSON.stringify({ level: 'info', message: 'actions api listening', port })
+    );
+  });
+}
