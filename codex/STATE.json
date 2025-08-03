@@ -4,67 +4,77 @@
   "tasks": {
     "01": {
       "title": "Repo scaffold",
-      "status": "todo"
+      "status": "done"
     },
     "02": {
       "title": "Installer & services",
-      "status": "todo"
+      "status": "done"
     },
     "03": {
       "title": "Router/act API",
-      "status": "todo"
+      "status": "done"
     },
     "04": {
       "title": "AgentHub",
-      "status": "todo"
+      "status": "done"
     },
     "05": {
       "title": "LiteLLM proxy",
-      "status": "todo"
+      "status": "done"
     },
     "06": {
       "title": "GUI core",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Electron + React GUI not implemented"
     },
     "07": {
       "title": "Model discovery",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Model discovery and downloads not implemented"
     },
     "08": {
       "title": "Testing & CI",
-      "status": "todo"
+      "status": "done"
     },
     "09": {
       "title": "Terminal engine",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Terminal engine (xterm.js + node-pty) not implemented"
     },
     "10": {
       "title": "Themes & keysets",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Themes and keysets system not implemented"
     },
     "11": {
       "title": "Workflow catalog & runner",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Workflow catalog and runner not implemented"
     },
     "12": {
       "title": "Terminal settings + import/export",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Terminal settings import/export not implemented"
     },
     "13": {
       "title": "Tests for terminal & workflows",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Terminal/workflow tests not implemented"
     },
     "14": {
       "title": "Sample assets pack",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Sample assets (themes/keysets/workflows) missing"
     },
     "15": {
       "title": "AgentHub /workflows/run endpoint",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "AgentHub /workflows/run endpoint missing"
     },
     "16": {
       "title": "Expanded tests",
-      "status": "todo"
+      "status": "blocked",
+      "hint": "Expanded tests for terminal/workflows not implemented"
     }
   }
 }
