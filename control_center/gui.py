@@ -19,6 +19,12 @@ from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
 from mesh import MeshNode
 from iot import ADAPTERS, discover_devices, pair_device
+from secrets import token_urlsafe
+
+try:  # pragma: no cover - optional dependency
+    import qrcode  # type: ignore
+except Exception:  # pragma: no cover
+    qrcode = None  # type: ignore[assignment]
 
 __all__ = ["ChatGUI", "main"]
 
@@ -88,6 +94,9 @@ class ChatGUI:
         ttk.Button(input_frame, text="IoT", command=self._open_iot_window).pack(
             side="left", padx=5
         )
+        ttk.Button(
+            input_frame, text="Pair Mobile", command=self._open_mobile_pair_window
+        ).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
     def _open_mesh_config(self) -> None:
@@ -162,6 +171,23 @@ class ChatGUI:
         ttk.Button(win, text="Pair", command=do_pair).grid(
             row=2, column=1, padx=5, pady=5, sticky="ew"
         )
+
+    # ----------------------------------------------------------- Mobile Pairing
+    def _open_mobile_pair_window(self) -> None:
+        """Display a pairing token and optional QR code."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Mobile Pairing")
+        token = token_urlsafe(8)
+        if qrcode:
+            qr = qrcode.QRCode(border=1)
+            qr.add_data(token)
+            qr.make(fit=True)
+            ascii_qr = "\n".join(
+                "".join("██" if cell else "  " for cell in row) for row in qr.get_matrix()
+            )
+            tk.Label(win, font=("Courier", 1), text=ascii_qr).pack(padx=5, pady=5)
+        ttk.Label(win, text=f"Token: {token}").pack(padx=5, pady=5)
 
     # ----------------------------------------------------------------- Chat
     def send_message(self, event: object | None = None) -> None:

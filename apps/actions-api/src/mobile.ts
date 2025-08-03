@@ -1,0 +1,26 @@
+import crypto from 'node:crypto';
+import { executeAction } from './actions';
+import { normalize } from './normalize';
+import { ValidationError } from './errors';
+
+const tokens = new Set<string>();
+
+export function createPairingToken(deviceId: string): string {
+  if (!deviceId) {
+    throw new ValidationError('deviceId is required');
+  }
+  const token = crypto.randomBytes(16).toString('hex');
+  tokens.add(token);
+  return token;
+}
+
+export async function handleRemoteCommand(
+  token: string,
+  body: unknown
+): Promise<unknown> {
+  if (!tokens.has(token)) {
+    throw new ValidationError('Invalid token');
+  }
+  const norm = normalize(body as any);
+  return await executeAction(norm);
+}
