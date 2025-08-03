@@ -30,3 +30,12 @@ def test_overlays_and_hotkeys():
     gui.register_hotkey("Ctrl+H", cb)
     assert gui.handle_hotkey("Ctrl+H") is True
     assert triggered
+
+
+def test_workflow_panel():
+    model = DummyModel()
+    gui = GuiCore(model)
+    panel = gui.add_workflow_panel("n8n", "http://localhost:5678")
+    assert panel.active is False
+    assert gui.open_workflow("n8n") is True
+    assert panel.active is True
