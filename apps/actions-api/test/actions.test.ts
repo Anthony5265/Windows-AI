@@ -9,6 +9,18 @@ test('shell executes command', async () => {
   assert.strictEqual(result.stdout.trim(), 'hello');
 });
 
+test('shell runs platform-specific list command', async () => {
+  const cmd = process.platform === 'win32' ? 'dir' : 'ls';
+  const result = await executeAction({ action: 'shell', params: { command: cmd } });
+  assert.ok(result.stdout.toLowerCase().includes('package.json'));
+});
+
+test('shell prints file contents', async () => {
+  const cmd = process.platform === 'win32' ? 'type package.json' : 'cat package.json';
+  const result = await executeAction({ action: 'shell', params: { command: cmd } });
+  assert.ok(result.stdout.includes('"name"'));
+});
+
 test('shell rejects command with disallowed characters', async () => {
   await assert.rejects(
     executeAction({ action: 'shell', params: { command: 'echo hello; ls' } })
