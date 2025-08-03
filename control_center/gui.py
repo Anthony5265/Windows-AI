@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover - environment specific
 from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
 from mesh import MeshNode
+from iot import ADAPTERS, discover_devices, pair_device
 
 __all__ = ["ChatGUI", "main"]
 
@@ -84,6 +85,9 @@ class ChatGUI:
         ttk.Button(input_frame, text="Mesh", command=self._open_mesh_config).pack(
             side="left", padx=5
         )
+        ttk.Button(input_frame, text="IoT", command=self._open_iot_window).pack(
+            side="left", padx=5
+        )
 
     # ----------------------------------------------------------------- Chat
     def _open_mesh_config(self) -> None:
@@ -110,6 +114,53 @@ class ChatGUI:
 
         ttk.Button(win, text="Connect", command=connect).grid(
             row=2, column=0, columnspan=2, pady=5
+        )
+
+    # ----------------------------------------------------------------- Chat
+    def _open_iot_window(self) -> None:
+        """Open device discovery and pairing window."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Device Discovery")
+
+        proto_var = tk.StringVar(value=next(iter(ADAPTERS)))
+        ttk.Label(win, text="Protocol:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Combobox(
+            win,
+            textvariable=proto_var,
+            values=list(ADAPTERS.keys()),
+            state="readonly",
+        ).grid(row=0, column=1, padx=5, pady=5)
+
+        listbox = tk.Listbox(win, height=6)
+        listbox.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        win.rowconfigure(1, weight=1)
+        win.columnconfigure(1, weight=1)
+
+        def do_discover() -> None:
+            devices = discover_devices(proto_var.get())
+            listbox.delete(0, "end")
+            for dev in devices:
+                listbox.insert("end", f"{dev.id}: {dev.name}")
+
+        def do_pair() -> None:
+            if not listbox.curselection():
+                return
+            item = listbox.get(listbox.curselection()[0])
+            device_id = item.split(":", 1)[0]
+            protocol = proto_var.get()
+            for dev in discover_devices(protocol):
+                if dev.id == device_id:
+                    if pair_device(protocol, dev):
+                        self.chat.insert("end", f"[IoT] Paired {dev.name}\n")
+                        self.chat.see("end")
+                    break
+
+        ttk.Button(win, text="Discover", command=do_discover).grid(
+            row=2, column=0, padx=5, pady=5, sticky="ew"
+        )
+        ttk.Button(win, text="Pair", command=do_pair).grid(
+            row=2, column=1, padx=5, pady=5, sticky="ew"
         )
 
     # ----------------------------------------------------------------- Chat
