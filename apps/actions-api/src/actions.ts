@@ -1,9 +1,8 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import os from 'os';
 
-const execAsync = promisify(exec);
+const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd']);
 
 export interface ActionRequest {
   action: string;
@@ -15,8 +14,37 @@ export async function executeAction(req: ActionRequest): Promise<any> {
     case 'shell': {
       const cmd = req.params?.command;
       if (!cmd) throw new Error('Missing command');
-      const { stdout } = await execAsync(cmd, { timeout: req.params?.timeout_ms ?? 10000 });
-      return { stdout };
+      if (!/^[-\w\s/.]+$/.test(cmd)) {
+        throw new Error('Command contains disallowed characters');
+      }
+      const [program, ...args] = cmd.trim().split(/\s+/);
+      if (!ALLOWED_COMMANDS.has(program)) {
+        throw new Error(`Command not allowed: ${program}`);
+      }
+      return await new Promise((resolve, reject) => {
+        const child = spawn(program, args);
+        let stdout = '';
+        let stderr = '';
+        child.stdout.on('data', (d) => (stdout += d));
+        child.stderr.on('data', (d) => (stderr += d));
+        const timeoutMs = req.params?.timeout_ms ?? 10000;
+        const timer = setTimeout(() => {
+          child.kill();
+          reject(new Error('Command timed out'));
+        }, timeoutMs);
+        child.on('error', (err) => {
+          clearTimeout(timer);
+          reject(err);
+        });
+        child.on('close', (code) => {
+          clearTimeout(timer);
+          if (code !== 0) {
+            reject(new Error(stderr || `Exited with code ${code}`));
+          } else {
+            resolve({ stdout });
+          }
+        });
+      });
     }
     case 'read_file': {
       const path = req.params?.path;
