@@ -1,0 +1,11 @@
+{
+  "name": "windows-ai",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "echo \"(optional) build all workspaces\"",
+    "test": "echo \"(optional) run tests across workspaces\""
+  }
+}
