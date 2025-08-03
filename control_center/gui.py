@@ -21,6 +21,7 @@ from mesh import MeshNode
 from iot import ADAPTERS, discover_devices, pair_device
 from secrets import token_urlsafe
 from plugins.manager import PluginManager
+from security import AuditLogger, PermissionManager
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -55,6 +56,9 @@ class ChatGUI:
         # Sync settings
         self.sync_frequency = 60  # minutes
         self.conflict_resolution = "ask"
+        # Security
+        self.audit_logger = AuditLogger()
+        self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
 
         self._build_widgets()
 
@@ -106,6 +110,12 @@ class ChatGUI:
         ).pack(side="left", padx=5)
         ttk.Button(
             input_frame, text="Plugins", command=self._open_plugin_marketplace
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Permissions", command=self._open_plugin_permissions
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Logs", command=self._open_audit_log
         ).pack(side="left", padx=5)
 
     # ----------------------------------------------------------------- Chat
@@ -233,6 +243,61 @@ class ChatGUI:
         btn_frame.pack(pady=5)
         ttk.Button(btn_frame, text="Install", command=install).pack(side="left", padx=5)
         ttk.Button(btn_frame, text="Update", command=update).pack(side="left", padx=5)
+
+    # ----------------------------------------------------------- Permissions
+    def _open_plugin_permissions(self) -> None:
+        """Configure permissions for individual plugins."""
+
+        pm = PluginManager()
+        win = tk.Toplevel(self.root)
+        win.title("Plugin Permissions")
+
+        listbox = tk.Listbox(win, height=6)
+        listbox.pack(side="left", fill="y", padx=5, pady=5)
+        for plugin in pm.plugins:
+            listbox.insert("end", plugin.name)
+
+        check_frame = ttk.Frame(win)
+        check_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        network_var = tk.BooleanVar()
+        fs_var = tk.BooleanVar()
+        ttk.Checkbutton(check_frame, text="Network", variable=network_var).pack(anchor="w")
+        ttk.Checkbutton(check_frame, text="Filesystem", variable=fs_var).pack(anchor="w")
+
+        def update_checks(event: object | None = None) -> None:
+            if not listbox.curselection():
+                return
+            name = listbox.get(listbox.curselection()[0])
+            perms = self.permission_manager.permissions.get(name, set())
+            network_var.set("network" in perms)
+            fs_var.set("filesystem" in perms)
+
+        def save() -> None:
+            if not listbox.curselection():
+                return
+            name = listbox.get(listbox.curselection()[0])
+            if network_var.get():
+                self.permission_manager.grant(name, "network")
+            else:
+                self.permission_manager.revoke(name, "network")
+            if fs_var.get():
+                self.permission_manager.grant(name, "filesystem")
+            else:
+                self.permission_manager.revoke(name, "filesystem")
+
+        listbox.bind("<<ListboxSelect>>", update_checks)
+        ttk.Button(check_frame, text="Save", command=save).pack(pady=5)
+
+    # --------------------------------------------------------------- Log view
+    def _open_audit_log(self) -> None:
+        """Display the contents of the audit log."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Audit Log")
+        text = tk.Text(win, wrap="word", height=20, width=80)
+        text.pack(fill="both", expand=True, padx=5, pady=5)
+        text.insert("end", self.audit_logger.read())
+        text.config(state="disabled")
 
     # ----------------------------------------------------------------- Chat
     def send_message(self, event: object | None = None) -> None:
