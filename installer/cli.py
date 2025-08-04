@@ -7,9 +7,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 
-from . import system_info, api_keys, plugins, env
-from .logging_config import get_logger
+if __package__ is None or __package__ == "":  # pragma: no cover - script entry
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from installer import api_keys, env, plugins, system_info
+from installer.logging_config import get_logger
 
 
 logger = get_logger(__name__)

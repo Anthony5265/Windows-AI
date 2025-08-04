@@ -15,7 +15,7 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
-from . import env, plugins
+from installer import env, plugins
 
 
 def _parse_requirements(requirements: Iterable[str]) -> Dict[str, List[Requirement]]:

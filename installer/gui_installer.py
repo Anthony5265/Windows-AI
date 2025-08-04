@@ -7,11 +7,16 @@ it can run in constrained environments.
 
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
-from . import api_keys, model_selector, system_info
+if __package__ is None or __package__ == "":  # pragma: no cover - script entry
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from installer import api_keys, model_selector, system_info
 
 __all__ = ["GUIInstaller", "main"]
 
@@ -140,7 +145,7 @@ class GUIInstaller:
         threading.Thread(target=self._install_worker, daemon=True).start()
 
     def _install_worker(self) -> None:
-        from . import env_setup
+        from installer import env_setup
 
         env_setup.setup_all()
 
