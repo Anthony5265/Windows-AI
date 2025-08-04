@@ -24,6 +24,7 @@ from secrets import token_urlsafe
 from plugins.manager import PluginManager
 from security import AuditLogger, PermissionManager
 from optimization import tuning
+from eco.scheduler import EcoScheduler
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -77,6 +78,7 @@ class ChatGUI:
         self,
         root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
+        scheduler: Optional[EcoScheduler] = None,
     ) -> None:
         if tk is None or ttk is None:
             raise RuntimeError("tkinter is not available")
@@ -99,6 +101,7 @@ class ChatGUI:
         self.audit_logger = AuditLogger()
         self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
         self.dashboard_manager = DashboardManager()
+        self.scheduler = scheduler or EcoScheduler()
 
         self._build_widgets()
 
@@ -177,6 +180,12 @@ class ChatGUI:
         ttk.Button(
             input_frame, text="Automation", command=self._open_automation_builder
         ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Defer", command=self.schedule_message
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Scheduler", command=self._open_scheduler_settings
+        ).pack(side="left", padx=5)
 
     def apply_profile(self) -> None:
         """Apply the selected optimization profile."""
@@ -190,6 +199,47 @@ class ChatGUI:
         tuning.revert()
         self.chat.insert("end", "[Optimization] Reverted profile\n")
         self.chat.see("end")
+
+    # ------------------------------------------------------------- Scheduling
+    def schedule_message(self) -> None:
+        """Schedule the current entry text for the next off-peak window."""
+
+        prompt = self.entry.get().strip()
+        if not prompt:
+            return
+        backend = self.backends[self.backend_var.get()]
+
+        def run() -> None:
+            response = backend.generate(prompt)
+            self.chat.insert("end", f"[Off-peak] Bot: {response}\n")
+            self.chat.see("end")
+
+        self.scheduler.schedule(run)
+        self.chat.insert("end", f"[Scheduled] {prompt}\n")
+        self.chat.see("end")
+        self.entry.delete(0, "end")
+
+    def _open_scheduler_settings(self) -> None:
+        """Configure off-peak hours for deferred tasks."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Scheduler")
+        start_var = tk.IntVar(value=self.scheduler.start_hour)
+        end_var = tk.IntVar(value=self.scheduler.end_hour)
+
+        ttk.Label(win, text="Start hour:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(win, textvariable=start_var, width=5).grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(win, text="End hour:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(win, textvariable=end_var, width=5).grid(row=1, column=1, padx=5, pady=5)
+
+        def save() -> None:
+            self.scheduler.start_hour = start_var.get()
+            self.scheduler.end_hour = end_var.get()
+            win.destroy()
+
+        ttk.Button(win, text="Save", command=save).grid(
+            row=2, column=0, columnspan=2, pady=5
+        )
 
     # ---------------------------------------------------------- Dashboards API
     def create_dashboard(self, name: str, owner: str) -> None:
