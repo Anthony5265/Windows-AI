@@ -25,6 +25,7 @@ from plugins.manager import PluginManager
 from security import AuditLogger, PermissionManager
 from optimization import tuning
 from eco.scheduler import EcoScheduler
+from updater import Updater
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -102,6 +103,7 @@ class ChatGUI:
         self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
         self.dashboard_manager = DashboardManager()
         self.scheduler = scheduler or EcoScheduler()
+        self.updater = Updater()
 
         self._build_widgets()
 
@@ -186,6 +188,9 @@ class ChatGUI:
         ttk.Button(
             input_frame, text="Scheduler", command=self._open_scheduler_settings
         ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Updates", command=self._open_update_settings
+        ).pack(side="left", padx=5)
 
     def apply_profile(self) -> None:
         """Apply the selected optimization profile."""
@@ -240,6 +245,27 @@ class ChatGUI:
         ttk.Button(win, text="Save", command=save).grid(
             row=2, column=0, columnspan=2, pady=5
         )
+
+    def _open_update_settings(self) -> None:
+        """Simple update window showing release notes."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Updates")
+        ttk.Button(win, text="Check", command=self._check_updates).pack(
+            padx=5, pady=5
+        )
+        self._release_notes = tk.Text(win, height=10, width=60, state="disabled")
+        self._release_notes.pack(fill="both", expand=True, padx=5, pady=5)
+
+    def _check_updates(self) -> None:
+        version = self.updater.latest_version()
+        notes = self.updater.get_release_notes(version)
+        self._release_notes.config(state="normal")
+        self._release_notes.delete("1.0", "end")
+        self._release_notes.insert(
+            "1.0", f"Latest version: {version}\n\n{notes}".strip()
+        )
+        self._release_notes.config(state="disabled")
 
     # ---------------------------------------------------------- Dashboards API
     def create_dashboard(self, name: str, owner: str) -> None:
