@@ -6,6 +6,7 @@ to switch between local models and remote APIs.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Dict, Optional
 
 try:  # pragma: no cover - import may fail on headless systems
@@ -29,7 +30,44 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover
     qrcode = None  # type: ignore[assignment]
 
-__all__ = ["ChatGUI", "main"]
+__all__ = ["ChatGUI", "DashboardManager", "main"]
+
+
+# ---------------------------------------------------------------- Dashboards
+@dataclass
+class Dashboard:
+    name: str
+    owner: str
+    roles: Dict[str, str] = field(default_factory=dict)
+
+
+class DashboardManager:
+    """Manage shared dashboards with simple role-based access control."""
+
+    def __init__(self) -> None:
+        self.dashboards: Dict[str, Dashboard] = {}
+
+    def create(self, name: str, owner: str) -> None:
+        dash = Dashboard(name, owner, {owner: "owner"})
+        self.dashboards[name] = dash
+
+    def share(self, name: str, user: str, role: str) -> None:
+        if name not in self.dashboards:
+            raise KeyError(f"Unknown dashboard {name}")
+        self.dashboards[name].roles[user] = role
+
+    def can_access(self, name: str, user: str, role: str) -> bool:
+        dash = self.dashboards.get(name)
+        if not dash:
+            return False
+        current = dash.roles.get(user)
+        if current == "owner":
+            return True
+        if current == "edit":
+            return role in {"edit", "view"}
+        if current == "view":
+            return role == "view"
+        return False
 
 
 class ChatGUI:
@@ -60,6 +98,7 @@ class ChatGUI:
         # Security
         self.audit_logger = AuditLogger()
         self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
+        self.dashboard_manager = DashboardManager()
 
         self._build_widgets()
 
@@ -151,6 +190,16 @@ class ChatGUI:
         tuning.revert()
         self.chat.insert("end", "[Optimization] Reverted profile\n")
         self.chat.see("end")
+
+    # ---------------------------------------------------------- Dashboards API
+    def create_dashboard(self, name: str, owner: str) -> None:
+        self.dashboard_manager.create(name, owner)
+
+    def share_dashboard(self, name: str, user: str, role: str) -> None:
+        self.dashboard_manager.share(name, user, role)
+
+    def can_access_dashboard(self, name: str, user: str, role: str) -> bool:
+        return self.dashboard_manager.can_access(name, user, role)
 
     # ----------------------------------------------------------------- Chat
     def _open_mesh_config(self) -> None:
