@@ -26,6 +26,7 @@ from security import AuditLogger, PermissionManager
 from optimization import tuning
 from eco.scheduler import EcoScheduler
 from updater import Updater
+from installer import snapshot
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -191,6 +192,24 @@ class ChatGUI:
         ttk.Button(
             input_frame, text="Updates", command=self._open_update_settings
         ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Snapshot", command=self._create_snapshot
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Restore", command=self._restore_snapshot
+        ).pack(side="left", padx=5)
+
+    def _create_snapshot(self) -> None:
+        """Create a system snapshot for later restoration."""
+        snapshot.create_snapshot()
+        self.chat.insert("end", "[Snapshot] Created\n")
+        self.chat.see("end")
+
+    def _restore_snapshot(self) -> None:
+        """Restore the previously recorded snapshot."""
+        snapshot.restore()
+        self.chat.insert("end", "[Snapshot] Restored\n")
+        self.chat.see("end")
 
     def apply_profile(self) -> None:
         """Apply the selected optimization profile."""
