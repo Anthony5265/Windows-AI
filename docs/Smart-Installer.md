@@ -24,7 +24,8 @@ This document sketches a design for an automated installer that sets up an AI ec
 3. **Download and Installation**
    - For remote services, install the necessary SDKs or Python packages.
    - For local models, download compatible model weights in the background. Use progress indicators and verify checksums.
-   - Install open-source tools like Transformers, LangChain, and other community packages. Include optional paid services if the user wants them.
+   - Install open-source model libraries and workflow frameworks, and other
+     community packages. Include optional paid services if the user wants them.
 
 4. **Environment Setup**
    - Create separate virtual environments (for example, with `venv` or Conda) to avoid library conflicts.

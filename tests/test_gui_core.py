@@ -7,6 +7,7 @@ class DummyModel:
 
 
 def test_gui_launch_and_chat():
+    """GUI should launch and echo chat messages."""
     model = DummyModel()
     gui = GuiCore(model)
     assert gui.launch() is True
@@ -16,6 +17,7 @@ def test_gui_launch_and_chat():
     assert "chat: hello" in logs
 
 def test_overlays_and_hotkeys():
+    """Overlays toggle visibility and hotkeys trigger callbacks."""
     model = DummyModel()
     gui = GuiCore(model)
     overlay = gui.add_overlay("tip", "Hello")
@@ -33,15 +35,17 @@ def test_overlays_and_hotkeys():
 
 
 def test_workflow_panel():
+    """Workflow panels open external tools in the GUI."""
     model = DummyModel()
     gui = GuiCore(model)
-    panel = gui.add_workflow_panel("n8n", "http://localhost:5678")
+    panel = gui.add_workflow_panel("FlowTool", "http://localhost:5678")
     assert panel.active is False
-    assert gui.open_workflow("n8n") is True
+    assert gui.open_workflow("FlowTool") is True
     assert panel.active is True
 
 
 def test_tooltips_and_walkthroughs():
+    """Tooltips and walkthroughs show stepwise guidance."""
     model = DummyModel()
     gui = GuiCore(model)
 

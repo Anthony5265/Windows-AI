@@ -33,6 +33,6 @@ POST /agents/demo/run {"task": "hello"}
 
 ## Workflow composition
 
-`gui.core` now supports drag‑and‑drop workflow builders through
-`WorkflowPanel`. Panels can embed external tools like n8n or LangFlow and be
-opened within the GUI.
+`gui.core` now supports drag-and-drop workflow builders through
+`WorkflowPanel`. Panels can embed external tools like FlowTool or ChainFlow and
+be opened within the GUI.

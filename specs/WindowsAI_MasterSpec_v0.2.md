@@ -1,6 +1,10 @@
 # Windows AI — Master Spec v0.2 (Windows 11 Only)
 
-**Goal:** A one-click Windows 11 suite called **Windows AI** with a desktop **GUI Command Center**, a **unified actions API** (`POST /plugin/router/act`), **local LLM runtimes** (Ollama/LM Studio/text-generation-webui), a **model router** (LiteLLM Proxy), and plug-in **multi‑agent frameworks** (LangChain, AutoGen, MetaGPT, CrewAI). End‑users do **not** need to code.
+**Goal:** A one-click Windows 11 suite called **Windows AI** with a desktop
+**GUI Command Center**, a **unified actions API** (`POST /plugin/router/act`),
+**local LLM runtimes** (Ollama/LM Studio/text-generation-webui), a **model router**
+(LiteLLM Proxy), and plug-in **multi-agent frameworks** (CustomChain, ModularGen,
+MetaAgents, CrewCore). End-users do **not** need to code.
 
 ---
 
@@ -55,7 +59,8 @@
 
 - **Chat**: streaming; model selector (logical names); tool‑calls that hit Router/AgentHub.
 - **Pipelines**: nodes — LLM, Tool, Script, Branch, Merge, Vote, Webhook; save/load JSON; run as job.
-- **Agents**: templates (AutoGen/CrewAI/MetaGPT/LangChain); policies (Local‑only / Fastest / Highest‑quality / Budget‑capped).
+- **Agents**: templates (ModularGen/CrewCore/MetaAgents/CustomChain); policies
+  (Local-only / Fastest / Highest-quality / Budget-capped).
 - **Models**: discover local backends; download CPU‑friendly models; map logical names in LiteLLM.
 - **Settings**: ports/paths/TLS toggle/API keys; start/stop/restart services.
 - **Logs/Jobs**: live logs, artifacts, replay.
