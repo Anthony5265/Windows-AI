@@ -43,6 +43,41 @@ class WorkflowPanel:
         self.active = False
 
 
+class Tooltip:
+    """Simple tooltip representation bound to a UI element."""
+
+    def __init__(self, target: str, text: str):
+        self.target = target
+        self.text = text
+        self.visible = False
+
+    def show(self) -> None:
+        self.visible = True
+
+    def hide(self) -> None:
+        self.visible = False
+
+
+class Walkthrough:
+    """Sequential walkthrough composed of textual steps."""
+
+    def __init__(self, steps: List[str]):
+        self.steps = steps
+        self._index = -1
+
+    def start(self) -> Optional[str]:
+        """Reset and return the first step."""
+        self._index = -1
+        return self.next_step()
+
+    def next_step(self) -> Optional[str]:
+        """Return the next step or None when finished."""
+        self._index += 1
+        if self._index < len(self.steps):
+            return self.steps[self._index]
+        return None
+
+
 class HotkeyManager:
     """Register and trigger hotkey callbacks."""
 
@@ -68,6 +103,8 @@ class GuiCore:
         self.launched = False
         self._logs: List[str] = []
         self.overlays: Dict[str, OverlayWidget] = {}
+        self.tooltips: Dict[str, Tooltip] = {}
+        self.walkthroughs: Dict[str, Walkthrough] = {}
         self.hotkeys = HotkeyManager()
         self.search_engine: Optional[SearchEngine] = None
         self._search_actions: Dict[str, Callable[[], None]] = {}
@@ -103,6 +140,46 @@ class GuiCore:
     def hide_overlay(self, name: str) -> None:
         self.overlays[name].hide()
 
+    # ---- tooltips ---------------------------------------------------------
+
+    def add_tooltip(self, target: str, text: str) -> Tooltip:
+        """Create and register a tooltip for a UI element."""
+
+        tip = Tooltip(target, text)
+        self.tooltips[target] = tip
+        return tip
+
+    def show_tooltip(self, target: str) -> None:
+        self.tooltips[target].show()
+
+    def hide_tooltip(self, target: str) -> None:
+        self.tooltips[target].hide()
+
+    # ---- walkthroughs -----------------------------------------------------
+
+    def add_walkthrough(self, name: str, steps: List[str]) -> Walkthrough:
+        """Register a multi-step walkthrough sequence."""
+
+        walk = Walkthrough(steps)
+        self.walkthroughs[name] = walk
+        return walk
+
+    def start_walkthrough(self, name: str) -> Optional[str]:
+        """Begin a walkthrough and return the first step."""
+
+        walk = self.walkthroughs.get(name)
+        if walk is None:
+            return None
+        return walk.start()
+
+    def advance_walkthrough(self, name: str) -> Optional[str]:
+        """Move to the next step in a walkthrough."""
+
+        walk = self.walkthroughs.get(name)
+        if walk is None:
+            return None
+        return walk.next_step()
+
     def register_hotkey(self, combo: str, handler: Callable[[], None]) -> None:
         self.hotkeys.register(combo, handler)
 
@@ -128,42 +205,3 @@ class GuiCore:
         """Execute a query and display results in the search overlay."""
 
         if self.search_engine is None:
-            return []
-        results = self.search_engine.search(query)
-        overlay = self.overlays.get("search")
-        if overlay:
-            overlay.content = "\n".join(results)
-            overlay.show()
-        return results
-
-    def register_search_action(self, result_id: str, action: Callable[[], None]) -> None:
-        """Link a search result to an executable action."""
-
-        self._search_actions[result_id] = action
-
-    def activate_search_result(self, result_id: str) -> bool:
-        """Execute the action associated with a search result."""
-
-        action = self._search_actions.get(result_id)
-        if action is None:
-            return False
-        action()
-        return True
-
-    # ---- workflow panels ---------------------------------------------------
-
-    def add_workflow_panel(self, tool: str, url: str) -> WorkflowPanel:
-        """Register an external workflow builder like n8n or LangFlow."""
-
-        panel = WorkflowPanel(tool, url)
-        self.workflow_panels[tool] = panel
-        return panel
-
-    def open_workflow(self, tool: str) -> bool:
-        """Open a previously registered workflow panel."""
-
-        panel = self.workflow_panels.get(tool)
-        if panel is None:
-            return False
-        panel.open()
-        return True
