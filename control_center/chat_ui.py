@@ -7,7 +7,7 @@ logic to be unit tested.
 """
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 try:  # pragma: no cover - executed only when tkinter is available
     import tkinter as tk
@@ -44,6 +44,8 @@ class ChatUI:
         self.node_var: Optional["tk.StringVar"] = None
         self.entry: Optional[ttk.Entry] = None
         self.chat: Optional[tk.Text] = None
+        self._voice_handler: Optional[Callable[[str], None]] = None
+        self._alt_input_handler: Optional[Callable[[str], None]] = None
 
         if build and tk is not None:
             try:
@@ -114,6 +116,35 @@ class ChatUI:
     def run(self) -> None:  # pragma: no cover - GUI loop
         if self.root is not None:
             self.root.mainloop()
+
+    # ------------------------------------------------------- Accessibility hooks
+    def register_voice_handler(self, handler: Callable[[str], None]) -> None:
+        """Register a callback invoked with recognised voice commands."""
+
+        self._voice_handler = handler
+
+    def handle_voice_command(self, command: str) -> None:
+        """Process a voice command by delegating to the registered handler."""
+
+        if self._voice_handler is not None:
+            self._voice_handler(command)
+        elif self.entry is not None:
+            # Fallback: treat voice command as text input
+            self.entry.insert(0, command)
+            self.send_message()
+
+    def register_alt_input(self, handler: Callable[[str], None]) -> None:
+        """Register an alternative input handler for accessibility devices."""
+
+        self._alt_input_handler = handler
+
+    def receive_alt_input(self, data: str) -> None:
+        """Send text from an alternative input source to the chat UI."""
+
+        if self._alt_input_handler is not None:
+            self._alt_input_handler(data)
+        elif self.entry is not None:
+            self.entry.insert(0, data)
 
 
 def main() -> None:  # pragma: no cover - CLI helper
