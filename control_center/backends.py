@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from dataclasses import dataclass, field
+from secrets import token_urlsafe
+from typing import Dict, List, Protocol, Tuple
 
 __all__ = [
     "Backend",
     "LocalBackend",
     "RemoteBackend",
+    "Session",
+    "SessionManager",
     "load_backend",
     "set_context_menu",
     "context_menu_enabled",
@@ -36,6 +40,48 @@ class RemoteBackend:
 
 
 _context_menu_enabled = False
+
+
+# ---------------------------------------------------------------- Session API
+@dataclass
+class Session:
+    """Represent an interactive session for a specific user and backend."""
+
+    user: str
+    backend: Backend
+    history: List[Tuple[str, str]] = field(default_factory=list)
+
+
+class SessionManager:
+    """Manage multiple user sessions for different backends."""
+
+    def __init__(self) -> None:
+        self._sessions: Dict[str, Session] = {}
+
+    # --------------------------------------------------------------- lifecycle
+    def create(self, user: str, backend: Backend) -> str:
+        """Create a new session and return its id."""
+
+        sid = token_urlsafe(16)
+        self._sessions[sid] = Session(user, backend)
+        return sid
+
+    def end(self, session_id: str) -> None:
+        """Terminate a session if it exists."""
+
+        self._sessions.pop(session_id, None)
+
+    # ----------------------------------------------------------------- helpers
+    def get(self, session_id: str) -> Session:
+        return self._sessions[session_id]
+
+    def send(self, session_id: str, prompt: str) -> str:
+        """Send *prompt* through the session's backend and record the result."""
+
+        session = self.get(session_id)
+        response = session.backend.generate(prompt)
+        session.history.append((prompt, response))
+        return response
 
 
 def set_context_menu(enabled: bool) -> None:
