@@ -1,4 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/docs/AI-Control-Center.md b/docs/AI-Control-Center.md
 index cf33320d8660b7e0d414962441f468700e59e5d4..ba33814239a6335f4501735ccbcce2a42411bd8c 100644
 --- a/docs/AI-Control-Center.md
@@ -95,6 +94,3 @@ index cf33320d8660b7e0d414962441f468700e59e5d4..ba33814239a6335f4501735ccbcce2a4
  ## Disclaimer
  
  This repository does not contain Windows binaries or a customized OS. The guide describes how to build user-space applications that interact with AI frameworks. Always follow Microsoft licensing terms and any service policies from AI API providers.
- 
-EOF
-)
