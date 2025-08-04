@@ -9,19 +9,22 @@ from plugins.manager import SANDBOX_DIR, Plugin, PluginManager, load_catalog
 
 
 def test_catalog_loads_default_manifest():
+    """Catalog should load and include the core plugins."""
     plugins = load_catalog()
     names = [p.name for p in plugins]
-    assert "LangChain" in names
+    assert "CustomChain" in names
     # ensure at least one paid plugin exists
     assert any(p.paid for p in plugins)
 
 
 def test_plugin_manager_initializes():
+    """Plugin manager should initialize with a non-empty catalog."""
     manager = PluginManager()
     assert manager.plugins  # catalog should not be empty
 
 
 def test_install_runs_absolute_command(monkeypatch):
+    """Installation should execute absolute commands safely."""
     echo_path = shutil.which("echo")
     assert echo_path
     plugin = Plugin(name="Echo", description="", command=f"{echo_path} hello")
@@ -47,6 +50,7 @@ def test_install_runs_absolute_command(monkeypatch):
 
 
 def test_install_rejects_unsafe_command():
+    """Shell usage should be rejected when command is unsafe."""
     plugin = Plugin(name="Unsafe", description="", command="echo hello")
     manager = PluginManager()
     with pytest.raises(ValueError):
@@ -54,6 +58,7 @@ def test_install_rejects_unsafe_command():
 
 
 def test_install_rejects_bad_signature():
+    """Installation should fail when signature verification fails."""
     echo_path = shutil.which("echo")
     assert echo_path
     plugin = Plugin(
@@ -65,6 +70,7 @@ def test_install_rejects_bad_signature():
 
 
 def test_dependencies_install_first(monkeypatch):
+    """Dependencies must be installed before the main plugin."""
     echo_path = shutil.which("echo")
     assert echo_path
     dep = Plugin(

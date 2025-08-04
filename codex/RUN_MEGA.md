@@ -14,12 +14,12 @@ Read `codex/manifest.json` → open the file in `"entry"`. Load `codex/STATE.jso
 1) GIT REMOTE & BRANCH SETUP
 ──────────────────────────────────────────────────────────────────────────────
 # Fill in the placeholder before running:
-#   TOKEN=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
+#   TOKEN=<YOUR_GITHUB_PAT>
 # If you cannot push, skip to §11 (NO-REMOTE fallback).
 
 SH:
   set -e
-  TOKEN="${TOKEN:-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}"               # <— user replaces
+  TOKEN="${TOKEN:-<YOUR_GITHUB_PAT>}"               # <— user replaces
   git init 2>/dev/null || true
   git config user.name  "Anthony"
   git config user.email "anthonybone5265@gmail.com"
@@ -277,7 +277,7 @@ EOF
 # 29 Visual pipeline editor
 # 30 Workflow suggestions
 # 31 Artifact viewer
-# 32 Agent templates (AutoGen/CrewAI/LangChain/MetaGPT)
+# 32 Agent templates (ModularGen/CrewCore/CustomChain/MetaAgents)
 # 33 Agent policy presets
 # 34 Error UX & recovery flows
 # 35 Config snapshots & restore points
