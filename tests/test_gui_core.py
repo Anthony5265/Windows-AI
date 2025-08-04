@@ -39,3 +39,20 @@ def test_workflow_panel():
     assert panel.active is False
     assert gui.open_workflow("n8n") is True
     assert panel.active is True
+
+
+def test_tooltips_and_walkthroughs():
+    model = DummyModel()
+    gui = GuiCore(model)
+
+    tip = gui.add_tooltip("start", "Click to begin")
+    assert tip.visible is False
+    gui.show_tooltip("start")
+    assert tip.visible is True
+    gui.hide_tooltip("start")
+    assert tip.visible is False
+
+    walk = gui.add_walkthrough("intro", ["Step 1", "Step 2"])
+    assert gui.start_walkthrough("intro") == "Step 1"
+    assert gui.advance_walkthrough("intro") == "Step 2"
+    assert gui.advance_walkthrough("intro") is None
