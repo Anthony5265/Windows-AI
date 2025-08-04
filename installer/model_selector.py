@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from . import system_info
+from installer import system_info
 
 
 def select_backend(task: str, specs: Dict[str, Any]) -> str:
