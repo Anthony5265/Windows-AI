@@ -205,3 +205,41 @@ class GuiCore:
         """Execute a query and display results in the search overlay."""
 
         if self.search_engine is None:
+            return []
+        results = self.search_engine.search(query)
+        overlay = self.overlays["search"]
+        overlay.content = "\n".join(results)
+        overlay.show()
+        return results
+
+    def register_search_action(self, name: str, action: Callable[[], None]) -> None:
+        """Associate an action callback with a search result."""
+
+        self._search_actions[name] = action
+
+    def activate_search_result(self, name: str) -> bool:
+        """Trigger the callback for *name* if it exists."""
+
+        action = self._search_actions.get(name)
+        if action is None:
+            return False
+        action()
+        return True
+
+    # ---- workflow panels -------------------------------------------------
+
+    def add_workflow_panel(self, tool: str, url: str) -> WorkflowPanel:
+        """Create and register an external workflow panel."""
+
+        panel = WorkflowPanel(tool, url)
+        self.workflow_panels[tool] = panel
+        return panel
+
+    def open_workflow(self, tool: str) -> bool:
+        """Activate a previously registered workflow panel."""
+
+        panel = self.workflow_panels.get(tool)
+        if panel is None:
+            return False
+        panel.open()
+        return True
