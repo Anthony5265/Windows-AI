@@ -18,6 +18,12 @@ from typing import Any, Dict
 
 from installer.system_info import detect_system as _detect_system
 
+try:  # optional dependency used for XR runtime detection
+    from xr import load_runtime
+except Exception:  # pragma: no cover - xr package optional
+    def load_runtime():  # type: ignore[misc]
+        return None
+
 
 def _detect_accessibility() -> Dict[str, bool]:
     """Return a dictionary describing basic OS accessibility settings.
@@ -123,6 +129,29 @@ def _detect_accessibility() -> Dict[str, bool]:
     return settings
 
 
+def _detect_xr_hardware() -> Dict[str, Any]:
+    """Return information about XR hardware/driver availability.
+
+    The function performs a best-effort import of either an OpenXR or WebXR
+    runtime via :func:`xr.load_runtime`.  When a runtime is available the
+    returned dictionary contains ``xr_capable`` set to ``True`` and
+    ``xr_runtime`` with the module name.  Missing runtimes are represented as
+    ``xr_capable`` being ``False`` and ``xr_runtime`` as ``None``.  All errors
+    are swallowed so the detection works in minimal environments without XR
+    support.
+    """
+
+    info: Dict[str, Any] = {"xr_capable": False, "xr_runtime": None}
+    try:
+        runtime = load_runtime()
+        if runtime:
+            info["xr_capable"] = True
+            info["xr_runtime"] = getattr(runtime, "__name__", str(runtime))
+    except Exception:
+        pass
+    return info
+
+
 def detect_system() -> Dict[str, Any]:
     """Return system information including basic accessibility settings."""
 
@@ -131,6 +160,7 @@ def detect_system() -> Dict[str, Any]:
         info["gpu_name"] = "unknown"
 
     info.update(_detect_accessibility())
+    info.update(_detect_xr_hardware())
     return info
 
 
