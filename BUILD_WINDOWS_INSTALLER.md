@@ -36,7 +36,8 @@ Optional but recommended:
 
 1. Transfer the `dist` folder to a Windows machine if built elsewhere.
 2. Run `WindowsAI_Installer.exe`. The Tkinter GUI will appear and can perform
-   system detection, API-key management, and dependency installation.
+    system detection, environment-based key management, and dependency
+    installation.
    After closing the GUI, the installer automatically runs
    `install\install.ps1` with administrator rights to register services,
    firewall rules, and other system integrations. Windows will prompt for

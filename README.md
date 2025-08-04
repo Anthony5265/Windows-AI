@@ -2,7 +2,9 @@
 
 > **Transform any Windows PC into a cosmic, AI-first, automated OS ecosystem—instantly.**
 
-Windows AI is a hyper-integrated overlay that turns ordinary devices into a self-orchestrating intelligence mesh. It amplifies every pixel and process with contextual automation, real-time reasoning, and cross-device awareness.
+Windows AI is a hyper-integrated overlay that turns ordinary devices into a
+self-orchestrating intelligence mesh. It amplifies every pixel and process with
+contextual automation, real-time reasoning, and cross-device awareness.
 
 ---
 
@@ -10,7 +12,8 @@ Windows AI is a hyper-integrated overlay that turns ordinary devices into a self
 
 ### **🌐 Universal AI OS Overlay**
 - **AI-augmented File Explorer** – Summarize, search, organize, batch-rename, or move files with natural language.
-- **AI Terminal (Warp/AI Shell)** – Generate code, run commands, automate scripts with GPT-powered suggestions.
+- **AI Terminal (Custom Shell)** – Generate code, run commands, automate scripts
+  with GPT-powered suggestions.
 - **AI Task Manager** – Analyze and optimize resource usage; terminate, restart, or schedule apps with AI insight.
 - **AI Settings/Control Panel** – Let AI tune power, performance, accessibility, privacy, and UI themes for you.
 - **AI Start Menu & Launcher** – Voice-search, summarize, or batch-launch apps and workflows.
@@ -24,7 +27,8 @@ Windows AI is a hyper-integrated overlay that turns ordinary devices into a self
 
 ### **📱 Mobile, IoT, and Cloud**
 - **Pair Mobile (iOS/Android)** – Use as remote, receive notifications, trigger automations, or run workflows.
-- **Smart Home Integrations** – Control and automate lights, TVs, speakers, cameras, and sensors from the Control Center.
+- **Smart Home Integrations** – Control and automate lights, TVs, speakers,
+  cameras, and sensors from the Control Center.
 - **Cloud Sync/Backup** – Secure, encrypted backup of AI models, automations, settings, and snapshots.
 
 ### **⚡ Power Tools & Plugins**
@@ -51,14 +55,15 @@ graph TD
     B --> E[IoT/Smart Home Hub]
     B --> F[Mobile Companion API]
     C --> G[App Store / Extension APIs]
-    C --> H[Automation Engine (n8n, LangChain)]
+    C --> H[Automation Engine (FlowTool, CustomChain)]
     C --> I[Cloud Sync]
     B --> J[Rollback/Snapshot Manager]
 ```
 
 * **Control Center**: The main GUI hub (Electron/.NET/WPF/Qt) – all features, devices, and workflows.
-* **AI Core**: Hosts local LLMs (Llama.cpp, GPT4All, LM Studio), plugins, agents, and cloud/hybrid backends.
-* **Automation Engine**: Integrates n8n, LangChain, AutoGPT, Open Interpreter, and other frameworks.
+* **AI Core**: Hosts local LLMs, plugins, agents, and cloud/hybrid backends.
+* **Automation Engine**: Integrates FlowTool, CustomChain, AutoAgent, Open Runner,
+  and other frameworks.
 * **Mesh Sync**: Manages device-to-device networking and distributed workflows.
 * **IoT/Smart Home Hub**: Connects to MQTT, Zigbee, Matter, Home Assistant, SmartThings, etc.
 * **Mobile API**: REST/WebSocket API for mobile app pairing, notifications, and control.
@@ -102,7 +107,7 @@ cmake .
 cmake --build .
 
 # Optional: Start Automation Engine
-docker compose up n8n langchain
+docker compose up flowtool customchain
 ```
 
 ### **Run the Full App**
@@ -168,8 +173,9 @@ npm run test
 
 ## 📦 Supported AI Models & Frameworks
 
-* **LLMs:** Llama.cpp, GPT4All, LM Studio, Ollama, Falcon, Mistral, OpenAI, Azure, Gemini, Perplexity, etc.
-* **Automation:** n8n, LangChain, AutoGPT, Open Interpreter, Node-RED, LangFlow
+* **LLMs:** multiple local and cloud models via pluggable providers.
+* **Automation:** FlowTool, CustomChain, AutoAgent, Open Runner, NodeFlow,
+  ChainFlow.
 * **GUI:** Electron, React, WPF, WinUI, PyQt, Qt, Tauri
 * **IoT:** MQTT, Matter, Zigbee, Home Assistant, SmartThings
 * **Mobile:** REST, WebSockets, iOS/Android companion apps (Flutter/React Native)
@@ -179,11 +185,13 @@ npm run test
 
 ## 🔮 Upcoming Features
 
-* **Adaptive Edge Orchestration** – Seamlessly shift workloads between local, mesh, and cloud for optimal speed and privacy.
+* **Adaptive Edge Orchestration** – Seamlessly shift workloads between local,
+  mesh, and cloud for optimal speed and privacy.
 * **Holographic & XR Interfaces** – Native support for AR headsets and volumetric displays with gesture-aware controls.
 * **Self-Healing Kernel** – AI-driven diagnostics and autonomous patching keep systems resilient and secure.
 * **AI Storyteller Mode** – Turn your actions and data into shareable tutorials, reports, or cinematic timelines.
-* **Marketplace for Autonomous Agents** – Publish, monetize, and collaborate with agents that live across the Windows AI ecosystem.
+* **Marketplace for Autonomous Agents** – Publish, monetize, and collaborate
+  with agents that live across the Windows AI ecosystem.
 
 ---
 
@@ -204,8 +212,8 @@ npm run test
 * **“Roll back last changes”**
   One-click restore to previous system snapshot.
 
-* **“Install Open Interpreter agent”**
-  Find, install, and launch the latest Open Interpreter from the App Store.
+* **“Install Coding Assistant agent”**
+  Find, install, and launch the latest coding assistant from the App Store.
 
 * **“Share AI dashboard with family”**
   Invite users; share specific controls, automations, or devices.

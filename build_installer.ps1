@@ -11,12 +11,12 @@ function Ensure-Package {
     param(
         [string]$package
     )
-    Write-Host "Installing $package..."
+    Write-Output "Installing $package..."
     & $PythonExe -m pip install --upgrade $package
 }
 
 if (-not (Get-Command $PythonExe -ErrorAction SilentlyContinue)) {
-    Write-Host "Python is required to build the installer. Install Python 3.11+ and rerun." -ForegroundColor Red
+    Write-Output "Python is required to build the installer. Install Python 3.11+ and rerun." -ForegroundColor Red
     exit 1
 }
 
@@ -28,7 +28,7 @@ if (Test-Path 'requirements.txt') {
 }
 
 # run PyInstaller
-Write-Host "Running PyInstaller..."
+Write-Output "Running PyInstaller..."
 & $PythonExe -m PyInstaller --noconfirm --onefile --windowed installer/gui_installer.py --name 'WindowsAI_Installer'
 
 # copy assets
@@ -40,5 +40,6 @@ foreach ($res in $resources) {
     }
 }
 
-Write-Host "Installer built at dist\WindowsAI_Installer.exe"
-Write-Host "Running the installer will automatically execute install\install.ps1 with admin rights to register services."
+Write-Output "Installer built at dist\WindowsAI_Installer.exe"
+Write-Output "Running the installer will automatically execute install\install.ps1"
+Write-Output "with admin rights to register services."
