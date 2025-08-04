@@ -8,8 +8,10 @@ it can run in constrained environments.
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import threading
+from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 
@@ -65,6 +67,7 @@ class GUIInstaller:
 
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
         self.progress.pack(padx=10, pady=10)
+        self.root.protocol("WM_DELETE_WINDOW", self._finalize)
 
     # --- System detection -------------------------------------------------
     def detect_system(self) -> None:
@@ -225,6 +228,40 @@ class GUIInstaller:
             top.destroy()
 
         ttk.Button(top, text="Apply", command=apply_config).pack(pady=5)
+
+    # --- Finalization -----------------------------------------------------
+    def _run_install_script(self) -> None:
+        base = (
+            Path(sys.executable).resolve().parent
+            if getattr(sys, "frozen", False)
+            else Path(__file__).resolve().parent.parent
+        )
+        script = base / "install" / "install.ps1"
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            (
+                "Start-Process PowerShell -Verb RunAs -ArgumentList "
+                f"'-ExecutionPolicy Bypass -File \"{script}\"' -Wait"
+            ),
+        ]
+        subprocess.run(cmd, check=True)
+
+    def _finalize(self) -> None:
+        self.progress.config(mode="indeterminate")
+        self.progress.start()
+        self.root.update()
+        try:
+            self._run_install_script()
+            messagebox.showinfo("Installer", "Setup complete")
+        except Exception as exc:  # pragma: no cover - environment specific
+            messagebox.showerror("Installer", f"Post-install step failed: {exc}")
+        finally:
+            self.progress.stop()
+            self.root.destroy()
 
 
 def main() -> None:

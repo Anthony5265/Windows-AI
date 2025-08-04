@@ -37,14 +37,11 @@ Optional but recommended:
 1. Transfer the `dist` folder to a Windows machine if built elsewhere.
 2. Run `WindowsAI_Installer.exe`. The Tkinter GUI will appear and can perform
    system detection, API-key management, and dependency installation.
-3. After running the installer GUI, execute additional setup steps:
-
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File install\install.ps1
-   ```
-
-   This registers services, firewall rules, and other system integrations.
-4. (Optional) Add the context menu entry by double-clicking
+   After closing the GUI, the installer automatically runs
+   `install\install.ps1` with administrator rights to register services,
+   firewall rules, and other system integrations. Windows will prompt for
+   elevation; approve the prompt to complete setup.
+3. (Optional) Add the context menu entry by double-clicking
    `install\context_menu_add.reg`.
 
 To remove integrations, use `install\uninstall.ps1` and
