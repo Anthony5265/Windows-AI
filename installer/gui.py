@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
-from . import api_keys, env, model_selector, models, plugins, system_info
-from .assistant import Assistant, ToolTip
+if __package__ is None or __package__ == "":  # pragma: no cover - script entry
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from installer import api_keys, env, model_selector, models, plugins, system_info
+from installer.assistant import Assistant, ToolTip
 
 
 class InstallerGUI:

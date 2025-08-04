@@ -41,4 +41,4 @@ foreach ($res in $resources) {
 }
 
 Write-Host "Installer built at dist\WindowsAI_Installer.exe"
-Write-Host "Run install\install.ps1 after executing the installer to register services."
+Write-Host "Running the installer will automatically execute install\install.ps1 with admin rights to register services."
