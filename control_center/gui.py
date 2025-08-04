@@ -22,6 +22,7 @@ from iot import ADAPTERS, discover_devices, pair_device
 from secrets import token_urlsafe
 from plugins.manager import PluginManager
 from security import AuditLogger, PermissionManager
+from optimization import tuning
 
 try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
@@ -89,6 +90,23 @@ class ChatGUI:
         )
         selector.pack(side="left")
 
+        ttk.Label(input_frame, text="Profile:").pack(side="left", padx=5)
+        self.profile_var = tk.StringVar(value="balanced")
+        profile_selector = ttk.Combobox(
+            input_frame,
+            textvariable=self.profile_var,
+            values=list(tuning.PROFILES),
+            state="readonly",
+            width=12,
+        )
+        profile_selector.pack(side="left")
+        ttk.Button(input_frame, text="Apply", command=self.apply_profile).pack(
+            side="left", padx=5
+        )
+        ttk.Button(input_frame, text="Revert", command=self.revert_profile).pack(
+            side="left", padx=5
+        )
+
         self.entry = ttk.Entry(input_frame)
         self.entry.pack(side="left", fill="x", expand=True, padx=5)
         self.entry.bind("<Return>", self.send_message)
@@ -120,6 +138,19 @@ class ChatGUI:
         ttk.Button(
             input_frame, text="Automation", command=self._open_automation_builder
         ).pack(side="left", padx=5)
+
+    def apply_profile(self) -> None:
+        """Apply the selected optimization profile."""
+        profile = self.profile_var.get()
+        tuning.apply(profile)
+        self.chat.insert("end", f"[Optimization] Applied {profile} profile\n")
+        self.chat.see("end")
+
+    def revert_profile(self) -> None:
+        """Revert to the previous optimization profile."""
+        tuning.revert()
+        self.chat.insert("end", "[Optimization] Reverted profile\n")
+        self.chat.see("end")
 
     # ----------------------------------------------------------------- Chat
     def _open_mesh_config(self) -> None:
