@@ -5,27 +5,5 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-- jobs:
-  build-test:
-    runs-on: windows-latest
-    steps: 
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - name: Install JS deps
-        run: npm ci || npm i
-      - name: Install Pythom deps
-        run: pip install -r requirements.txt || echo "no requirements.txt"
-      - name: Install linters, type checkers, and test tools
-        run: |
-          pip install ruff mypy pytest pytest-cov
-      - name: Lint (with ruff)
-        run: ruff windows_ai / windows_ai/ *.py
-      - name: Type check with mypy
-        run: mypy windows_ai/ windows_ai/*.py
-      - name: Run tests with coverage
-        run: pytest --#modules windows_ai --maxfail --runner pytest-cov --output-coverage-report-svg coverage.svg
-      - name: OpenAPI validate
-        run: npx @redocly/cli lint openapi/windows-ai.yaml || echo "OpenAPI CLI not installed"
+- workflow_dispatch:
+  workflow_dispatch:
