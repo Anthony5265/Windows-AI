@@ -27,22 +27,34 @@ if (Test-Path 'requirements.txt') {
     & $PythonExe -m pip install -r requirements.txt
 }
 
-# run PyInstaller for both architectures and bundle Python
-Write-Output "Running PyInstaller..."
+# run PyInstaller for both architectures
+$architectures = @('x86', 'x64')
 $resources = @('install','plugins','assets','config','control_center','automation','windows_ai')
-$arches = @('x64','x86')
-foreach ($arch in $arches) {
-    $name = "WindowsAI_Installer_$arch"
-    $dist = Join-Path (Get-Location) "dist\$arch"
+
+foreach ($arch in $architectures) {
+    Write-Output "Running PyInstaller for $arch..."
+
+    $dist = Join-Path (Get-Location) "dist_$arch"
+    $build = Join-Path (Get-Location) "build_$arch"
+
+    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+    if (Test-Path $build) { Remove-Item $build -Recurse -Force }
+
     & $PythonExe -m PyInstaller --noconfirm --onefile --windowed installer/gui_installer.py `
-        --name $name --distpath $dist --python-option embed --target-arch $arch
+        --name "WindowsAI_Installer_$arch" `
+        --distpath $dist `
+        --workpath $build `
+        --specpath $build `
+        --target-arch $arch
+
     foreach ($res in $resources) {
         if (Test-Path $res) {
             Copy-Item $res -Destination (Join-Path $dist $res) -Recurse -Force
         }
     }
-    Write-Output "Installer built at $dist\$name.exe"
+
+    Write-Output "Installer built at $dist\WindowsAI_Installer_$arch.exe"
 }
 
-Write-Output "Running the installer will automatically execute install\install.ps1"
+Write-Output "Running the installers will automatically execute install\install.ps1"
 Write-Output "with admin rights to register services."
