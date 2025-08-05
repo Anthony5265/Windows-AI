@@ -1,0 +1,7 @@
+{
+  "name": "Windows AI",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  }
+}
