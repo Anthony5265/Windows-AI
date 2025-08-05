@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 import sys
 import threading
-import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
+from installer.locales import _
 
 if __package__ is None or __package__ == "":  # pragma: no cover - script entry
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -24,38 +24,97 @@ class InstallerGUI:
 
     def __init__(self) -> None:
         try:
-            import webview  # type: ignore
-        except Exception as exc:  # pragma: no cover - optional dependency
-            raise RuntimeError("pywebview is required to launch the installer") from exc
+            self.root = tk.Tk()
+        except tk.TclError as exc:  # pragma: no cover - environment specific
+            raise RuntimeError(
+                _("tkinter is not available or no display is found")
+            ) from exc
 
-        self._webview = webview
-        self.themes = ThemeManager()
-        # Provide basic light and dark themes
-        self.themes.add_theme(Theme(name="light", background="#ffffff", foreground="#000000"))
-        self.themes.add_theme(Theme(name="dark", background="#000000", foreground="#ffffff"))
-        self._theme = self.themes.get_theme("light")  # default theme
+        self.root.title(_("Windows AI Installer"))
 
         html = self._html_path("chat_ui.html")
         self.window = self._webview.create_window(
             "Windows AI Installer", html, width=900, height=700, js_api=self
         )
 
-    # ------------------------------------------------------------------ HTML
-    def _html_path(self, name: str) -> str:
-        """Return absolute path to ``installer/web/<name>``."""
+        # Component selection
+        self.registry = plugins.discover_plugins()
+        self.component_vars: dict[str, tk.BooleanVar] = {}
+        component_frame = tk.LabelFrame(self.root, text=_("Components"))
+        component_frame.pack(fill="x", padx=10, pady=5)
+        for plugin_name in sorted(self.registry.dependencies.keys()):
+            var = tk.BooleanVar(value=True)
+            self.component_vars[plugin_name] = var
+            ttk.Checkbutton(component_frame, text=plugin_name, variable=var).pack(
+                anchor="w"
+            )
+        if not self.registry.dependencies:
+            tk.Label(component_frame, text=_("No plugin dependencies found.")).pack(
+                padx=5, pady=5
+            )
 
-        return str(Path(__file__).with_name("web") / name)
+        # Backend selection
+        backend_frame = tk.LabelFrame(self.root, text=_("Model Backend"))
+        backend_frame.pack(fill="x", padx=10, pady=5)
+        recommended = model_selector.select_backend("default", {})
+        self.backend_var = tk.StringVar(value=recommended)
+        ttk.Radiobutton(
+            backend_frame,
+            text=_("Use Local Models"),
+            value="local",
+            variable=self.backend_var,
+        ).pack(anchor="w")
+        ttk.Radiobutton(
+            backend_frame,
+            text=_("Use Remote APIs"),
+            value="remote",
+            variable=self.backend_var,
+        ).pack(anchor="w")
+        tk.Label(
+            backend_frame,
+            text=_("Recommended: {recommended}").format(recommended=recommended),
+            justify="left",
+        ).pack(anchor="w", padx=5)
 
-    # ------------------------------------------------------------------ Theme API
-    def get_theme(self) -> dict:
-        """Return the currently selected theme as a JSON-serialisable dict."""
+        # Model selection
+        model_frame = tk.LabelFrame(self.root, text=_("Models"))
+        model_frame.pack(fill="x", padx=10, pady=5)
+        self.available_models = models.compatible_models(info)
+        if self.available_models:
+            names = [m.name for m in self.available_models]
+            self.model_var = tk.StringVar(value=names[0])
+            ttk.Combobox(
+                model_frame,
+                textvariable=self.model_var,
+                values=names,
+                state="readonly",
+            ).pack(anchor="w", padx=5, pady=5)
+            self.download_btn = ttk.Button(
+                model_frame,
+                text=_("Download Selected Model"),
+                command=self.download_selected_model,
+            )
+            self.download_btn.pack(anchor="w", padx=5, pady=5)
+            ToolTip(self.download_btn, _("Download the chosen model"))
+        else:
+            tk.Label(
+                model_frame, text=_("No compatible models available.")
+            ).pack(anchor="w", padx=5, pady=5)
 
-        assert self._theme is not None
-        return {
-            "name": self._theme.name,
-            "background": self._theme.background,
-            "foreground": self._theme.foreground,
-        }
+        # Buttons
+        button_frame = tk.Frame(self.root)
+        button_frame.pack(pady=10)
+        api_btn = ttk.Button(button_frame, text=_("Add API Key"), command=self.add_api_key)
+        api_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(api_btn, _("Store a service API key"))
+        self.install_btn = ttk.Button(
+            button_frame, text=_("Install Selected"), command=self.install_selected
+        )
+        self.install_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(self.install_btn, _("Install chosen components"))
+        ask_btn = ttk.Button(button_frame, text=_("Ask Assistant"), command=self.ask_assistant)
+        ask_btn.pack(side=tk.LEFT, padx=5)
+        ToolTip(ask_btn, _("Ask questions or get step-by-step help"))
 
         # Progress indicator
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
@@ -69,9 +128,24 @@ class InstallerGUI:
         self._theme = theme
         return self.get_theme()
 
-    # ------------------------------------------------------------------ Runner
-    def run(self) -> None:
-        """Start the PyWebView event loop."""
+        service = simpledialog.askstring(_("API Key"), _("Service name:"), parent=self.root)
+        if not service:
+            return
+        key = simpledialog.askstring(
+            _("API Key"),
+            _("Enter API key for {service}:").format(service=service),
+            show="*",
+            parent=self.root,
+        )
+        if not key:
+            return
+        try:
+            api_keys.save_key(service, key)
+            messagebox.showinfo(
+                _("API Key"), _("Saved key for {service}").format(service=service)
+            )
+        except Exception as exc:  # pragma: no cover - GUI path
+            messagebox.showerror(_("API Key"), str(exc))
 
     # --- Installation -----------------------------------------------------
     def install_selected(self) -> None:
@@ -79,12 +153,12 @@ class InstallerGUI:
 
         selected_plugins = [p for p, var in self.component_vars.items() if var.get()]
         if not selected_plugins:
-            messagebox.showinfo("Install", "No components selected")
+            messagebox.showinfo(_("Install"), _("No components selected"))
             return
 
         # Allow user override of the model backend
         backend = self.backend_var.get()
-        print(f"Backend chosen: {backend}")
+        print(_("Backend chosen: {backend}").format(backend=backend))
 
         # Warn about missing dependencies before starting
         deps_to_check: list[str] = []
@@ -92,24 +166,34 @@ class InstallerGUI:
             deps_to_check.extend(self.registry.dependencies.get(plugin_name, []))
         missing = self.assistant.check_dependencies(deps_to_check)
         if missing:
-            msg = "Missing dependencies: " + ", ".join(missing)
+            msg = _("Missing dependencies: {deps}").format(
+                deps=", ".join(missing)
+            )
             self.assistant.speak(msg)
-            messagebox.showinfo("Dependencies", msg)
+            messagebox.showinfo(_("Dependencies"), msg)
 
         # Prompt for API key before installation
         service = simpledialog.askstring(
-            "API Key", "Service requiring key (leave blank to skip):", parent=self.root
+            _("API Key"),
+            _("Service requiring key (leave blank to skip):"),
+            parent=self.root,
         )
         if service:
             key = simpledialog.askstring(
-                "API Key", f"Enter API key for {service}:", show="*", parent=self.root
+                _("API Key"),
+                _("Enter API key for {service}:").format(service=service),
+                show="*",
+                parent=self.root,
             )
             if key:
                 try:
                     api_keys.save_key(service, key)
-                    messagebox.showinfo("API Key", f"Saved key for {service}")
+                    messagebox.showinfo(
+                        _("API Key"),
+                        _("Saved key for {service}").format(service=service),
+                    )
                 except Exception as exc:  # pragma: no cover - GUI path
-                    messagebox.showerror("API Key", str(exc))
+                    messagebox.showerror(_("API Key"), str(exc))
 
         self.install_btn.config(state=tk.DISABLED)
         self.progress.config(maximum=len(selected_plugins))
@@ -137,12 +221,14 @@ class InstallerGUI:
 
         self.install_btn.config(state=tk.NORMAL)
         if error:
-            messagebox.showerror("Install", f"Install failed: {error}")
+            messagebox.showerror(
+                _("Install"), _("Install failed: {error}").format(error=error)
+            )
             return
 
         # Offer to launch the Control Center after a successful install
         if messagebox.askyesno(
-            "Install", "Installation complete. Launch Control Center now?"
+            _("Install"), _("Installation complete. Launch Control Center now?")
         ):
             try:
                 from control_center.gui import main as launch_gui
@@ -150,7 +236,9 @@ class InstallerGUI:
                 self.root.destroy()
                 launch_gui()
             except Exception as exc:  # pragma: no cover - runtime path
-                messagebox.showerror("Control Center", f"Failed to launch: {exc}")
+                messagebox.showerror(
+                    _("Control Center"), _("Failed to launch: {exc}").format(exc=exc)
+                )
 
     # --- Model downloads -------------------------------------------------
     def download_selected_model(self) -> None:
@@ -160,33 +248,27 @@ class InstallerGUI:
         if not model_name:
             return
         model_name = self.model_var.get()
-        dest = filedialog.askdirectory(title="Select download directory") or "."
+        dest = filedialog.askdirectory(title=_("Select download directory")) or "."
         self.download_btn.config(state=tk.DISABLED)
         self.progress.config(mode="determinate", maximum=100, value=0)
 
-        start_time = time.monotonic()
-
         def progress(downloaded: int, total: int) -> None:
             percent = int(downloaded / total * 100) if total else 0
-            elapsed = time.monotonic() - start_time
-            speed = downloaded / 1048576 / elapsed if elapsed else 0
-            downloaded_mb = downloaded / 1048576
-            total_mb = total / 1048576 if total else 0
-
-            def update() -> None:
-                self.progress.config(value=percent)
-                self.progress_label.config(
-                    text=f"{downloaded_mb:.1f} / {total_mb:.1f} MB ({speed:.1f} MB/s)"
-                )
-
-            self.root.after(0, update)
+            self.root.after(0, lambda: self.progress.config(value=percent))
 
         def worker() -> None:
             try:
                 models.download_model(model_name, dest, progress)
-                self.root.after(0, lambda: messagebox.showinfo("Download", "Model downloaded"))
+                self.root.after(
+                    0,
+                    lambda: messagebox.showinfo(
+                        _("Download"), _("Model downloaded")
+                    ),
+                )
             except Exception as exc:  # pragma: no cover - network path
-                self.root.after(0, lambda: messagebox.showerror("Download", str(exc)))
+                self.root.after(
+                    0, lambda: messagebox.showerror(_("Download"), str(exc))
+                )
             finally:
                 self.root.after(0, self._download_complete)
 
@@ -200,12 +282,14 @@ class InstallerGUI:
     def ask_assistant(self) -> None:
         """Prompt the user for a question and show the assistant's reply."""
 
-        question = simpledialog.askstring("Assistant", "How can I help?", parent=self.root)
+        question = simpledialog.askstring(
+            _("Assistant"), _("How can I help?"), parent=self.root
+        )
         if not question:
             return
         reply = self.assistant.answer(question)
         self.assistant.speak(reply)
-        messagebox.showinfo("Assistant", reply)
+        messagebox.showinfo(_("Assistant"), reply)
 
 
 def main() -> None:  # pragma: no cover - thin wrapper
