@@ -20,6 +20,7 @@ class MeshNode:
         handle_task: Callable[[str], None],
         key: bytes | None = None,
         heartbeat_interval: float = 1.0,
+        reconnect_interval: float = 1.0,
     ) -> None:
         self.handle_task = handle_task
         self.protocol = SecureProtocol(key)
@@ -27,8 +28,10 @@ class MeshNode:
         self._sock: socket.socket | None = None
         self._thread: threading.Thread | None = None
         self._heartbeat_thread: threading.Thread | None = None
-        self._addr: Tuple[str, int] | None = None
         self._running = False
+        self._addr: Tuple[str, int] | None = None
+        self.heartbeat_interval = heartbeat_interval
+        self.reconnect_interval = reconnect_interval
 
     # ---------------------------------------------------------- discovery
     @staticmethod
@@ -54,7 +57,7 @@ class MeshNode:
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
         self._heartbeat_thread = threading.Thread(
-            target=self._heartbeat, daemon=True
+            target=self._heartbeat_loop, daemon=True
         )
         self._heartbeat_thread.start()
 
@@ -62,16 +65,9 @@ class MeshNode:
         while self._running:
             sock = self._sock
             if sock is None:
-                if not self._addr:
+                if not self._reconnect():
                     break
-                try:
-                    self._sock = socket.create_connection(self._addr)
-                    continue
-                except OSError:
-                    if not self._running:
-                        break
-                    time.sleep(self.heartbeat_interval)
-                    continue
+                continue
             try:
                 header = sock.recv(4)
                 if not header:
@@ -91,9 +87,6 @@ class MeshNode:
                 except Exception:
                     pass
                 self._sock = None
-                if not self._running:
-                    break
-                time.sleep(self.heartbeat_interval)
 
     def stop(self) -> None:
         self._running = False
@@ -107,17 +100,30 @@ class MeshNode:
         if self._heartbeat_thread:
             self._heartbeat_thread.join(timeout=1)
 
-    def _heartbeat(self) -> None:
+    def _heartbeat_loop(self) -> None:
         while self._running:
-            time.sleep(self.heartbeat_interval)
-            if not self._running:
-                break
             sock = self._sock
-            if sock is None:
-                continue
+            if sock is not None:
+                try:
+                    message = self.protocol.encrypt(b"HB")
+                    packet = len(message).to_bytes(4, "big") + message
+                    sock.sendall(packet)
+                except OSError:
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+                    self._sock = None
+            time.sleep(self.heartbeat_interval)
+
+    def _reconnect(self) -> bool:
+        if self._addr is None:
+            return False
+        while self._running and self._sock is None:
             try:
-                message = self.protocol.encrypt(b"HB")
-                packet = len(message).to_bytes(4, "big") + message
-                sock.sendall(packet)
+                self._sock = socket.create_connection(self._addr)
             except OSError:
-                pass
+                time.sleep(self.reconnect_interval)
+            else:
+                return True
+        return self._sock is not None
