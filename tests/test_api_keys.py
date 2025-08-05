@@ -26,9 +26,11 @@ def setup_dummy_keyring(monkeypatch):
     return store
 
 
-def test_save_list_load_delete_with_keyring(monkeypatch):
+def test_save_list_load_delete_with_keyring(tmp_path, monkeypatch):
     store = setup_dummy_keyring(monkeypatch)
-    monkeypatch.setenv("WINDOWS_AI_SERVICES", "svc")
+    monkeypatch.delenv("WINDOWS_AI_SERVICES", raising=False)
+    monkeypatch.setattr(api_keys, "CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr(api_keys, "SERVICES_FILE", str(tmp_path / "services.json"))
 
     api_keys.save_key("svc", "secret")
     assert store[("svc", api_keys._USERNAME)] == "secret"
@@ -63,6 +65,7 @@ def test_file_backend_encrypted(tmp_path, monkeypatch):
     monkeypatch.setattr(api_keys, "CONFIG_DIR", str(tmp_path))
     monkeypatch.setattr(api_keys, "ENC_FILE", str(tmp_path / "keys.enc"))
     monkeypatch.setattr(api_keys, "FERNET_KEY_FILE", str(tmp_path / "fernet.key"))
+    monkeypatch.setattr(api_keys, "SERVICES_FILE", str(tmp_path / "services.json"))
 
     api_keys.save_key("svc", "secret")
     assert api_keys.load_key("svc") == "secret"

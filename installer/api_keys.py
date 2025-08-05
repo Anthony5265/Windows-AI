@@ -58,6 +58,7 @@ except Exception:  # pragma: no cover - cryptography not installed
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".windows_ai")
 ENC_FILE = os.path.join(CONFIG_DIR, "keys.enc")
 FERNET_KEY_FILE = os.path.join(CONFIG_DIR, "fernet.key")
+SERVICES_FILE = os.path.join(CONFIG_DIR, "services.json")
 _USERNAME = "api_key"
 
 
@@ -124,6 +125,47 @@ def _load_file_store() -> Dict[str, str]:
         return {}
 
 
+def _load_services() -> list[str]:
+    """Return the list of known service names."""
+
+    try:
+        with open(SERVICES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _save_services(services: list[str]) -> None:
+    """Persist the list of known service names."""
+
+    _ensure_config_dir()
+    try:
+        with open(SERVICES_FILE, "w", encoding="utf-8") as f:
+            os.chmod(SERVICES_FILE, 0o600)
+            json.dump(sorted(set(services)), f)
+    except OSError:  # pragma: no cover - filesystem errors
+        logger.exception("Failed to write services metadata file")
+        raise
+
+
+def _add_service(service: str) -> None:
+    """Record a service name in the metadata list."""
+
+    services = _load_services()
+    if service not in services:
+        services.append(service)
+        _save_services(services)
+
+
+def _remove_service(service: str) -> None:
+    """Remove a service name from the metadata list if present."""
+
+    services = _load_services()
+    if service in services:
+        services.remove(service)
+        _save_services(services)
+
+
 def _save_file_store(store: Dict[str, str]) -> None:
     """Write the mapping to disk using the encrypted backend."""
 
@@ -142,6 +184,8 @@ def _save_file_store(store: Dict[str, str]) -> None:
     except OSError:  # pragma: no cover - filesystem errors
         logger.exception("Failed to write encrypted keys file")
         raise
+
+    _save_services(list(store.keys()))
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +234,7 @@ def save_key(service: str, key: str) -> None:
                 "Persist": win32cred.CRED_PERSIST_LOCAL_MACHINE,
             }
             win32cred.CredWrite(credential, 0)
+            _add_service(service)
             return
         except Exception:  # pragma: no cover - win32cred errors
             logger.exception("Failed to write key for %s", service)
@@ -198,6 +243,7 @@ def save_key(service: str, key: str) -> None:
     if keyring is not None:
         try:
             keyring.set_password(service, _USERNAME, key)
+            _add_service(service)
             return
         except Exception:
             logger.exception("Failed to write key for %s to keyring", service)
@@ -225,7 +271,9 @@ def list_keys() -> Dict[str, str]:
         if keyring is None and not (IS_WINDOWS and win32cred is not None):
             # File backend can enumerate all stored services
             return _load_file_store()
-        return {}
+        services = _load_services()
+        if not services:
+            return {}
 
     for svc in services:
         value = load_key(svc)
@@ -241,6 +289,7 @@ def delete_key(service: str) -> bool:
     if IS_WINDOWS and win32cred is not None:
         try:  # pragma: no cover - executed only on Windows
             win32cred.CredDelete(service, win32cred.CRED_TYPE_GENERIC, 0)
+            _remove_service(service)
             return True
         except Exception:  # pragma: no cover - win32cred errors
             logger.exception("Failed to delete key for %s", service)
@@ -249,6 +298,7 @@ def delete_key(service: str) -> bool:
     if keyring is not None:
         try:
             keyring.delete_password(service, _USERNAME)
+            _remove_service(service)
             return True
         except KeyringError:
             logger.exception("Failed to delete key for %s from keyring", service)
@@ -259,6 +309,8 @@ def delete_key(service: str) -> bool:
     if existed:
         del store[service]
         _save_file_store(store)
+    else:
+        _remove_service(service)
     return existed
 
 
@@ -290,6 +342,7 @@ __all__ = [
     "CONFIG_DIR",
     "ENC_FILE",
     "FERNET_KEY_FILE",
+    "SERVICES_FILE",
     "keyring",
     "KeyringError",
     "win32cred",
