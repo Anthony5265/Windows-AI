@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Protocol, List, Dict, Callable, Optional
 
 from search import SearchEngine
+from .simple_model import SimpleModel
 
 
 class Model(Protocol):
@@ -99,21 +100,7 @@ class GuiCore:
     """Minimal GUI core placeholder with overlays and hotkeys."""
 
     def __init__(self, model: Optional[Model] = None):
-        """Initialize the GUI core.
-
-        If no model is provided a :class:`~gui.simple_model.SimpleModel`
-        instance is created. This keeps the core usable out of the box
-        while still allowing custom models to be injected for tests or
-        other purposes.
-        """
-
-        if model is None:
-            # Import locally to avoid circular imports during type checking.
-            from .simple_model import SimpleModel
-
-            model = SimpleModel()
-
-        self.model = model
+        self.model = model if model is not None else SimpleModel()
         self.launched = False
         self._logs: List[str] = []
         self.overlays: Dict[str, OverlayWidget] = {}
