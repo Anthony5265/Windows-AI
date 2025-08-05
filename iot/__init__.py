@@ -7,6 +7,7 @@ from .mqtt import MQTTAdapter
 from .matter import MatterAdapter
 from .zigbee import ZigbeeAdapter
 from .home_assistant import HomeAssistantAdapter
+from .adapters import ZeroconfAdapter
 from .automation import WorkflowAutomation
 
 ADAPTERS: Dict[str, DeviceAdapter] = {
@@ -14,6 +15,7 @@ ADAPTERS: Dict[str, DeviceAdapter] = {
     "matter": MatterAdapter(),
     "zigbee": ZigbeeAdapter(),
     "home_assistant": HomeAssistantAdapter(),
+    "zeroconf": ZeroconfAdapter(),
 }
 
 
@@ -36,6 +38,7 @@ __all__ = [
     "MatterAdapter",
     "ZigbeeAdapter",
     "HomeAssistantAdapter",
+    "ZeroconfAdapter",
     "discover_devices",
     "pair_device",
     "WorkflowAutomation",
