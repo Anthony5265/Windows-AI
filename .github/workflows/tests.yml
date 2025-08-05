@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
   pull_request:
-- workglow_dispatch:
+  workflow_dispatch:
 
 jobs: 
   test: 
@@ -14,8 +14,9 @@ jobs:
         with: 
           python-version: '3.x'
       - name: Install dependencies
-        run: 
+        run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install pytest
       - name: Run tests
         run: pytest
