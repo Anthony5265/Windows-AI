@@ -16,7 +16,7 @@ import shlex
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 # Catalog lives alongside this file
 CATALOG_PATH = Path(__file__).resolve().parent / "catalog.json"
@@ -137,11 +137,31 @@ class PluginManager:
 
         try:
             self.verify_signature(plugin)
-            args = shlex.split(plugin.command)
-            if not args:
+            raw_args = shlex.split(plugin.command, posix=os.name != "nt")
+            if not raw_args:
                 raise ValueError("Empty command")
-            executable = Path(args[0])
-            if not executable.is_absolute() and executable.name not in self.ALLOWED_COMMANDS:
+
+            if os.name == "nt":
+                # ``shlex`` on Windows cannot handle unquoted executable paths
+                # containing spaces.  Join tokens until we hit something that
+                # looks like a real executable (has a file extension).
+                exe = raw_args[0]
+                i = 1
+                while i < len(raw_args) and Path(exe).suffix == "":
+                    exe += f" {raw_args[i]}"
+                    i += 1
+                args = [exe, *raw_args[i:]]
+            else:
+                args = raw_args
+
+            exe_str = args[0]
+            executable = Path(exe_str)
+            # pathlib on POSIX does not recognise Windows paths as absolute.
+            # Allow execution when the path is absolute for either platform or
+            # when the command is explicitly whitelisted.
+            is_abs = executable.is_absolute() or PureWindowsPath(exe_str).is_absolute()
+
+            if not is_abs and executable.name not in self.ALLOWED_COMMANDS:
                 raise ValueError("Command not allowed")
             self.sandbox_run(args)
             self._installed.add(plugin.name)
