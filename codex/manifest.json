@@ -30,5 +30,11 @@
     "commit_style": "conventional_commits",
     "docs_public": "docs/",
     "ci_required": true
+  },
+  "tasks": {
+    "update-prs": {
+      "description": "Rebase all open PR branches onto main and push updates",
+      "script": "codex/SCRIPTS/update_prs.ps1"
+    }
   }
 }
