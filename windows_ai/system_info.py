@@ -12,11 +12,15 @@ instead.
 from __future__ import annotations
 
 import ctypes
+import logging
 import platform
 import subprocess
 from typing import Any, Dict
 
 from installer.system_info import detect_system as _detect_system
+
+
+logger = logging.getLogger(__name__)
 
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
@@ -65,8 +69,12 @@ def _detect_accessibility() -> Dict[str, bool]:
                 SPI_GETHIGHCONTRAST, hc.cbSize, ctypes.byref(hc), 0
             )
             settings["high_contrast"] = bool(hc.dwFlags & HCF_HIGHCONTRASTON)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Failed to query accessibility via SystemParametersInfo on %s: %s",
+                system,
+                exc,
+            )
     elif system == "Darwin":
         try:  # pragma: no cover - macOS only
             out = subprocess.check_output(
@@ -78,8 +86,12 @@ def _detect_accessibility() -> Dict[str, bool]:
                 ]
             )
             settings["screen_reader"] = out.strip() == b"1"
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Failed to read VoiceOverEnabled on %s: %s",
+                system,
+                exc,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -90,8 +102,12 @@ def _detect_accessibility() -> Dict[str, bool]:
                 ]
             )
             settings["high_contrast"] = out.strip() == b"1"
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Failed to read increaseContrast on %s: %s",
+                system,
+                exc,
+            )
     else:  # Linux/other
         try:  # pragma: no cover - optional dependencies
             out = subprocess.check_output(
@@ -107,8 +123,12 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "true",
                 "1",
             }
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Failed to query high-contrast via gsettings on %s: %s",
+                system,
+                exc,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -123,8 +143,12 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "true",
                 "1",
             }
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Failed to query screen-reader via gsettings on %s: %s",
+                system,
+                exc,
+            )
 
     return settings
 
@@ -147,8 +171,12 @@ def _detect_xr_hardware() -> Dict[str, Any]:
         if runtime:
             info["xr_capable"] = True
             info["xr_runtime"] = getattr(runtime, "__name__", str(runtime))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug(
+            "Failed to load XR runtime on %s: %s",
+            platform.system(),
+            exc,
+        )
     return info
 
 
