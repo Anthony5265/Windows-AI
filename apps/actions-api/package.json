@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "test": "node --test dist/test/*.test.js"
+    "test": "npm run build && node --test dist/test/*.test.js"
   },
   "dependencies": {
     "express": "^5.1.0"
