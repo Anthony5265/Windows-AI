@@ -31,3 +31,14 @@ Stop when no "todo" tasks remain or ~90 minutes pass; output a session summary a
 - CI workflows are split:
   - **Linux**: Python tests + Node workspace tests.
   - **Windows**: PSScriptAnalyzer lints PowerShell scripts and does a low‑risk smoke load of installer scripts.
+
+### Updating PR branches
+
+Use the script `codex/SCRIPTS/update_prs.ps1` to bring all open pull request branches up to date with `main`.
+Run from the repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\codex\SCRIPTS\update_prs.ps1
+```
+
+The script requires the GitHub CLI (`gh`) and is also exposed as the `update-prs` task in `codex/manifest.json`.
