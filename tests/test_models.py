@@ -3,6 +3,52 @@ import hashlib
 from installer import models
 
 
+def _fake_urlopen_factory(data: bytes):
+    """Create a ``urlopen`` replacement that fails once mid-stream."""
+
+    state = {"calls": 0}
+
+    def _fake_urlopen(req, timeout=None):
+        # Determine starting offset via Range header
+        start = 0
+        if hasattr(req, "headers"):
+            range_header = req.headers.get("Range")
+            if range_header:
+                start = int(range_header.split("=")[1].split("-")[0])
+
+        fail = state["calls"] == 0
+        state["calls"] += 1
+
+        class Resp:
+            def __init__(self):
+                self.pos = start
+
+            def read(self, n=-1):
+                if fail and self.pos >= 4:
+                    raise models.urllib.error.URLError("boom")
+                end = len(data) if n < 0 else self.pos + n
+                chunk = data[self.pos:end]
+                self.pos += len(chunk)
+                return chunk
+
+            def getheader(self, name, default=None):
+                if name.lower() == "content-length":
+                    return str(len(data) - start)
+                if name.lower() == "content-range":
+                    return f"bytes {start}-{len(data)-1}/{len(data)}"
+                return default
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                pass
+
+        return Resp()
+
+    return _fake_urlopen
+
+
 def test_compatible_models(monkeypatch):
     dummy = {
         "cpu": models.ModelInfo(
@@ -46,3 +92,26 @@ def test_verify_checksum(tmp_path):
     digest = hashlib.sha256(data).hexdigest()
     assert models.verify_checksum(file, digest)
     assert not models.verify_checksum(file, "0" * 64)
+
+
+def test_download_model_retries(tmp_path, monkeypatch):
+    data = b"abcdefghij"
+    checksum = hashlib.sha256(data).hexdigest()
+    info = models.ModelInfo(
+        name="test",
+        filename="test.bin",
+        checksum=checksum,
+    )
+    monkeypatch.setattr(models, "MODEL_REGISTRY", {"test": info})
+
+    fake_urlopen = _fake_urlopen_factory(data)
+    monkeypatch.setattr(models.urllib.request, "urlopen", fake_urlopen)
+
+    sleeps: list[float] = []
+    monkeypatch.setattr(models.time, "sleep", lambda s: sleeps.append(s))
+
+    dest = models.download_model("test", tmp_path, retries=2, timeout=1)
+
+    assert dest.read_bytes() == data
+    # Only one retry should have occurred, resulting in a single sleep call
+    assert sleeps == [1]
