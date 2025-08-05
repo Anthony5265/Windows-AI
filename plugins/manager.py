@@ -16,7 +16,7 @@ import shlex
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 # Catalog lives alongside this file
 CATALOG_PATH = Path(__file__).resolve().parent / "catalog.json"
@@ -140,8 +140,14 @@ class PluginManager:
             args = shlex.split(plugin.command)
             if not args:
                 raise ValueError("Empty command")
-            executable = Path(args[0])
-            if not executable.is_absolute() and executable.name not in self.ALLOWED_COMMANDS:
+            exe_str = args[0]
+            executable = Path(exe_str)
+            # pathlib on POSIX does not recognise Windows paths as absolute.
+            # Allow execution when the path is absolute for either platform or
+            # when the command is explicitly whitelisted.
+            is_abs = executable.is_absolute() or PureWindowsPath(exe_str).is_absolute()
+
+            if not is_abs and executable.name not in self.ALLOWED_COMMANDS:
                 raise ValueError("Command not allowed")
             self.sandbox_run(args)
             self._installed.add(plugin.name)
