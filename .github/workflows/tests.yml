@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
   pull_request:
-- workglow_dispatch:
+  workflow_dispatch:
 
 jobs: 
   test: 
