@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 class SimpleModel:
-    """A minimal concrete model used for testing and default behavior."""
+    """Very small model used for tests and examples."""
 
     def generate(self, prompt: str) -> str:
-        """Return a deterministic response for a given prompt."""
-        return f"Echo: {prompt}"
+        """Return a deterministic response for *prompt*."""
+        return prompt.upper()
