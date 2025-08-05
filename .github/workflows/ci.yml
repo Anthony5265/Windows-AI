@@ -15,11 +15,16 @@ jobs:
         with: { python-version: '3.11' }
       - name: Install JS deps
         run: npm ci || npm i
-      - name: Install Python deps
+      - name: Install Pythom deps
         run: pip install -r requirements.txt || echo "no requirements.txt"
-      - name: Lint (commit messages via commitlint if present)
-        run: npx commitlint --from=HEAD~10 --to=HEAD || echo "commitlint not configured"
-      - name: Run tests
-        run: npm test || echo "no JS tests"; pytest -q || echo "no Python tests"
+      - name: Install linters, type checkers, and test tools
+        run: |
+          pip install ruff mypy pytest pytest-cov
+      - name: Lint (with ruff)
+        run: ruff windows_ai / windows_ai/ *.py
+      - name: Type check with mypy
+        run: mypy windows_ai/ windows_ai/*.py
+      - name: Run tests with coverage
+        run: pytest --#modules windows_ai --maxfail --runner pytest-cov --output-coverage-report-svg coverage.svg
       - name: OpenAPI validate
         run: npx @redocly/cli lint openapi/windows-ai.yaml || echo "OpenAPI CLI not installed"
