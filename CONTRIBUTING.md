@@ -16,9 +16,11 @@ Please ensure tests pass locally before requesting a review.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
 
-## Stale Issues and Pull Requests
+## Releases
 
-Issues and pull requests with no activity for 30 days are automatically
-labeled `stale` and will be closed after another 30 days without activity.
-Any comment or code change removes the `stale` label and resets the timer.
-Keep the conversation going or add updates to avoid automatic closing.
+- Draft releases are updated automatically whenever changes are merged to `main`.
+- To publish a new release:
+  1. Open the draft release on GitHub.
+  2. Review and adjust the notes and version as needed.
+  3. Publish the release to create the tag.
+
