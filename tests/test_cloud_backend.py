@@ -1,48 +1,48 @@
-import pytest
-import requests
+import json
+
+import httpx
+import respx
 
 from search.backends import CloudBackend
 
 
-class DummyResponse:
-    def __init__(self, data, status_code=200):
-        self._data = data
-        self.status_code = status_code
+@respx.mock
+def test_cloud_backend_remote_calls():
+    endpoint = "https://api.example.com"
+    backend = CloudBackend(endpoint)
 
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise requests.HTTPError(f"status {self.status_code}")
+    # Mock indexing endpoint
+    index_route = respx.post(f"{endpoint}/index").mock(
+        return_value=httpx.Response(200)
+    )
+    backend.index({"a": "hello"})
+    assert index_route.called
+    # Ensure the correct payload was sent
+    sent = json.loads(index_route.calls[0].request.content.decode())
+    assert sent == {"a": "hello"}
 
-    def json(self):
-        return self._data
-
-
-def test_cloud_backend_index_and_search(monkeypatch):
-    calls = []
-
-    def fake_post(url, json=None, timeout=None):
-        calls.append((url, json))
-        if url.endswith("/search"):
-            return DummyResponse({"results": ["a", "b"]})
-        return DummyResponse({})
-
-    monkeypatch.setattr(requests, "post", fake_post)
-
-    backend = CloudBackend("http://api.test")
-    backend.index({"a": "foo"})
-    results = backend.search("bar", top_k=2)
-
-    assert calls[0][0] == "http://api.test/index"
-    assert calls[0][1] == {"a": "foo"}
+    # Mock search endpoint
+    search_route = respx.get(f"{endpoint}/search").mock(
+        return_value=httpx.Response(200, json={"results": ["a", "b"]})
+    )
+    results = backend.search("hello", top_k=2)
+    assert search_route.called
+    # Verify query parameters were passed through
+    request = search_route.calls[0].request
+    assert request.url.params["q"] == "hello"
+    assert request.url.params["top_k"] == "2"
     assert results == ["a", "b"]
 
 
-def test_cloud_backend_timeout(monkeypatch):
-    def fake_post(url, json=None, timeout=None):
-        raise requests.Timeout("boom")
+@respx.mock
+def test_cloud_backend_fallback_on_error():
+    endpoint = "https://api.example.com"
+    backend = CloudBackend(endpoint)
 
-    monkeypatch.setattr(requests, "post", fake_post)
+    # Simulate network failure when indexing
+    respx.post(f"{endpoint}/index").mock(side_effect=httpx.ConnectError("boom"))
+    backend.index({"x": "foo", "y": "bar"})
 
-    backend = CloudBackend("http://api.test")
-    with pytest.raises(TimeoutError):
-        backend.search("baz")
+    # Simulate network failure when searching; should fall back to local index
+    respx.get(f"{endpoint}/search").mock(side_effect=httpx.ConnectError("boom"))
+    assert backend.search("foo", top_k=5) == ["x", "y"]
