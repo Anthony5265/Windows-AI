@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import socket
 import threading
-from typing import List
+import time
+from typing import Dict
 
 from .protocol import SecureProtocol
 
@@ -25,9 +26,10 @@ class MeshHub:
         self.port = port
         self.discovery_port = discovery_port
         self.protocol = SecureProtocol(key)
-        self._nodes: List[socket.socket] = []
+        self._nodes: Dict[socket.socket, float] = {}
         self._running = False
         self._lock = threading.Lock()
+        self._timeout = 3.0
 
     # --------------------------------------------------------------- lifecycle
     def start(self) -> None:
@@ -56,6 +58,11 @@ class MeshHub:
         )
         self._server_thread.start()
 
+        self._prune_thread = threading.Thread(
+            target=self._prune_loop, daemon=True
+        )
+        self._prune_thread.start()
+
     def stop(self) -> None:
         self._running = False
         try:
@@ -67,7 +74,7 @@ class MeshHub:
         except Exception:
             pass
         with self._lock:
-            for node in self._nodes:
+            for node in list(self._nodes):
                 try:
                     node.close()
                 except Exception:
@@ -93,7 +100,10 @@ class MeshHub:
             except OSError:
                 break
             with self._lock:
-                self._nodes.append(conn)
+                self._nodes[conn] = time.time()
+            threading.Thread(
+                target=self._node_listener, args=(conn,), daemon=True
+            ).start()
 
     # ---------------------------------------------------------- task handling
     def distribute_task(self, task: str) -> None:
@@ -106,5 +116,51 @@ class MeshHub:
                 try:
                     conn.sendall(packet)
                 except OSError:
-                    self._nodes.remove(conn)
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    del self._nodes[conn]
+
+    # ----------------------------------------------------------- heartbeat
+    def _node_listener(self, conn: socket.socket) -> None:
+        while self._running:
+            try:
+                header = conn.recv(4)
+                if not header:
+                    break
+                length = int.from_bytes(header, "big")
+                data = b""
+                while len(data) < length:
+                    chunk = conn.recv(length - len(data))
+                    if not chunk:
+                        break
+                    data += chunk
+                if len(data) != length:
+                    break
+                if self.protocol.decrypt(data) == b"HB":
+                    with self._lock:
+                        if conn in self._nodes:
+                            self._nodes[conn] = time.time()
+            except OSError:
+                break
+        with self._lock:
+            self._nodes.pop(conn, None)
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    def _prune_loop(self) -> None:
+        while self._running:
+            time.sleep(1)
+            now = time.time()
+            with self._lock:
+                for conn, ts in list(self._nodes.items()):
+                    if now - ts > self._timeout:
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        del self._nodes[conn]
 
