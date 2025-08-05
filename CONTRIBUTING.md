@@ -15,3 +15,13 @@ Please ensure tests pass locally before requesting a review.
 - Create feature branches from `main`.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
+
+## Development Container
+
+This repository includes a preconfigured development container for VS Code.
+
+1. Install Docker, VS Code, and the Dev Containers extension.
+2. Open the command palette and run **Dev Containers: Reopen in Container**.
+3. VS Code will build the container using the provided `Dockerfile` and open the workspace inside.
+
+The container includes all Python and Node.js dependencies so you can run `pytest` and `npm test` directly inside the environment.
