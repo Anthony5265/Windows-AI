@@ -171,6 +171,68 @@ class PluginManager:
             else:
                 raise
 
+    # ------------------------------------------------------------- uninstallation
+    def uninstall(
+        self,
+        plugin: Plugin,
+        messagebox=None,
+        _stack: set[str] | None = None,
+    ) -> None:
+        """Uninstall a plugin and any unneeded dependencies."""
+
+        if plugin.name not in self._installed:
+            return
+
+        if _stack is None:
+            _stack = set()
+        if plugin.name in _stack:
+            raise ValueError("Cyclic dependency detected")
+        _stack.add(plugin.name)
+
+        # Remove dependencies first when no other installed plugin requires them
+        for dep_name in plugin.dependencies:
+            dep = self.get_plugin(dep_name)
+            if dep is None:
+                raise ValueError(f"Missing dependency: {dep_name}")
+
+            # Determine if another plugin still depends on this dependency
+            shared = any(
+                dep_name in (self.get_plugin(other).dependencies if self.get_plugin(other) else [])
+                for other in self._installed
+                if other != plugin.name
+            )
+            if not shared:
+                self.uninstall(dep, messagebox, _stack)
+
+        _stack.remove(plugin.name)
+
+        try:
+            raw_args = shlex.split(plugin.command, posix=os.name != "nt")
+            if not raw_args:
+                raise ValueError("Empty command")
+
+            if os.name == "nt":
+                exe = raw_args[0]
+                i = 1
+                while i < len(raw_args) and Path(exe).suffix == "":
+                    exe += f" {raw_args[i]}"
+                    i += 1
+                args = [exe, *raw_args[i:]]
+            else:
+                args = raw_args
+
+            if args[0] in self.ALLOWED_COMMANDS and len(args) > 1:
+                args[1] = "uninstall"
+                if args[0] == "pip" and "-y" not in args and "--yes" not in args:
+                    args.append("-y")
+            self.sandbox_run(args)
+            self._installed.discard(plugin.name)
+        except Exception as exc:  # pragma: no cover - subprocess path
+            if messagebox is not None:
+                messagebox.showerror("Plugin Uninstall", f"Failed to uninstall {plugin.name}: {exc}")
+            else:
+                raise
+
 
 __all__ = ["Plugin", "PluginManager", "load_catalog", "SANDBOX_DIR"]
 
