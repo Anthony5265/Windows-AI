@@ -48,6 +48,16 @@ Optional but recommended:
 To remove integrations, use `install\uninstall.ps1` and
 `install\context_menu_remove.reg`.
 
+## Non-interactive CLI mode
+
+The prototype installer exposes a Python CLI in `installer/cli.py`. When
+automating setup, invoke it with the `--non-interactive` (or `--yes`) flag to
+skip API key prompts and decline launching the Control Center GUI:
+
+```bash
+python -m installer.cli --non-interactive
+```
+
 ## Updating
 
 When repository changes occur, rerun the build script to generate an updated
