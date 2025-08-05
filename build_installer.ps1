@@ -2,7 +2,9 @@
 # Run from repository root on Windows
 
 param(
-    [string]$PythonExe = "python"
+    [string]$PythonExe = "python",
+    [string]$CertPath = "",
+    [string]$TimestampServer = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,5 +58,18 @@ foreach ($arch in $architectures) {
     Write-Output "Installer built at $dist\WindowsAI_Installer_$arch.exe"
 }
 
-Write-Output "Running the installers will automatically execute install\install.ps1"
+$installerExe = Join-Path $dist 'WindowsAI_Installer.exe'
+if ($CertPath -and $TimestampServer) {
+    if (Test-Path $CertPath) {
+        Write-Output "Signing installer..."
+        & "SignTool.exe" sign /fd SHA256 /f $CertPath /tr $TimestampServer /td SHA256 $installerExe
+    } else {
+        Write-Output "Certificate not found at $CertPath. Skipping signing."
+    }
+} else {
+    Write-Output "CertPath or TimestampServer not provided. Skipping signing."
+}
+
+Write-Output "Installer built at dist\WindowsAI_Installer.exe"
+Write-Output "Running the installer will automatically execute install\install.ps1"
 Write-Output "with admin rights to register services."
