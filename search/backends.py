@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+import requests
+
 from .embeddings import embed
 from .index import SearchIndex
 
@@ -31,19 +33,34 @@ class LocalBackend(SearchBackend):
 
 
 class CloudBackend(SearchBackend):
-    """Placeholder backend representing a remote service."""
+    """Backend representing a remote search service."""
 
-    def __init__(self, endpoint: str):
-        self.endpoint = endpoint
-        self._indexed: Dict[str, str] = {}
+    def __init__(self, endpoint: str, timeout: float = 5.0):
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout = timeout
 
     def index(self, docs: Dict[str, str]) -> None:
-        # In a real implementation this would send docs to the service.
-        self._indexed.update(docs)
+        try:
+            res = requests.post(
+                f"{self.endpoint}/index", json=docs, timeout=self.timeout
+            )
+            res.raise_for_status()
+        except requests.exceptions.Timeout as e:  # pragma: no cover - network
+            raise TimeoutError("Index request timed out") from e
+        except requests.RequestException as e:  # pragma: no cover - network
+            raise RuntimeError(f"Index request failed: {e}") from e
 
     def search(self, query: str, top_k: int = 5) -> List[str]:
-        # Real implementation would call the remote service. We return all ids
-        # when a query is provided to keep behaviour deterministic for tests.
-        if not query:
-            return []
-        return list(self._indexed.keys())[:top_k]
+        try:
+            res = requests.post(
+                f"{self.endpoint}/search",
+                json={"query": query, "top_k": top_k},
+                timeout=self.timeout,
+            )
+            res.raise_for_status()
+            data = res.json()
+            return data.get("results", [])
+        except requests.exceptions.Timeout as e:  # pragma: no cover - network
+            raise TimeoutError("Search request timed out") from e
+        except requests.RequestException as e:  # pragma: no cover - network
+            raise RuntimeError(f"Search request failed: {e}") from e
