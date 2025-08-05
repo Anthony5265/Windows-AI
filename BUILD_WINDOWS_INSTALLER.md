@@ -23,7 +23,7 @@ Optional but recommended:
 2. Run the build script:
 
    ```powershell
-   ./build_installer.ps1
+   ./build_installer.ps1 [-CertPath path\to\cert.pfx -TimestampServer https://timestamp.server]
    ```
 
    The script will:
@@ -32,8 +32,22 @@ Optional but recommended:
    - Package `installer/gui_installer.py` into `dist/WindowsAI_Installer.exe`
    - Copy runtime assets (`install`, `plugins`, `assets`, `config`, `control_center`,
      `automation`, `windows_ai`) into the `dist/` folder alongside the executable
+   - Optionally sign `dist\WindowsAI_Installer.exe` with `SignTool.exe` if `-CertPath`
+     and `-TimestampServer` are provided
 
 3. After the script completes, the executable is located at `dist/WindowsAI_Installer.exe`.
+
+### Code Signing (optional)
+
+To distribute a signed installer, supply a code signing certificate and a timestamp
+server when running the build script. `SignTool.exe` from the Windows SDK must be
+available in your `PATH`.
+
+```powershell
+./build_installer.ps1 -CertPath C:\path\to\cert.pfx -TimestampServer https://timestamp.digicert.com
+```
+
+The script will invoke `SignTool.exe` to sign the generated `WindowsAI_Installer.exe`.
 
 ## Testing the Installer
 
