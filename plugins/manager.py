@@ -137,9 +137,23 @@ class PluginManager:
 
         try:
             self.verify_signature(plugin)
-            args = shlex.split(plugin.command)
-            if not args:
+            raw_args = shlex.split(plugin.command, posix=os.name != "nt")
+            if not raw_args:
                 raise ValueError("Empty command")
+                
+            if os.name == "nt":
+                # ``shlex`` on Windows cannot handle unquoted executable paths
+                # containing spaces.  Join tokens until we hit something that
+                # looks like a real executable (has a file extension).
+                exe = raw_args[0]
+                i = 1
+                while i < len(raw_args) and Path(exe).suffix == "":
+                    exe += f" {raw_args[i]}"
+                    i += 1
+                args = [exe, *raw_args[i:]]
+            else:
+                args = raw_args
+
             exe_str = args[0]
             executable = Path(exe_str)
             # pathlib on POSIX does not recognise Windows paths as absolute.
