@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import venv
+import logging
 from pathlib import Path
 from typing import Iterable
 import shutil
@@ -20,6 +21,8 @@ CONFIG_DIR = Path.home() / ".windows_ai"
 BASE_DIR = CONFIG_DIR / "venvs"
 ENV_RECORD_FILE = CONFIG_DIR / "envs.json"
 BASE_DIR.mkdir(parents=True, exist_ok=True)
+
+logger = logging.getLogger(__name__)
 
 
 def _use_conda() -> bool:
@@ -63,7 +66,14 @@ def create_env(name: str, backend: str | None = None) -> Path:
     backend = backend or ("conda" if _use_conda() else "venv")
     if not env_path.exists():
         if backend == "conda":
-            subprocess.check_call(["conda", "create", "-y", "-p", str(env_path), "python"])
+            cmd = ["conda", "create", "-y", "-p", str(env_path), "python"]
+            try:
+                subprocess.check_call(cmd, stderr=subprocess.PIPE, text=True)
+            except subprocess.CalledProcessError as exc:
+                logger.error("Command %s failed with stderr: %s", exc.cmd, exc.stderr)
+                raise RuntimeError(
+                    f"Failed to create environment '{name}' using conda"
+                ) from exc
         else:
             venv.EnvBuilder(with_pip=True).create(env_path)
     _record_env_path(name, env_path)
