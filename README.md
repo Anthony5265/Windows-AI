@@ -1,4 +1,5 @@
 # Windows AI
+[![codecov](https://codecov.io/gh/Windows-AI/Windows-AI/branch/main/graph/badge.svg)](https://codecov.io/gh/Windows-AI/Windows-AI)
 
 > **Transform any Windows PC into a cosmic, AI-first, automated OS ecosystem—instantly.**
 
