@@ -97,6 +97,29 @@ def load_recorded_envs() -> dict[str, str]:
         return {}
 
 
+def remove_env(name: str) -> None:
+    """Remove the environment named ``name`` and update the record file."""
+
+    env_path = BASE_DIR / name
+    if env_path.exists():
+        shutil.rmtree(env_path, ignore_errors=True)
+
+    if not ENV_RECORD_FILE.exists():
+        return
+
+    try:
+        data = json.loads(ENV_RECORD_FILE.read_text())
+    except Exception:
+        data = {}
+
+    if name in data:
+        del data[name]
+        if data:
+            ENV_RECORD_FILE.write_text(json.dumps(data, indent=2))
+        else:
+            ENV_RECORD_FILE.unlink()
+
+
 __all__ = [
     "CONFIG_DIR",
     "BASE_DIR",
@@ -104,5 +127,6 @@ __all__ = [
     "create_env",
     "python_executable",
     "install_packages",
+    "remove_env",
     "load_recorded_envs",
 ]
