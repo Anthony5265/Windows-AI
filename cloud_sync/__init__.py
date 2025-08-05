@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Protocol
 import hashlib
-from itertools import cycle
+import hmac
+import os
+
 
 
 class Provider(Protocol):
@@ -22,7 +24,7 @@ class Provider(Protocol):
 class InMemoryProvider:
     """Simple in-memory provider used for testing."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pragma: no cover - tiny
         self.storage: Dict[str, bytes] = {}
 
     def upload(self, name: str, data: bytes) -> None:  # pragma: no cover - tiny
@@ -32,21 +34,71 @@ class InMemoryProvider:
         return self.storage.get(name)
 
 
-def _xor(data: bytes, key: bytes) -> bytes:
-    return bytes(a ^ b for a, b in zip(data, cycle(key)))
+class FilesystemProvider:
+    """Store uploaded files on the local filesystem.
+
+    ``name`` is treated as a file name relative to the base directory
+    provided at construction time.  The base directory is created if it
+    does not already exist.
+    """
+
+    def __init__(self, base: str | Path) -> None:
+        self.base = Path(base)
+        self.base.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, name: str) -> Path:
+        return self.base / name
+
+    def upload(self, name: str, data: bytes) -> None:  # pragma: no cover - tiny
+        self._path(name).write_bytes(data)
+
+    def download(self, name: str) -> bytes | None:  # pragma: no cover - tiny
+        path = self._path(name)
+        return path.read_bytes() if path.exists() else None
+
+
+def _keystream(key: bytes, iv: bytes, length: int) -> bytes:
+    """Generate a pseudo-random keystream using HMAC-SHA256."""
+
+    stream = b""
+    counter = 0
+    while len(stream) < length:
+        block = hmac.new(key, iv + counter.to_bytes(4, "big"), hashlib.sha256).digest()
+        stream += block
+        counter += 1
+    return stream[:length]
 
 
 def encrypt(data: bytes, password: str) -> bytes:
-    """Encrypt ``data`` with ``password`` using a simple XOR scheme."""
+    """Encrypt ``data`` with ``password`` using HMAC for confidentiality and integrity.
+
+    The returned blob is ``IV || ciphertext || tag`` where ``tag`` is an HMAC
+    over the IV and ciphertext.  A random 16-byte IV is used for each
+    encryption.
+    """
 
     key = hashlib.sha256(password.encode()).digest()
-    return _xor(data, key)
+    iv = os.urandom(16)
+    stream = _keystream(key, iv, len(data))
+    ciphertext = bytes(a ^ b for a, b in zip(data, stream))
+    tag = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
+    return iv + ciphertext + tag
 
 
 def decrypt(data: bytes, password: str) -> bytes:
-    """Decrypt ``data`` with ``password``."""
+    """Decrypt ``data`` with ``password`` and verify integrity."""
 
-    return encrypt(data, password)
+    key = hashlib.sha256(password.encode()).digest()
+    if len(data) < 16 + 32:
+        raise ValueError("ciphertext too short")
+    iv = data[:16]
+    tag = data[-32:]
+    ciphertext = data[16:-32]
+    expected = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
+    if not hmac.compare_digest(tag, expected):
+        raise ValueError("HMAC verification failed")
+    stream = _keystream(key, iv, len(ciphertext))
+    return bytes(a ^ b for a, b in zip(ciphertext, stream))
 
 
 @dataclass
@@ -112,6 +164,7 @@ class CloudSync:
 __all__ = [
     "Provider",
     "InMemoryProvider",
+    "FilesystemProvider",
     "CloudSync",
     "encrypt",
     "decrypt",
