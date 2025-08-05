@@ -1,69 +1,58 @@
-function Get-ToolVersion {
-    param(
-        [string]$Command,
-        [string[]]$Arguments
-    )
+param(
+    [string]$CacheDir = (Join-Path $PSScriptRoot 'cache')
+)
 
-    try {
-        $output = & $Command @Arguments 2>&1
-    } catch {
-        return $null
-    }
-
-    $match = $output | Select-String -Pattern '\d+(\.\d+)+'
-    if ($match) {
-        return [Version]$match.Matches[0].Value
-    }
-    return $null
+if (-not (Test-Path $CacheDir)) {
+    New-Item -ItemType Directory -Path $CacheDir | Out-Null
 }
 
-function Require-MinVersion {
-    param(
-        [string]$Name,
-        [string]$Command,
-        [Version]$Minimum,
-        [string[]]$Arguments
-    )
-
-    $version = Get-ToolVersion -Command $Command -Arguments $Arguments
-    if (-not $version) {
-        throw "Unable to determine $Name version."
-    }
-    Write-Host "$Name version $version"
-    if ($version -lt $Minimum) {
-        throw "$Name $Minimum or later is required."
-    }
-    return $version
-}
-
-function Invoke-WindowsAIInstall {
+$logPath = Join-Path $CacheDir 'install.log'
+Start-Transcript -Path $logPath -Force | Out-Null
+try {
     Write-Host "Installing Windows AI services..."
-
-    $minPSVersion = [Version]'5.1'
-    $minNssmVersion = [Version]'2.24'
-    $minMkcertVersion = [Version]'1.4.0'
-
-    Write-Host "PowerShell version $($PSVersionTable.PSVersion)"
-    if ($PSVersionTable.PSVersion -lt $minPSVersion) {
-        throw "PowerShell $minPSVersion or later is required."
-    }
 
     # Start a new snapshot so we can rollback these actions later
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python -m installer.snapshot create
+    } else {
+        Write-Error "python not found; snapshot creation skipped."
     }
 
-    if (Get-Command nssm.exe -ErrorAction SilentlyContinue) {
-        Require-MinVersion -Name 'nssm' -Command 'nssm.exe' -Minimum $minNssmVersion -Arguments 'version'
-        nssm install WindowsAIService "node" "apps\server.js"
+    $nssmCmd = Get-Command nssm.exe -ErrorAction SilentlyContinue
+    if (-not $nssmCmd) {
+        Write-Error "nssm.exe not found; attempting download."
+        $nssmZip = Join-Path $CacheDir 'nssm.zip'
+        $nssmUrl = 'https://nssm.cc/release/nssm-2.24.zip'
+        Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+        Expand-Archive -Path $nssmZip -DestinationPath $CacheDir -Force
+        $nssmPath = Join-Path $CacheDir 'nssm-2.24\win64\nssm.exe'
+    } else {
+        $nssmPath = $nssmCmd.Path
+    }
+
+    if (Test-Path $nssmPath) {
+        Start-Process -FilePath $nssmPath -ArgumentList 'install','WindowsAIService','node','apps\server.js' -Wait
         if (Get-Command python -ErrorAction SilentlyContinue) {
             python -m installer.snapshot record service WindowsAIService
         }
+    } else {
+        Write-Error "Unable to locate nssm executable; service installation skipped."
     }
 
-    if (Get-Command mkcert -ErrorAction SilentlyContinue) {
-        Require-MinVersion -Name 'mkcert' -Command 'mkcert' -Minimum $minMkcertVersion -Arguments '--version'
-        mkcert -install
+    $mkcertCmd = Get-Command mkcert -ErrorAction SilentlyContinue
+    if (-not $mkcertCmd) {
+        Write-Error "mkcert not found; attempting download."
+        $mkcertPath = Join-Path $CacheDir 'mkcert.exe'
+        $mkcertUrl = 'https://dl.filippo.io/mkcert/latest?for=windows/amd64'
+        Invoke-WebRequest -Uri $mkcertUrl -OutFile $mkcertPath -UseBasicParsing
+    } else {
+        $mkcertPath = $mkcertCmd.Path
+    }
+
+    if (Test-Path $mkcertPath) {
+        Start-Process -FilePath $mkcertPath -ArgumentList '-install' -Wait
+    } else {
+        Write-Error "Unable to locate mkcert executable; certificate installation skipped."
     }
 
     if (Get-Command New-NetFirewallRule -ErrorAction SilentlyContinue) {
@@ -72,13 +61,16 @@ function Invoke-WindowsAIInstall {
             if (Get-Command python -ErrorAction SilentlyContinue) {
                 python -m installer.snapshot record firewall 'Windows AI'
             }
-        } catch {}
+        } catch {
+            Write-Error $_
+        }
+    } else {
+        Write-Error "New-NetFirewallRule not available; firewall rule not added."
     }
 
     Write-Host "Install complete."
 }
-
-if ($MyInvocation.InvocationName -ne '.') {
-    Invoke-WindowsAIInstall
+finally {
+    Stop-Transcript | Out-Null
 }
 
