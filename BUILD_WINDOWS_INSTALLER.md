@@ -3,6 +3,9 @@
 This document explains how to produce a single `WindowsAI_Installer.exe` that bundles
 this repository and launches the Tkinter-based installer GUI.
 
+Quick-start guides for using the installer are available in `docs/README.en.md`
+(English) and `docs/README.es.md` (Español).
+
 ## Prerequisites
 
 - Windows 10 or later

@@ -14,6 +14,7 @@ import threading
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
+import webbrowser
 
 if __package__ is None or __package__ == "":  # pragma: no cover - script entry
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -68,6 +69,26 @@ class GUIInstaller:
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
         self.progress.pack(padx=10, pady=10)
         self.root.protocol("WM_DELETE_WINDOW", self._finalize)
+
+        # guide selector
+        guide_frame = tk.Frame(self.root)
+        guide_frame.pack(padx=10, pady=5)
+        ttk.Label(guide_frame, text="Guide:").pack(side=tk.LEFT)
+        self._lang_var = tk.StringVar(value="English")
+        self._guide_paths = {
+            "English": Path(__file__).resolve().parents[1] / "docs" / "README.en.md",
+            "Español": Path(__file__).resolve().parents[1] / "docs" / "README.es.md",
+        }
+        ttk.Combobox(
+            guide_frame,
+            textvariable=self._lang_var,
+            values=list(self._guide_paths.keys()),
+            state="readonly",
+            width=10,
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(guide_frame, text="Open", command=self.open_guide).pack(
+            side=tk.LEFT
+        )
 
     # --- System detection -------------------------------------------------
     def detect_system(self) -> None:
@@ -228,6 +249,16 @@ class GUIInstaller:
             top.destroy()
 
         ttk.Button(top, text="Apply", command=apply_config).pack(pady=5)
+
+    # --- Guide handling ---------------------------------------------------
+    def open_guide(self) -> None:
+        """Open the quick-start guide in the selected language."""
+
+        path = self._guide_paths.get(self._lang_var.get())
+        if path and path.exists():
+            webbrowser.open(path.as_uri())
+        else:
+            messagebox.showerror("Guide", "Guide not found")
 
     # --- Finalization -----------------------------------------------------
     def _run_install_script(self) -> None:
