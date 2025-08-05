@@ -6,6 +6,6 @@
   ],
   "scripts": {
     "build": "echo \"(optional) build all workspaces\"",
-    "test": "npm test -w apps/actions-api"
+    "test": "npm test -ws"
   }
 }
