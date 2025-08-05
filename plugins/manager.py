@@ -140,7 +140,7 @@ class PluginManager:
             raw_args = shlex.split(plugin.command, posix=os.name != "nt")
             if not raw_args:
                 raise ValueError("Empty command")
-
+                
             if os.name == "nt":
                 # ``shlex`` on Windows cannot handle unquoted executable paths
                 # containing spaces.  Join tokens until we hit something that
