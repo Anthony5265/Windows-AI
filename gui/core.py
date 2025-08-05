@@ -98,7 +98,21 @@ class HotkeyManager:
 class GuiCore:
     """Minimal GUI core placeholder with overlays and hotkeys."""
 
-    def __init__(self, model: Model):
+    def __init__(self, model: Optional[Model] = None):
+        """Initialize the GUI core.
+
+        If no model is provided a :class:`~gui.simple_model.SimpleModel`
+        instance is created. This keeps the core usable out of the box
+        while still allowing custom models to be injected for tests or
+        other purposes.
+        """
+
+        if model is None:
+            # Import locally to avoid circular imports during type checking.
+            from .simple_model import SimpleModel
+
+            model = SimpleModel()
+
         self.model = model
         self.launched = False
         self._logs: List[str] = []
