@@ -9,3 +9,9 @@ Thanks for your interest in improving Windows AI!
 - **Do not merge manually.** All changes must go through the queue.
 
 Please ensure tests pass locally before requesting a review.
+
+## Branching and Rebasing
+
+- Create feature branches from `main`.
+- Before pushing, run `git fetch origin && git rebase origin/main`.
+- Resolve conflicts locally before opening or refreshing a PR.
