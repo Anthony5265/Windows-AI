@@ -7,13 +7,15 @@ will invoke the associated installation commands.
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
-CATALOG_PATH = Path(__file__).resolve().parents[2] / "plugins" / "catalog.json"
+DEFAULT_CATALOG_PATH = Path(__file__).resolve().parents[2] / "plugins" / "catalog.json"
+CATALOG_PATH = Path(os.environ.get("WINDOWS_AI_PLUGIN_CATALOG", DEFAULT_CATALOG_PATH))
 
 
 @dataclass

@@ -63,6 +63,12 @@ python -m installer.cli --install-all
 
 The GUI's **Install All** button performs the same operation.
 
+### Custom Plugin Catalog
+
+The plugin manager reads its catalog from ``plugins/catalog.json`` by default.
+Set the ``WINDOWS_AI_PLUGIN_CATALOG`` environment variable to override this
+path when testing or using a custom catalog.
+
 ## Configuration Examples
 
 A plugin declares the packages it needs in a small Python module. Place the file
