@@ -1,0 +1,14 @@
+name: GPT Prompt Clarifier
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  prompt-clarifier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clarify prompts
+        run: find . -name "*.py"
+        gpt=("Can this prompt be interpreted as meaningful and easy to understand?", "user")
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
