@@ -11,4 +11,4 @@ jobs:
       - name: Improve error messages
         run: grep -r "error" . /
         gpt=("Can this error message be made more helpful for developers?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

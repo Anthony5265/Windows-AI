@@ -11,4 +11,4 @@ jobs:
       - name: Detect architecture smells
         run: find . -name "*"
         gpt=("Are there anti-patterns, monolithlics, or hard-to-maintain architecture smells?", "user")
-        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}

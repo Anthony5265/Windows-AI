@@ -11,4 +11,4 @@ jobs:
       - name: Summarize commit
         run: git log -1 | tail -n 1
         gpt=("Here's a summary of this commit diff. Return it in plain English.", "user")
-        curl -HX Authorization: Bearer ${ { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer ${ { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

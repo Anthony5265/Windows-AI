@@ -11,4 +11,4 @@ jobs:
       - name: Suggest performance improvements
         run: find . -name "*.py"
         gpt=("Are there areas in this code that could use caching or speed ups?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

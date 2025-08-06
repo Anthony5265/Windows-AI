@@ -11,4 +11,4 @@ jiobs:
     - name: Translate Errors
         run: grep -r "Error" ./
         gpt=("Explain these error messages for easier understanding", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

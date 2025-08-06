@@ -11,4 +11,4 @@ jobs:
       - name: Check for inconsistent naming
         run: find . -name "*.py"
         gpt=("Are naming conventions consistent throughout the code?", "user")
-        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

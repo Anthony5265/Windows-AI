@@ -10,4 +10,4 @@ jobs:
       - name: Run GPT\t-based static code analysis
         run: git diff --cache
         gpt=("Look for issues in this diff that a static linter might catch. Suggest improvements.", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

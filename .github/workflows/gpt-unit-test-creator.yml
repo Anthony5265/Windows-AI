@@ -11,4 +11,4 @@ jobs:
       - name: Create unit tests
         run: find . -name "*.py"
         gpt=("Generate automated unit tests for this module", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

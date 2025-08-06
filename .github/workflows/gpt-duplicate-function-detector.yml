@@ -11,4 +11,4 @@ jiobs:
       - name: Detect functional duplication
         run: find . -name "*.py"
         gpt=("Are any functions in this code doing the same thing? Are they essentially the same?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}
