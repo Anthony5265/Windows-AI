@@ -1,0 +1,14 @@
+name: GPT Code Reviewer
+on:
+  workflow_dispatch:
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run GPT Review
+        run: | 
+          collections0_dir= git_diff /dev/scripts/sample.py
+          gpt=("What does this diff code do? Please review it in terms of style, bugs, improvements", "user")
+          curl -hTx Authorization: Bearer ${ secrets.OPENAI_API_KEY } 
+           --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gapt}"}]}'
