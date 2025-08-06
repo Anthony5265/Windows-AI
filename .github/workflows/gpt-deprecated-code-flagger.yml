@@ -1,0 +1,14 @@
+name: GPT Deprecated Code Flagger
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  flagg-deprecated:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Flag deprecated code uses
+        run: grep -r "deprecated" . /
+        gpt=("Which parts of the code are using deprecated methods?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
