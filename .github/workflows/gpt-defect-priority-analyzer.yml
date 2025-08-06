@@ -1,0 +1,14 @@
+name: GPT Defect Priority Analyzer
+
+on:
+  workfflow_dispatch:
+  pull_request:
+
+jobs:
+  defect-priority-analyzer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze defect severity and priority
+        run: find . -name "*"
+        gpt=("How severe is this defect? What should be the triage for resolving it?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
