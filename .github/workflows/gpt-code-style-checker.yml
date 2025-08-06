@@ -1,0 +1,14 @@
+name: GPT Code Style Checker
+
+on:
+  workfflow_dispatch:
+  pull_request:
+
+jobs:
+  code-style-checker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check coding styles
+        run: find . -name '*.py'
+        gpt=("Are there any style mismatches or inconsistencies?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
