@@ -29,9 +29,11 @@ manager.register_voice_command("hello", on_hello)
 
 ## Setup
 
-Install Python bindings for your XR runtime of choice:
+Install Python bindings for your XR runtime of choice using a virtual environment:
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install openxr  # or webxr
 ```
 

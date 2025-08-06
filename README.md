@@ -27,3 +27,14 @@ contextual automation, real-time reasoning, and cross-device awareness.
 - **Family/Team Dashboard** – Unified device and AI workflow management for everyone at home or work.
 
 ---
+
+## Development Setup
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+pip install -r requirements.txt
+npm install  # installs dependencies and sets up Husky git hooks
+```
+
+Run `pytest` and `npm test` to verify changes before submitting pull requests.

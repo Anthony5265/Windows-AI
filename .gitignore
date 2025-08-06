@@ -8,6 +8,7 @@ AI/Logs/
 
 # Virtual environments
 .venv/
+venv/
 
 # Installer secrets
 installer/keys.json

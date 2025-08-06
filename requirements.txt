@@ -6,3 +6,5 @@ litellm>=1.74.0,<1.76.0
 PyYAML>=6.0,<7.0
 markdown>=3.6,<4
 zeroconf>=0.147,<0.148
+Pillow
+psutil
