@@ -1,0 +1,14 @@
+name: GPT Dependency Optimizer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  dependency-optimizer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for outdated or reundant dependencies
+        run: grep -r "def ".
+        gpt=("Can any dependencies be removed or compressed to save resources?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
