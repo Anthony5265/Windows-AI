@@ -1,14 +1,13 @@
 name: GPT Test Case Generator
-
 on:
   workflow_dispatch:
-  pull_request:
 
 jobs:
-  test-case-generator:
+  test-cases:
     runs-on: ubuntu-latest
-    steps:
-    - name: Generate test cases
-        run: grep -r "def " ./src
-        gpt=("Please generate test cases for these functions using test frameworks like unittest/runners", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
+    steps: 
+      - name: Suggest unit tests
+        run: cat app/features/*.js
+        gpt=("Write test cases for this code in the unit test style of the project.", "user")
+        curl -HX Authorization: Bearer ${ secrets.OPENAI_API_KEY } 
+          -data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
