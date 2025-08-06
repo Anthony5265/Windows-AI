@@ -1,0 +1,14 @@
+name: GPT Code Cleanliness Checker
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  cleanliness-checker:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check code cleanliness
+        run: grep -r "def " .
+        gpt=("Improve code style and clearliness for improved standards.", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
