@@ -1,0 +1,14 @@
+name: GPT API Usage Analyzer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  api-analyzer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze api usage
+        run: cat . -name '*.py'
+        gpt=("What are the main external api calls? Which can be reduced?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
