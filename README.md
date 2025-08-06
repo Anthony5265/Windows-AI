@@ -48,3 +48,13 @@ The repository uses a single workflow, [`gpt-review.yml`](.github/workflows/gpt-
 - **commit-summary** – produces a short summary of the most recent changes.
 
 Set the `OPENAI_API_KEY` secret to enable these jobs.
+
+## GitHub Actions Secrets
+
+The GPT-powered workflows require an OpenAI API key.
+
+1. In your repository on GitHub, navigate to **Settings > Secrets and variables > Actions**.
+2. Choose **New repository secret** and name it `OPENAI_API_KEY`.
+3. Paste your OpenAI API key and save.
+
+A lightweight workflow, [`openai-key-check.yml`](.github/workflows/openai-key-check.yml), is available to verify the secret. Run it from the **Actions** tab to confirm the key is configured correctly.
