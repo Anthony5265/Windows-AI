@@ -5,10 +5,10 @@ on:
   pull_request:
 
 jobs:
-  bug-pattern:
+  bug-pattern-detector:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for common bug patterns
-        run: git diff --cache
-        gpt=("Are there any recurrence patterns in this code that might be bug-prone?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+      - name: Scan for common bug patterns
+        run: find . -name '*.py'
+        gpt=("Identify code patterns that may cause bugs", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
