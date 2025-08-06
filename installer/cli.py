@@ -79,6 +79,17 @@ def main() -> None:
         action="store_true",
         help="install plugin dependencies in their own environment",
     )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        "--non-interactive",
+        dest="yes",
+        action="store_true",
+        help=(
+            "run without interactive prompts; defaults API-key actions and declines GUI "
+            "launch"
+        ),
+    )
     args = parser.parse_args()
 
     info = system_info.detect_system()
@@ -111,13 +122,16 @@ def main() -> None:
         performed_action = True
 
     if not performed_action:
-        try:
-            choice = input(
-                "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
-            ).strip().lower()
-        except Exception:
-            logger.exception("Failed to read API key choice")
+        if args.yes:
             choice = "n"
+        else:
+            try:
+                choice = input(
+                    "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
+                ).strip().lower()
+            except Exception:
+                logger.exception("Failed to read API key choice")
+                choice = "n"
 
         if choice == "l":
             keys = api_keys.list_keys()
@@ -147,11 +161,14 @@ def main() -> None:
         install_all()
 
     # Offer to launch the Control Center after setup completes
-    try:
-        launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
-    except Exception:
-        logger.exception("Failed to read launch choice")
+    if args.yes:
         launch = "n"
+    else:
+        try:
+            launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
+        except Exception:
+            logger.exception("Failed to read launch choice")
+            launch = "n"
     if launch in {"y", "yes"}:
         try:
             from control_center.gui import main as launch_gui
