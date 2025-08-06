@@ -18,7 +18,21 @@ _formatter = logging.Formatter(
     "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 )
 _file_handler.setFormatter(_formatter)
-logging.basicConfig(level=logging.INFO, handlers=[_file_handler])
+
+# Configure the root logger level via environment variable.  When the level is
+# set below ``ERROR`` a console handler is added so messages are visible in the
+# terminal as well.  If the provided level is not recognised it defaults to
+# ``ERROR``.
+_level_name = os.getenv("WINDOWS_AI_LOG_LEVEL", "ERROR").upper()
+_root_level = getattr(logging, _level_name, logging.ERROR)
+_handlers = [_file_handler]
+if _root_level < logging.ERROR:
+    _console_handler = logging.StreamHandler()
+    _console_handler.setLevel(_root_level)
+    _console_handler.setFormatter(_formatter)
+    _handlers.append(_console_handler)
+
+logging.basicConfig(level=_root_level, handlers=_handlers)
 
 
 def get_logger(name: str) -> logging.Logger:

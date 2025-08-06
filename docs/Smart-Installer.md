@@ -99,6 +99,18 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "transformers"])
 
 This pseudocode only scratches the surface but illustrates how the installer might check hardware details and install dependencies programmatically.
 
+## Logging
+
+The installer records errors to ``%USERPROFILE%\AI\Logs\installer.log``.  Set
+the ``WINDOWS_AI_LOG_LEVEL`` environment variable (for example ``DEBUG`` or
+``INFO``) to print messages to the console while running:
+
+```
+WINDOWS_AI_LOG_LEVEL=DEBUG python -m installer.cli --install-all
+```
+
+Only when the configured level is below ``ERROR`` are console messages shown.
+
 ## Troubleshooting
 
 - **GUI fails to start** – Ensure ``tkinter`` is installed and that you are not
