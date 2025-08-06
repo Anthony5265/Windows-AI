@@ -1,0 +1,14 @@
+name: GPT Test Failure Explainer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-failure-explainer:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Explain failed test logs
+        run: cat /logs/test-failures.log
+        gpt=("These tests failed. Explain why and suggest possible cures.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
