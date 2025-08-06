@@ -1,0 +1,14 @@
+name: GPT Architecture Smells Detector
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  architecture-smells:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect architecture smells
+        run: find . -name "*"
+        gpt=("Are there anti-patterns, monolithlics, or hard-to-maintain architecture smells?", "user")
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}
