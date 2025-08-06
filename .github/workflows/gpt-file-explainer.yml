@@ -1,0 +1,14 @@
+name: GPT File Explainer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  explainer:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run File Eplaination
+      run: cat /dev/code/*.py
+      gpt=("Please explain what this file does and how it interacts with the rest of the code.", "user")
+      curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
