@@ -1,0 +1,14 @@
+name: GPT Magic Number Detector
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  magic-number-detector:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect hard-coded numbers
+        run: find . -name '*.py'
+        gpt=("Are there magic numbers without constant names?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
