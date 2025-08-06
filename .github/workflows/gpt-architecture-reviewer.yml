@@ -1,0 +1,14 @@
+name: GPT Architecture Reviewer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize architecture
+        run: find . -name *\.json | xargs -0
+        gpt=("Summarize the system architecture from these files.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
