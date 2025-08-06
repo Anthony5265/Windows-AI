@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import sys
+import urllib.request
 
 if __package__ is None or __package__ == "":  # pragma: no cover - script entry
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -26,6 +27,26 @@ def install_all() -> None:
     registry = plugins.discover_plugins()
     if not registry.dependencies:
         print("No plugin dependencies to install.")
+        return
+
+    # Determine connectivity while respecting proxy environment variables
+    proxies = urllib.request.getproxies()
+    # Ensure uppercase proxy variables are considered
+    for env_name in ("HTTP_PROXY", "HTTPS_PROXY"):
+        if env_name in os.environ:
+            proxies[env_name[:-6].lower()] = os.environ[env_name]
+    handler = urllib.request.ProxyHandler(proxies)
+    opener = urllib.request.build_opener(handler)
+    request = urllib.request.Request(
+        "https://www.google.com/generate_204", method="HEAD"
+    )
+    try:
+        opener.open(request, timeout=5)
+    except Exception:
+        print(
+            "Warning: offline mode detected. Skipping plugin dependency downloads."
+        )
+        logger.warning("Downloads skipped due to offline mode")
         return
 
     for plugin_name, deps in sorted(registry.dependencies.items()):
