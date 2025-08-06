@@ -1,0 +1,14 @@
+name: GPT Commit Summarizer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  summarizer:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Summarize commit
+        run: git log -1 | tail -n 1
+        gpt=("Here's a summary of this commit diff. Return it in plain English.", "user")
+        curl -HX Authorization: Bearer ${ { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
