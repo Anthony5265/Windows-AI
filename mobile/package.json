@@ -7,7 +7,7 @@
     "start": "expo start"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-native": "0.73.11"
+    "react": "^19.1.1",
+    "react-native": "^0.80.2"
   }
 }
