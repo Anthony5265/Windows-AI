@@ -1,0 +1,14 @@
+name: GPT Pseudocode Generator
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  pseudocode:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Generate pseudocode from code user
+        run: cat .py|
+        gpt=("Generate procedural blocks of this code in pseudocode form.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
