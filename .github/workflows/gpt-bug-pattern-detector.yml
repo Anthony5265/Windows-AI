@@ -1,0 +1,14 @@
+name: GPT Bug Pattern Detector
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  bug-pattern:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for common bug patterns
+        run: git diff --cache
+        gpt=("Are there any recurrence patterns in this code that might be bug-prone?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
