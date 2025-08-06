@@ -1,0 +1,14 @@
+name: GPT AI Code Auditor
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  ai-code-auditor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit the code with GOPT-
+        run: greg -r "def ".
+        gpt=("What could this code do better? Look for code style, errors, and inconsistencies.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
