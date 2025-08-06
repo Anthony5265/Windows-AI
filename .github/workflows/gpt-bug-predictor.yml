@@ -1,0 +1,14 @@
+name: GPT Bug Predictor
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  bug-predictor:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Analyze code for potential bugs
+        run: grep -r "function " .
+        gpt=("Are there constructs or logic flows that may be prone to bugs?", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
