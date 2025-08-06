@@ -1,0 +1,14 @@
+name: GPT Code Commenter
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Add comments to functions
+        run: grep -r "def " ./src
+        gpt=("Add comments to these functions with short explanations of what they do.", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
