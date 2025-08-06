@@ -1,0 +1,32 @@
+const fs = require('fs');
+
+const apiKey = process.env.OPENAI_API_KEY;
+const prompt = process.env.PROMPT;
+const model = process.env.MODEL || 'gpt-4.1-nano';
+const filePath = process.env.FILE_PATH;
+
+if (!apiKey) {
+  console.error('OPENAI_API_KEY is not set');
+  process.exit(1);
+}
+
+const fileContent = fs.readFileSync(filePath, 'utf8');
+
+const payload = {
+  model,
+  messages: [{ role: 'user', content: `${prompt}\n${fileContent}` }],
+};
+
+(async () => {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  console.log(text);
+})();

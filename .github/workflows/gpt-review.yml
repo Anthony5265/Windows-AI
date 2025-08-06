@@ -19,28 +19,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare commit message
+        run: git log -1 --pretty=%B > commit_message.txt
       - name: Review commit message
+        uses: ./.github/actions/gpt-request
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          git log -1 --pretty=%B > commit_message.txt
-          curl -s -X POST \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{\"model\":\"gpt-4.1-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"Are these commit messages clear, descriptive, and actionable?\\n$(cat commit_message.txt)\"}]}" \
-            https://api.openai.com/v1/chat/completions
+        with:
+          prompt: |
+            Are these commit messages clear, descriptive, and actionable?
+          file_path: commit_message.txt
+          model: gpt-4.1-mini
 
   commit-summary:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Generate diff
+        run: git diff HEAD^ HEAD > changes.diff
       - name: Summarize changes
+        uses: ./.github/actions/gpt-request
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          git diff HEAD^ HEAD > changes.diff
-          curl -s -X POST \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{\"model\":\"gpt-4.1-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"Provide a concise summary of these changes:\\n$(cat changes.diff)\"}]}" \
-            https://api.openai.com/v1/chat/completions
+        with:
+          prompt: |
+            Provide a concise summary of these changes:
+          file_path: changes.diff
+          model: gpt-4.1-mini
