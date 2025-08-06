@@ -1,0 +1,14 @@
+name: GPT UX Copy Reviewer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  ux-copy-review:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Review UX copy
+        run: cat ./src
+        gpt=("Review the user experience text across the app for clarity, tone, and usefulness.", "user")
+        curl -HX Authoriztion: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
