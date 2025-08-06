@@ -1,12 +1,12 @@
 """Expose system information utilities to tests and consumers.
 
-This module wraps :func:`installer.system_info.detect_system` and augments the
-result with a best-effort lookup of operating system accessibility settings.
-The goal is to expose features like screen reader usage or high-contrast
-themes to higher level components so they can adapt their behaviour
-accordingly.  The implementation is intentionally forgiving – failures to
-query the platform are silently ignored and sensible defaults are returned
-instead.
+This module wraps :func:`windows_ai.system_info_core.detect_system` and
+augments the result with a best-effort lookup of operating system
+accessibility settings. The goal is to expose features like screen reader
+usage or high-contrast themes to higher level components so they can adapt
+their behaviour accordingly.  The implementation is intentionally forgiving –
+failures to query the platform are silently ignored and sensible defaults are
+returned instead.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import platform
 import subprocess
 from typing import Any, Dict
 
-from installer.system_info import detect_system as _detect_system
+from .system_info_core import detect_system as _detect_system
 
 
 logger = logging.getLogger(__name__)
