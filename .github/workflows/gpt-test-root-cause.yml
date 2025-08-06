@@ -1,0 +1,14 @@
+name: GPT Test Failure Root Cause Analysis
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  root-cause:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Analyze test log for root cause
+        run: cat /logs/test-failures.log
+        gpt=("Can you diagnose the root cause of these test failures?", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
