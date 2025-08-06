@@ -38,3 +38,13 @@ npm install  # installs dependencies and sets up Husky git hooks
 ```
 
 Run `pytest` and `npm test` to verify changes before submitting pull requests.
+
+## GPT-based Workflows
+
+The repository uses a single workflow, [`gpt-review.yml`](.github/workflows/gpt-review.yml), to run GPT-powered checks:
+
+- **code-review** – runs the ChatGPT Code Review action on pull requests.
+- **commit-message-review** – ensures the latest commit message is clear and actionable.
+- **commit-summary** – produces a short summary of the most recent changes.
+
+Set the `OPENAI_API_KEY` secret to enable these jobs.

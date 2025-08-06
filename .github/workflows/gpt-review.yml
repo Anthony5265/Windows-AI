@@ -1,0 +1,46 @@
+name: GPT Review
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ChatGPT Code Review
+        uses: anc95/ChatGPT-CodeReview@v1.0.22
+        with:
+          openai_key: ${{ secrets.OPENAI_API_KEY }}
+
+  commit-message-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Review commit message
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git log -1 --pretty=%B > commit_message.txt
+          curl -s -X POST \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"model\":\"gpt-4.1-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"Are these commit messages clear, descriptive, and actionable?\\n$(cat commit_message.txt)\"}]}" \
+            https://api.openai.com/v1/chat/completions
+
+  commit-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Summarize changes
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git diff HEAD^ HEAD > changes.diff
+          curl -s -X POST \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"model\":\"gpt-4.1-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"Provide a concise summary of these changes:\\n$(cat changes.diff)\"}]}" \
+            https://api.openai.com/v1/chat/completions
