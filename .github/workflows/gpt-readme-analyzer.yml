@@ -1,0 +1,14 @@
+name: GPT README Analyzer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  readme-analyyzer:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Analyze README
+        run: cat README.md
+        gpt=("Is this README easy to understand? What improvements would benefit a visitor?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
