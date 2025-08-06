@@ -70,8 +70,9 @@ This code omits error handling and advanced features, but it shows a minimal app
 ## Troubleshooting
 
 - **Window does not appear** – Verify that ``tkinter`` is installed and that you
-  have access to a display. On Windows, ``python -m pip install tk`` installs the
-  required libraries.
+  have access to a display. On Windows, create a virtual environment with
+  ``python3 -m venv venv && source venv/bin/activate`` (``venv\\Scripts\\activate`` on
+  Windows) and run ``pip install tk`` to install the required libraries.
 - **Backend errors** – Ensure API keys are stored using the installer or
   environment variables. For local models, confirm the model path is correct and
   that dependencies such as ``transformers`` are installed.

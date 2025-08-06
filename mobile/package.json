@@ -4,10 +4,14 @@
   "private": true,
   "main": "App.js",
   "scripts": {
-    "start": "expo start"
+    "start": "expo start",
+    "prepare": "husky install"
   },
   "dependencies": {
     "react": "^19.1.1",
     "react-native": "^0.80.2"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

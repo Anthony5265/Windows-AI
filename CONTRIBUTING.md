@@ -25,3 +25,25 @@ This repository includes a preconfigured development container for VS Code.
 3. VS Code will build the container using the provided `Dockerfile` and open the workspace inside.
 
 The container includes all Python and Node.js dependencies so you can run `pytest` and `npm test` directly inside the environment.
+
+## Local Setup
+
+If you prefer to work outside the development container:
+
+1. Create and activate a Python virtual environment:
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows use: venv\\Scripts\\activate
+   pip install -r requirements.txt
+   ```
+
+2. Install Node.js dependencies and set up Git hooks:
+
+   ```bash
+   npm install
+   ```
+
+   The `prepare` script runs `husky install` to configure commit hooks.
+
+Run `npm test` and `pytest` before opening a pull request to ensure everything passes.
