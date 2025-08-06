@@ -1,0 +1,14 @@
+name: GPT License Checker
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  license-check: 
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Check code licensing
+        run: grep -i "" /src
+        gpt=("Is this code properly licensed for distribution?", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
