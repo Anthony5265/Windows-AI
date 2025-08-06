@@ -1,0 +1,14 @@
+name: GPT Codebase Summarizer
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  codebase-summarizer:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Summarize codebase
+        run: find . -name '*.py'
+        gpt=("Summarizu utility and content of this codebase.", "user")
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
