@@ -11,4 +11,4 @@ jobs:
       - name: Verify apis against spec or consentions
         run: find . -name '*.py'
         gpt=("Is this code fully compliant with its published API constrakts?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

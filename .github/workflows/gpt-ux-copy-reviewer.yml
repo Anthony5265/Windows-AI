@@ -11,4 +11,4 @@ jobs:
       - name: Review UX copy
         run: cat ./src
         gpt=("Review the user experience text across the app for clarity, tone, and usefulness.", "user")
-        curl -HX Authoriztion: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authoriztion: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

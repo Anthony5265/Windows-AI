@@ -11,4 +11,4 @@ jobs:
     - name: Analyze code for potential bugs
         run: grep -r "function " .
         gpt=("Are there constructs or logic flows that may be prone to bugs?", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

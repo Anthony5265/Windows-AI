@@ -11,4 +11,4 @@ jobs:
       - name: Identify complexity hotspots
         run: find . -name "*.py"
         gpt=("Where are the most complex, line-long, or nested code hotspots?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

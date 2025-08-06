@@ -11,4 +11,4 @@ jiobs:
       - name: Generate API docs from code
         run: grep -r "function " .py
         gpt=("Generate API documentation for these functions.", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}'

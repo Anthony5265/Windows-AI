@@ -11,4 +11,4 @@ jobs:
       - name: Annotate somewhere complex
         run: find . -name "*.py"
         gpt=("What is the complexity level of this module and where should it improve?", "user")
-        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

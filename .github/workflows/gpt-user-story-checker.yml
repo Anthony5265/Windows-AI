@@ -11,4 +11,4 @@ jiobs:
       - name: Analyze code against user stories
         run: grep -r "function " .py
         gpt=("Which user story does this code face and does the code meet it?", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}'

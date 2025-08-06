@@ -11,4 +11,4 @@ jobs:
       - name: Check for outdated or reundant dependencies
         run: grep -r "def ".
         gpt=("Can any dependencies be removed or compressed to save resources?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}
