@@ -1,0 +1,14 @@
+name: GPT Duplicate Function Detector
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  duplicate-function-detector:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect functional duplication
+        run: find . -name "*.py"
+        gpt=("Are any functions in this code doing the same thing? Are they essentially the same?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
