@@ -101,3 +101,64 @@ def test_advanced_configuration(monkeypatch, tk_root):
     assert gui.backend == "remote"
     text = gui.info.get("1.0", tk.END)
     assert "Recommended backend: remote" in text
+
+
+def test_finalize_runs_script_when_admin(monkeypatch, tk_root):
+    from installer.gui_installer import GUIInstaller
+
+    gui = GUIInstaller(root=tk_root)
+
+    monkeypatch.setattr(GUIInstaller, "_is_admin", lambda self: True)
+
+    called = {}
+
+    def fake_run(self):
+        called["ran"] = True
+
+    monkeypatch.setattr(GUIInstaller, "_run_install_script", fake_run)
+    monkeypatch.setattr(
+        "installer.gui_installer.messagebox.showinfo", lambda *a, **k: None
+    )
+
+    gui._finalize()
+    tk_root.destroy = lambda: None
+
+    assert called.get("ran") is True
+
+
+def test_finalize_prompts_for_elevation(monkeypatch, tk_root):
+    from installer.gui_installer import GUIInstaller
+    import types
+
+    gui = GUIInstaller(root=tk_root)
+
+    monkeypatch.setattr(GUIInstaller, "_is_admin", lambda self: False)
+
+    prompts = {}
+
+    def fake_askyesno(title, msg):
+        prompts["msg"] = msg
+        return True
+
+    monkeypatch.setattr("installer.gui_installer.messagebox.askyesno", fake_askyesno)
+
+    shell_calls = {}
+
+    def fake_shell_executeW(*args):
+        shell_calls["args"] = args
+        return 0
+
+    shell32 = types.SimpleNamespace(ShellExecuteW=fake_shell_executeW)
+    windll = types.SimpleNamespace(shell32=shell32)
+    monkeypatch.setattr("installer.gui_installer.ctypes", "windll", windll)
+
+    def fail_run(self):
+        raise AssertionError("Should not run install script")
+
+    monkeypatch.setattr(GUIInstaller, "_run_install_script", fail_run)
+
+    gui._finalize()
+    tk_root.destroy = lambda: None
+
+    assert "msg" in prompts
+    assert "args" in shell_calls

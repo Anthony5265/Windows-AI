@@ -8,6 +8,7 @@ it can run in constrained environments.
 from __future__ import annotations
 
 import os
+import ctypes
 import subprocess
 import sys
 import threading
@@ -230,6 +231,15 @@ class GUIInstaller:
         ttk.Button(top, text="Apply", command=apply_config).pack(pady=5)
 
     # --- Finalization -----------------------------------------------------
+    def _is_admin(self) -> bool:
+        """Return True if running with administrator rights."""
+
+        try:
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:  # pragma: no cover - platform dependent
+            # If the API is unavailable (e.g. non-Windows), assume admin.
+            return True
+
     def _run_install_script(self) -> None:
         base = (
             Path(sys.executable).resolve().parent
@@ -255,6 +265,18 @@ class GUIInstaller:
         self.progress.start()
         self.root.update()
         try:
+            if not self._is_admin():
+                self.progress.stop()
+                self.progress.config(mode="determinate", value=0)
+                if messagebox.askyesno(
+                    "Installer",
+                    "Administrator rights required. Relaunch with elevation?",
+                ):
+                    params = " ".join(f'"{arg}"' for arg in sys.argv)
+                    ctypes.windll.shell32.ShellExecuteW(
+                        None, "runas", sys.executable, params, None, 1
+                    )
+                return
             self._run_install_script()
             messagebox.showinfo("Installer", "Setup complete")
         except Exception as exc:  # pragma: no cover - environment specific
