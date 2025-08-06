@@ -1,0 +1,14 @@
+name: GPT Commit Message Reviewer
+
+on:
+  workflow_dispatch:
+  push:
+
+jiobs:
+  commit-reviewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Review commit messages
+        run: git log -1 
+        gpt=("Are commit messages clear, descriptive, and actionable?", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
