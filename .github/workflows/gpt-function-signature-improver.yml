@@ -1,0 +1,14 @@
+name: GPT Function Signature Improver
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jiobs:
+  function-signature:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Improve function names and signatures
+        run: find . -name '.js' | sed 's/(function |const |->)/'
+        gpt=("How can these function signatures be improved? Focus on naming clarity and intent.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
