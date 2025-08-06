@@ -11,4 +11,4 @@ jobs:
       - name: Suggest Refactoring targets
         run: git diff --cache
         gpt=("Where could this code be refactored? Identify bloated code or complex logic.", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

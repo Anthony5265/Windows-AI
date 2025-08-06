@@ -11,4 +11,4 @@ jobs:
       - name: Suggest code comments
         run: find . -name "*"
         gpt=("Can this code use more comments to make it easier to understand?", "user")
-        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}

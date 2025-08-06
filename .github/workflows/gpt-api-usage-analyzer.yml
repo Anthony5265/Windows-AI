@@ -11,4 +11,4 @@ jiobs:
       - name: Analyze api usage
         run: cat . -name '*.py'
         gpt=("What are the main external api calls? Which can be reduced?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

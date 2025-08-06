@@ -11,4 +11,4 @@ jobs:
       - name: Review unit test quality
         run: grep -r "def " ./tests
         gpt=("Review these unit tests for adequacy, coverage, and clarity of assertions", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

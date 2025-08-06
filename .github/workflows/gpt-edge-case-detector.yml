@@ -11,4 +11,4 @@ jiobs:
       - name: Detect untested edge cases
         run: grep -i "return" /src
         gpt=("Are there functions in this code that return flags but lack tests?", "user")
-        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}'
+        curl -HX Authorization: Bearer {{ secrets.OPENAI_API_KEY }} --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}'

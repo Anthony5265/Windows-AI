@@ -11,4 +11,4 @@ jobs:
       - name: Analyze exception patterns
         run: find . -name "*.py"
         gpt=("Are exceptions being handled consistently? Could they indicate dependencies between classes?", "user")
-        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4", "messages": [{"role": "user", "content": "$gpt"}]}
+        curl -HX Authorization: Bearer { secrets.OPENAI_API_KEY } --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "$gpt"}]}

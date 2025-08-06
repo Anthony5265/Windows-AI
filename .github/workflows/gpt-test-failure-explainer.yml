@@ -11,4 +11,4 @@ jobs:
     - name: Explain failed test logs
         run: cat /logs/test-failures.log
         gpt=("These tests failed. Explain why and suggest possible cures.", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}'

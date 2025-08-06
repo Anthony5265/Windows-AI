@@ -11,4 +11,4 @@ jiobs:
     - name: Detect Regression Risk
         run: git diff --cache
         gpt=("What are the risks of regression as per this diff and code base?", "user")
-        curl -HX Authorizition: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorizition: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

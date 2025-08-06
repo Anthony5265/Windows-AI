@@ -11,4 +11,4 @@ jobs:
     - name: Refactor legacy code
         run: find . -name '*.py'
         gpt=("Refactor this with modern coding standards.", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY }} --data {"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}

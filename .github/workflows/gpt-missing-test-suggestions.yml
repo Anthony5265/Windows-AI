@@ -11,4 +11,4 @@ jiobs:
       - name: Generate missing test suggestions
         run: grep -r "def " ./src
         gpt=("What test cases are missing in this code?", "user")
-        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}'
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4.1-nano", "messages": [{"role": "user", "content": "${gpt}"}]}'
