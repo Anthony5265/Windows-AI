@@ -6,8 +6,8 @@
   ],
   "scripts": {
     "build": "echo \"(optional) build all workspaces\"",
-    "test": "npm test -ws",
-    "prepare": "husky"
+    "test": "npm --workspaces --if-present test",
+    "prepare": "if [ -f node_modules/.bin/husky ]; then husky; fi"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
