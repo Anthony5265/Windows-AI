@@ -1,0 +1,14 @@
+name: GPT Refactor Suggestions
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Suggest Refactoring targets
+        run: git diff --cache
+        gpt=("Where could this code be refactored? Identify bloated code or complex logic.", "user")
+        curl -HX Authorization: Bearer { { secrets.OPENAI_API_KEY } } --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gpt}"}]}
