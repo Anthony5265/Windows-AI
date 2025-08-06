@@ -7,8 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run GPT Review
-        run: | 
-          collections0_dir= git_diff /dev/scripts/sample.py
-          gpt=("What does this diff code do? Please review it in terms of style, bugs, improvements", "user")
-          curl -hTx Authorization: Bearer ${ secrets.OPENAI_API_KEY } 
-           --data '{"model": "gpt-4", "messages": [{"role": "user", "content": "${gapt}"}]}'
+        run: |
+          gpt="What does this diff code do? Please review it in terms of style, bugs, improvements"
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"model\":\"gpt-4.1-nano\",\"messages\":[{\"role\":\"user\",\"content\":\"$gpt\"}]}" \
+            https://api.openai.com/v1/chat/completions
