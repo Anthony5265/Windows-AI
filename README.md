@@ -41,7 +41,7 @@ Run `pytest` and `npm test` to verify changes before submitting pull requests.
 
 ## GPT-based Workflows
 
-The repository uses a single workflow, [`gpt-review.yml`](.github/workflows/gpt-review.yml), to run GPT-powered checks:
+All AI-assisted jobs use the `gpt-4.1-nano` model. A single workflow, [`gpt-review.yml`](.github/workflows/gpt-review.yml), runs GPT-powered checks through a reusable [composite action](.github/actions/gpt-request/action.yml):
 
 - **code-review** – runs the ChatGPT Code Review action on pull requests.
 - **commit-message-review** – ensures the latest commit message is clear and actionable.
@@ -57,4 +57,4 @@ The GPT-powered workflows require an OpenAI API key.
 2. Choose **New repository secret** and name it `OPENAI_API_KEY`.
 3. Paste your OpenAI API key and save.
 
-A lightweight workflow, [`openai-key-check.yml`](.github/workflows/openai-key-check.yml), is available to verify the secret. Run it from the **Actions** tab to confirm the key is configured correctly.
+A lightweight workflow, [`openai-key-check.yml`](.github/workflows/openai-key-check.yml), verifies the secret by calling `gpt-4.1-nano`. Run it from the **Actions** tab to confirm the key is configured correctly.
