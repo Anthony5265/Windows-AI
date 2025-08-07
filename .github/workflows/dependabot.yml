@@ -1,11 +1,12 @@
 one:
-  workflow_dispatch:
-
-jobs: 
+  workflow_dispatch: null
+jobs:
   dependabot-update:
     runs-on: schedule
     steps:
-      - name: Rename branch
-        run: git check out --type=head
-      - name: Run Dependabot
-        uses: dependabot/update-go@b3.4.0
+    - name: Rename branch
+      run: git check out --type=head
+    - name: Run Dependabot
+      uses: dependabot/update-go@b3.4.0
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
