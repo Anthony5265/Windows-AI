@@ -12,8 +12,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: ChatGPT Code Review
         uses: anc95/ChatGPT-CodeReview@v1.0.22
-        with:
-          openai_key: ${{ secrets.OPENAI_API_KEY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MODEL: gpt-4.1-nano
 
   commit-message-review:
     runs-on: ubuntu-latest
@@ -29,7 +31,7 @@ jobs:
           prompt: |
             Are these commit messages clear, descriptive, and actionable?
           file_path: commit_message.txt
-          model: gpt-4.1-mini
+          model: gpt-4.1-nano
 
   commit-summary:
     runs-on: ubuntu-latest
@@ -45,4 +47,4 @@ jobs:
           prompt: |
             Provide a concise summary of these changes:
           file_path: changes.diff
-          model: gpt-4.1-mini
+          model: gpt-4.1-nano
