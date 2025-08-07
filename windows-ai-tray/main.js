@@ -7,10 +7,14 @@ function createWindow(){
 }
 app.whenReady().then(() => {
   createWindow();
-  tray = new Tray(null);
+  tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'assets', 'icon.png')));
   tray.setToolTip('Windows AI');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open', click: () => { win.show(); } },
     { label: 'Quit', role: 'quit' }
   ]));
 });
+
+
+const path = require('path');
+const { nativeImage } = require('electron');
