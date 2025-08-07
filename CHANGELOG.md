@@ -1,9 +1,7 @@
 # Changelog
 
-## 20250807-205619
-- Initialized PLAN.md
-- Added rollback and verify scripts
-- Added diagnostic workflow (openai-key-check.yml)
-
-## 2025-08-07 20:56:36 — Phase 0 check
-- Verified Phase 0 scaffold present
+## 2025-08-07 22:02:42 — Phase 1 scaffolding
+- Added windows-ai-agent with CLI and plugins
+- Added tray scaffold
+- Added CI workflow windows-ai-agent-ci.yml
+- Added README.windows-ai.md
