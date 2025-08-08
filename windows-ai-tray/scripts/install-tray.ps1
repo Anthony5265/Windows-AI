@@ -1,8 +1,8 @@
 param([string]$TaskName="WindowsAITray")
-$trayDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$cmd = Join-Path $trayDir "run-tray.cmd"
+$trayScripts = Split-Path -Parent $MyInvocation.MyCommand.Path
+$trayRoot    = Split-Path -Parent $trayScripts
+$cmd = Join-Path $trayRoot "run-tray.cmd"
 try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
-# Use cmd.exe so working dir is correct
 $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$cmd`""
 $trig   = New-ScheduledTaskTrigger -AtLogOn
 $princ  = New-ScheduledTaskPrincipal -UserId "$env:USERNAME" -RunLevel Highest -LogonType Interactive
