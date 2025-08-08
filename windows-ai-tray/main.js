@@ -1,24 +1,25 @@
-app.disableHardwareAcceleration();`nconst { app, Tray, Menu, shell, nativeImage } = require("electron");
+const { app, Tray, Menu, shell, nativeImage } = require("electron");
 const path = require("path");
+app.disableHardwareAcceleration();
 
 const HOST = "127.0.0.1";
 const PORT = 15777;
-const BASE = `http://${HOST}:${PORT}`;
+const BASE = "http://" + HOST + ":" + PORT;
 
-app.setPath("userData", path.join(__dirname, "userdata")); // reduce cache permission issues
+app.setPath("userData", path.join(__dirname, "userdata"));
 
 function iconPath() {
   return path.join(__dirname, "assets", "icon.png");
 }
 
 async function callAgent(pathname, payload) {
-  const url = `${BASE}${pathname}`;
+  const url = BASE + pathname;
   const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload||{})
+    body: JSON.stringify(payload || {})
   });
-  if (!res.ok) throw new Error(`${pathname} ${res.status}`);
+  if (!res.ok) throw new Error(pathname + " " + res.status);
   return await res.json();
 }
 
@@ -28,14 +29,14 @@ function buildMenu(tray) {
       label: "Ask: 'hello from tray'",
       click: async () => {
         try { await callAgent("/ask", { prompt: "hello from tray" }); tray.setToolTip("Asked AI"); }
-        catch (e) { tray.setToolTip("Ask failed"); }
+        catch { tray.setToolTip("Ask failed"); }
       }
     },
     {
       label: "Run: 'Get-Process | Select -First 1'",
       click: async () => {
         try { await callAgent("/sh", { command: "Get-Process | Select-Object -First 1 Name,CPU" }); tray.setToolTip("Command sent"); }
-        catch (e) { tray.setToolTip("Command failed"); }
+        catch { tray.setToolTip("Command failed"); }
       }
     },
     { type: "separator" },
@@ -45,10 +46,7 @@ function buildMenu(tray) {
     },
     {
       label: "Restart Agent Task",
-      click: async () => {
-        const { exec } = require("child_process");
-        exec('schtasks /End /TN "WindowsAIAgent" & schtasks /Run /TN "WindowsAIAgent"');
-      }
+      click: () => require("child_process").exec('schtasks /End /TN "WindowsAIAgent" & schtasks /Run /TN "WindowsAIAgent"')
     },
     { type: "separator" },
     { label: "Quit", role: "quit" }
@@ -63,12 +61,10 @@ app.whenReady().then(() => {
   tray.setContextMenu(buildMenu(tray));
   tray.setToolTip("Windows AI");
 
-  // Health ping
   const ping = async () => {
     try {
-      const res = await fetch(`${BASE}/health`);
-      if (res.ok) tray.setToolTip("Windows AI: online");
-      else tray.setToolTip("Windows AI: degraded");
+      const res = await fetch(BASE + "/health");
+      tray.setToolTip(res.ok ? "Windows AI: online" : "Windows AI: degraded");
     } catch {
       tray.setToolTip("Windows AI: offline");
     }
