@@ -96,3 +96,55 @@ def test_load_key_no_backend(tmp_path, monkeypatch):
     monkeypatch.setattr(api_keys, "FERNET_KEY_FILE", str(tmp_path / "fernet.key"))
 
     assert api_keys.load_key("svc") is None
+
+
+def test_migrate_file_to_keyring(tmp_path, monkeypatch):
+    """Existing file-stored keys are copied to keyring when available."""
+
+    import importlib
+    import os
+    import sys
+    import types
+
+    # Initial environment uses the encrypted file backend
+    monkeypatch.setattr(api_keys, "win32cred", None)
+    monkeypatch.setattr(api_keys, "keyring", None)
+    monkeypatch.setattr(api_keys, "Fernet", DummyFernet)
+    config_dir = tmp_path / ".windows_ai"
+    monkeypatch.setattr(api_keys, "CONFIG_DIR", str(config_dir))
+    monkeypatch.setattr(api_keys, "ENC_FILE", str(config_dir / "keys.enc"))
+    monkeypatch.setattr(api_keys, "FERNET_KEY_FILE", str(config_dir / "fernet.key"))
+    api_keys.save_key("svc", "secret")
+    assert os.path.exists(api_keys.ENC_FILE)
+
+    # Simulate installation of keyring and reload module
+    store: dict = {}
+
+    def set_password(service, username, password):
+        store[(service, username)] = password
+
+    def get_password(service, username):
+        return store.get((service, username))
+
+    def delete_password(service, username):
+        store.pop((service, username), None)
+
+    keyring_mod = types.SimpleNamespace(
+        set_password=set_password,
+        get_password=get_password,
+        delete_password=delete_password,
+    )
+    errors_mod = types.SimpleNamespace(KeyringError=Exception)
+    keyring_mod.errors = errors_mod
+    monkeypatch.setitem(sys.modules, "keyring", keyring_mod)
+    monkeypatch.setitem(sys.modules, "keyring.errors", errors_mod)
+    fernet_mod = types.SimpleNamespace(Fernet=DummyFernet)
+    monkeypatch.setitem(sys.modules, "cryptography", types.SimpleNamespace(fernet=fernet_mod))
+    monkeypatch.setitem(sys.modules, "cryptography.fernet", fernet_mod)
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    importlib.reload(api_keys)
+
+    assert store[("svc", api_keys._USERNAME)] == "secret"
+    assert not os.path.exists(api_keys.ENC_FILE)
+    assert api_keys.load_key("svc") == "secret"
