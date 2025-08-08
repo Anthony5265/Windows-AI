@@ -262,6 +262,39 @@ def delete_key(service: str) -> bool:
     return existed
 
 
+def migrate_keys(old_backend: str, new_backend: str) -> None:
+    """Copy keys from ``old_backend`` to ``new_backend``.
+
+    Currently only the file backend supports enumeration of all stored
+    services.  Migration therefore reads the encrypted file store directly
+    and writes each key using :func:`save_key`, which persists the value to
+    the most secure available backend.
+    """
+
+    if old_backend == new_backend:
+        return
+
+    if old_backend != "file":
+        logger.debug("Migration from %s not supported", old_backend)
+        return
+
+    store = _load_file_store()
+    if not store:
+        return
+
+    for svc, key in store.items():
+        try:
+            save_key(svc, key)
+        except Exception:  # pragma: no cover - unlikely failures
+            logger.exception("Failed to migrate key for %s", svc)
+
+    for path in (ENC_FILE, FERNET_KEY_FILE):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
 def prompt_and_save() -> None:
     """Interactively prompt the user for an API key and save it."""
 
@@ -281,12 +314,25 @@ def prompt_and_save() -> None:
     print(f"Saved {service} key")
 
 
+_CURRENT_BACKEND = (
+    "win32cred"
+    if IS_WINDOWS and win32cred is not None
+    else "keyring"
+    if keyring is not None
+    else "file"
+)
+if _CURRENT_BACKEND != "file":
+    if _load_file_store():
+        migrate_keys("file", _CURRENT_BACKEND)
+
+
 __all__ = [
     "load_key",
     "save_key",
     "list_keys",
     "delete_key",
     "prompt_and_save",
+    "migrate_keys",
     "CONFIG_DIR",
     "ENC_FILE",
     "FERNET_KEY_FILE",
