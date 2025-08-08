@@ -12,7 +12,8 @@
     "dev": "node src/agent.js --verbose",
     "test": "node src/tests/smoke.js",
     "link": "npm link",
-    "lint": "echo \"(placeholder) add eslint if desired\" && exit 0"
+    "lint": "echo \"(placeholder) add eslint if desired\" && exit 0",
+    "start:server": "node ./bin/wai-server.js --listen=127.0.0.1:15777"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
