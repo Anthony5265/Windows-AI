@@ -10,40 +10,12 @@ Thanks for your interest in improving Windows AI!
 
 Please ensure tests pass locally before requesting a review.
 
-## Branching and Rebasing
+## Pre-commit
 
-- Create feature branches from `main`.
-- Before pushing, run `git fetch origin && git rebase origin/main`.
-- Resolve conflicts locally before opening or refreshing a PR.
+We use [pre-commit](https://pre-commit.com/) to manage formatting and linting. Install and run the hooks before committing:
 
-## Development Container
-
-This repository includes a preconfigured development container for VS Code.
-
-1. Install Docker, VS Code, and the Dev Containers extension.
-2. Open the command palette and run **Dev Containers: Reopen in Container**.
-3. VS Code will build the container using the provided `Dockerfile` and open the workspace inside.
-
-The container includes all Python and Node.js dependencies so you can run `pytest` and `npm test` directly inside the environment.
-
-## Local Setup
-
-If you prefer to work outside the development container:
-
-1. Create and activate a Python virtual environment:
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use: venv\\Scripts\\activate
-   pip install -r requirements.txt
-   ```
-
-2. Install Node.js dependencies and set up Git hooks:
-
-   ```bash
-   npm install
-   ```
-
-   The `prepare` script runs `husky install` to configure commit hooks.
-
-Run `npm test` and `pytest` before opening a pull request to ensure everything passes.
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
