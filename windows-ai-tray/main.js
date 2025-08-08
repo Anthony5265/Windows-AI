@@ -1,4 +1,4 @@
-const { app, Tray, Menu, shell, nativeImage } = require("electron");
+app.disableHardwareAcceleration();`nconst { app, Tray, Menu, shell, nativeImage } = require("electron");
 const path = require("path");
 
 const HOST = "127.0.0.1";
@@ -76,3 +76,4 @@ app.whenReady().then(() => {
   ping();
   setInterval(ping, 5000);
 });
+
