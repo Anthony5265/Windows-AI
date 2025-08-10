@@ -1,1 +1,19 @@
-name: OpenAI Key Checkon:  workflow_dispatch:jobs:  verify:    runs-on: ubuntu-latest    steps:      - name: Test OpenAI API key        env:          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+name: openai-key-check
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/openai-key-check.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Verify OPENAI_API_KEY wired
+        run: |
+          if [ -z "${OPENAI_API_KEY}" ]; then
+            echo "OPENAI_API_KEY is empty"; exit 1
+          fi
+          echo "OPENAI_API_KEY length: ${#OPENAI_API_KEY}"
