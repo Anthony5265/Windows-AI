@@ -1,18 +1,1 @@
-// Simple smoke tests that do not hit external APIs by default.
-import assert from 'assert';
-import * as files from '../plugins/files.js';
-import * as shell from '../plugins/shell.js';
-
-const tmp = './tmp_test.txt';
-const c = Math.random().toString(36).slice(2);
-
-const w = await files.write(tmp, c);
-assert.equal(w.status, 'ok');
-
-const r = await files.read(tmp);
-assert(r.preview.includes(c));
-
-const s = await shell.exec('echo smoke');
-assert(s.out.toLowerCase().includes('smoke'));
-
-console.log('smoke:ok');
+// Simple smoke tests that do not hit external APIs by default.import assert from 'assert';import * as files from '../plugins/files.js';import * as shell from '../plugins/shell.js';const tmp = './tmp_test.txt';const c = Math.random().toString(36).slice(2);const w = await files.write(tmp, c);assert.equal(w.status, 'ok');const r = await files.read(tmp);assert(r.preview.includes(c));const s = await shell.exec('echo smoke');assert(s.out.toLowerCase().includes('smoke'));console.log('smoke:ok');

@@ -1,7 +1,1 @@
-id: git-status-here
-title: Git status (current folder)
-tags: ["git"]
-description: Runs git status in the current working directory.
-inputs: []
-run:
-  mode: shell
+id: git-status-heretitle: Git status (current folder)tags: ["git"]description: Runs git status in the current working directory.inputs: []run:  mode: shell
