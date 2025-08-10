@@ -1,11 +1,1 @@
-one:
-  workflow_dispatch:
-
-jobs: 
-  dependabot-update:
-    runs-on: schedule
-    steps:
-      - name: Rename branch
-        run: git check out --type=head
-      - name: Run Dependabot
-        uses: dependabot/update-go@b3.4.0
+one:  workflow_dispatch:jobs:   dependabot-update:    runs-on: schedule    steps:      - name: Rename branch        run: git check out --type=head      - name: Run Dependabot        uses: dependabot/update-go@b3.4.0
