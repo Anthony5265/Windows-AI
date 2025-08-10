@@ -5,8 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 
-jobs:
-  build:
+jobs:`n  build:`n    env:`n      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     runs-on: windows-latest
 
     steps:
@@ -39,3 +38,4 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
