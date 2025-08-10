@@ -9,6 +9,10 @@ contextual automation, real-time reasoning, and cross-device awareness.
 
 ---
 
+## 🧬 Test Coverage Badge
+
+![Coverage](https://img.shields.io/badge/coverage-unknown-lightgrey)
+
 ## 🧬 Key Features & One-Click Actions
 
 ### **🌐 Universal AI OS Overlay**
@@ -19,6 +23,7 @@ contextual automation, real-time reasoning, and cross-device awareness.
 - **AI Settings/Control Panel** – Let AI tune power, performance, accessibility, privacy, and UI themes for you.
 - **AI Start Menu & Launcher** – Voice-search, summarize, or batch-launch apps and workflows.
 - **AI Notification Center** – Summarized, actionable notifications; “Remind me,” “Schedule meeting,” or “Take note.”
+
 
 ## **🧠 AI Mesh and Automation**
 - **One-click Mesh Expansion** – Instantly add new PCs, laptops, VMs, and smart devices to your Windows AI network.
