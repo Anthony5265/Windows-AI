@@ -39,3 +39,10 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
+      - name: Build installers
+        shell: pwsh
+        run: |
+          ./build_installer.ps1
+          if (-not (Test-Path 'dist_x86/WindowsAI_Installer_x86.exe')) { throw 'x86 build failed' }
+          if (-not (Test-Path 'dist_x64/WindowsAI_Installer_x64.exe')) { throw 'x64 build failed' }
