@@ -1,62 +1,84 @@
-Write-Host "Installing Windows AI services..."
-
-function Ensure-Tool {
+function Get-ToolVersion {
     param(
         [string]$Command,
-        [scriptblock]$Installer
+        [string[]]$Arguments
     )
-    if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
-        Write-Host "$Command not found, attempting download..."
-        & $Installer
-    }
-}
 
-Ensure-Tool 'nssm.exe' {
-    $url = 'https://nssm.cc/release/nssm-2.24.zip'
-    $zip = Join-Path $env:TEMP 'nssm.zip'
-    Invoke-WebRequest $url -OutFile $zip
-    $dir = Join-Path $env:ProgramData 'nssm'
-    Expand-Archive $zip -DestinationPath $dir -Force
-    $nssmExe = Get-ChildItem $dir -Recurse -Filter nssm.exe | Select-Object -First 1
-    if ($nssmExe) {
-        $env:PATH = "$($nssmExe.Directory.FullName);$env:PATH"
-    }
-}
-
-Ensure-Tool 'mkcert' {
-    $url = 'https://github.com/FiloSottile/mkcert/releases/latest/download/mkcert.exe'
-    $exe = Join-Path $env:ProgramData 'mkcert.exe'
-    Invoke-WebRequest $url -OutFile $exe
-    $env:PATH = "$env:ProgramData;$env:PATH"
-}
-
-Ensure-Tool 'node' {
-    $url = 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi'
-    $msi = Join-Path $env:TEMP 'node.msi'
-    Invoke-WebRequest $url -OutFile $msi
-    Start-Process msiexec.exe -ArgumentList '/i',$msi,'/quiet','/norestart' -Wait
-}
-
-# Start a new snapshot so we can rollback these actions later
-if (Get-Command python -ErrorAction SilentlyContinue) {
-    python -m installer.snapshot create
-}
-
-if (Get-Command nssm.exe -ErrorAction SilentlyContinue) {
-    nssm install WindowsAIService "node" "apps\server.js"
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        python -m installer.snapshot record service WindowsAIService
-    }
-}
-if (Get-Command mkcert -ErrorAction SilentlyContinue) {
-    mkcert -install
-}
-if (Get-Command New-NetFirewallRule -ErrorAction SilentlyContinue) {
     try {
-        New-NetFirewallRule -DisplayName "Windows AI" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 | Out-Null
-        if (Get-Command python -ErrorAction SilentlyContinue) {
-            python -m installer.snapshot record firewall 'Windows AI'
-        }
-    } catch {}
+        $output = & $Command @Arguments 2>&1
+    } catch {
+        return $null
+    }
+
+    $match = $output | Select-String -Pattern '\d+(\.\d+)+'
+    if ($match) {
+        return [Version]$match.Matches[0].Value
+    }
+    return $null
 }
-Write-Host "Install complete."
+
+function Require-MinVersion {
+    param(
+        [string]$Name,
+        [string]$Command,
+        [Version]$Minimum,
+        [string[]]$Arguments
+    )
+
+    $version = Get-ToolVersion -Command $Command -Arguments $Arguments
+    if (-not $version) {
+        throw "Unable to determine $Name version."
+    }
+    Write-Host "$Name version $version"
+    if ($version -lt $Minimum) {
+        throw "$Name $Minimum or later is required."
+    }
+    return $version
+}
+
+function Invoke-WindowsAIInstall {
+    Write-Host "Installing Windows AI services..."
+
+    $minPSVersion = [Version]'5.1'
+    $minNssmVersion = [Version]'2.24'
+    $minMkcertVersion = [Version]'1.4.0'
+
+    Write-Host "PowerShell version $($PSVersionTable.PSVersion)"
+    if ($PSVersionTable.PSVersion -lt $minPSVersion) {
+        throw "PowerShell $minPSVersion or later is required."
+    }
+
+    # Start a new snapshot so we can rollback these actions later
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        python -m installer.snapshot create
+    }
+
+    if (Get-Command nssm.exe -ErrorAction SilentlyContinue) {
+        Require-MinVersion -Name 'nssm' -Command 'nssm.exe' -Minimum $minNssmVersion -Arguments 'version'
+        nssm install WindowsAIService "node" "apps\server.js"
+        if (Get-Command python -ErrorAction SilentlyContinue) {
+            python -m installer.snapshot record service WindowsAIService
+        }
+    }
+
+    if (Get-Command mkcert -ErrorAction SilentlyContinue) {
+        Require-MinVersion -Name 'mkcert' -Command 'mkcert' -Minimum $minMkcertVersion -Arguments '--version'
+        mkcert -install
+    }
+
+    if (Get-Command New-NetFirewallRule -ErrorAction SilentlyContinue) {
+        try {
+            New-NetFirewallRule -DisplayName "Windows AI" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 | Out-Null
+            if (Get-Command python -ErrorAction SilentlyContinue) {
+                python -m installer.snapshot record firewall 'Windows AI'
+            }
+        } catch {}
+    }
+
+    Write-Host "Install complete."
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    Invoke-WindowsAIInstall
+}
+
