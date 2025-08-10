@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List
 import urllib.request
-import time
+import logging
 
 
 # ``ModelInfo`` captures metadata about downloadable model files.  Instead of
@@ -189,6 +189,11 @@ def download_model(
             attempt += 1
 
     if info.checksum and not verify_checksum(dest_path, info.checksum):
+        logging.warning("Checksum mismatch for model %s; deleting %s", name, dest_path)
+        try:
+            dest_path.unlink()
+        except FileNotFoundError:
+            pass
         raise ValueError("Checksum mismatch for model " + name)
 
     return dest_path
