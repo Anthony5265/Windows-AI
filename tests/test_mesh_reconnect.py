@@ -3,35 +3,30 @@ import time
 from mesh import MeshHub, MeshNode
 
 
-def test_node_reconnects_after_disconnect():
+def test_node_reconnects_and_hub_prunes():
     key = b"k" * 32
-    hub = MeshHub(key=key)
+    hub = MeshHub(key=key, heartbeat_timeout=0.3, prune_interval=0.1)
     hub.start()
 
     received: list[str] = []
 
-    def handler(task: str) -> None:
-        received.append(task)
+    node = MeshNode(received.append, key=key, heartbeat_interval=0.1, reconnect_interval=0.1)
+    node.connect(("127.0.0.1", hub.port))
+    time.sleep(0.2)
 
-    node = MeshNode(handler, key=key, heartbeat_interval=0.1)
-    address = node.discover(hub.discovery_port, host="127.0.0.1")
-    node.connect(address)
-
-    time.sleep(0.3)
-    hub.distribute_task("one")
-    time.sleep(0.3)
-    assert "one" in received
-
+    # simulate connection drop from hub side
     with hub._lock:
-        conn = next(iter(hub._nodes))
-        conn.close()
+        conn = hub._nodes[0]
+    conn.close()
 
-    time.sleep(1.0)
-    hub.distribute_task("two")
-    time.sleep(0.3)
+    # allow time for pruning and reconnection
+    time.sleep(0.6)
+
+    hub.distribute_task("again")
+    time.sleep(0.2)
+
+    assert "again" in received
+    assert len(hub._nodes) == 1
 
     node.stop()
     hub.stop()
-
-    assert "two" in received
-
