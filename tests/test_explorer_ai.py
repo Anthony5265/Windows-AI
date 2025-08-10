@@ -1,34 +1,52 @@
+import json
 from windows_ai.explorer import ExplorerAI
 
 
 class DummyModel:
     def generate(self, prompt: str) -> str:
-        return f"RESULT:{prompt}"
+        data = json.loads(prompt)
+        recommendations = []
+        for info in data["files"]:
+            if info["extension"] == ".tmp":
+                action = "delete"
+            elif info["size"] > 1024:
+                action = "compress"
+            else:
+                action = "keep"
+            recommendations.append({"name": info["name"], "action": action})
+        return json.dumps(recommendations)
 
 
-def test_suggest_cleanup_records_prompt_and_actions(tmp_path):
+def test_suggest_cleanup_records_prompt(tmp_path):
     model = DummyModel()
     explorer = ExplorerAI(model)
 
-    small = tmp_path / "a.txt"
-    small.write_text("hi")
-    log_file = tmp_path / "b.log"
-    log_file.write_text("log")
-    large = tmp_path / "c.bin"
-    large.write_bytes(b"0" * (1_000_001))
+    tmp_file = tmp_path / "old.tmp"
+    tmp_file.write_text("old")
 
-    result = explorer.suggest_cleanup([str(small), str(log_file), str(large)])
+    big_file = tmp_path / "big.log"
+    big_file.write_bytes(b"x" * 2048)
 
-    prompt = (
-        f"cleanup: {small} ({small.stat().st_size} bytes, .txt), "
-        f"{log_file} ({log_file.stat().st_size} bytes, .log), "
-        f"{large} ({large.stat().st_size} bytes, .bin)"
-    )
+    result = explorer.suggest_cleanup([str(tmp_file), str(big_file)])
+    assert result == [
+        {"name": str(tmp_file), "action": "delete"},
+        {"name": str(big_file), "action": "compress"},
+    ]
 
-    assert result["suggestion"] == f"RESULT:{prompt}"
-    assert explorer.get_logs() == [prompt]
-    assert result["actions"] == {
-        str(small): "none",
-        str(log_file): "delete",
-        str(large): "compress",
+    logs = explorer.get_logs()
+    assert len(logs) == 1
+    prompt = json.loads(logs[0])
+    assert prompt == {
+        "files": [
+            {
+                "name": str(tmp_file),
+                "size": tmp_file.stat().st_size,
+                "extension": ".tmp",
+            },
+            {
+                "name": str(big_file),
+                "size": big_file.stat().st_size,
+                "extension": ".log",
+            },
+        ]
     }
