@@ -1,7 +1,1 @@
-{
-  "name": "Windows AI",
-  "build": {
-    "dockerfile": "../Dockerfile",
-    "context": ".."
-  }
-}
+{  "name": "Windows AI",  "build": {    "dockerfile": "../Dockerfile",    "context": ".."  }}
