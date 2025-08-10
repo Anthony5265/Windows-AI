@@ -71,25 +71,18 @@ class GUIInstaller:
         self.progress.pack(padx=10, pady=10)
         self.root.protocol("WM_DELETE_WINDOW", self._finalize)
 
-        # guide selector
-        guide_frame = tk.Frame(self.root)
-        guide_frame.pack(padx=10, pady=5)
-        ttk.Label(guide_frame, text="Guide:").pack(side=tk.LEFT)
-        self._lang_var = tk.StringVar(value="English")
-        self._guide_paths = {
-            "English": Path(__file__).resolve().parents[1] / "docs" / "README.en.md",
-            "Español": Path(__file__).resolve().parents[1] / "docs" / "README.es.md",
-        }
-        ttk.Combobox(
-            guide_frame,
-            textvariable=self._lang_var,
-            values=list(self._guide_paths.keys()),
-            state="readonly",
-            width=10,
-        ).pack(side=tk.LEFT, padx=5)
-        ttk.Button(guide_frame, text="Open", command=self.open_guide).pack(
-            side=tk.LEFT
-        )
+    @staticmethod
+    def _parse_float(value: str, label: str) -> float | None:
+        """Convert a string to ``float`` while reporting errors."""
+
+        value = value.strip()
+        if not value:
+            return None
+        try:
+            return float(value)
+        except Exception:
+            messagebox.showerror("Configuration", f"{label} must be a number")
+            raise ValueError from None
 
     # --- System detection -------------------------------------------------
     def detect_system(self) -> None:
@@ -236,16 +229,16 @@ class GUIInstaller:
             self.auto_select = auto_var.get()
             self.backend = manual_var.get()
 
-            def _to_float(val: str) -> float | None:
-                try:
-                    return float(val)
-                except Exception:
-                    return None
+            try:
+                vram = self._parse_float(vram_var.get(), "Min VRAM")
+                ram = self._parse_float(ram_var.get(), "Min RAM")
+            except ValueError:
+                return
 
             self.model_specs = {
                 "requires_gpu": req_gpu_var.get(),
-                "min_vram_gb": _to_float(vram_var.get()),
-                "min_ram_gb": _to_float(ram_var.get()),
+                "min_vram_gb": vram,
+                "min_ram_gb": ram,
             }
             top.destroy()
 
