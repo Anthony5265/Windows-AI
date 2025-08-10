@@ -1,0 +1,19 @@
+name: chatgpt-session-log
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "docs/chatgpt-session-log/**"
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure log folder
+        run: |
+          mkdir -p docs/chatgpt-session-log
+          echo "Log check on $(date -u)" >> docs/chatgpt-session-log/_index.md
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(docs): update chatgpt session log index"
