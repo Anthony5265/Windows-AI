@@ -12,10 +12,13 @@ Please ensure tests pass locally before requesting a review.
 
 ## Pre-commit
 
-We use [pre-commit](https://pre-commit.com/) to manage formatting and linting. Install and run the hooks before committing:
+- Create feature branches from `main`.
+- Before pushing, run `git fetch origin && git rebase origin/main`.
+- Resolve conflicts locally before opening or refreshing a PR.
 
-```bash
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
-```
+## Stale Issues and Pull Requests
+
+Issues and pull requests with no activity for 30 days are automatically
+labeled `stale` and will be closed after another 30 days without activity.
+Any comment or code change removes the `stale` label and resets the timer.
+Keep the conversation going or add updates to avoid automatic closing.
