@@ -25,7 +25,7 @@ class InputManager:
         self._gestures[name] = callback
 
     def unregister_gesture(self, name: str) -> None:
-        """Remove any gesture callback associated with ``name``."""
+        """Remove the gesture callback associated with ``name`` if present."""
 
         self._gestures.pop(name, None)
 
@@ -35,7 +35,7 @@ class InputManager:
         self._voice[phrase.lower()] = callback
 
     def unregister_voice_command(self, phrase: str) -> None:
-        """Remove any voice callback associated with ``phrase``."""
+        """Remove the voice callback associated with ``phrase`` if present."""
 
         self._voice.pop(phrase.lower(), None)
 
