@@ -1,7 +1,0 @@
-name: two-llms
-steps:
-  - llm: local.small
-    id: ideate
-    with: { prompt: "Ideas for Windows AI features" }
-  - llm: cloud.large
-    with: { prompt: "Expand: {{ steps.ideate.text }}" }
