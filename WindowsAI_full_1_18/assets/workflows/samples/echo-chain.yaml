@@ -1,9 +1,0 @@
-name: echo-chain
-steps:
-  - tool: echo
-    id: a
-    with: { text: "hello" }
-  - llm: local.small
-    id: b
-    with:
-      prompt: "transform: {{ steps.a.result.text }}"
