@@ -1,0 +1,10 @@
+appId: com.windowsai.gui
+productName: WindowsAI
+directories:
+  output: dist
+files:
+  - "**/*"
+  - "!dist/*"
+win:
+  target: [zip, dir]
+  artifactName: "WindowsAI-${version}-${arch}.${ext}"
