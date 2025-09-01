@@ -1,1 +1,58 @@
-{  "plugins": [    {      "name": "CustomChain",      "description": "Framework for building LLM-powered applications.",      "command": "pip install customchain",      "paid": false,      "metadata": {"version": "0.1.0", "author": "WindowsAI"},      "rating": 4.5,      "dependencies": []    },    {      "name": "FlowTool",      "description": "Workflow automation and integration platform.",      "command": "npm install -g flowtool",      "paid": true,      "metadata": {"version": "1.2.0", "author": "WindowsAI"},      "rating": 4.0,      "dependencies": []    },    {      "name": "GPUShell",      "description": "GPU-accelerated terminal with modern features.",      "command": "brew install gpushell",      "paid": false,      "metadata": {"version": "0.5.0", "author": "WindowsAI"},      "rating": 4.2,      "dependencies": []    }  ]}
+{
+  "plugins": [
+    {
+      "name": "CustomChain",
+      "description": "Framework for building LLM-powered applications.",
+      "command": "pip install customchain",
+      "paid": false,
+      "metadata": {"version": "0.1.0", "author": "WindowsAI"},
+      "rating": 4.5,
+      "dependencies": []
+    },
+    {
+      "name": "FlowTool",
+      "description": "Workflow automation and integration platform.",
+      "command": "npm install -g flowtool",
+      "paid": true,
+      "metadata": {"version": "1.2.0", "author": "WindowsAI"},
+      "rating": 4.0,
+      "dependencies": []
+    },
+    {
+      "name": "GPUShell",
+      "description": "GPU-accelerated terminal with modern features.",
+      "command": "brew install gpushell",
+      "paid": false,
+      "metadata": {"version": "0.5.0", "author": "WindowsAI"},
+      "rating": 4.2,
+      "dependencies": []
+    },
+    {
+      "name": "Ollama",
+      "description": "Run large language models locally.",
+      "command": "npm install -g ollama",
+      "paid": false,
+      "metadata": {"version": "0.1.0", "author": "Ollama"},
+      "rating": 4.6,
+      "dependencies": []
+    },
+    {
+      "name": "sentence-transformers",
+      "description": "Sentence embeddings for tasks like semantic search.",
+      "command": "pip install sentence-transformers",
+      "paid": false,
+      "metadata": {"version": "2.2.2", "author": "HuggingFace"},
+      "rating": 4.7,
+      "dependencies": []
+    },
+    {
+      "name": "llama-index",
+      "description": "Data framework for LLM apps.",
+      "command": "pip install llama-index",
+      "paid": false,
+      "metadata": {"version": "0.10.0", "author": "LlamaIndex"},
+      "rating": 4.3,
+      "dependencies": []
+    }
+  ]
+}
