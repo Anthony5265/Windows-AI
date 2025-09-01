@@ -6,3 +6,7 @@ litellm>=1.74.0,<1.76.0
 PyYAML>=6.0,<7.0
 markdown>=3.6,<4
 psutil>=5.9,<8
+llama-cpp-python==0.3.16
+langchain==0.3.27
+llama-index==0.13.3
+sentence-transformers==5.1.0
