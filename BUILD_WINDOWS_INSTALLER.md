@@ -80,3 +80,24 @@ python -m installer.cli --non-interactive
 When repository changes occur, rerun the build script to generate an updated
 installer. The script can be extended to include new assets or additional
 PyInstaller options as features evolve.
+
+## Programmatic framework installation
+
+The :mod:`updater` module now provides an
+``install_framework(name, version, model_urls=None, models_dir=None)``
+helper. It installs a Python package via ``pip`` in a sanitized
+environment and optionally downloads model files to a configurable
+directory (defaulting to ``install_dir/models``). This is useful when the
+installer needs to pull in machine learning frameworks and associated
+model weights at runtime.
+
+```python
+from updater import Updater
+
+up = Updater()
+up.install_framework(
+    "torch",
+    "2.2.0",
+    model_urls=["https://example.com/model.bin"],
+)
+```
