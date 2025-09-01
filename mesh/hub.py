@@ -174,7 +174,7 @@ class MeshHub:
                         conn.close()
                     except Exception:
                         pass
-                    del self._nodes[conn]
+                    self._nodes.remove(conn)
 
     # ----------------------------------------------------------- heartbeat
     def _node_listener(self, conn: socket.socket) -> None:
@@ -204,17 +204,4 @@ class MeshHub:
             conn.close()
         except Exception:
             pass
-
-    def _prune_loop(self) -> None:
-        while self._running:
-            time.sleep(1)
-            now = time.time()
-            with self._lock:
-                for conn, ts in list(self._nodes.items()):
-                    if now - ts > self._timeout:
-                        try:
-                            conn.close()
-                        except Exception:
-                            pass
-                        del self._nodes[conn]
 
