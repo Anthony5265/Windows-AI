@@ -11,10 +11,11 @@ from typing import Dict, Optional
 
 try:  # pragma: no cover - import may fail on headless systems
     import tkinter as tk  # type: ignore
-    from tkinter import ttk  # type: ignore
+    from tkinter import ttk, messagebox  # type: ignore
 except Exception:  # pragma: no cover - environment specific
     tk = None  # type: ignore[assignment]
     ttk = None  # type: ignore[assignment]
+    messagebox = None  # type: ignore[assignment]
 
 from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
@@ -385,6 +386,11 @@ class ChatGUI:
                 "".join("██" if cell else "  " for cell in row) for row in qr.get_matrix()
             )
             tk.Label(win, font=("Courier", 1), text=ascii_qr).pack(padx=5, pady=5)
+        elif messagebox:
+            messagebox.showwarning(
+                "Mobile Pairing",
+                "Install 'qrcode' to enable QR-code display.",
+            )
         ttk.Label(win, text=f"Token: {token}").pack(padx=5, pady=5)
 
     # -------------------------------------------------------------- Marketplace

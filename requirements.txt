@@ -6,3 +6,4 @@ litellm>=1.74.0,<1.76.0
 PyYAML>=6.0,<7.0
 markdown>=3.6,<4
 psutil>=5.9,<8
+qrcode>=7.4,<8
