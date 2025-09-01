@@ -5,6 +5,15 @@ extend the Control Center with new capabilities such as model integrations or
 automation tools.  Community contributions are welcome—use the guidelines below
 to add your plugin.
 
+## Built-in Framework Plugins
+
+The default catalog ships with common AI frameworks to jump-start development:
+
+- **Transformers** – `pip install transformers`
+- **Torch** – `pip install torch`
+- **TensorFlow** – `pip install tensorflow`
+- **LangChain** – `pip install langchain`
+
 ## Adding a Plugin
 
 1. Edit `plugins/catalog.json` and append a new entry under the `plugins`

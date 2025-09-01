@@ -1,1 +1,88 @@
-{  "plugins": [    {      "name": "CustomChain",      "description": "Framework for building LLM-powered applications.",      "command": "pip install customchain",      "paid": false,      "metadata": {"version": "0.1.0", "author": "WindowsAI"},      "rating": 4.5,      "dependencies": []    },    {      "name": "FlowTool",      "description": "Workflow automation and integration platform.",      "command": "npm install -g flowtool",      "paid": true,      "metadata": {"version": "1.2.0", "author": "WindowsAI"},      "rating": 4.0,      "dependencies": []    },    {      "name": "GPUShell",      "description": "GPU-accelerated terminal with modern features.",      "command": "brew install gpushell",      "paid": false,      "metadata": {"version": "0.5.0", "author": "WindowsAI"},      "rating": 4.2,      "dependencies": []    }  ]}
+{
+  "plugins": [
+    {
+      "name": "CustomChain",
+      "description": "Framework for building LLM-powered applications.",
+      "command": "pip install customchain",
+      "paid": false,
+      "metadata": {
+        "version": "0.1.0",
+        "author": "WindowsAI"
+      },
+      "rating": 4.5,
+      "dependencies": []
+    },
+    {
+      "name": "FlowTool",
+      "description": "Workflow automation and integration platform.",
+      "command": "npm install -g flowtool",
+      "paid": true,
+      "metadata": {
+        "version": "1.2.0",
+        "author": "WindowsAI"
+      },
+      "rating": 4.0,
+      "dependencies": []
+    },
+    {
+      "name": "GPUShell",
+      "description": "GPU-accelerated terminal with modern features.",
+      "command": "brew install gpushell",
+      "paid": false,
+      "metadata": {
+        "version": "0.5.0",
+        "author": "WindowsAI"
+      },
+      "rating": 4.2,
+      "dependencies": []
+    },
+    {
+      "name": "Transformers",
+      "description": "Hugging Face Transformers library.",
+      "command": "pip install transformers",
+      "paid": false,
+      "metadata": {
+        "version": "4.40.0",
+        "author": "HuggingFace"
+      },
+      "rating": 4.8,
+      "dependencies": []
+    },
+    {
+      "name": "Torch",
+      "description": "PyTorch deep learning framework.",
+      "command": "pip install torch",
+      "paid": false,
+      "metadata": {
+        "version": "2.2.0",
+        "author": "PyTorch"
+      },
+      "rating": 4.7,
+      "dependencies": []
+    },
+    {
+      "name": "TensorFlow",
+      "description": "TensorFlow end-to-end ML platform.",
+      "command": "pip install tensorflow",
+      "paid": false,
+      "metadata": {
+        "version": "2.15.0",
+        "author": "Google"
+      },
+      "rating": 4.6,
+      "dependencies": []
+    },
+    {
+      "name": "LangChain",
+      "description": "Framework for developing LLM-powered applications.",
+      "command": "pip install langchain",
+      "paid": false,
+      "metadata": {
+        "version": "0.1.0",
+        "author": "LangChain"
+      },
+      "rating": 4.5,
+      "dependencies": []
+    }
+  ]
+}
