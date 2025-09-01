@@ -50,3 +50,29 @@ def test_suggest_cleanup_records_prompt(tmp_path):
             },
         ]
     }
+
+
+def test_suggest_cleanup_missing_file(tmp_path):
+    model = DummyModel()
+    explorer = ExplorerAI(model)
+
+    existing = tmp_path / "keep.txt"
+    existing.write_text("keep")
+
+    missing = tmp_path / "missing.tmp"  # not created
+
+    result = explorer.suggest_cleanup([str(existing), str(missing)])
+    assert result == [{"name": str(existing), "action": "keep"}]
+
+    logs = explorer.get_logs()
+    assert len(logs) == 1
+    prompt = json.loads(logs[0])
+    assert prompt == {
+        "files": [
+            {
+                "name": str(existing),
+                "size": existing.stat().st_size,
+                "extension": ".txt",
+            }
+        ]
+    }
