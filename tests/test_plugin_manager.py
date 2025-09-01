@@ -13,6 +13,9 @@ def test_catalog_loads_default_manifest():
     plugins = load_catalog()
     names = [p.name for p in plugins]
     assert "CustomChain" in names
+    # newly added framework plugins should be present
+    for framework in ["Transformers", "Torch", "TensorFlow", "LangChain"]:
+        assert framework in names
     # ensure at least one paid plugin exists
     assert any(p.paid for p in plugins)
 
@@ -98,4 +101,30 @@ def test_dependencies_install_first(monkeypatch):
     manager.install(main)
 
     assert calls == [[echo_path, "dep"], [echo_path, "main"]]
+
+
+@pytest.mark.parametrize(
+    "name, package",
+    [
+        ("Transformers", "transformers"),
+        ("Torch", "torch"),
+        ("TensorFlow", "tensorflow"),
+        ("LangChain", "langchain"),
+    ],
+)
+def test_framework_plugins_install(monkeypatch, name, package):
+    """Framework plugins from the catalog should install via pip."""
+    manager = PluginManager()
+    plugin = manager.get_plugin(name)
+    assert plugin is not None
+
+    calls = []
+
+    def fake_run(args, shell, check, cwd, env):
+        calls.append(args)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    manager.install(plugin)
+
+    assert calls == [["pip", "install", package]]
 
