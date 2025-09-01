@@ -28,7 +28,7 @@ Optional but recommended:
 
    The script will:
    - Ensure `pip` and `pyinstaller` are installed
-   - Install Python dependencies from `requirements.txt`
+   - Install Python dependencies from `requirements.txt` (including `llama-cpp-python`, `langchain`, `llama-index`, and `sentence-transformers`)
    - Package `installer/gui_installer.py` into `dist/WindowsAI_Installer.exe`
    - Copy runtime assets (`install`, `plugins`, `assets`, `config`, `control_center`,
      `automation`, `windows_ai`) into the `dist/` folder alongside the executable
