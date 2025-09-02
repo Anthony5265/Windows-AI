@@ -22,8 +22,6 @@ from .system_info_core import detect_system as _detect_system
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
 except Exception:  # pragma: no cover - xr package optional
