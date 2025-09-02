@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Callable
 from urllib.request import urlopen
@@ -76,7 +78,7 @@ class Updater:
         Parameters
         ----------
         version:
-            Version identifier to download.
+            Version identifier to download or a direct URL.
         dest:
             Destination file path.
         progress:
@@ -89,7 +91,11 @@ class Updater:
         """
 
         dest_path = Path(dest)
-        with urlopen(f"{self.base_url}/{version}/package.zip") as resp:
+        if version.startswith("http://") or version.startswith("https://"):
+            url = version
+        else:
+            url = f"{self.base_url}/{version}/package.zip"
+        with urlopen(url) as resp:
             header = None
             if hasattr(resp, "getheader"):
                 try:
@@ -117,6 +123,49 @@ class Updater:
             raise ValueError("Checksum mismatch for downloaded package")
 
         return dest_path
+
+    def install_framework(
+        self,
+        name: str,
+        version: str,
+        model_urls: list[str] | None = None,
+        models_dir: Path | str | None = None,
+    ) -> None:
+        """Install a Python framework and optional models.
+
+        Parameters
+        ----------
+        name:
+            Package name to install via ``pip``.
+        version:
+            Package version specifier.
+        model_urls:
+            Optional list of model URLs to download.
+        models_dir:
+            Target directory for downloaded models. Defaults to
+            ``install_dir / 'models'``.
+        """
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+                "PIP_NO_INPUT": "1",
+                "PYTHONPATH": "",
+            }
+        )
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", f"{name}=={version}"],
+            check=True,
+            env=env,
+        )
+
+        if model_urls:
+            target = Path(models_dir or self.install_dir / "models")
+            target.mkdir(parents=True, exist_ok=True)
+            for url in model_urls:
+                dest = target / Path(url).name
+                self.download(url, dest)
 
     def verify_checksum(self, file_path: Path | str, expected: str) -> bool:
         """Verify the SHA256 checksum of ``file_path`` against ``expected``."""
