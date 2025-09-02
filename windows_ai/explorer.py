@@ -30,8 +30,12 @@ class ExplorerAI:
 
         file_info: List[Dict[str, Any]] = []
         for path in files:
-            size = os.path.getsize(path)
-            ext = os.path.splitext(path)[1]
+            try:
+                size = os.path.getsize(path)
+                ext = os.path.splitext(path)[1]
+            except OSError:
+                # Skip files that cannot be accessed
+                continue
             file_info.append({"name": path, "size": size, "extension": ext})
 
         prompt = json.dumps({"files": file_info})
