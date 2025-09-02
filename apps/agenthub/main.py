@@ -4,7 +4,11 @@ from fastapi import FastAPI, HTTPException, Request
 import httpx
 
 from windows_ai.agents import DomainAgent, Agent
-from domains import natural_language_processing, audio_processing, computer_vision
+from domains import (
+    natural_language_processing,
+    audio_processing,
+    computer_vision,
+)
 
 app = FastAPI()
 
@@ -26,7 +30,9 @@ class AgentHub:
         try:
             module = DOMAIN_MODULES[domain_key]
         except KeyError as exc:
-            raise HTTPException(status_code=404, detail=f"Unknown domain: {domain_key}") from exc
+            raise HTTPException(
+                status_code=404, detail=f"Unknown domain: {domain_key}"
+            ) from exc
         agent = DomainAgent(module)
         agent.setup()
         self._agents[name] = agent
@@ -46,12 +52,18 @@ class AgentHub:
 
 hub = AgentHub()
 
-ACTIONS_URL = os.getenv("ACTIONS_URL", "http://localhost:3000/api/actions/execute")
-PROXY_URL = os.getenv("PROXY_URL", "http://localhost:11434/v1/chat/completions")
+ACTIONS_URL = os.getenv(
+    "ACTIONS_URL", "http://localhost:3000/api/actions/execute"
+)
+PROXY_URL = os.getenv(
+    "PROXY_URL", "http://localhost:11434/v1/chat/completions"
+)
+
 
 @app.get("/health")
 async def health():
     return {"ok": True}
+
 
 @app.post("/pipeline/sample")
 async def pipeline_sample():
@@ -72,7 +84,10 @@ async def pipeline_sample():
             proxy.raise_for_status()
             proxy_data = proxy.json()
         except httpx.HTTPError as exc:
-            return {"action": action_data, "error": f"Proxy service unreachable: {exc}"}
+            return {
+                "action": action_data,
+                "error": f"Proxy service unreachable: {exc}",
+            }
 
     return {"action": action_data, "proxy": proxy_data}
 
