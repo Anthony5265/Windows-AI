@@ -138,7 +138,7 @@ class MeshHub:
         with self._lock:
             if conn in self._nodes:
                 self._nodes.remove(conn)
-            self._last_heartbeat.pop(conn, None)
+            # `_last_heartbeat` entries are pruned in `_prune_loop`.
         try:
             conn.close()
         except Exception:
