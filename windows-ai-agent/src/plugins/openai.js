@@ -12,8 +12,7 @@ export async function ask(prompt) {
   const c = client();
   const res = await c.responses.create({
     model: 'gpt-4.1-nano',
-    input: prompt,
+    input: prompt
   });
   return res.output_text ?? JSON.stringify(res);
 }
-
