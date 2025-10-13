@@ -109,7 +109,12 @@ def _call_remote_api(audio: Any) -> str:
     # The real function would send ``audio`` to a remote service using HTTP
     # requests.  Importing ``requests`` here keeps the dependency optional until
     # remote execution is actually attempted.
-    import requests  # type: ignore
+    try:  # pragma: no cover - handled in tests
+        import requests  # type: ignore
+    except Exception as exc:  # pragma: no cover
+        raise RuntimeError(
+            "The 'requests' package is required for remote transcription tasks"
+        ) from exc
 
     response = requests.post(
         "https://example.com/api/transcribe", json={"audio": "<binary>"}
