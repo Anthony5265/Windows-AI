@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Iterable, Tuple, Dict, List, Iterable as Iter, Set
+from typing import Iterable, Tuple, Dict, List, Set
 
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -40,7 +40,7 @@ def _parse_requirements(requirements: Iterable[str]) -> Dict[str, List[ParsedReq
     return grouped
 
 
-def _merge_markers(markers: Iter[str | None]) -> str | None:
+def _merge_markers(markers: Iterable[str | None]) -> str | None:
     markers = list(markers)
     if any(m is None for m in markers):
         return None

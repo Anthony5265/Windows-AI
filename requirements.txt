@@ -1,8 +1,11 @@
-fastapi>=0.116,<0.117
+fastapi>=0.116,<0.120
 httpx>=0.28,<0.29
+huggingface_hub>=0.24,<0.36
 respx>=0.22,<0.23
-uvicorn[standard]>=0.30,<0.36
-litellm>=1.74.0,<1.76.0
+uvicorn[standard]>=0.30,<0.38
+litellm>=1.74.0,<1.79.0
 PyYAML>=6.0,<7.0
 markdown>=3.6,<4
 psutil>=5.9,<8
+Pillow>=10,<12
+requests>=2,<3
