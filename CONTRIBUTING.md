@@ -16,6 +16,16 @@ Please ensure tests pass locally before requesting a review.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
 
+## Development Container
+
+This repository includes a VS Code Dev Container configuration to provide a
+consistent development environment.
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and the **Dev Containers** extension.
+2. Open the command palette and run **Dev Containers: Open Folder in Container...** (or **Reopen in Container** if the folder is already open).
+3. Select the repository folder and VS Code will build the container using the provided `Dockerfile`.
+4. After the build completes, all project build and test dependencies are available inside the container.
+
 ## Releases
 
 - Draft releases are updated automatically whenever changes are merged to `main`.
