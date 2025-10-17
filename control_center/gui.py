@@ -162,7 +162,8 @@ class ChatGUI:
         ttk.Button(input_frame, text="Mesh", command=self._open_mesh_config).pack(
             side="left", padx=5
         )
-        ttk.Button(input_frame, text="IoT", command=self._open_iot_window).pack(
+        # IoT management
+        ttk.Button(input_frame, text="IoT", command=self._open_iot_dialog).pack(
             side="left", padx=5
         )
         ttk.Button(
@@ -324,8 +325,8 @@ class ChatGUI:
         )
 
     # ----------------------------------------------------------------- Chat
-    def _open_iot_window(self) -> None:
-        """Open device discovery and pairing window."""
+    def _open_iot_dialog(self) -> None:
+        """Open a dialog for device discovery and pairing."""
 
         win = tk.Toplevel(self.root)
         win.title("Device Discovery")
