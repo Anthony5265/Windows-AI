@@ -1,1 +1,76 @@
-import { spawn } from 'child_process';import fs from 'fs/promises';import os from 'os';import { ValidationError } from './errors';const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd', 'dir', 'type']);export interface ActionRequest {  action: string;  params?: Record<string, any>;}export async function executeAction(req: ActionRequest): Promise<any> {  switch (req.action) {    case 'shell': {      const cmd = req.params?.command;      if (!cmd) throw new ValidationError('Missing command');      if (!/^[-\w\s/.]+$/.test(cmd)) {        throw new ValidationError('Command contains disallowed characters');      }      const [program, ...args] = cmd.trim().split(/\s+/);      if (!ALLOWED_COMMANDS.has(program)) {        throw new ValidationError(`Command not allowed: ${program}`);      }      const isWindows = process.platform === 'win32';      return await new Promise((resolve, reject) => {        const child = spawn(program, args, isWindows ? { shell: true } : undefined);        let stdout = '';        let stderr = '';        child.stdout.on('data', (d) => (stdout += d));        child.stderr.on('data', (d) => (stderr += d));        const timeoutMs = req.params?.timeout_ms ?? 10000;        const timer = setTimeout(() => {          child.kill();          reject(new Error('Command timed out'));        }, timeoutMs);        child.on('error', (err) => {          clearTimeout(timer);          reject(err);        });        child.on('close', (code) => {          clearTimeout(timer);          if (code !== 0) {            reject(new Error(stderr || `Exited with code ${code}`));          } else {            resolve({ stdout });          }        });      });    }    case 'read_file': {      const path = req.params?.path;      if (!path) throw new ValidationError('Missing path');      return { content: await fs.readFile(path, 'utf8') };    }    case 'write_file': {      const path = req.params?.path;      if (!path) throw new ValidationError('Missing path');      const content = req.params?.content ?? '';      await fs.writeFile(path, content, 'utf8');      return { ok: true };    }    case 'get_system_info': {      return {        platform: os.platform(),        arch: os.arch(),        release: os.release()      };    }    default:      throw new ValidationError(`Unknown action: ${req.action}`);  }}
+import { spawn } from 'child_process';
+import fs from 'fs/promises';
+import os from 'os';
+import { ValidationError } from './errors';
+
+const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd', 'dir', 'type']);
+
+export interface ActionRequest {
+  action: string;
+  params?: Record<string, any>;
+}
+
+export async function executeAction(req: ActionRequest): Promise<any> {
+  switch (req.action) {
+    case 'shell': {
+      const cmd = req.params?.command;
+      if (!cmd) throw new ValidationError('Missing command');
+      if (!/^[-\w\s/.]+$/.test(cmd)) {
+        throw new ValidationError('Command contains disallowed characters');
+      }
+      const [program, ...args] = cmd.trim().split(/\s+/);
+      if (!ALLOWED_COMMANDS.has(program)) {
+        throw new ValidationError(`Command not allowed: ${program}`);
+      }
+      const isWindows = process.platform === 'win32';
+      return await new Promise((resolve, reject) => {
+        const spawnProg = isWindows ? 'cmd' : program;
+        const spawnArgs = isWindows ? ['/c', program, ...args] : args;
+        const child = spawn(spawnProg, spawnArgs, isWindows ? { shell: true } : undefined);
+        let stdout = '';
+        let stderr = '';
+        child.stdout.on('data', (d) => (stdout += d));
+        child.stderr.on('data', (d) => (stderr += d));
+        const timeoutMs = req.params?.timeout_ms ?? 10000;
+        const timer = setTimeout(() => {
+          child.kill();
+          reject(new Error('Command timed out'));
+        }, timeoutMs);
+        child.on('error', (err) => {
+          clearTimeout(timer);
+          reject(err);
+        });
+        child.on('close', (code) => {
+          clearTimeout(timer);
+          if (code !== 0) {
+            reject(new Error(stderr || `Exited with code ${code}`));
+          } else {
+            resolve({ stdout });
+          }
+        });
+      });
+    }
+    case 'read_file': {
+      const path = req.params?.path;
+      if (!path) throw new ValidationError('Missing path');
+      return { content: await fs.readFile(path, 'utf8') };
+    }
+    case 'write_file': {
+      const path = req.params?.path;
+      if (!path) throw new ValidationError('Missing path');
+      const content = req.params?.content ?? '';
+      await fs.writeFile(path, content, 'utf8');
+      return { ok: true };
+    }
+    case 'get_system_info': {
+      return {
+        platform: os.platform(),
+        arch: os.arch(),
+        release: os.release(),
+      };
+    }
+    default:
+      throw new ValidationError(`Unknown action: ${req.action}`);
+  }
+}
+
