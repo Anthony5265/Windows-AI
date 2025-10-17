@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import os
 import shutil
 import subprocess
 import tempfile
@@ -211,3 +212,61 @@ class Updater:
         except Exception:
             self.rollback(snapshot)
             raise
+
+    # ------------------------------------------------------------------
+    # High level helpers
+    def fetch_signed_package(
+        self,
+        version: str,
+        dest: Path | str | None = None,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> Path:
+        """Download ``version`` and ensure its signature matches.
+
+        The update archive is downloaded to ``dest`` (or a temporary file)
+        using :meth:`download`.  After the download completes the SHA256
+        digest is verified against the ``package.sig`` file on the update
+        server.  A :class:`ValueError` is raised when the signature does not
+        match and the partially downloaded file is removed.
+        """
+
+        if dest is None:
+            fd, tmp = tempfile.mkstemp(suffix=".zip")
+            os.close(fd)
+            dest_path = Path(tmp)
+        else:
+            dest_path = Path(dest)
+
+        pkg = self.download(version, dest_path, progress=progress)
+        if not self.verify_signature(pkg, version):
+            dest_path.unlink(missing_ok=True)
+            raise ValueError("Signature mismatch for downloaded package")
+        return pkg
+
+    def update(
+        self,
+        version: str | None = None,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> str:
+        """Fetch and install an update package.
+
+        Parameters
+        ----------
+        version:
+            Version identifier to install.  When omitted the latest version
+            advertised by :meth:`latest_version` is used.
+        progress:
+            Optional download progress callback.  See :meth:`download` for the
+            callback signature.
+
+        Returns
+        -------
+        str
+            The version that was installed.
+        """
+
+        version = version or self.latest_version()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pkg = self.fetch_signed_package(version, Path(tmpdir) / "pkg.zip", progress)
+            self.apply_update(pkg)
+        return version
