@@ -16,6 +16,10 @@ Please ensure tests pass locally before requesting a review.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
 
+## Inactive Issues and Pull Requests
+
+Issues and pull requests with no activity for 30 days are automatically labeled `stale` and may be closed after 60 days. Add a comment or push a new commit to keep the discussion active.
+
 ## Releases
 
 - Draft releases are updated automatically whenever changes are merged to `main`.
