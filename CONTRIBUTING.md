@@ -18,9 +18,10 @@ Please ensure tests pass locally before requesting a review.
 
 ## Releases
 
-- Draft releases are updated automatically whenever changes are merged to `main`.
+- Label pull requests so Release Drafter can categorize them (e.g. `feature`, `enhancement`, `bug`, `documentation`, `docs`, `chore`, `refactor`).
+- Draft releases are updated automatically by Release Drafter whenever changes are merged to `main`.
 - To publish a new release:
   1. Open the draft release on GitHub.
-  2. Review and adjust the notes and version as needed.
+  2. Review the generated notes and version, adjusting as needed.
   3. Publish the release to create the tag.
 
