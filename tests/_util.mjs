@@ -8,7 +8,7 @@ export function detectPython(){
   for (const c of candidates){
     const r = spawnSync(c.cmd, c.args, {encoding:'utf8'});
     if (r.status === 0 || (r.stdout && r.stdout.includes('Python')) || (r.stderr && r.stderr.includes('Python'))) {
-      return c;
+      return { cmd: c.cmd, args: [] };
     }
   }
   return { cmd: 'python', args: [] };
