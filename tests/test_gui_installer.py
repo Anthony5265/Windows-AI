@@ -32,12 +32,13 @@ def test_auto_model_selection(monkeypatch, tk_root):
 
     calls = {}
 
-    def fake_select(task, specs):
+    def fake_select(preset, specs):
         calls["specs"] = specs
+        calls["preset"] = preset
         return "local"
 
     monkeypatch.setattr(
-        "installer.gui_installer.model_selector.select_backend", fake_select
+        "installer.gui_installer.model_selector.select_preset", fake_select
     )
 
     gui._detect_worker()
@@ -45,6 +46,7 @@ def test_auto_model_selection(monkeypatch, tk_root):
 
     assert gui.backend == "local"
     assert calls["specs"] == gui.model_specs
+    assert calls["preset"] == gui.preset
     text = gui.info.get("1.0", tk.END)
     assert "Recommended backend: local" in text
 
@@ -65,7 +67,7 @@ def test_manual_mode(monkeypatch, tk_root):
         raise AssertionError("auto selection should not run")
 
     monkeypatch.setattr(
-        "installer.gui_installer.model_selector.select_backend", fail_select
+        "installer.gui_installer.model_selector.select_preset", fail_select
     )
 
     gui._detect_worker()
@@ -87,12 +89,13 @@ def test_advanced_configuration(monkeypatch, tk_root):
         lambda: {"ram_total_gb": 16},
     )
 
-    def fake_select(task, specs):
+    def fake_select(preset, specs):
         assert specs["min_ram_gb"] == 32
+        assert preset == gui.preset
         return "remote"
 
     monkeypatch.setattr(
-        "installer.gui_installer.model_selector.select_backend", fake_select
+        "installer.gui_installer.model_selector.select_preset", fake_select
     )
 
     gui._detect_worker()
