@@ -24,5 +24,21 @@ handlers and alternative input devices.  Voice commands can be processed or
 translated into chat messages, and accessibility devices can inject text directly
 into the chat interface.
 
+### Chat GUI
+
+`control_center.gui.ChatGUI` detects whether Windows has a screen reader or
+high-contrast theme enabled and adjusts its defaults accordingly.  The chat
+window exposes an **Accessibility** panel where users can toggle:
+
+* **Screen reader narration** – speaks chat messages using the system
+  text-to-speech engine.
+* **Speech input** – captures microphone audio and inserts recognized text into
+  the message entry field.
+* **High contrast mode** – switches the chat window to a high contrast color
+  scheme.
+
+These options allow the interface to adapt to individual needs without
+requiring external tools.
+
 These features form the foundation for broader accessibility support and are
 intended to be extended by downstream applications.
