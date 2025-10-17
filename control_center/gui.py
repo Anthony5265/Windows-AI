@@ -7,14 +7,15 @@ to switch between local models and remote APIs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
 
 try:  # pragma: no cover - import may fail on headless systems
     import tkinter as tk  # type: ignore
-    from tkinter import ttk  # type: ignore
+    from tkinter import ttk, messagebox  # type: ignore
 except Exception:  # pragma: no cover - environment specific
     tk = None  # type: ignore[assignment]
     ttk = None  # type: ignore[assignment]
+    messagebox = None  # type: ignore[assignment]
 
 from .backends import Backend, LocalBackend, RemoteBackend
 from . import get_plugins
@@ -81,6 +82,7 @@ class ChatGUI:
         root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
         scheduler: Optional[EcoScheduler] = None,
+        permission_prompt: Optional[Callable[[str, str], bool]] = None,
     ) -> None:
         if tk is None or ttk is None:
             raise RuntimeError("tkinter is not available")
@@ -102,6 +104,8 @@ class ChatGUI:
         # Security
         self.audit_logger = AuditLogger()
         self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
+        prompt_cb = permission_prompt or (lambda _p, _perm: True)
+        self.permission_manager.prompt("control_center", "network", prompt_cb)
         self.dashboard_manager = DashboardManager()
         self.scheduler = scheduler or EcoScheduler()
         self.updater = Updater()
@@ -539,7 +543,12 @@ class ChatGUI:
 
 
 def main() -> None:  # pragma: no cover - CLI helper
-    gui = ChatGUI()
+    def _prompt(plugin: str, perm: str) -> bool:
+        if messagebox is None:
+            return True
+        return messagebox.askyesno("Permission", f"{plugin} requests {perm} access?")
+
+    gui = ChatGUI(permission_prompt=_prompt)
     gui.run()
 
 
