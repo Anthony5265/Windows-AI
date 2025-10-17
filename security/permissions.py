@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
-from typing import Dict, Set
+from typing import Dict, Set, Callable
 
 from .audit import AuditLogger
 
@@ -48,6 +48,30 @@ class PermissionManager:
             raise PermissionError(f"{plugin} lacks {permission} permission")
         if self.audit_logger:
             self.audit_logger.log(plugin, "ALLOW", permission)
+
+    def prompt(
+        self,
+        plugin: str,
+        permission: str,
+        ask: Callable[[str, str], bool],
+    ) -> bool:
+        """Prompt the user via *ask* callback to grant *permission* for *plugin*.
+
+        The callback should return ``True`` to grant the permission. ``False``
+        results in a denial. The decision is audited and stored.
+        """
+
+        if self.has(plugin, permission):
+            if self.audit_logger:
+                self.audit_logger.log(plugin, "ALLOW", permission)
+            return True
+        allowed = ask(plugin, permission)
+        if allowed:
+            self.grant(plugin, permission)
+        else:
+            if self.audit_logger:
+                self.audit_logger.log(plugin, "DENIED", permission)
+        return allowed
 
     # ------------------------------------------------------------ persistence
     def save(self, path: str | Path | None = None) -> None:

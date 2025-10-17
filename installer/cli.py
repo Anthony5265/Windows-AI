@@ -16,13 +16,18 @@ if __package__ is None or __package__ == "":  # pragma: no cover - script entry
 
 from installer import api_keys, env, plugins, system_info
 from installer.logging_config import get_logger
+from security import AuditLogger, PermissionManager
 
 
 logger = get_logger(__name__)
 
 
-def install_all() -> None:
+def install_all(permission_manager: PermissionManager | None = None) -> None:
     """Discover plugins and install their requested dependencies."""
+
+    if permission_manager and not permission_manager.has("installer", "network"):
+        print("Network permission required. Skipping downloads.")
+        return
 
     registry = plugins.discover_plugins()
     if not registry.dependencies:
@@ -92,6 +97,23 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    audit_logger = AuditLogger()
+    permission_manager = PermissionManager(audit_logger=audit_logger)
+
+    def ask_permission(plugin: str, perm: str) -> bool:
+        if args.yes:
+            return False
+        try:
+            choice = input(
+                f"{plugin} requests {perm} access. Allow? [y/N] "
+            ).strip().lower()
+        except Exception:
+            logger.exception("Failed to read permission choice")
+            return False
+        return choice in {"y", "yes"}
+
+    permission_manager.prompt("installer", "network", ask_permission)
+
     info = system_info.detect_system()
     print("Detected system info:")
     print(json.dumps(info, indent=2))
@@ -158,7 +180,7 @@ def main() -> None:
             print("No API key stored.")
 
     if args.install_all:
-        install_all()
+        install_all(permission_manager)
 
     # Offer to launch the Control Center after setup completes
     if args.yes:
