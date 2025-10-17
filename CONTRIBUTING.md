@@ -12,6 +12,11 @@ Please ensure tests pass locally before requesting a review.
 
 ## Pre-commit
 
+This project uses [pre-commit](https://pre-commit.com/) to run linters and formatters.
+
+- Install pre-commit with `pip install pre-commit`.
+- Run `pre-commit install` to set up the git hook.
+- Before pushing, run `pre-commit run --all-files`.
 - Create feature branches from `main`.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
@@ -23,4 +28,3 @@ Please ensure tests pass locally before requesting a review.
   1. Open the draft release on GitHub.
   2. Review and adjust the notes and version as needed.
   3. Publish the release to create the tag.
-
