@@ -16,6 +16,23 @@ Please ensure tests pass locally before requesting a review.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
 
+## Commit Messages
+
+This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+Each commit message should be structured as:
+
+```
+<type>(optional scope): <description>
+```
+
+Examples:
+
+- `feat: add OAuth support`
+- `fix(ui): correct button color`
+- `chore: update dependencies`
+
+Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
+
 ## Releases
 
 - Draft releases are updated automatically whenever changes are merged to `main`.
