@@ -57,3 +57,21 @@ def test_filesystem_provider_round_trip(tmp_path):
     local.unlink()
     assert sync.restore_file(local, "data")
     assert local.read_text() == "hello"
+
+
+def test_profile_and_model_helpers(tmp_path):
+    provider = InMemoryProvider()
+    sync = CloudSync(provider, "pw")
+    profile = tmp_path / "profile.json"
+    profile.write_text("p")
+    sync.backup_profile(profile)
+    profile.unlink()
+    assert sync.restore_profile(profile)
+    assert profile.read_text() == "p"
+
+    model = tmp_path / "model.bin"
+    model.write_text("m")
+    sync.backup_model(model, "m.bin")
+    model.unlink()
+    assert sync.restore_model(model, "m.bin")
+    assert model.read_text() == "m"
