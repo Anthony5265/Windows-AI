@@ -12,6 +12,14 @@ features aimed at teams and regulated environments.
 - Role-based access control limits each user's abilities to **view** or **edit**
   shared dashboards.
 
+## Single Sign-On
+- Integration with Microsoft Entra ID using the MSAL library.
+- Supports device code and interactive flows for seamless authentication.
+
+## Policy Management
+- ADMX templates define egress, telemetry, and update restrictions.
+- Policies can be loaded and queried through the `PolicyManager` module.
+
 ## Compliance Logging
 - Security events and permission changes are logged for auditing.
 - Compliance events can be exported in JSON or CSV for external reporting.
