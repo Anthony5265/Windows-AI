@@ -8,25 +8,30 @@ AgentHub service.
 ## Core protocol: `windows_ai/agents.py`
 
 The `Agent` protocol defines a four-stage lifecycle implemented throughout the
-codebase:
+codebase.  The concrete signature is intentionally simple and untyped:
 
-1. `setup()` prepares any resources required by the agent instance.
-2. `train(data)` optionally updates internal state using caller-provided data and
-   returns any intermediate artefacts the caller might need (for example a plan
-   stub or statistics).
-3. `execute(task)` runs the agent against an arbitrary payload and returns a
-   result object.  Payload and result schemas are intentionally untyped so each
-   domain can tailor them.
-4. `teardown()` releases resources and clears cached state.
+```python
+class Agent(Protocol):
+    def setup(self) -> None: ...
+    def train(self, data: Any) -> Any: ...
+    def execute(self, task: Any) -> Any: ...
+    def teardown(self) -> None: ...
+```
+
+Callers must therefore prepare arguments that match the expectations of the
+specific agent implementation they instantiate.  The hub never forwards
+configuration objects to `setup()` and does not expect structured result types—
+each agent decides what (if anything) to return from `train()`/`execute()`.
 
 The protocol only relies on `typing.Protocol` to keep it lightweight—no abstract
 base classes or mixins are required to build a compliant agent.
 
 ## Default implementation: `DomainAgent`
 
-`DomainAgent` resides in the same module and delegates the lifecycle to a domain
-module passed to its constructor.  The domain is expected to expose four
-callables:
+`DomainAgent` (also in `windows_ai/agents.py`) delegates the lifecycle to a
+domain module passed to its constructor.  The repository does not use a
+registry module or per-domain service classes—`DomainAgent` calls a handful of
+plain functions exported by the domain module:
 
 - `input_processor(data)` – normalize inbound payloads before planning.
 - `task_planner(processed)` – produce an execution plan that downstream stages
