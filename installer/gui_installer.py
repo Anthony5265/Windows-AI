@@ -41,6 +41,7 @@ class GUIInstaller:
         # configuration defaults
         self.auto_select: bool = True
         self.backend: str | None = None
+        self.preset: str = "minimal"
         self.model_specs = {
             "requires_gpu": True,
             "min_vram_gb": 4.0,
@@ -107,11 +108,12 @@ class GUIInstaller:
             for k, v in info.items():
                 self.info.insert(tk.END, f"{k}: {v}\n")
             if self.auto_select:
-                backend = model_selector.select_backend("default", self.model_specs)
+                backend = model_selector.select_preset(self.preset, self.model_specs)
                 self.backend = backend
                 self.info.insert(
                     tk.END,
-                    _("Recommended backend: {backend}").format(backend=backend) + "\n",
+                    _("Recommended backend: {backend}").format(backend=backend)
+                    + "\n",
                 )
             else:
                 self.info.insert(
@@ -205,6 +207,19 @@ class GUIInstaller:
             top, text=_("Automatic model selection"), variable=auto_var
         ).pack(anchor="w", padx=10, pady=5)
 
+        preset_var = tk.StringVar(value=self.preset)
+        preset_frame = ttk.LabelFrame(top, text=_("Preset"))
+        preset_frame.pack(fill="x", padx=10, pady=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Minimal"), variable=preset_var, value="minimal"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Full"), variable=preset_var, value="full"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Custom"), variable=preset_var, value="custom"
+        ).pack(side=tk.LEFT, padx=5)
+
         manual_var = tk.StringVar(value=self.backend or "remote")
         manual_frame = ttk.LabelFrame(top, text=_("Manual backend"))
         manual_frame.pack(fill="x", padx=10, pady=5)
@@ -245,6 +260,7 @@ class GUIInstaller:
         def apply_config() -> None:
             self.auto_select = auto_var.get()
             self.backend = manual_var.get()
+            self.preset = preset_var.get()
 
             try:
                 vram = self._parse_float(vram_var.get(), "Min VRAM")
