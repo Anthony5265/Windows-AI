@@ -25,6 +25,8 @@ from plugins.manager import PluginManager
 from security import AuditLogger, PermissionManager
 from optimization import tuning
 from eco.scheduler import EcoScheduler
+from eco.monitor import EcoMonitor
+from eco.tracker import PowerInfo
 from updater import Updater
 from installer import snapshot
 
@@ -81,6 +83,7 @@ class ChatGUI:
         root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
         scheduler: Optional[EcoScheduler] = None,
+        monitor: Optional[EcoMonitor] = None,
     ) -> None:
         if tk is None or ttk is None:
             raise RuntimeError("tkinter is not available")
@@ -104,6 +107,7 @@ class ChatGUI:
         self.permission_manager = PermissionManager(audit_logger=self.audit_logger)
         self.dashboard_manager = DashboardManager()
         self.scheduler = scheduler or EcoScheduler()
+        self.eco_monitor = monitor or EcoMonitor(scheduler=self.scheduler)
         self.updater = Updater()
 
         self._build_widgets()
@@ -187,6 +191,9 @@ class ChatGUI:
             input_frame, text="Defer", command=self.schedule_message
         ).pack(side="left", padx=5)
         ttk.Button(
+            input_frame, text="Eco", command=self._open_eco_settings
+        ).pack(side="left", padx=5)
+        ttk.Button(
             input_frame, text="Scheduler", command=self._open_scheduler_settings
         ).pack(side="left", padx=5)
         ttk.Button(
@@ -263,6 +270,36 @@ class ChatGUI:
 
         ttk.Button(win, text="Save", command=save).grid(
             row=2, column=0, columnspan=2, pady=5
+        )
+
+    def _open_eco_settings(self) -> None:
+        """Show current energy usage and scheduler options."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Eco Settings")
+
+        def fmt(info: PowerInfo) -> str:
+            percent = f"{info.percent:.0f}%" if info.percent is not None else "n/a"
+            if info.secs_left is None or info.secs_left < 0:
+                left = "n/a"
+            else:
+                left = f"{info.secs_left // 60}m"
+            plugged = (
+                "yes"
+                if info.power_plugged
+                else "no" if info.power_plugged is not None else "n/a"
+            )
+            return f"Battery: {percent}\nTime left: {left}\nPlugged in: {plugged}"
+
+        label = ttk.Label(win, text=fmt(self.eco_monitor.sample()), justify="left")
+        label.pack(padx=5, pady=5)
+
+        def refresh() -> None:
+            label.config(text=fmt(self.eco_monitor.sample()))
+
+        ttk.Button(win, text="Refresh", command=refresh).pack(pady=5)
+        ttk.Button(win, text="Scheduler", command=self._open_scheduler_settings).pack(
+            pady=5
         )
 
     def _open_update_settings(self) -> None:

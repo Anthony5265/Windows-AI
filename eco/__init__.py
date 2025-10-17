@@ -9,5 +9,6 @@ light‑weight and rely only on the Python standard library and optional
 from .tracker import EnergyTracker
 from .reports import generate_report
 from .scheduler import EcoScheduler
+from .monitor import EcoMonitor
 
-__all__ = ["EnergyTracker", "EcoScheduler", "generate_report"]
+__all__ = ["EnergyTracker", "EcoScheduler", "EcoMonitor", "generate_report"]
