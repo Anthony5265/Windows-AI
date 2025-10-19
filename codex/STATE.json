@@ -48,8 +48,8 @@
     },
     "11": {
       "title": "Workflow catalog & runner",
-      "status": "blocked",
-      "hint": "Workflow catalog and runner not implemented"
+      "status": "done",
+      "commit": "5b50aa7d29c4e76a5d194c61172d239a2b1bce02"
     },
     "12": {
       "title": "Terminal settings + import/export",
