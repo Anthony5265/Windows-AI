@@ -3,9 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "lint": "node ./scripts/lint.js",
-    "test": "node ./tests/run.mjs",
+    "test": "npm test -ws",
     "build:agent": "node scripts/build-artifacts.js agent",
     "build:tray": "node scripts/build-artifacts.js tray",
     "start:actions": "node apps/actions/server.js",

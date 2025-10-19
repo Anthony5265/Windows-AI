@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "electron-builder -c electron-builder.yml"
+    "build": "electron-builder -c electron-builder.yml",
+    "test": "echo \"No tests\""
   },
   "devDependencies": {
     "electron-builder": "24.13.3",
