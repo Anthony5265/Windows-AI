@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "lint": "node ./scripts/lint.js",
-    "test": "node ./tests/run.mjs",
+    "test": "npm test -ws",
     "build:agent": "node scripts/build-artifacts.js agent",
     "build:tray": "node scripts/build-artifacts.js tray",
     "start:actions": "node apps/actions/server.js",
@@ -14,5 +14,11 @@
   "dependencies": {
     "express": "4.19.2",
     "node-fetch": "3.3.2"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "mobile",
+    "windows-ai-agent",
+    "windows-ai-tray"
+  ]
 }
