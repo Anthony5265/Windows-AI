@@ -108,15 +108,15 @@ class Updater:
             downloaded = 0
             sha = hashlib.sha256()
             with open(dest_path, "wb") as fh:
-                while True:
-                    chunk = resp.read(8192)
-                    if not chunk:
-                        break
+                for chunk in iter(lambda: resp.read(8192), b""):
                     fh.write(chunk)
                     sha.update(chunk)
                     downloaded += len(chunk)
                     if progress:
                         progress(downloaded, total)
+
+        if progress:
+            progress(downloaded, total)
 
         if checksum and sha.hexdigest().lower() != checksum.lower():
             dest_path.unlink(missing_ok=True)
