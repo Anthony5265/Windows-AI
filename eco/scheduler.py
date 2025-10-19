@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from threading import Timer
 from typing import Callable, Iterable, List, Optional, Tuple
@@ -28,7 +28,9 @@ class EcoScheduler:
         start_hour: int = 22,
         end_hour: int = 6,
     ) -> None:
-        self.windows = list(windows) if windows is not None else [(start_hour, end_hour)]
+        win_list = list(windows) if windows is not None else [(start_hour, end_hour)]
+        # Normalize and sort windows for deterministic behaviour
+        self.windows = sorted((s % 24, e % 24) for s, e in win_list)
 
     # ------------------------------------------------------------------
     # Backwards compatibility helpers for existing code using the old API
