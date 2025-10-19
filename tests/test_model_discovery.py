@@ -25,9 +25,10 @@ def test_discover_models_missing_path(tmp_path):
 
 def test_download_model_failure(tmp_path):
     src = tmp_path / "missing.model"
-    dest = tmp_path / "dest.model"
+    dest = tmp_path / "sub" / "dest.model"
     result = download_model(str(src), str(dest))
     assert result == ""
+    assert dest.parent.exists()
     assert not dest.exists()
 
 
