@@ -7,5 +7,5 @@ litellm>=1.74.0,<1.79.0
 PyYAML>=6.0,<7.0
 markdown>=3.6,<4
 psutil>=5.9,<8
-Pillow>=10,<12
+Pillow>=10,<13
 requests>=2,<3
