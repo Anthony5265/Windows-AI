@@ -243,15 +243,14 @@ class GUIInstaller:
         )
 
         def apply_config() -> None:
-            self.auto_select = auto_var.get()
-            self.backend = manual_var.get()
-
             try:
                 vram = self._parse_float(vram_var.get(), "Min VRAM")
                 ram = self._parse_float(ram_var.get(), "Min RAM")
             except ValueError:
                 return
 
+            self.auto_select = auto_var.get()
+            self.backend = manual_var.get()
             self.model_specs = {
                 "requires_gpu": req_gpu_var.get(),
                 "min_vram_gb": vram,

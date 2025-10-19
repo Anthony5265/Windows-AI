@@ -3,8 +3,10 @@ import pytest
 
 try:
     import tkinter as tk
+    from tkinter import ttk
 except Exception:  # pragma: no cover - tkinter optional
     tk = None  # type: ignore
+    ttk = None  # type: ignore
 
 
 @pytest.fixture
@@ -126,3 +128,71 @@ def test_parse_float_invalid(monkeypatch, tk_root):
     with pytest.raises(ValueError):
         GUIInstaller._parse_float("not-a-number", "Min RAM")
     assert called.get("called") is True
+
+
+def _open_config(gui, tk_root):
+    gui.open_config()
+    tk_root.update()
+    top = next(c for c in tk_root.winfo_children() if isinstance(c, tk.Toplevel))
+    specs_frame = next(
+        c
+        for c in top.winfo_children()
+        if any(isinstance(g, ttk.Entry) for g in c.winfo_children())
+    )
+    entries = [w for w in specs_frame.winfo_children() if isinstance(w, ttk.Entry)]
+    vram_entry, ram_entry = entries
+    apply_button = next(
+        c for c in top.winfo_children() if isinstance(c, ttk.Button)
+    )
+    return top, vram_entry, ram_entry, apply_button
+
+
+def test_apply_config_valid(monkeypatch, tk_root):
+    from installer.gui_installer import GUIInstaller
+
+    gui = GUIInstaller(root=tk_root)
+    top, vram_entry, ram_entry, apply_button = _open_config(gui, tk_root)
+
+    vram_entry.delete(0, tk.END)
+    vram_entry.insert(0, "6")
+    ram_entry.delete(0, tk.END)
+    ram_entry.insert(0, "12")
+
+    called = {}
+    monkeypatch.setattr(
+        "installer.gui_installer.messagebox.showerror",
+        lambda *a, **k: called.setdefault("called", True),
+    )
+
+    apply_button.invoke()
+    tk_root.update()
+
+    assert "called" not in called
+    assert gui.model_specs["min_vram_gb"] == 6.0
+    assert gui.model_specs["min_ram_gb"] == 12.0
+    assert top.winfo_exists() == 0
+
+
+def test_apply_config_invalid(monkeypatch, tk_root):
+    from installer.gui_installer import GUIInstaller
+
+    gui = GUIInstaller(root=tk_root)
+    top, vram_entry, _, apply_button = _open_config(gui, tk_root)
+
+    vram_entry.delete(0, tk.END)
+    vram_entry.insert(0, "bad")
+
+    called = {}
+    monkeypatch.setattr(
+        "installer.gui_installer.messagebox.showerror",
+        lambda *a, **k: called.setdefault("called", True),
+    )
+
+    apply_button.invoke()
+    tk_root.update()
+
+    assert called.get("called") is True
+    assert gui.model_specs["min_vram_gb"] == 4.0
+    assert gui.backend is None
+    assert top.winfo_exists() == 1
+    top.destroy()
