@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import List
 import csv
@@ -24,7 +24,8 @@ class AuditLogger:
     def log(self, plugin: str, action: str, permission: str) -> None:
         """Append an entry to the audit log."""
 
-        line = f"{datetime.utcnow().isoformat()} {plugin} {action} {permission}\n"
+        timestamp = datetime.now(UTC)
+        line = f"{timestamp.isoformat()} {plugin} {action} {permission}\n"
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(line)
@@ -40,7 +41,7 @@ class AuditLogger:
     def log_compliance(self, user: str, action: str, resource: str) -> None:
         """Record a structured compliance event in memory."""
 
-        event = ComplianceEvent(datetime.utcnow(), user, action, resource)
+        event = ComplianceEvent(datetime.now(UTC), user, action, resource)
         self.compliance_events.append(event)
 
     def export(self, dest: Path | str, fmt: str = "json") -> None:
