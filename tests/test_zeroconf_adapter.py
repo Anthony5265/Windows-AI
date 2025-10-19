@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from iot import Device, pair_device
 from iot.adapters.zeroconf import ZeroconfAdapter
 
 
@@ -20,4 +21,7 @@ def test_zeroconf_discover_simulated_devices():
     assert device.id == "TestDevice._http._tcp.local."
     assert device.name == "TestDevice"
     assert device.protocol == adapter.protocol
+    assert pair_device("zeroconf", device) is True
+    wrong = Device(id="x", name="x", protocol="other")
+    assert pair_device("zeroconf", wrong) is False
     zc_instance.close.assert_called_once()

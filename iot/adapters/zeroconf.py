@@ -35,3 +35,7 @@ class ZeroconfAdapter(DeviceAdapter):
             zc.close()
 
         return devices
+
+    def pair(self, device: Device) -> bool:
+        """Only allow pairing for devices discovered via Zeroconf."""
+        return device.protocol == self.protocol
