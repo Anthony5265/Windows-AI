@@ -195,13 +195,18 @@ class PluginManager:
             if dep is None:
                 raise ValueError(f"Missing dependency: {dep_name}")
 
-            # Determine if another plugin still depends on this dependency
-            shared = any(
-                dep_name in (self.get_plugin(other).dependencies if self.get_plugin(other) else [])
-                for other in self._installed
-                if other != plugin.name
-            )
-            if not shared:
+            # Determine if another installed plugin still relies on this dependency
+            shared = False
+            for other_name in self._installed:
+                if other_name == plugin.name:
+                    continue
+                other_plugin = self.get_plugin(other_name)
+                if other_plugin and dep_name in other_plugin.dependencies:
+                    shared = True
+                    break
+
+            if not shared and dep_name in self._installed:
+                # Recursively uninstall the dependency when no one else needs it
                 self.uninstall(dep, messagebox, _stack)
 
         _stack.remove(plugin.name)
