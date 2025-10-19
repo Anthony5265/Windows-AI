@@ -19,9 +19,13 @@ def test_register_and_unregister_callbacks():
     assert called == ["gesture", "voice"]
 
     # Unregister callbacks and ensure they are not invoked
-    mgr.unregister_gesture("swipe_left")
+    assert mgr.unregister_gesture("swipe_left") is True
     # Unregister with different casing to ensure case-insensitive removal
-    mgr.unregister_voice_command("HELLO")
+    assert mgr.unregister_voice_command("HELLO") is True
+
+    # Subsequent unregister calls should report nothing removed
+    assert mgr.unregister_gesture("swipe_left") is False
+    assert mgr.unregister_voice_command("hello") is False
 
     assert mgr.handle_gesture("swipe_left") is False
     assert mgr.handle_voice_command("hello") is False

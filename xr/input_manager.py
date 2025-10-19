@@ -24,20 +24,20 @@ class InputManager:
 
         self._gestures[name] = callback
 
-    def unregister_gesture(self, name: str) -> None:
-        """Remove the gesture callback associated with ``name`` if present."""
+    def unregister_gesture(self, name: str) -> bool:
+        """Remove ``name`` and return ``True`` if a gesture callback existed."""
 
-        self._gestures.pop(name, None)
+        return self._gestures.pop(name, None) is not None
 
     def register_voice_command(self, phrase: str, callback: Callback) -> None:
         """Associate ``phrase`` with ``callback`` for voice events."""
 
         self._voice[phrase.lower()] = callback
 
-    def unregister_voice_command(self, phrase: str) -> None:
-        """Remove the voice callback associated with ``phrase`` if present."""
+    def unregister_voice_command(self, phrase: str) -> bool:
+        """Remove ``phrase`` and return ``True`` if a voice callback existed."""
 
-        self._voice.pop(phrase.lower(), None)
+        return self._voice.pop(phrase.lower(), None) is not None
 
     def handle_gesture(self, name: str) -> bool:
         """Invoke the callback mapped to ``name`` if present."""
