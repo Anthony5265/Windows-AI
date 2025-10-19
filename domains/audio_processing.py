@@ -17,7 +17,7 @@ REMOTE_THRESHOLD = 5.0
 def input_processor(audio: Any) -> Dict[str, Any]:
     """Prepare ``audio`` data for downstream consumption.
 
-    The stub inspects ``audio`` and determines whether the data should be
+    The function inspects ``audio`` and determines whether the data should be
     handled locally or sent to a remote API.  ``audio`` may be any object but
     tests primarily provide a dictionary with a ``duration`` field measured in
     seconds.  If ``duration`` exceeds :data:`REMOTE_THRESHOLD` the audio will be
@@ -46,52 +46,33 @@ def task_planner(processed_audio: Dict[str, Any]) -> Dict[str, Any]:
     the ``use_remote`` flag provided by :func:`input_processor`.
     """
 
-    mode = "remote" if processed_audio.get("use_remote") else "local"
-    steps = [
-        {
-            "type": "transcribe",
-            "mode": mode,
-            "audio": processed_audio.get("data"),
-        }
-    ]
-    return {"steps": steps}
+    step = {
+        "type": "transcribe",
+        "mode": "remote" if processed_audio.get("use_remote") else "local",
+        "audio": processed_audio.get("data"),
+    }
+    return {"steps": [step]}
 
 
 def executor(plan: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute the planned audio processing steps.
-
-    For each step, the executor chooses between a local implementation and a
-    mocked remote API call.  Real implementations would perform heavy audio
-    processing or make HTTP requests to external services.
-    """
+    """Execute the planned audio processing steps."""
 
     results: List[Dict[str, Any]] = []
     for step in plan.get("steps", []):
-        mode = step.get("mode")
-        if mode == "local":
-            output = _local_transcribe(step.get("audio"))
-        else:
-            output = _call_remote_api(step.get("audio"))
+        mode = step.get("mode", "local")
+        audio = step.get("audio")
+        output = _local_transcribe(audio) if mode == "local" else _call_remote_api(audio)
         results.append({"type": step.get("type"), "mode": mode, "output": output})
 
     return {"results": results}
 
 
 def result_aggregator(results: Dict[str, Any]) -> Dict[str, Any]:
-    """Merge outputs from audio processing tasks.
+    """Merge outputs from audio processing tasks."""
 
-    The aggregator combines individual step results into a single transcript and
-    keeps track of the origin of each contribution.  It returns a dictionary
-    containing the merged transcript and a list identifying whether each step
-    was processed locally or via a remote API.
-    """
-
-    transcripts = []
-    modes = []
-    for item in results.get("results", []):
-        transcripts.append(item.get("output", ""))
-        modes.append(item.get("mode"))
-
+    items = results.get("results", [])
+    transcripts = [item.get("output", "") for item in items]
+    modes = [item.get("mode") for item in items]
     return {"transcript": " ".join(transcripts).strip(), "modes": modes}
 
 
@@ -111,8 +92,9 @@ def _call_remote_api(audio: Any) -> str:
     # remote execution is actually attempted.
     import requests  # type: ignore
 
+    payload = {"audio": str(audio)}
     response = requests.post(
-        "https://example.com/api/transcribe", json={"audio": "<binary>"}
+        "https://example.com/api/transcribe", json=payload, timeout=10
     )
     response.raise_for_status()
     data = response.json()
