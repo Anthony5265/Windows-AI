@@ -174,47 +174,8 @@ class MeshHub:
                         conn.close()
                     except Exception:
                         pass
-                    del self._nodes[conn]
+                    if conn in self._nodes:
+                        self._nodes.remove(conn)
+                    self._last_heartbeat.pop(conn, None)
 
-    # ----------------------------------------------------------- heartbeat
-    def _node_listener(self, conn: socket.socket) -> None:
-        while self._running:
-            try:
-                header = conn.recv(4)
-                if not header:
-                    break
-                length = int.from_bytes(header, "big")
-                data = b""
-                while len(data) < length:
-                    chunk = conn.recv(length - len(data))
-                    if not chunk:
-                        break
-                    data += chunk
-                if len(data) != length:
-                    break
-                if self.protocol.decrypt(data) == b"HB":
-                    with self._lock:
-                        if conn in self._nodes:
-                            self._nodes[conn] = time.time()
-            except OSError:
-                break
-        with self._lock:
-            self._nodes.pop(conn, None)
-        try:
-            conn.close()
-        except Exception:
-            pass
-
-    def _prune_loop(self) -> None:
-        while self._running:
-            time.sleep(1)
-            now = time.time()
-            with self._lock:
-                for conn, ts in list(self._nodes.items()):
-                    if now - ts > self._timeout:
-                        try:
-                            conn.close()
-                        except Exception:
-                            pass
-                        del self._nodes[conn]
 

@@ -27,6 +27,7 @@ def test_node_reconnects_and_hub_prunes():
 
     assert "again" in received
     assert len(hub._nodes) == 1
+    assert len(hub._last_heartbeat) == 1
 
     node.stop()
     hub.stop()

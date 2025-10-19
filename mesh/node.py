@@ -54,20 +54,27 @@ class MeshNode:
         self._addr = addr
         self._sock = socket.create_connection(addr)
         self._running = True
-        self._thread = threading.Thread(target=self._listen, daemon=True)
+        self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
         self._heartbeat_thread = threading.Thread(
             target=self._heartbeat_loop, daemon=True
         )
         self._heartbeat_thread.start()
 
-    def _listen(self) -> None:
+    def _run(self) -> None:
+        """Listen for tasks and reconnect on failure."""
+
         while self._running:
-            sock = self._sock
-            if sock is None:
+            self._listen()
+            if self._running and self._sock is None:
                 if not self._reconnect():
                     break
-                continue
+
+    def _listen(self) -> None:
+        sock = self._sock
+        if sock is None:
+            return
+        while self._running:
             try:
                 header = sock.recv(4)
                 if not header:
@@ -87,6 +94,7 @@ class MeshNode:
                 except Exception:
                     pass
                 self._sock = None
+                break
 
     def stop(self) -> None:
         self._running = False
