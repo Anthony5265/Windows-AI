@@ -1,12 +1,1 @@
-{
-  "name": "windows-ai-gui",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "build": "electron-builder -c electron-builder.yml"
-  },
-  "devDependencies": {
-    "electron-builder": "24.13.3",
-    "electron": "29.4.5"
-  }
-}
+{"name":"windows-ai-gui","version":"0.1.0","private":true,"scripts":{"build":"electron-builder -c electron-builder.yml","test":"echo \"No tests\" && exit 0"},"devDependencies":{"electron-builder":"24.13.3","electron":"29.4.5"}}

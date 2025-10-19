@@ -1,5 +1,1 @@
-{
-  "name": "windows-ai-actions",
-  "version": "0.1.0",
-  "type": "module"
-}
+{"name":"windows-ai-actions","version":"0.1.0","type":"module","scripts":{"test":"echo \"No tests\" && exit 0"}}
