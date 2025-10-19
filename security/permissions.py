@@ -20,6 +20,7 @@ class PermissionManager:
 
     def __post_init__(self) -> None:  # pragma: no cover - trivial
         if self.path:
+            # Normalize to Path and eagerly load any existing permissions
             self.path = Path(self.path)
             self.load(self.path)
 
@@ -51,20 +52,35 @@ class PermissionManager:
 
     # ------------------------------------------------------------ persistence
     def save(self, path: str | Path | None = None) -> None:
+        """Persist current permissions to a JSON file."""
+
         target_input = path or self.path
         if not target_input:
             raise ValueError("No path provided for saving permissions")
+
         target = Path(target_input)
+        # Remember the location so subsequent calls can omit a path
+        self.path = target
         target.parent.mkdir(parents=True, exist_ok=True)
-        data = {plugin: sorted(perms) for plugin, perms in self.permissions.items()}
+
+        data = {
+            plugin: sorted(list(perms))
+            for plugin, perms in self.permissions.items()
+        }
         target.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     def load(self, path: str | Path | None = None) -> None:
+        """Load permissions from a JSON file if it exists."""
+
         target_input = path or self.path
         if not target_input:
             return
+
         target = Path(target_input)
+        # Store the path so future saves default to the same location
+        self.path = target
         if not target.exists():
             return
+
         data = json.loads(target.read_text(encoding="utf-8"))
         self.permissions = {plugin: set(perms) for plugin, perms in data.items()}
