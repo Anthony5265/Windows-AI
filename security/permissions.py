@@ -75,6 +75,8 @@ class PermissionManager:
 
     # ------------------------------------------------------------ persistence
     def save(self, path: str | Path | None = None) -> None:
+        """Persist permissions to ``path`` or ``self.path`` as JSON."""
+
         target_input = path or self.path
         if not target_input:
             raise ValueError("No path provided for saving permissions")
@@ -84,6 +86,8 @@ class PermissionManager:
         target.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     def load(self, path: str | Path | None = None) -> None:
+        """Load permissions from ``path`` or ``self.path`` if available."""
+
         target_input = path or self.path
         if not target_input:
             return
