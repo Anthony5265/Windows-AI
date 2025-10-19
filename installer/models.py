@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List
-import urllib.request
 import logging
 
 
@@ -164,9 +164,14 @@ def download_model(
             req = urllib.request.Request(info.url)
             if downloaded:
                 req.add_header("Range", f"bytes={downloaded}-")
-            with urllib.request.urlopen(req, timeout=timeout) as resp, open(
-                dest_path, "ab"
-            ) as fh:
+            open_kwargs = {"timeout": timeout} if timeout is not None else {}
+            try:
+                response_cm = urllib.request.urlopen(req, **open_kwargs)
+            except TypeError:
+                if timeout is None:
+                    raise
+                response_cm = urllib.request.urlopen(req)
+            with response_cm as resp, open(dest_path, "ab") as fh:
                 if total is None:
                     length = resp.getheader("Content-Length")
                     if length is not None:
