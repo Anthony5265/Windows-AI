@@ -13,6 +13,8 @@ class DummyModel:
                 action = "compress"
             else:
                 action = "keep"
+            # The dummy model only returns the action; the ExplorerAI combines
+            # this with metadata when producing the final summary.
             recommendations.append({"name": info["name"], "action": action})
         return json.dumps(recommendations)
 
@@ -29,8 +31,18 @@ def test_suggest_cleanup_records_prompt(tmp_path):
 
     result = explorer.suggest_cleanup([str(tmp_file), str(big_file)])
     assert result == [
-        {"name": str(tmp_file), "action": "delete"},
-        {"name": str(big_file), "action": "compress"},
+        {
+            "name": str(tmp_file),
+            "size": tmp_file.stat().st_size,
+            "extension": ".tmp",
+            "action": "delete",
+        },
+        {
+            "name": str(big_file),
+            "size": big_file.stat().st_size,
+            "extension": ".log",
+            "action": "compress",
+        },
     ]
 
     logs = explorer.get_logs()
