@@ -189,19 +189,21 @@ class PluginManager:
             raise ValueError("Cyclic dependency detected")
         _stack.add(plugin.name)
 
-        # Remove dependencies first when no other installed plugin requires them
+        # Gather dependencies that are still required by other installed plugins.
+        dependents: set[str] = set()
+        for other in self._installed:
+            if other == plugin.name:
+                continue
+            other_plugin = self.get_plugin(other)
+            if other_plugin:
+                dependents.update(other_plugin.dependencies)
+
+        # Remove dependencies when no other plugin depends on them
         for dep_name in plugin.dependencies:
             dep = self.get_plugin(dep_name)
             if dep is None:
                 raise ValueError(f"Missing dependency: {dep_name}")
-
-            # Determine if another plugin still depends on this dependency
-            shared = any(
-                dep_name in (self.get_plugin(other).dependencies if self.get_plugin(other) else [])
-                for other in self._installed
-                if other != plugin.name
-            )
-            if not shared:
+            if dep_name not in dependents:
                 self.uninstall(dep, messagebox, _stack)
 
         _stack.remove(plugin.name)
