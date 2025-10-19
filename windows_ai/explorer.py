@@ -19,13 +19,14 @@ class ExplorerAI:
         self.model = model
         self._logs: List[str] = []
 
-    def suggest_cleanup(self, files: List[str]) -> List[Dict[str, Any]]:
+    def suggest_cleanup(self, files: List[str]) -> Dict[str, Any]:
         """Return model suggestions for cleaning up *files*.
 
-        The method collects basic metadata for each file and sends it to the
-        underlying ``model`` as a JSON encoded prompt. The expected model
-        response is a JSON string describing recommended actions for each file.
-        The parsed response is returned to callers as native Python objects.
+        The method inspects each file's size and extension before constructing
+        the prompt sent to the underlying ``model``. The model should return a
+        JSON string describing recommended actions for each file. Along with the
+        per-file recommendations, a summary of the recommended actions is
+        provided in the returned value.
         """
 
         file_info: List[Dict[str, Any]] = []
@@ -43,9 +44,17 @@ class ExplorerAI:
 
         response = self.model.generate(prompt)
         try:
-            return json.loads(response)
+            recommendations = json.loads(response)
         except json.JSONDecodeError:
-            return []
+            recommendations = []
+
+        summary: Dict[str, int] = {}
+        for item in recommendations:
+            action = item.get("action")
+            if action:
+                summary[action] = summary.get(action, 0) + 1
+
+        return {"recommendations": recommendations, "summary": summary}
 
     def get_logs(self) -> List[str]:
         """Return recorded prompts."""
