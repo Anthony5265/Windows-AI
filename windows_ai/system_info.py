@@ -22,7 +22,11 @@ from .system_info_core import detect_system as _detect_system
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+
+def _log_detection_failure(system: str, step: str) -> None:
+    """Log a failure when a detection step raises an exception."""
+
+    logger.debug("%s: failed to detect %s", system, step, exc_info=True)
 
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
@@ -58,9 +62,7 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = bool(screen_reader.value)
         except Exception:
-            logger.debug(
-                "%s: failed to detect screen_reader", system, exc_info=True
-            )
+            _log_detection_failure(system, "screen_reader")
 
         try:
             class HIGHCONTRAST(ctypes.Structure):
@@ -77,9 +79,7 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = bool(hc.dwFlags & HCF_HIGHCONTRASTON)
         except Exception:
-            logger.debug(
-                "%s: failed to detect high_contrast", system, exc_info=True
-            )
+            _log_detection_failure(system, "high_contrast")
     elif system == "Darwin":
         try:  # pragma: no cover - macOS only
             out = subprocess.check_output(
@@ -92,9 +92,7 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = out.strip() == b"1"
         except Exception:
-            logger.debug(
-                "%s: failed to detect screen_reader", system, exc_info=True
-            )
+            _log_detection_failure(system, "screen_reader")
         try:
             out = subprocess.check_output(
                 [
@@ -106,9 +104,7 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = out.strip() == b"1"
         except Exception:
-            logger.debug(
-                "%s: failed to detect high_contrast", system, exc_info=True
-            )
+            _log_detection_failure(system, "high_contrast")
     else:  # Linux/other
         try:  # pragma: no cover - optional dependencies
             out = subprocess.check_output(
@@ -125,9 +121,7 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            logger.debug(
-                "%s: failed to detect high_contrast", system, exc_info=True
-            )
+            _log_detection_failure(system, "high_contrast")
         try:
             out = subprocess.check_output(
                 [
@@ -143,9 +137,7 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            logger.debug(
-                "%s: failed to detect screen_reader", system, exc_info=True
-            )
+            _log_detection_failure(system, "screen_reader")
 
     return settings
 
@@ -169,9 +161,7 @@ def _detect_xr_hardware() -> Dict[str, Any]:
             info["xr_capable"] = True
             info["xr_runtime"] = getattr(runtime, "__name__", str(runtime))
     except Exception:
-        logger.debug(
-            "%s: failed XR runtime detection", platform.system(), exc_info=True
-        )
+        _log_detection_failure(platform.system(), "XR runtime")
     return info
 
 
