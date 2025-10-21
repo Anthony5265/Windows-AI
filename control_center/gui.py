@@ -390,6 +390,11 @@ class ChatGUI:
                 "".join("██" if cell else "  " for cell in row) for row in qr.get_matrix()
             )
             tk.Label(win, font=("Courier", 1), text=ascii_qr).pack(padx=5, pady=5)
+        elif messagebox:
+            messagebox.showwarning(
+                "Mobile Pairing",
+                "Install 'qrcode' to enable QR-code display.",
+            )
         ttk.Label(win, text=f"Token: {token}").pack(padx=5, pady=5)
 
     # -------------------------------------------------------------- Marketplace
