@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from installer.locales import _
@@ -239,9 +240,21 @@ class InstallerGUI:
         self.download_btn.config(state=tk.DISABLED)
         self.progress.config(mode="determinate", maximum=100, value=0)
 
+        start = time.monotonic()
+
         def progress(downloaded: int, total: int) -> None:
             percent = int(downloaded / total * 100) if total else 0
-            self.root.after(0, lambda: self.progress.config(value=percent))
+            elapsed = time.monotonic() - start
+            speed = (downloaded / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            downloaded_mb = downloaded / 1024 / 1024
+            total_mb = total / 1024 / 1024 if total else 0
+            label = f"{downloaded_mb:.1f} / {total_mb:.1f} MB ({speed:.1f} MB/s)"
+
+            def update() -> None:
+                self.progress.config(value=percent)
+                self.progress_label.config(text=label)
+
+            self.root.after(0, update)
 
         def worker() -> None:
             try:
