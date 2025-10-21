@@ -84,7 +84,10 @@ class GUIInstaller:
         try:
             return float(value)
         except Exception:
-            messagebox.showerror("Configuration", f"{label} must be a number")
+            messagebox.showerror(
+                _("Configuration"),
+                _("{label} must be a number").format(label=label),
+            )
             raise ValueError from None
 
     # --- System detection -------------------------------------------------
@@ -263,8 +266,8 @@ class GUIInstaller:
             self.preset = preset_var.get()
 
             try:
-                vram = self._parse_float(vram_var.get(), "Min VRAM")
-                ram = self._parse_float(ram_var.get(), "Min RAM")
+                vram = self._parse_float(vram_var.get(), _("Min VRAM (GB)"))
+                ram = self._parse_float(ram_var.get(), _("Min RAM (GB)"))
             except ValueError:
                 return
 
@@ -285,7 +288,7 @@ class GUIInstaller:
         if path and path.exists():
             webbrowser.open(path.as_uri())
         else:
-            messagebox.showerror("Guide", "Guide not found")
+            messagebox.showerror(_("Guide"), _("Guide not found"))
 
     # --- Finalization -----------------------------------------------------
     def _is_admin(self) -> bool:
@@ -326,8 +329,10 @@ class GUIInstaller:
                 self.progress.stop()
                 self.progress.config(mode="determinate", value=0)
                 if messagebox.askyesno(
-                    "Installer",
-                    "Administrator rights required. Relaunch with elevation?",
+                    _("Installer"),
+                    _(
+                        "Administrator rights required. Relaunch with elevation?"
+                    ),
                 ):
                     params = " ".join(f'"{arg}"' for arg in sys.argv)
                     ctypes.windll.shell32.ShellExecuteW(
