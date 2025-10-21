@@ -42,7 +42,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Mapping, MutableSequence, Sequence
+from typing import Any, Iterable, Mapping, MutableSequence, Sequence
 
 
 LOGGER = logging.getLogger(__name__)
@@ -119,25 +119,22 @@ def _coerce_command(value: Iterable[str], *, field_name: str, task_name: str) ->
     return command
 
 
-def load_config(config_path: Path) -> tuple[int, list[Task]]:
-    """Load a configuration file from ``config_path``.
+def parse_tasks(raw_tasks: Iterable[Mapping[str, Any]] | None) -> list[Task]:
+    """Convert a JSON sequence of task definitions into :class:`Task` objects."""
 
-    Returns a tuple of ``(interval_seconds, tasks)``.
-    """
+    if raw_tasks is None:
+        raise ValueError("configuration must include at least one task")
 
-    with config_path.open("r", encoding="utf-8") as fh:
-        raw = json.load(fh)
+    try:
+        task_defs = list(raw_tasks)
+    except TypeError as exc:  # pragma: no cover - defensive guard.
+        raise ValueError("tasks must be a sequence") from exc
 
-    interval = int(raw.get("interval", 900))
-    if interval < 0:
-        raise ValueError("interval cannot be negative")
-
-    raw_tasks = raw.get("tasks", [])
-    if not isinstance(raw_tasks, list) or not raw_tasks:
+    if not task_defs:
         raise ValueError("configuration must include at least one task")
 
     tasks: list[Task] = []
-    for raw_task in raw_tasks:
+    for raw_task in task_defs:
         if not isinstance(raw_task, Mapping):
             raise ValueError("each task must be a mapping")
 
@@ -159,6 +156,28 @@ def load_config(config_path: Path) -> tuple[int, list[Task]]:
         env = {str(key): str(value) for key, value in env_raw.items()} if isinstance(env_raw, Mapping) else None
 
         tasks.append(Task(name=name, check=check, fixes=tuple(fixes), cwd=cwd, env=env))
+
+    return tasks
+
+
+def load_config(config_path: Path) -> tuple[int, list[Task]]:
+    """Load a configuration file from ``config_path``.
+
+    Returns a tuple of ``(interval_seconds, tasks)``.
+    """
+
+    with config_path.open("r", encoding="utf-8") as fh:
+        raw = json.load(fh)
+
+    interval = int(raw.get("interval", 900))
+    if interval < 0:
+        raise ValueError("interval cannot be negative")
+
+    raw_tasks = raw.get("tasks")
+    if not isinstance(raw_tasks, Iterable):
+        raise ValueError("configuration must include at least one task")
+
+    tasks = parse_tasks(raw_tasks)
 
     return interval, tasks
 
