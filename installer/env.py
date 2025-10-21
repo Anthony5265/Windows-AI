@@ -72,7 +72,8 @@ def create_env(name: str, backend: str | None = None) -> Path:
             except subprocess.CalledProcessError as exc:
                 logger.error("Command %s failed with stderr: %s", exc.cmd, exc.stderr)
                 raise RuntimeError(
-                    f"Failed to create environment '{name}' using conda"
+                    "Failed to create environment '%s' using conda. Command %s failed: %s"
+                    % (name, exc.cmd, exc.stderr)
                 ) from exc
         else:
             venv.EnvBuilder(with_pip=True).create(env_path)
