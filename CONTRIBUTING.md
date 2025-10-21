@@ -10,7 +10,7 @@ Thanks for your interest in improving Windows AI!
 
 Please ensure tests pass locally before requesting a review.
 
-## Pre-commit
+## Branching and rebasing
 
 - Create feature branches from `main`.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
