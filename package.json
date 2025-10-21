@@ -17,5 +17,11 @@
   "dependencies": {
     "express": "5.1.0",
     "node-fetch": "3.3.2"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "mobile",
+    "windows-ai-agent",
+    "windows-ai-tray"
+  ]
 }
