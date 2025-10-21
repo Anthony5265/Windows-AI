@@ -112,23 +112,20 @@ def remove_env(name: str) -> None:
     """Remove the environment named ``name`` and update the record file."""
 
     env_path = BASE_DIR / name
-    if env_path.exists():
-        shutil.rmtree(env_path, ignore_errors=True)
+    shutil.rmtree(env_path, ignore_errors=True)
 
     if not ENV_RECORD_FILE.exists():
         return
 
-    try:
-        data = json.loads(ENV_RECORD_FILE.read_text())
-    except Exception:
-        data = {}
+    data = load_recorded_envs()
+    if name not in data:
+        return
 
-    if name in data:
-        del data[name]
-        if data:
-            ENV_RECORD_FILE.write_text(json.dumps(data, indent=2))
-        else:
-            ENV_RECORD_FILE.unlink()
+    del data[name]
+    if data:
+        ENV_RECORD_FILE.write_text(json.dumps(data, indent=2))
+    else:
+        ENV_RECORD_FILE.unlink()
 
 
 __all__ = [
