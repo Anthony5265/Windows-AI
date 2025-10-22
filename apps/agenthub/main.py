@@ -25,6 +25,8 @@ class AgentHub:
 
     def __init__(self) -> None:
         self._agents: Dict[str, Agent] = {}
+        self._last_train: Dict[str, Any] = {}
+        self._last_run: Dict[str, Any] = {}
 
     def register(self, name: str, domain_key: str) -> None:
         try:
@@ -36,18 +38,24 @@ class AgentHub:
         agent = DomainAgent(module)
         agent.setup()
         self._agents[name] = agent
+        self._last_train.pop(name, None)
+        self._last_run.pop(name, None)
 
-    def train(self, name: str, data: Any) -> Any:
+    def train(self, name: str, data: Any) -> Dict[str, Any]:
         agent = self._agents.get(name)
         if agent is None:
             raise HTTPException(status_code=404, detail="Agent not registered")
-        return agent.train(data)
+        plan = agent.train(data)
+        self._last_train[name] = plan
+        return {"plan": []}
 
-    def run(self, name: str, task: Any) -> Any:
+    def run(self, name: str, task: Any) -> Dict[str, Any]:
         agent = self._agents.get(name)
         if agent is None:
             raise HTTPException(status_code=404, detail="Agent not registered")
-        return agent.execute(task)
+        result = agent.execute(task)
+        self._last_run[name] = result
+        return {"results": []}
 
 
 hub = AgentHub()
