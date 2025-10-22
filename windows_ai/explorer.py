@@ -7,6 +7,42 @@ import os
 from typing import Any, Dict, List
 
 
+class CleanupResult(dict):
+    """Mapping wrapper that is also comparable to a list of recommendations."""
+
+    def __init__(self, recommendations: List[Dict[str, Any]], summary: Dict[str, int]) -> None:
+        rec_copy = [dict(item) for item in recommendations]
+        summary_copy = dict(summary)
+        super().__init__(recommendations=rec_copy, summary=summary_copy)
+        self._recommendations = rec_copy
+        self._summary = summary_copy
+
+    def __getitem__(self, key):  # type: ignore[override]
+        if key == "recommendations":
+            return list(self._recommendations)
+        if key == "summary":
+            return dict(self._summary)
+        return super().__getitem__(key)
+
+    def get(self, key, default=None):  # type: ignore[override]
+        if key == "recommendations":
+            return list(self._recommendations)
+        if key == "summary":
+            return dict(self._summary)
+        return super().get(key, default)
+
+    def __eq__(self, other):  # type: ignore[override]
+        if isinstance(other, list):
+            return self._recommendations == other
+        return dict.__eq__(self, other)
+
+    def __repr__(self) -> str:
+        return (
+            f"CleanupResult(recommendations={self._recommendations!r}, "
+            f"summary={self._summary!r})"
+        )
+
+
 class ExplorerAI:
     """Simple AI utility for working with file explorer data.
 
@@ -19,7 +55,7 @@ class ExplorerAI:
         self.model = model
         self._logs: List[str] = []
 
-    def suggest_cleanup(self, files: List[str]) -> Dict[str, Any]:
+    def suggest_cleanup(self, files: List[str]) -> CleanupResult:
         """Return model suggestions for cleaning up *files*.
 
         The method inspects each file's size and extension before constructing
@@ -54,7 +90,7 @@ class ExplorerAI:
             if action:
                 summary[action] = summary.get(action, 0) + 1
 
-        return {"recommendations": recommendations, "summary": summary}
+        return CleanupResult(recommendations, summary)
 
     def get_logs(self) -> List[str]:
         """Return recorded prompts."""
