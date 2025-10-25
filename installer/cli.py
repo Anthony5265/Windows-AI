@@ -9,23 +9,49 @@ import argparse
 import json
 import os
 import sys
+import urllib.request
 
 if __package__ is None or __package__ == "":  # pragma: no cover - script entry
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from installer import api_keys, env, plugins, system_info
 from installer.logging_config import get_logger
+from security import AuditLogger, PermissionManager
 
 
 logger = get_logger(__name__)
 
 
-def install_all() -> None:
+def install_all(permission_manager: PermissionManager | None = None) -> None:
     """Discover plugins and install their requested dependencies."""
+
+    if permission_manager and not permission_manager.has("installer", "network"):
+        print("Network permission required. Skipping downloads.")
+        return
 
     registry = plugins.discover_plugins()
     if not registry.dependencies:
         print("No plugin dependencies to install.")
+        return
+
+    # Determine connectivity while respecting proxy environment variables
+    proxies = urllib.request.getproxies()
+    # Ensure uppercase proxy variables are considered
+    for env_name in ("HTTP_PROXY", "HTTPS_PROXY"):
+        if env_name in os.environ:
+            proxies[env_name[:-6].lower()] = os.environ[env_name]
+    handler = urllib.request.ProxyHandler(proxies)
+    opener = urllib.request.build_opener(handler)
+    request = urllib.request.Request(
+        "https://www.google.com/generate_204", method="HEAD"
+    )
+    try:
+        opener.open(request, timeout=5)
+    except Exception:
+        print(
+            "Warning: offline mode detected. Skipping plugin dependency downloads."
+        )
+        logger.warning("Downloads skipped due to offline mode")
         return
 
     for plugin_name, deps in sorted(registry.dependencies.items()):
@@ -58,7 +84,35 @@ def main() -> None:
         action="store_true",
         help="install plugin dependencies in their own environment",
     )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        "--non-interactive",
+        dest="yes",
+        action="store_true",
+        help=(
+            "run without interactive prompts; defaults API-key actions and declines GUI "
+            "launch"
+        ),
+    )
     args = parser.parse_args()
+
+    audit_logger = AuditLogger()
+    permission_manager = PermissionManager(audit_logger=audit_logger)
+
+    def ask_permission(plugin: str, perm: str) -> bool:
+        if args.yes:
+            return False
+        try:
+            choice = input(
+                f"{plugin} requests {perm} access. Allow? [y/N] "
+            ).strip().lower()
+        except Exception:
+            logger.exception("Failed to read permission choice")
+            return False
+        return choice in {"y", "yes"}
+
+    permission_manager.prompt("installer", "network", ask_permission)
 
     info = system_info.detect_system()
     print("Detected system info:")
@@ -90,13 +144,16 @@ def main() -> None:
         performed_action = True
 
     if not performed_action:
-        try:
-            choice = input(
-                "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
-            ).strip().lower()
-        except Exception:
-            logger.exception("Failed to read API key choice")
+        if args.yes:
             choice = "n"
+        else:
+            try:
+                choice = input(
+                    "API key options: [l]ist, [d]elete, [a]dd or [n]one? "
+                ).strip().lower()
+            except Exception:
+                logger.exception("Failed to read API key choice")
+                choice = "n"
 
         if choice == "l":
             keys = api_keys.list_keys()
@@ -123,14 +180,17 @@ def main() -> None:
             print("No API key stored.")
 
     if args.install_all:
-        install_all()
+        install_all(permission_manager)
 
     # Offer to launch the Control Center after setup completes
-    try:
-        launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
-    except Exception:
-        logger.exception("Failed to read launch choice")
+    if args.yes:
         launch = "n"
+    else:
+        try:
+            launch = input("Launch Control Center GUI now? [y/N] ").strip().lower()
+        except Exception:
+            logger.exception("Failed to read launch choice")
+            launch = "n"
     if launch in {"y", "yes"}:
         try:
             from control_center.gui import main as launch_gui

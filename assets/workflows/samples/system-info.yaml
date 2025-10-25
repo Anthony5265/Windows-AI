@@ -1,0 +1,4 @@
+name: system-info
+steps:
+  - tool: system.info
+    id: info

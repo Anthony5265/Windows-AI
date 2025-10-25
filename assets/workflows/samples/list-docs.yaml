@@ -1,0 +1,5 @@
+name: list-docs
+steps:
+  - tool: files.list
+    id: files
+    with: { path: "%USERPROFILE%/Documents" }

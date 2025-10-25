@@ -1,11 +1,1 @@
-id: open-notepad
-title: Open Notepad
-tags: ["apps"]
-description: Launches Notepad.
-inputs: []
-run:
-  mode: action
-  action:
-    name: start_process
-    params:
-      exe: "notepad.exe"
+id: open-notepadtitle: Open Notepadtags: ["apps"]description: Launches Notepad.inputs: []run:  mode: action  action:    name: start_process    params:      exe: "notepad.exe"

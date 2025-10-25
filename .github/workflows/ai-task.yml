@@ -1,0 +1,1 @@
+name: ai-taskon:  workflow_dispatch:    inputs:      prompt:        description: "Instruction for the model"        required: truejobs:  run:    runs-on: ubuntu-latest    env:      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
