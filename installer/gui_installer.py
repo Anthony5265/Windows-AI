@@ -271,6 +271,8 @@ class GUIInstaller:
             except ValueError:
                 return
 
+            self.auto_select = auto_var.get()
+            self.backend = manual_var.get()
             self.model_specs = {
                 "requires_gpu": req_gpu_var.get(),
                 "min_vram_gb": vram,
