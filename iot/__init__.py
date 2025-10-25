@@ -10,13 +10,29 @@ from .home_assistant import HomeAssistantAdapter
 from .adapters import ZeroconfAdapter
 from .automation import WorkflowAutomation
 
-ADAPTERS: Dict[str, DeviceAdapter] = {
-    "mqtt": MQTTAdapter(),
-    "matter": MatterAdapter(),
-    "zigbee": ZigbeeAdapter(),
-    "home_assistant": HomeAssistantAdapter(),
-    "zeroconf": ZeroconfAdapter(),
-}
+
+# Registry of protocol adapters.  Adapters can be added at runtime via
+# :func:`register_adapter`, allowing external packages to provide their own
+# implementations.
+ADAPTERS: Dict[str, DeviceAdapter] = {}
+
+
+def register_adapter(protocol: str, adapter: DeviceAdapter) -> None:
+    """Register an *adapter* for *protocol*.
+
+    Existing adapters with the same protocol will be replaced, enabling a simple
+    plug-in style architecture for new IoT protocols.
+    """
+
+    ADAPTERS[protocol] = adapter
+
+
+# Register built-in adapters
+register_adapter("mqtt", MQTTAdapter())
+register_adapter("matter", MatterAdapter())
+register_adapter("zigbee", ZigbeeAdapter())
+register_adapter("home_assistant", HomeAssistantAdapter())
+register_adapter("zeroconf", ZeroconfAdapter())
 
 
 def discover_devices(protocol: str) -> List[Device]:
@@ -39,6 +55,7 @@ __all__ = [
     "ZigbeeAdapter",
     "HomeAssistantAdapter",
     "ZeroconfAdapter",
+    "register_adapter",
     "discover_devices",
     "pair_device",
     "WorkflowAutomation",

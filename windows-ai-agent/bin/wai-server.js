@@ -1,1 +1,2 @@
-#!/usr/bin/env nodeimport "../src/server.js";
+#!/usr/bin/env node
+import "../src/server.js";
