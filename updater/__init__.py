@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Callable
 from urllib.request import urlopen
@@ -76,7 +78,7 @@ class Updater:
         Parameters
         ----------
         version:
-            Version identifier to download.
+            Version identifier to download or a direct URL.
         dest:
             Destination file path.
         progress:
@@ -89,7 +91,11 @@ class Updater:
         """
 
         dest_path = Path(dest)
-        with urlopen(f"{self.base_url}/{version}/package.zip") as resp:
+        if version.startswith("http://") or version.startswith("https://"):
+            url = version
+        else:
+            url = f"{self.base_url}/{version}/package.zip"
+        with urlopen(url) as resp:
             header = None
             if hasattr(resp, "getheader"):
                 try:
@@ -102,21 +108,64 @@ class Updater:
             downloaded = 0
             sha = hashlib.sha256()
             with open(dest_path, "wb") as fh:
-                while True:
-                    chunk = resp.read(8192)
-                    if not chunk:
-                        break
+                for chunk in iter(lambda: resp.read(8192), b""):
                     fh.write(chunk)
                     sha.update(chunk)
                     downloaded += len(chunk)
                     if progress:
                         progress(downloaded, total)
 
+        if progress:
+            progress(downloaded, total)
+
         if checksum and sha.hexdigest().lower() != checksum.lower():
             dest_path.unlink(missing_ok=True)
             raise ValueError("Checksum mismatch for downloaded package")
 
         return dest_path
+
+    def install_framework(
+        self,
+        name: str,
+        version: str,
+        model_urls: list[str] | None = None,
+        models_dir: Path | str | None = None,
+    ) -> None:
+        """Install a Python framework and optional models.
+
+        Parameters
+        ----------
+        name:
+            Package name to install via ``pip``.
+        version:
+            Package version specifier.
+        model_urls:
+            Optional list of model URLs to download.
+        models_dir:
+            Target directory for downloaded models. Defaults to
+            ``install_dir / 'models'``.
+        """
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+                "PIP_NO_INPUT": "1",
+                "PYTHONPATH": "",
+            }
+        )
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", f"{name}=={version}"],
+            check=True,
+            env=env,
+        )
+
+        if model_urls:
+            target = Path(models_dir or self.install_dir / "models")
+            target.mkdir(parents=True, exist_ok=True)
+            for url in model_urls:
+                dest = target / Path(url).name
+                self.download(url, dest)
 
     def verify_checksum(self, file_path: Path | str, expected: str) -> bool:
         """Verify the SHA256 checksum of ``file_path`` against ``expected``."""
@@ -211,3 +260,61 @@ class Updater:
         except Exception:
             self.rollback(snapshot)
             raise
+
+    # ------------------------------------------------------------------
+    # High level helpers
+    def fetch_signed_package(
+        self,
+        version: str,
+        dest: Path | str | None = None,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> Path:
+        """Download ``version`` and ensure its signature matches.
+
+        The update archive is downloaded to ``dest`` (or a temporary file)
+        using :meth:`download`.  After the download completes the SHA256
+        digest is verified against the ``package.sig`` file on the update
+        server.  A :class:`ValueError` is raised when the signature does not
+        match and the partially downloaded file is removed.
+        """
+
+        if dest is None:
+            fd, tmp = tempfile.mkstemp(suffix=".zip")
+            os.close(fd)
+            dest_path = Path(tmp)
+        else:
+            dest_path = Path(dest)
+
+        pkg = self.download(version, dest_path, progress=progress)
+        if not self.verify_signature(pkg, version):
+            dest_path.unlink(missing_ok=True)
+            raise ValueError("Signature mismatch for downloaded package")
+        return pkg
+
+    def update(
+        self,
+        version: str | None = None,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> str:
+        """Fetch and install an update package.
+
+        Parameters
+        ----------
+        version:
+            Version identifier to install.  When omitted the latest version
+            advertised by :meth:`latest_version` is used.
+        progress:
+            Optional download progress callback.  See :meth:`download` for the
+            callback signature.
+
+        Returns
+        -------
+        str
+            The version that was installed.
+        """
+
+        version = version or self.latest_version()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pkg = self.fetch_signed_package(version, Path(tmpdir) / "pkg.zip", progress)
+            self.apply_update(pkg)
+        return version
