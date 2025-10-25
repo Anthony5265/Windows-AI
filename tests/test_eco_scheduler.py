@@ -39,3 +39,12 @@ def test_cross_midnight_windows():
     now = datetime(2024, 1, 2, 2, 30)
     expected = datetime(2024, 1, 2, 3, 0)
     assert sched.next_run(now) == expected
+
+
+def test_overlapping_cross_midnight_next_run():
+    """Ensure the earliest overnight window is chosen after overlaps."""
+    sched = EcoScheduler(windows=[(23, 3), (1, 4)])
+    now = datetime(2024, 1, 2, 4, 0)
+    expected = datetime(2024, 1, 2, 23, 0)
+    assert not sched.is_off_peak(now)
+    assert sched.next_run(now) == expected

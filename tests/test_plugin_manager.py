@@ -37,6 +37,34 @@ def test_plugin_manager_initializes():
     assert manager.plugins  # catalog should not be empty
 
 
+def test_catalog_includes_ml_frameworks():
+    """Catalog should include popular ML frameworks."""
+    plugins = load_catalog()
+    names = [p.name for p in plugins]
+    assert "torch" in names
+    assert "transformers" in names
+
+
+def test_install_transformers_installs_torch_first(monkeypatch):
+    """Installing transformers should install torch first."""
+    manager = PluginManager()
+    plugin = manager.get_plugin("transformers")
+    assert plugin is not None
+
+    calls: list[list[str]] = []
+
+    def fake_run(args, shell, check, cwd, env):
+        calls.append(args)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    manager.install(plugin)
+
+    assert calls == [
+        ["pip", "install", "torch"],
+        ["pip", "install", "transformers"],
+    ]
+
+
 def test_install_runs_absolute_command(monkeypatch):
     """Installation should execute absolute commands safely."""
     echo_path = shutil.which("echo")
