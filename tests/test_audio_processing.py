@@ -1,34 +1,33 @@
+"""Tests for the audio processing utilities."""
+
 import domains.audio_processing as ap
+import pytest
 
 
-def test_local_processing():
-    audio = {"data": b"123", "duration": 2}
+@pytest.mark.parametrize(
+    "duration, expected_mode, transcript",
+    [
+        (2, "local", "local transcript"),
+        (10, "remote", "remote transcript"),
+    ],
+)
+def test_processing_path(duration, expected_mode, transcript, monkeypatch):
+    """Verify that audio is routed locally or remotely based on duration."""
+
+    audio = {"data": b"123", "duration": duration}
+    if expected_mode == "remote":
+        monkeypatch.setattr(ap, "_call_remote_api", lambda audio: transcript)
+
     processed = ap.input_processor(audio)
-    assert processed["use_remote"] is False
+    assert processed["use_remote"] is (expected_mode == "remote")
 
     plan = ap.task_planner(processed)
-    assert plan["steps"][0]["mode"] == "local"
+    assert plan["steps"][0]["mode"] == expected_mode
 
     results = ap.executor(plan)
-    assert results["results"][0]["mode"] == "local"
+    assert results["results"][0]["mode"] == expected_mode
 
     aggregated = ap.result_aggregator(results)
-    assert aggregated["transcript"] == "local transcript"
-    assert aggregated["modes"] == ["local"]
+    assert aggregated["transcript"] == transcript
+    assert aggregated["modes"] == [expected_mode]
 
-
-def test_remote_processing(monkeypatch):
-    audio = {"data": b"123", "duration": 10}
-    processed = ap.input_processor(audio)
-    assert processed["use_remote"] is True
-
-    plan = ap.task_planner(processed)
-    assert plan["steps"][0]["mode"] == "remote"
-
-    monkeypatch.setattr(ap, "_call_remote_api", lambda audio: "remote transcript")
-    results = ap.executor(plan)
-    assert results["results"][0]["mode"] == "remote"
-
-    aggregated = ap.result_aggregator(results)
-    assert aggregated["transcript"] == "remote transcript"
-    assert aggregated["modes"] == ["remote"]
