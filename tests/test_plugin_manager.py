@@ -12,7 +12,21 @@ def test_catalog_loads_default_manifest():
     """Catalog should load and include the core plugins."""
     plugins = load_catalog()
     names = [p.name for p in plugins]
-    assert "CustomChain" in names
+    assert {
+        "CustomChain",
+        "Ollama",
+        "sentence-transformers",
+        "llama-index",
+    }.issubset(names)
+
+    plugin_map = {p.name: p for p in plugins}
+    assert plugin_map["Ollama"].command == "npm install -g ollama"
+    assert (
+        plugin_map["sentence-transformers"].command
+        == "pip install sentence-transformers"
+    )
+    assert plugin_map["llama-index"].command == "pip install llama-index"
+
     # ensure at least one paid plugin exists
     assert any(p.paid for p in plugins)
 
