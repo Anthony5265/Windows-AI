@@ -7,6 +7,9 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List
+import urllib.request
+import logging
+import time
 
 
 # ``ModelInfo`` captures metadata about downloadable model files.  Instead of
@@ -110,13 +113,25 @@ def select_inference_mode(task: str, policy: str = "hybrid") -> str:
 
 
 def verify_checksum(path: str | Path, expected: str) -> bool:
-    """Check the SHA256 hash of ``path`` against ``expected``."""
+    """Check the SHA256 hash of ``path`` against ``expected``.
 
+    If the checksum does not match, the file is removed and the deletion is
+    logged via ``logging``.
+    """
+
+    path = Path(path)
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
-    return h.hexdigest().lower() == expected.lower()
+    if h.hexdigest().lower() != expected.lower():
+        logging.warning("Checksum mismatch for %s; deleting", path)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        return False
+    return True
 
 
 def download_model(
@@ -189,11 +204,6 @@ def download_model(
             attempt += 1
 
     if info.checksum and not verify_checksum(dest_path, info.checksum):
-        logging.warning("Checksum mismatch for model %s; deleting %s", name, dest_path)
-        try:
-            dest_path.unlink()
-        except FileNotFoundError:
-            pass
         raise ValueError("Checksum mismatch for model " + name)
 
     return dest_path
