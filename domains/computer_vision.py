@@ -13,16 +13,26 @@ from typing import Any, Dict, List
 import base64
 import io
 
-import requests
-from PIL import Image
+try:  # Optional dependency
+    import requests  # type: ignore
+except Exception:  # pragma: no cover - graceful fallback
+    requests = None  # type: ignore
+
+try:  # Optional dependency
+    from PIL import Image  # type: ignore
+except Exception:  # pragma: no cover - graceful fallback
+    Image = None  # type: ignore
 
 
-def input_processor(image: Any) -> Image.Image:
+def input_processor(image: Any) -> "Image.Image":
     """Prepare ``image`` data for model or API consumption.
 
     The function ensures the input is a :class:`~PIL.Image.Image`, converts it
     to RGB, and resizes it to ``224x224`` pixels.
     """
+
+    if Image is None:
+        raise RuntimeError("Pillow is required for image processing")
 
     if isinstance(image, Image.Image):
         img = image
@@ -33,13 +43,16 @@ def input_processor(image: Any) -> Image.Image:
     return img
 
 
-def task_planner(processed_image: Image.Image) -> Dict[str, Any]:
+def task_planner(processed_image: "Image.Image") -> Dict[str, Any]:
     """Plan the sequence of vision tasks to perform.
 
     A very small planner that always includes a local brightness analysis. If
     the image is fairly dark (mean pixel value below ``100``), an additional
     remote classification step is scheduled.
     """
+
+    if Image is None:
+        raise RuntimeError("Pillow is required for image processing")
 
     gray = processed_image.convert("L")
     mean = sum(gray.getdata()) / (gray.width * gray.height)
@@ -73,10 +86,14 @@ def executor(plan: Dict[str, Any]) -> Dict[str, Any]:
 
     for step in plan.get("plan", []):
         if step.get("type") == "local" and step.get("operation") == "brightness":
-            img: Image.Image = step["image"]
+            if Image is None:
+                raise RuntimeError("Pillow is required for image processing")
+            img: "Image.Image" = step["image"]
             mean = sum(img.getdata()) / (img.width * img.height)
             results.append({"brightness": mean})
         elif step.get("type") == "remote":
+            if Image is None or requests is None:
+                raise RuntimeError("Pillow and requests are required for remote vision tasks")
             img = step["image"]
             buffer = io.BytesIO()
             img.save(buffer, format="PNG")

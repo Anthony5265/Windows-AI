@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Iterable, Tuple, Dict, List, Iterable as Iter, Set
+from typing import Iterable, Tuple, Dict, List, Set
 
 from packaging.requirements import Requirement
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 
 from installer import env, plugins
+from updater import Updater
 
 
 @dataclass
@@ -40,7 +41,7 @@ def _parse_requirements(requirements: Iterable[str]) -> Dict[str, List[ParsedReq
     return grouped
 
 
-def _merge_markers(markers: Iter[str | None]) -> str | None:
+def _merge_markers(markers: Iterable[str | None]) -> str | None:
     markers = list(markers)
     if any(m is None for m in markers):
         return None
@@ -98,7 +99,12 @@ def resolve_conflicts(requirements: Iterable[str], auto_resolve: bool = True) ->
     return resolved, conflicts
 
 
-def setup_all(search_path: str | Path | None = None, auto_resolve: bool = True) -> Dict[str, Dict[str, object]]:
+def setup_all(
+    search_path: str | Path | None = None,
+    auto_resolve: bool = True,
+    update: bool = False,
+    updater_kwargs: Dict[str, object] | None = None,
+) -> Dict[str, Dict[str, object]]:
     """Discover plugins and install their dependencies in isolated envs.
 
     Parameters
@@ -109,6 +115,12 @@ def setup_all(search_path: str | Path | None = None, auto_resolve: bool = True) 
         to facilitate unit testing.
     auto_resolve:
         Passed to :func:`resolve_conflicts`.
+    update:
+        When ``True`` the application is updated using :class:`updater.Updater`
+        before environments are created.
+    updater_kwargs:
+        Optional keyword arguments passed to :class:`updater.Updater` when
+        ``update`` is ``True``.
 
     Returns
     -------
@@ -117,6 +129,9 @@ def setup_all(search_path: str | Path | None = None, auto_resolve: bool = True) 
         entry contains the environment path, installed packages and any
         conflicts encountered.
     """
+
+    if update:
+        Updater(**(updater_kwargs or {})).update()
 
     registry = plugins.discover_plugins(search_path)
     report: Dict[str, Dict[str, object]] = {}
