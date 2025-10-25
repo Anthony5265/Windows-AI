@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import threading
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from installer.locales import _
@@ -34,7 +36,7 @@ class InstallerGUI:
 
         html = self._html_path("chat_ui.html")
         self.window = self._webview.create_window(
-            "Windows AI Installer", html, width=900, height=700, js_api=self
+            _("Windows AI Installer"), html, width=900, height=700, js_api=self
         )
 
         # Component selection
@@ -104,17 +106,21 @@ class InstallerGUI:
         # Buttons
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
-        api_btn = ttk.Button(button_frame, text="Add API Key", command=self.add_api_key)
+        api_btn = ttk.Button(
+            button_frame, text=_("Add API Key"), command=self.add_api_key
+        )
         api_btn.pack(side=tk.LEFT, padx=5)
-        ToolTip(api_btn, "Store a service API key")
+        ToolTip(api_btn, _("Store a service API key"))
         self.install_btn = ttk.Button(
-            button_frame, text="Install Selected", command=self.install_selected
+            button_frame, text=_("Install Selected"), command=self.install_selected
         )
         self.install_btn.pack(side=tk.LEFT, padx=5)
-        ToolTip(self.install_btn, "Install chosen components")
-        ask_btn = ttk.Button(button_frame, text="Ask Assistant", command=self.ask_assistant)
+        ToolTip(self.install_btn, _("Install chosen components"))
+        ask_btn = ttk.Button(
+            button_frame, text=_("Ask Assistant"), command=self.ask_assistant
+        )
         ask_btn.pack(side=tk.LEFT, padx=5)
-        ToolTip(ask_btn, "Chat with the installer assistant")
+        ToolTip(ask_btn, _("Ask questions or get step-by-step help"))
 
         # Progress indicator
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
@@ -153,7 +159,7 @@ class InstallerGUI:
 
         selected_plugins = [p for p, var in self.component_vars.items() if var.get()]
         if not selected_plugins:
-            messagebox.showinfo("Install", "No components selected")
+            messagebox.showinfo(_("Install"), _("No components selected"))
             return
 
         # Allow user override of the model backend
@@ -166,24 +172,34 @@ class InstallerGUI:
             deps_to_check.extend(self.registry.dependencies.get(plugin_name, []))
         missing = self.assistant.check_dependencies(deps_to_check)
         if missing:
-            msg = "Missing dependencies: " + ", ".join(missing)
+            msg = _("Missing dependencies: {deps}").format(
+                deps=", ".join(missing)
+            )
             self.assistant.speak(msg)
-            messagebox.showinfo("Dependencies", msg)
+            messagebox.showinfo(_("Dependencies"), msg)
 
         # Prompt for API key before installation
         service = simpledialog.askstring(
-            "API Key", "Service requiring key (leave blank to skip):", parent=self.root
+            _("API Key"),
+            _("Service requiring key (leave blank to skip):"),
+            parent=self.root,
         )
         if service:
             key = simpledialog.askstring(
-                "API Key", f"Enter API key for {service}:", show="*", parent=self.root
+                _("API Key"),
+                _("Enter API key for {service}:").format(service=service),
+                show="*",
+                parent=self.root,
             )
             if key:
                 try:
                     api_keys.save_key(service, key)
-                    messagebox.showinfo("API Key", f"Saved key for {service}")
+                    messagebox.showinfo(
+                        _("API Key"),
+                        _("Saved key for {service}").format(service=service),
+                    )
                 except Exception as exc:  # pragma: no cover - GUI path
-                    messagebox.showerror("API Key", str(exc))
+                    messagebox.showerror(_("API Key"), str(exc))
 
         self.install_btn.config(state=tk.DISABLED)
         self.progress.config(maximum=len(selected_plugins))
@@ -211,12 +227,15 @@ class InstallerGUI:
 
         self.install_btn.config(state=tk.NORMAL)
         if error:
-            messagebox.showerror("Install", f"Install failed: {error}")
+            messagebox.showerror(
+                _("Install"), _("Install failed: {error}").format(error=error)
+            )
             return
 
         # Offer to launch the Control Center after a successful install
         if messagebox.askyesno(
-            "Install", "Installation complete. Launch Control Center now?"
+            _("Install"),
+            _("Installation complete. Launch Control Center now?"),
         ):
             try:
                 from control_center.gui import main as launch_gui
@@ -224,7 +243,10 @@ class InstallerGUI:
                 self.root.destroy()
                 launch_gui()
             except Exception as exc:  # pragma: no cover - runtime path
-                messagebox.showerror("Control Center", f"Failed to launch: {exc}")
+                messagebox.showerror(
+                    _("Control Center"),
+                    _("Failed to launch: {exc}").format(exc=exc),
+                )
 
     # --- Model downloads -------------------------------------------------
     def download_selected_model(self) -> None:
@@ -234,20 +256,39 @@ class InstallerGUI:
         if not model_name:
             return
         model_name = self.model_var.get()
-        dest = filedialog.askdirectory(title="Select download directory") or "."
+        dest = filedialog.askdirectory(title=_("Select download directory")) or "."
         self.download_btn.config(state=tk.DISABLED)
         self.progress.config(mode="determinate", maximum=100, value=0)
 
+        start = time.monotonic()
+
         def progress(downloaded: int, total: int) -> None:
             percent = int(downloaded / total * 100) if total else 0
-            self.root.after(0, lambda: self.progress.config(value=percent))
+            elapsed = time.monotonic() - start
+            speed = (downloaded / 1024 / 1024) / elapsed if elapsed > 0 else 0
+            downloaded_mb = downloaded / 1024 / 1024
+            total_mb = total / 1024 / 1024 if total else 0
+            label = f"{downloaded_mb:.1f} / {total_mb:.1f} MB ({speed:.1f} MB/s)"
+
+            def update() -> None:
+                self.progress.config(value=percent)
+                self.progress_label.config(text=label)
+
+            self.root.after(0, update)
 
         def worker() -> None:
             try:
                 models.download_model(model_name, dest, progress)
-                self.root.after(0, lambda: messagebox.showinfo("Download", "Model downloaded"))
+                self.root.after(
+                    0,
+                    lambda: messagebox.showinfo(
+                        _("Download"), _("Model downloaded")
+                    ),
+                )
             except Exception as exc:  # pragma: no cover - network path
-                self.root.after(0, lambda: messagebox.showerror("Download", str(exc)))
+                self.root.after(
+                    0, lambda: messagebox.showerror(_("Download"), str(exc))
+                )
             finally:
                 self.root.after(0, self._download_complete)
 
@@ -266,7 +307,7 @@ class InstallerGUI:
             return
 
         self.chat_win = tk.Toplevel(self.root)
-        self.chat_win.title("Assistant")
+        self.chat_win.title(_("Assistant"))
 
         self.chat_log = tk.Text(self.chat_win, state="disabled", width=60, height=15, wrap="word")
         self.chat_log.pack(padx=5, pady=5, fill="both", expand=True)
@@ -275,7 +316,7 @@ class InstallerGUI:
         entry_frame.pack(fill="x", padx=5, pady=5)
         self.chat_entry = tk.Entry(entry_frame)
         self.chat_entry.pack(side=tk.LEFT, fill="x", expand=True)
-        send_btn = ttk.Button(entry_frame, text="Send", command=self.send_chat)
+        send_btn = ttk.Button(entry_frame, text=_("Send"), command=self.send_chat)
         send_btn.pack(side=tk.LEFT, padx=5)
 
     def send_chat(self) -> None:
@@ -285,7 +326,9 @@ class InstallerGUI:
         if not question:
             return
         self.chat_entry.delete(0, tk.END)
-        self._append_chat(f"User: {question}\nAssistant: ")
+        self._append_chat(
+            f"{_('User')}: {question}\n{_('Assistant')}: "
+        )
 
         def worker() -> None:
             parts: list[str] = []

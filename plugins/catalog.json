@@ -1,1 +1,65 @@
-{  "plugins": [    {      "name": "CustomChain",      "description": "Framework for building LLM-powered applications.",      "command": "pip install customchain",      "paid": false,      "metadata": {"version": "0.1.0", "author": "WindowsAI"},      "rating": 4.5,      "dependencies": []    },    {      "name": "FlowTool",      "description": "Workflow automation and integration platform.",      "command": "npm install -g flowtool",      "paid": true,      "metadata": {"version": "1.2.0", "author": "WindowsAI"},      "rating": 4.0,      "dependencies": []    },    {      "name": "GPUShell",      "description": "GPU-accelerated terminal with modern features.",      "command": "brew install gpushell",      "paid": false,      "metadata": {"version": "0.5.0", "author": "WindowsAI"},      "rating": 4.2,      "dependencies": []    }  ]}
+{
+    "plugins": [
+        {
+            "name": "CustomChain",
+            "description": "Framework for building LLM-powered applications.",
+            "command": "pip install customchain",
+            "paid": false,
+            "metadata": {
+                "version": "0.1.0",
+                "author": "WindowsAI"
+            },
+            "rating": 4.5,
+            "dependencies": []
+        },
+        {
+            "name": "FlowTool",
+            "description": "Workflow automation and integration platform.",
+            "command": "npm install -g flowtool",
+            "paid": true,
+            "metadata": {
+                "version": "1.2.0",
+                "author": "WindowsAI"
+            },
+            "rating": 4.0,
+            "dependencies": []
+        },
+        {
+            "name": "GPUShell",
+            "description": "GPU-accelerated terminal with modern features.",
+            "command": "brew install gpushell",
+            "paid": false,
+            "metadata": {
+                "version": "0.5.0",
+                "author": "WindowsAI"
+            },
+            "rating": 4.2,
+            "dependencies": []
+        },
+        {
+            "name": "torch",
+            "description": "Deep learning framework for tensor computation and neural networks.",
+            "command": "pip install torch",
+            "paid": false,
+            "metadata": {
+                "version": "2.1.0",
+                "author": "PyTorch"
+            },
+            "rating": 4.6,
+            "dependencies": []
+        },
+        {
+            "name": "transformers",
+            "description": "State-of-the-art machine learning models for natural language processing.",
+            "command": "pip install transformers",
+            "paid": false,
+            "metadata": {
+                "version": "4.33.0",
+                "author": "Hugging Face"
+            },
+            "rating": 4.8,
+            "dependencies": ["torch"]
+        }
+    ]
+}
+
