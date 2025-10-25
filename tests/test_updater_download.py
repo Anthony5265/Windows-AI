@@ -43,3 +43,20 @@ def test_download_checksum_failure(tmp_path):
         updater.download("2.0", dest, checksum="0" * 64)
 
     assert not dest.exists()
+
+
+def test_apply_update_verifies_checksum_before_install(tmp_path):
+    pkg = tmp_path / "pkg.zip"
+    pkg.write_bytes(b"content")
+    updater = Updater()
+    called: list[Path] = []
+
+    def fake_install(path: Path) -> None:
+        called.append(path)
+
+    updater.run_install = fake_install  # type: ignore[method-assign]
+
+    with pytest.raises(ValueError):
+        updater.apply_update(pkg, checksum="0" * 64)
+
+    assert not called
