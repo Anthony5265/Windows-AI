@@ -22,6 +22,28 @@ from security import AuditLogger, PermissionManager
 logger = get_logger(__name__)
 
 
+def _is_online(url: str = "https://www.google.com/generate_204") -> bool:
+    """Return True if a lightweight request to *url* succeeds.
+
+    The check respects both lowercase and uppercase proxy environment variables
+    so that users behind corporate proxies can still verify connectivity.
+    """
+    proxies = urllib.request.getproxies()
+    for scheme in ("http", "https"):
+        env_value = os.environ.get(f"{scheme.upper()}_PROXY")
+        if env_value:
+            proxies[scheme] = env_value
+    handler = urllib.request.ProxyHandler(proxies)
+    opener = urllib.request.build_opener(handler)
+    request = urllib.request.Request(url, method="HEAD")
+    try:
+        opener.open(request, timeout=5)
+        return True
+    except Exception:
+        return False
+
+
+def install_all() -> None:
 def install_all(permission_manager: PermissionManager | None = None) -> None:
     """Discover plugins and install their requested dependencies."""
 
@@ -34,20 +56,7 @@ def install_all(permission_manager: PermissionManager | None = None) -> None:
         print("No plugin dependencies to install.")
         return
 
-    # Determine connectivity while respecting proxy environment variables
-    proxies = urllib.request.getproxies()
-    # Ensure uppercase proxy variables are considered
-    for env_name in ("HTTP_PROXY", "HTTPS_PROXY"):
-        if env_name in os.environ:
-            proxies[env_name[:-6].lower()] = os.environ[env_name]
-    handler = urllib.request.ProxyHandler(proxies)
-    opener = urllib.request.build_opener(handler)
-    request = urllib.request.Request(
-        "https://www.google.com/generate_204", method="HEAD"
-    )
-    try:
-        opener.open(request, timeout=5)
-    except Exception:
+    if not _is_online():
         print(
             "Warning: offline mode detected. Skipping plugin dependency downloads."
         )
