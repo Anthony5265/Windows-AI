@@ -1,0 +1,14 @@
+{
+  "interval": 1800,
+  "tasks": [
+    {
+      "name": "pytest",
+      "check": ["npm", "test", "--", "--maxfail=1"]
+    },
+    {
+      "name": "lint",
+      "check": ["npm", "run", "lint"],
+      "fix": [["npm", "run", "lint", "--", "--fix"]]
+    }
+  ]
+}

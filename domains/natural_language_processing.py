@@ -5,24 +5,27 @@ local models or remote APIs.
 """
 
 from __future__ import annotations
+import re
 from typing import Any, Dict, List
 
 
 def input_processor(raw_text: str) -> List[str]:
     """Preprocess ``raw_text`` before it is passed to models or APIs.
 
-    The processor performs minimal normalization and tokenization.  For the
-    purposes of this project we simply lowercase the text and split on
-    whitespace, returning a list of tokens that downstream components can use to
-    decide whether to route to local models or remote APIs.
+    The processor performs minimal normalization and tokenization.  The current
+    implementation lowercases the text and extracts word tokens using a simple
+    regular expression.  This keeps the example dependency free while still
+    demonstrating how text is prepared before entering the rest of the
+    pipeline.
     """
 
     # Normalize by trimming whitespace and converting to lowercase
     normalized = raw_text.strip().lower()
-    # Tokenize using a naïve whitespace split.  Real implementations would use a
-    # dedicated tokenizer but this is sufficient for demonstrating flow through
-    # the pipeline.
-    tokens = normalized.split()
+
+    # Tokenize using a simple word based regular expression.  Using ``re`` keeps
+    # punctuation such as commas from appearing in tokens while remaining light
+    # weight compared to a full featured tokenizer.
+    tokens = re.findall(r"\b\w+\b", normalized)
     return tokens
 
 
@@ -38,21 +41,15 @@ def task_planner(processed_text: List[str]) -> Dict[str, Any]:
     components in the repository.
     """
 
-    if len(processed_text) <= 1:
-        # For very small inputs keep behaviour compatible with existing tests
-        # and return an empty plan.  This mirrors the previous stub behaviour
-        # used throughout the repository.
+    if not processed_text:
+        # An empty list of tokens means there is nothing to process.
         return {"plan": []}
 
+    # Heuristic routing: short inputs are handled locally while longer inputs
+    # are delegated to a remote API.  This mirrors how higher level components
+    # decide between local models and cloud services.
     mode = "local" if len(processed_text) <= 5 else "remote"
-    plan = {
-        "plan": [
-            {
-                "type": mode,
-                "tokens": processed_text,
-            }
-        ]
-    }
+    plan = {"plan": [{"type": mode, "tokens": processed_text}]}
     return plan
 
 

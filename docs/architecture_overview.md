@@ -20,7 +20,7 @@ module listed here maps to a major feature area described in the project vision.
 
 ## 4. Mobile & Companion Apps
 - Companion apps provide notifications and remote control of desktop agents.
-- Secure pairing over local network or QR code exchange.
+- Secure pairing over local network or QR code exchange (requires the optional `qrcode` Python package).
 - Mobile devices participate as mesh nodes when available.
 
 ## 5. Cloud Sync & Hybrid Modes
