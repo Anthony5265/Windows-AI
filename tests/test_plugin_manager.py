@@ -141,3 +141,29 @@ def test_dependencies_install_first(monkeypatch):
 
     assert calls == [[echo_path, "dep"], [echo_path, "main"]]
 
+
+@pytest.mark.parametrize(
+    "name, package",
+    [
+        ("Transformers", "transformers"),
+        ("Torch", "torch"),
+        ("TensorFlow", "tensorflow"),
+        ("LangChain", "langchain"),
+    ],
+)
+def test_framework_plugins_install(monkeypatch, name, package):
+    """Framework plugins from the catalog should install via pip."""
+    manager = PluginManager()
+    plugin = manager.get_plugin(name)
+    assert plugin is not None
+
+    calls = []
+
+    def fake_run(args, shell, check, cwd, env):
+        calls.append(args)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    manager.install(plugin)
+
+    assert calls == [["pip", "install", package]]
+
