@@ -23,4 +23,7 @@ def test_conda_env_creation_failure_logs_and_raises(tmp_path, monkeypatch, caplo
     expected_cmd = ["conda", "create", "-y", "-p", str(env.BASE_DIR / "broken"), "python"]
     assert str(expected_cmd) in caplog.text
     assert "boom" in caplog.text
-    assert "Failed to create environment" in str(excinfo.value)
+    error_msg = str(excinfo.value)
+    assert "Failed to create environment" in error_msg
+    assert str(expected_cmd) in error_msg
+    assert "boom" in error_msg

@@ -2,27 +2,19 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
-from typing import Dict
+import time
+import threading
+import time
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 
-try:  # pragma: no cover - optional dependency
-    import webview  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
-    webview = None  # type: ignore
-
-from ui import themes
-
-if __package__ in {None, ""}:  # pragma: no cover - script entry
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from installer.locales import _
+from installer import api_keys, env, model_selector, models, plugins, system_info
+from installer.assistant import Assistant, ToolTip
 
 
 class InstallerGUI:
-    """Web-based installer interface using PyWebView.
-
-    The interface renders a React component that mimics ChatGPT's chat layout.
-    Themes are managed through :class:`ui.themes.ThemeManager` and exposed to
-    the JavaScript side via the PyWebView API.
-    """
+    """Simple Tkinter-based installer interface."""
 
     def __init__(self) -> None:
         if webview is None:  # pragma: no cover - runtime safeguard
