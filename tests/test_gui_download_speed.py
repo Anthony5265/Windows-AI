@@ -1,4 +1,4 @@
-import types
+import pytest
 
 from installer import gui
 
