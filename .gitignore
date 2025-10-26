@@ -1,24 +1,12 @@
-# Byte-compiled / cache
-__pycache__/
-*.py[cod]
-
-# Logs
-*.log
-AI/Logs/
-
-# Virtual environments
-.venv/
-
-# Installer secrets
-installer/keys.json
-
-# Build artifacts
 node_modules/
-build/
 dist/
-*.spec
-
-# Test & coverage
-.pytest_cache/
-.mypy_cache/
-.coverage
+build/
+.cache/
+.env
+.env.*
+logs/
+models/
+*.log
+*.bak.*
+.DS_Store
+Thumbs.db

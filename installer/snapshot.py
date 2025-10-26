@@ -12,11 +12,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import json
 import subprocess
+import logging
+import shutil
 from typing import Set
 
 # Location of the snapshot record
 CONFIG_DIR = Path.home() / ".windows_ai"
 SNAPSHOT_FILE = CONFIG_DIR / "snapshot.json"
+SNAPSHOT_LOG = CONFIG_DIR / "snapshot.log"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -93,12 +98,39 @@ def restore(snapshot: Snapshot | None = None) -> None:
     """
 
     snap = snapshot or Snapshot.load()
-    for service in snap.services:
-        subprocess.run(["nssm", "remove", service, "confirm"], check=False)
-    for rule in snap.firewall_rules:
-        cmd = f"Remove-NetFirewallRule -DisplayName '{rule}'"
-        subprocess.run(["pwsh", "-NoProfile", "-Command", cmd], check=False)
-    snap.clear()
+    SNAPSHOT_LOG.parent.mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(SNAPSHOT_LOG, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+    try:
+        nssm = shutil.which("nssm")
+        pwsh = shutil.which("pwsh")
+        if not nssm and snap.services:
+            logger.warning("nssm not found; cannot remove services: %s", ", ".join(sorted(snap.services)))
+        if not pwsh and snap.firewall_rules:
+            logger.warning(
+                "pwsh not found; cannot remove firewall rules: %s",
+                ", ".join(sorted(snap.firewall_rules)),
+            )
+        if nssm:
+            for service in snap.services:
+                result = subprocess.run([nssm, "remove", service, "confirm"], check=False)
+                if result.returncode == 0:
+                    logger.info("Removed service %s", service)
+                else:
+                    logger.error("Failed to remove service %s (code %s)", service, result.returncode)
+        if pwsh:
+            for rule in snap.firewall_rules:
+                cmd = f"Remove-NetFirewallRule -DisplayName '{rule}'"
+                result = subprocess.run([pwsh, "-NoProfile", "-Command", cmd], check=False)
+                if result.returncode == 0:
+                    logger.info("Removed firewall rule %s", rule)
+                else:
+                    logger.error("Failed to remove firewall rule %s (code %s)", rule, result.returncode)
+        snap.clear()
+        logger.info("Snapshot restore complete")
+    finally:
+        logger.removeHandler(handler)
 
 
 def load_snapshot() -> Snapshot:
@@ -110,6 +142,7 @@ def load_snapshot() -> Snapshot:
 __all__ = [
     "Snapshot",
     "SNAPSHOT_FILE",
+    "SNAPSHOT_LOG",
     "create_snapshot",
     "record_service",
     "record_firewall_rule",

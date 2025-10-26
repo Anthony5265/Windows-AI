@@ -1,0 +1,20 @@
+{
+  "repo": "microsoft/windows-ai",
+  "token_env": "GITHUB_TOKEN",
+  "remote": "origin",
+  "commit_message": "chore: auto-fix PR #{pr_number}",
+  "workdir": ".",
+  "push": true,
+  "per_page": 30,
+  "tasks": [
+    {
+      "name": "lint",
+      "check": ["npm", "run", "lint"],
+      "fix": [["npm", "run", "lint", "--", "--fix"]]
+    },
+    {
+      "name": "tests",
+      "check": ["npm", "test", "--", "--maxfail=1"]
+    }
+  ]
+}

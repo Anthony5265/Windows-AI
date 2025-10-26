@@ -22,6 +22,7 @@ test('returns 400 for validation errors', async () => {
   assert.strictEqual(res.status, 400);
   const body = await res.json();
   assert.strictEqual(body.ok, false);
+  assert.strictEqual(body.error.message, 'Invalid action');
   await new Promise((resolve) => server.close(resolve));
 });
 
@@ -35,5 +36,7 @@ test('returns 500 for unexpected errors', async () => {
   assert.strictEqual(res.status, 500);
   const body = await res.json();
   assert.strictEqual(body.ok, false);
+  assert.strictEqual(body.error.message, 'Internal server error');
   await new Promise((resolve) => server.close(resolve));
 });
+

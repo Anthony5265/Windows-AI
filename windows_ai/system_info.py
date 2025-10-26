@@ -1,22 +1,26 @@
 """Expose system information utilities to tests and consumers.
 
-This module wraps :func:`installer.system_info.detect_system` and augments the
-result with a best-effort lookup of operating system accessibility settings.
-The goal is to expose features like screen reader usage or high-contrast
-themes to higher level components so they can adapt their behaviour
-accordingly.  The implementation is intentionally forgiving – failures to
-query the platform are silently ignored and sensible defaults are returned
-instead.
+This module wraps :func:`windows_ai.system_info_core.detect_system` and
+augments the result with a best-effort lookup of operating system
+accessibility settings. The goal is to expose features like screen reader
+usage or high-contrast themes to higher level components so they can adapt
+their behaviour accordingly.  The implementation is intentionally forgiving –
+failures to query the platform are silently ignored and sensible defaults are
+returned instead.
 """
 
 from __future__ import annotations
 
 import ctypes
+import logging
 import platform
 import subprocess
 from typing import Any, Dict
 
-from installer.system_info import detect_system as _detect_system
+from .system_info_core import detect_system as _detect_system
+
+
+logger = logging.getLogger(__name__)
 
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
@@ -41,17 +45,24 @@ def _detect_accessibility() -> Dict[str, bool]:
 
     system = platform.system()
     if system == "Windows":
-        try:  # pragma: no cover - Windows only
-            SPI_GETSCREENREADER = 0x0046
-            SPI_GETHIGHCONTRAST = 0x0042
-            HCF_HIGHCONTRASTON = 0x00000001
+        SPI_GETSCREENREADER = 0x0046
+        SPI_GETHIGHCONTRAST = 0x0042
+        HCF_HIGHCONTRASTON = 0x00000001
 
+        try:  # pragma: no cover - Windows only
             screen_reader = ctypes.c_uint()
             ctypes.windll.user32.SystemParametersInfoW(
                 SPI_GETSCREENREADER, 0, ctypes.byref(screen_reader), 0
             )
             settings["screen_reader"] = bool(screen_reader.value)
+        except Exception:
+            logger.warning(
+                "platform=%s step=screen_reader detection failed",
+                system,
+                exc_info=True,
+            )
 
+        try:
             class HIGHCONTRAST(ctypes.Structure):
                 _fields_ = [
                     ("cbSize", ctypes.c_uint),
@@ -66,7 +77,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = bool(hc.dwFlags & HCF_HIGHCONTRASTON)
         except Exception:
-            pass
+            logger.warning(
+                "platform=%s step=high_contrast detection failed",
+                system,
+                exc_info=True,
+            )
     elif system == "Darwin":
         try:  # pragma: no cover - macOS only
             out = subprocess.check_output(
@@ -79,7 +94,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = out.strip() == b"1"
         except Exception:
-            pass
+            logger.warning(
+                "platform=%s step=screen_reader detection failed",
+                system,
+                exc_info=True,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -91,7 +110,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = out.strip() == b"1"
         except Exception:
-            pass
+            logger.warning(
+                "platform=%s step=high_contrast detection failed",
+                system,
+                exc_info=True,
+            )
     else:  # Linux/other
         try:  # pragma: no cover - optional dependencies
             out = subprocess.check_output(
@@ -108,7 +131,11 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            pass
+            logger.warning(
+                "platform=%s step=high_contrast detection failed",
+                system,
+                exc_info=True,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -124,7 +151,11 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            pass
+            logger.warning(
+                "platform=%s step=screen_reader detection failed",
+                system,
+                exc_info=True,
+            )
 
     return settings
 
@@ -148,7 +179,11 @@ def _detect_xr_hardware() -> Dict[str, Any]:
             info["xr_capable"] = True
             info["xr_runtime"] = getattr(runtime, "__name__", str(runtime))
     except Exception:
-        pass
+        logger.warning(
+            "platform=%s step=xr_runtime detection failed",
+            platform.system(),
+            exc_info=True,
+        )
     return info
 
 
