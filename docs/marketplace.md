@@ -51,3 +51,18 @@ Installation commands execute inside a temporary sandbox directory with a very
 limited environment.  Avoid commands that modify global system state and do not
 rely on environment variables beyond `PATH`.
 
+
+## Publishing Guidelines
+
+1. Start the marketplace service:
+
+   ```bash
+   uvicorn marketplace.main:app
+   ```
+
+2. Open the Marketplace panel in the Control Center or send a `POST` request to `/plugins`
+   using the fields described in the `PluginMetadata` schema within
+   `openapi/windows-ai.yaml`.
+
+3. The catalog is stored in `plugins/catalog.json`. Review your entry and submit
+   documentation via pull request when proposing new plugins.

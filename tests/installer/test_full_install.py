@@ -30,3 +30,5 @@ $env:TEMP='{tmp_path}'
     assert any("nssm.cc" in line for line in lines)
     assert any("mkcert" in line for line in lines)
     assert any("nodejs.org" in line for line in lines)
+    assert any(line.startswith("START:") and line.lower().endswith("nssm.exe") for line in lines)
+    assert any(line.startswith("START:") and line.lower().endswith("mkcert.exe") for line in lines)
