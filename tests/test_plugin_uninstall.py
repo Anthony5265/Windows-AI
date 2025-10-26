@@ -63,3 +63,22 @@ def test_uninstall_keeps_shared_dependency(monkeypatch):
 
     assert calls == [["pip", "uninstall", "main1", "-y"]]
     assert manager._installed == {"Dep", "Main2"}
+
+
+def test_uninstall_noop_when_not_installed(monkeypatch):
+    """Uninstalling a plugin that isn't installed should do nothing."""
+
+    plugin = make_plugin("Ghost")
+    manager = PluginManager()
+    manager.plugins = [plugin]
+
+    calls = []
+
+    def fake_run(args, shell, check, cwd, env):
+        calls.append(args)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    manager.uninstall(plugin)
+
+    assert calls == []
+    assert manager._installed == set()

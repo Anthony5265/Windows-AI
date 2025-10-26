@@ -22,7 +22,9 @@ async function probe(url){
 async function detectHosts(){
   const ollama = await probe('http://127.0.0.1:11434/');
   const lmstudio = await probe('http://127.0.0.1:1234/');
-  return { ollama, lmstudio, openai: !!OPENAI_KEY };
+  const textgen = await probe('http://127.0.0.1:5000/');
+  const vllm = await probe('http://127.0.0.1:8000/');
+  return { ollama, lmstudio, textgen, vllm, openai: !!OPENAI_KEY };
 }
 
 app.get('/health', async (req, res) => { res.json({ ok:true, hosts: await detectHosts() }); });
@@ -32,6 +34,12 @@ app.get('/v1/models', async (req, res) => {
   try {
     if (hosts.lmstudio) {
       const r = await fetch('http://127.0.0.1:1234/v1/models'); const j = await r.json().catch(()=>({data:[]})); return res.json(j);
+    }
+    if (hosts.textgen) {
+      const r = await fetch('http://127.0.0.1:5000/v1/models'); const j = await r.json().catch(()=>({data:[]})); return res.json(j);
+    }
+    if (hosts.vllm) {
+      const r = await fetch('http://127.0.0.1:8000/v1/models'); const j = await r.json().catch(()=>({data:[]})); return res.json(j);
     }
     if (hosts.ollama) {
       const r = await fetch('http://127.0.0.1:11434/api/tags'); const j = await r.json().catch(()=>({models:[]}));
@@ -50,6 +58,14 @@ app.post('/v1/chat/completions', async (req, res) => {
   try {
     if (hosts.lmstudio) {
       const r = await fetch('http://127.0.0.1:1234/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model, messages, temperature, max_tokens, stream }) });
+      if (stream) { res.status(501).json({ error:'streaming_not_implemented' }); } else { return res.status(r.status).json(await r.json()); }
+    }
+    if (hosts.textgen) {
+      const r = await fetch('http://127.0.0.1:5000/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model, messages, temperature, max_tokens, stream }) });
+      if (stream) { res.status(501).json({ error:'streaming_not_implemented' }); } else { return res.status(r.status).json(await r.json()); }
+    }
+    if (hosts.vllm) {
+      const r = await fetch('http://127.0.0.1:8000/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model, messages, temperature, max_tokens, stream }) });
       if (stream) { res.status(501).json({ error:'streaming_not_implemented' }); } else { return res.status(r.status).json(await r.json()); }
     }
     if (hosts.ollama) {

@@ -32,3 +32,11 @@ def _(key: str) -> str:
     """Return the localized string for *key*."""
 
     return _strings.get(key, key)
+
+
+def set_language(lang: str | None) -> None:
+    """Reload localized strings for the given language code."""
+
+    global _strings
+    _strings = load_strings(lang)
+
