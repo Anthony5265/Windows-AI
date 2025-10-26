@@ -5,6 +5,7 @@ This guide outlines how to try the placeholder mobile companion app and pair it 
 ## Prerequisites
 - Node.js and npm
 - An emulator or device capable of running React Native apps
+- Optional: Python `qrcode` package to display QR codes in the desktop Control Center
 
 ## Running the App
 1. Navigate to the `mobile/` directory and install dependencies:
@@ -16,7 +17,7 @@ This guide outlines how to try the placeholder mobile companion app and pair it 
 3. Sign in with any credentials. Authentication is not yet wired up.
 
 ## Pairing with the Desktop
-1. In the desktop Control Center, choose **Pair Mobile** to display a secure token or QR code.
+1. In the desktop Control Center, choose **Pair Mobile** to display a secure token or QR code. If the optional `qrcode` package is not installed, only the token is shown.
 2. Enter the token into the mobile app's pairing screen.
 3. Once paired, the token can be used to send remote commands through the Actions API.
 

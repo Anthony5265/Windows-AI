@@ -3,10 +3,10 @@ import hashlib
 from installer import models
 
 
-def _fake_urlopen_factory(data: bytes):
-    """Create a ``urlopen`` replacement that fails once mid-stream."""
+def _fake_urlopen_factory(data: bytes, failures: int = 1):
+    """Create a ``urlopen`` replacement that fails ``failures`` times mid-stream."""
 
-    state = {"calls": 0}
+    state = {"calls": 0, "timeouts": []}
 
     def _fake_urlopen(req, timeout=None):
         # Determine starting offset via Range header
@@ -16,7 +16,8 @@ def _fake_urlopen_factory(data: bytes):
             if range_header:
                 start = int(range_header.split("=")[1].split("-")[0])
 
-        fail = state["calls"] == 0
+        state["timeouts"].append(timeout)
+        fail = state["calls"] < failures
         state["calls"] += 1
 
         class Resp:
@@ -46,7 +47,7 @@ def _fake_urlopen_factory(data: bytes):
 
         return Resp()
 
-    return _fake_urlopen
+    return _fake_urlopen, state
 
 
 def test_compatible_models(monkeypatch):
@@ -104,14 +105,16 @@ def test_download_model_retries(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(models, "MODEL_REGISTRY", {"test": info})
 
-    fake_urlopen = _fake_urlopen_factory(data)
+    fake_urlopen, state = _fake_urlopen_factory(data, failures=2)
     monkeypatch.setattr(models.urllib.request, "urlopen", fake_urlopen)
 
     sleeps: list[float] = []
     monkeypatch.setattr(models.time, "sleep", lambda s: sleeps.append(s))
 
-    dest = models.download_model("test", tmp_path, retries=2, timeout=1)
+    dest = models.download_model("test", tmp_path, retries=3, timeout=1)
 
     assert dest.read_bytes() == data
-    # Only one retry should have occurred, resulting in a single sleep call
-    assert sleeps == [1]
+    # Two retries should have occurred with exponential backoff (1s then 2s)
+    assert sleeps == [1, 2]
+    # Ensure timeout was forwarded to urlopen for each attempt
+    assert state["timeouts"] == [1, 1, 1]

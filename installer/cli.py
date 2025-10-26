@@ -16,33 +16,47 @@ if __package__ is None or __package__ == "":  # pragma: no cover - script entry
 
 from installer import api_keys, env, plugins, system_info
 from installer.logging_config import get_logger
+from security import AuditLogger, PermissionManager
 
 
 logger = get_logger(__name__)
 
 
+def _is_online(url: str = "https://www.google.com/generate_204") -> bool:
+    """Return True if a lightweight request to *url* succeeds.
+
+    The check respects both lowercase and uppercase proxy environment variables
+    so that users behind corporate proxies can still verify connectivity.
+    """
+    proxies = urllib.request.getproxies()
+    for scheme in ("http", "https"):
+        env_value = os.environ.get(f"{scheme.upper()}_PROXY")
+        if env_value:
+            proxies[scheme] = env_value
+    handler = urllib.request.ProxyHandler(proxies)
+    opener = urllib.request.build_opener(handler)
+    request = urllib.request.Request(url, method="HEAD")
+    try:
+        opener.open(request, timeout=5)
+        return True
+    except Exception:
+        return False
+
+
 def install_all() -> None:
+def install_all(permission_manager: PermissionManager | None = None) -> None:
     """Discover plugins and install their requested dependencies."""
+
+    if permission_manager and not permission_manager.has("installer", "network"):
+        print("Network permission required. Skipping downloads.")
+        return
 
     registry = plugins.discover_plugins()
     if not registry.dependencies:
         print("No plugin dependencies to install.")
         return
 
-    # Determine connectivity while respecting proxy environment variables
-    proxies = urllib.request.getproxies()
-    # Ensure uppercase proxy variables are considered
-    for env_name in ("HTTP_PROXY", "HTTPS_PROXY"):
-        if env_name in os.environ:
-            proxies[env_name[:-6].lower()] = os.environ[env_name]
-    handler = urllib.request.ProxyHandler(proxies)
-    opener = urllib.request.build_opener(handler)
-    request = urllib.request.Request(
-        "https://www.google.com/generate_204", method="HEAD"
-    )
-    try:
-        opener.open(request, timeout=5)
-    except Exception:
+    if not _is_online():
         print(
             "Warning: offline mode detected. Skipping plugin dependency downloads."
         )
@@ -91,6 +105,23 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+
+    audit_logger = AuditLogger()
+    permission_manager = PermissionManager(audit_logger=audit_logger)
+
+    def ask_permission(plugin: str, perm: str) -> bool:
+        if args.yes:
+            return False
+        try:
+            choice = input(
+                f"{plugin} requests {perm} access. Allow? [y/N] "
+            ).strip().lower()
+        except Exception:
+            logger.exception("Failed to read permission choice")
+            return False
+        return choice in {"y", "yes"}
+
+    permission_manager.prompt("installer", "network", ask_permission)
 
     info = system_info.detect_system()
     print("Detected system info:")
@@ -158,7 +189,7 @@ def main() -> None:
             print("No API key stored.")
 
     if args.install_all:
-        install_all()
+        install_all(permission_manager)
 
     # Offer to launch the Control Center after setup completes
     if args.yes:

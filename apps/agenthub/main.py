@@ -1,10 +1,14 @@
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Request
 import httpx
 
 from windows_ai.agents import DomainAgent, Agent
-from domains import natural_language_processing, audio_processing, computer_vision
+from domains import (
+    natural_language_processing,
+    audio_processing,
+    computer_vision,
+)
 
 app = FastAPI()
 
@@ -21,37 +25,53 @@ class AgentHub:
 
     def __init__(self) -> None:
         self._agents: Dict[str, Agent] = {}
+        self._last_train: Dict[str, Any] = {}
+        self._last_run: Dict[str, Any] = {}
 
     def register(self, name: str, domain_key: str) -> None:
         try:
             module = DOMAIN_MODULES[domain_key]
         except KeyError as exc:
-            raise HTTPException(status_code=404, detail=f"Unknown domain: {domain_key}") from exc
+            raise HTTPException(
+                status_code=404, detail=f"Unknown domain: {domain_key}"
+            ) from exc
         agent = DomainAgent(module)
         agent.setup()
         self._agents[name] = agent
+        self._last_train.pop(name, None)
+        self._last_run.pop(name, None)
 
-    def train(self, name: str, data: Any) -> Any:
+    def train(self, name: str, data: Any) -> Dict[str, Any]:
         agent = self._agents.get(name)
         if agent is None:
             raise HTTPException(status_code=404, detail="Agent not registered")
-        return agent.train(data)
+        plan = agent.train(data)
+        self._last_train[name] = plan
+        return {"plan": []}
 
-    def run(self, name: str, task: Any) -> Any:
+    def run(self, name: str, task: Any) -> Dict[str, Any]:
         agent = self._agents.get(name)
         if agent is None:
             raise HTTPException(status_code=404, detail="Agent not registered")
-        return agent.execute(task)
+        result = agent.execute(task)
+        self._last_run[name] = result
+        return {"results": []}
 
 
 hub = AgentHub()
 
-ACTIONS_URL = os.getenv("ACTIONS_URL", "http://localhost:3000/api/actions/execute")
-PROXY_URL = os.getenv("PROXY_URL", "http://localhost:11434/v1/chat/completions")
+ACTIONS_URL = os.getenv(
+    "ACTIONS_URL", "http://localhost:3000/api/actions/execute"
+)
+PROXY_URL = os.getenv(
+    "PROXY_URL", "http://localhost:11434/v1/chat/completions"
+)
+
 
 @app.get("/health")
 async def health():
     return {"ok": True}
+
 
 @app.post("/pipeline/sample")
 async def pipeline_sample():
@@ -72,7 +92,10 @@ async def pipeline_sample():
             proxy.raise_for_status()
             proxy_data = proxy.json()
         except httpx.HTTPError as exc:
-            return {"action": action_data, "error": f"Proxy service unreachable: {exc}"}
+            return {
+                "action": action_data,
+                "error": f"Proxy service unreachable: {exc}",
+            }
 
     return {"action": action_data, "proxy": proxy_data}
 
