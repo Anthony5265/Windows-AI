@@ -4,7 +4,8 @@
 param(
     [string]$PythonExe = "python",
     [string]$CertPath = "",
-    [string]$TimestampServer = ""
+    [string]$TimestampServer = "",
+    [string[]]$PythonOptions = @('--embed')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,12 +43,21 @@ foreach ($arch in $architectures) {
     if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
     if (Test-Path $build) { Remove-Item $build -Recurse -Force }
 
-    & $PythonExe -m PyInstaller --noconfirm --onefile --windowed installer/gui_installer.py `
-        --name "WindowsAI_Installer_$arch" `
-        --distpath $dist `
-        --workpath $build `
-        --specpath $build `
-        --target-arch $arch
+    $pyArgs = @(
+        '--noconfirm','--onefile','--windowed','installer/gui_installer.py',
+        '--name',"WindowsAI_Installer_$arch",
+        '--distpath',$dist,
+        '--workpath',$build,
+        '--specpath',$build,
+        '--target-arch',$arch
+    )
+
+    foreach ($opt in $PythonOptions) {
+        $pyArgs += '--python-option'
+        $pyArgs += $opt
+    }
+
+    & $PythonExe -m PyInstaller @pyArgs
 
     foreach ($res in $resources) {
         if (Test-Path $res) {
