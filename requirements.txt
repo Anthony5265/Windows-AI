@@ -1,6 +1,6 @@
 fastapi>=0.116,<0.120
 httpx>=0.28,<0.29
-huggingface_hub>=0.24,<0.36
+huggingface_hub>=0.24,<0.37
 respx>=0.22,<0.23
 uvicorn[standard]>=0.30,<0.39
 litellm>=1.74.0,<1.79.0
