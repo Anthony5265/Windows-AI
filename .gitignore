@@ -10,3 +10,5 @@ models/
 *.bak.*
 .DS_Store
 Thumbs.db
+.gemini/
+gha-creds-*.json
