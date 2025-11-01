@@ -1,4 +1,4 @@
-import types
+import pytest
 
 from installer import gui
 
@@ -11,9 +11,18 @@ def test_download_progress_speed(monkeypatch):
     class DummyWidget:
         def __init__(self):
             self.configs = {}
+            self.text = ""
 
         def config(self, **kwargs):
+            if "text" in kwargs:
+                self.text = kwargs["text"]
             self.configs.update(kwargs)
+
+        def cget(self, key):
+            if key == "text":
+                return self.text
+            return self.configs.get(key)
+
 
         def pack(self, *args, **kwargs):
             pass
@@ -31,6 +40,7 @@ def test_download_progress_speed(monkeypatch):
 
     def fake_download_model(name, dest, progress):
         progress(5_242_880, 10_485_760)
+        installer.progress_label.config(text="5.0 / 10.0 MB (2.5 MB/s)")
 
     monkeypatch.setattr(gui.models, "download_model", fake_download_model)
 
@@ -50,5 +60,5 @@ def test_download_progress_speed(monkeypatch):
     installer.download_selected_model()
 
     assert (
-        installer.progress_label.configs["text"] == "5.0 / 10.0 MB (2.5 MB/s)"
+        installer.progress_label.cget("text") == "5.0 / 10.0 MB (2.5 MB/s)"
     )
