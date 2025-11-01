@@ -18,6 +18,7 @@ except Exception:  # pragma: no cover - headless environment
 
 from .backends import Backend, load_backend
 from . import get_plugins
+from search import SearchEngine, load_engine
 
 __all__ = ["ChatUI", "main"]
 
@@ -30,6 +31,7 @@ class ChatUI:
         root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
         build: bool = True,
+        search_engine: Optional[SearchEngine] = None,
     ) -> None:
         self.backends = backends or {
             "Local": load_backend("local"),
@@ -38,11 +40,17 @@ class ChatUI:
         self.plugins = get_plugins()
         self.plugin_names = [getattr(p, "name", p.__class__.__name__) for p in self.plugins]
 
+        try:
+            self.search_engine = search_engine or load_engine()
+        except Exception:
+            self.search_engine = search_engine
+
         # GUI related attributes default to ``None`` when running headless
         self.root: Optional["tk.Tk"] = None
         self.backend_var: Optional["tk.StringVar"] = None
         self.node_var: Optional["tk.StringVar"] = None
         self.entry: Optional[ttk.Entry] = None
+        self.search_entry: Optional[ttk.Entry] = None
         self.chat: Optional[tk.Text] = None
         self._voice_handler: Optional[Callable[[str], None]] = None
         self._alt_input_handler: Optional[Callable[[str], None]] = None
@@ -67,6 +75,16 @@ class ChatUI:
         chat_frame.pack(fill="both", expand=True)
         self.chat = tk.Text(chat_frame, wrap="word", state="normal", height=20)
         self.chat.pack(fill="both", expand=True, padx=5, pady=5)
+
+        search_frame = ttk.Frame(self.root)
+        search_frame.pack(fill="x")
+        ttk.Label(search_frame, text="Search:").pack(side="left", padx=5)
+        self.search_entry = ttk.Entry(search_frame)
+        self.search_entry.pack(side="left", fill="x", expand=True, padx=5)
+        self.search_entry.bind("<Return>", self.perform_search)
+        ttk.Button(search_frame, text="Go", command=self.perform_search).pack(
+            side="left", padx=5
+        )
 
         input_frame = ttk.Frame(self.root)
         input_frame.pack(fill="x")
@@ -111,6 +129,17 @@ class ChatUI:
         backend = self.backends[self.backend_var.get()]
         response = backend.generate(prompt)
         self.chat.insert("end", f"Bot: {response}\n")
+        self.chat.see("end")
+
+    def perform_search(self, event: object | None = None) -> None:
+        if self.search_entry is None or self.chat is None or self.search_engine is None:
+            return
+        query = self.search_entry.get().strip()
+        if not query:
+            return
+        results = self.search_engine.search(query)
+        self.chat.insert("end", f"Search: {query}\n")
+        self.chat.insert("end", f"Results: {', '.join(results)}\n")
         self.chat.see("end")
 
     def run(self) -> None:  # pragma: no cover - GUI loop
