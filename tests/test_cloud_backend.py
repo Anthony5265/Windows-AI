@@ -40,9 +40,9 @@ def test_cloud_backend_fallback_on_error():
     backend = CloudBackend(endpoint)
 
     # Simulate network failure when indexing
-    respx.post(f"{endpoint}/index").mock(side_effect=httpx.ConnectError("boom"))
+    respx.post(f"{endpoint}/index").mock(side_effect=httpx.ReadTimeout("boom"))
     backend.index({"x": "foo", "y": "bar"})
 
     # Simulate network failure when searching; should fall back to local index
-    respx.get(f"{endpoint}/search").mock(side_effect=httpx.ConnectError("boom"))
+    respx.get(f"{endpoint}/search").mock(side_effect=httpx.ReadTimeout("boom"))
     assert backend.search("foo", top_k=5) == ["x", "y"]
