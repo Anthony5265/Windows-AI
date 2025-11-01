@@ -31,6 +31,9 @@ def test_analyze_processes_records_prompt(monkeypatch):
 
     model = DummyModel()
     tm = TaskManagerAI(model)
+    # Stub psutil so metrics are deterministic
+    monkeypatch.setattr(task_manager, "psutil", fake_psutil)
+
     result = tm.analyze_processes(["proc1", "proc2"])
     expected = (
         "analyze: proc1 (cpu=10.0%, mem=100.0MB), "
@@ -39,6 +42,3 @@ def test_analyze_processes_records_prompt(monkeypatch):
     expected_prompt = "".join(expected)
     assert result == f"ANALYSIS:{expected_prompt}"
     assert tm.get_queries() == [expected_prompt]
-    query = tm.get_queries()[0]
-    assert "proc1 (cpu=10.0%, mem=100.0MB)" in query
-    assert "proc2 (cpu=20.0%, mem=200.0MB)" in query

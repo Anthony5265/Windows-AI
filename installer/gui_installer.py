@@ -41,6 +41,7 @@ class GUIInstaller:
         # configuration defaults
         self.auto_select: bool = True
         self.backend: str | None = None
+        self.preset: str = "minimal"
         self.model_specs = {
             "requires_gpu": True,
             "min_vram_gb": 4.0,
@@ -83,7 +84,10 @@ class GUIInstaller:
         try:
             return float(value)
         except Exception:
-            messagebox.showerror("Configuration", f"{label} must be a number")
+            messagebox.showerror(
+                _("Configuration"),
+                _("{label} must be a number").format(label=label),
+            )
             raise ValueError from None
 
     # --- System detection -------------------------------------------------
@@ -107,11 +111,12 @@ class GUIInstaller:
             for k, v in info.items():
                 self.info.insert(tk.END, f"{k}: {v}\n")
             if self.auto_select:
-                backend = model_selector.select_backend("default", self.model_specs)
+                backend = model_selector.select_preset(self.preset, self.model_specs)
                 self.backend = backend
                 self.info.insert(
                     tk.END,
-                    _("Recommended backend: {backend}").format(backend=backend) + "\n",
+                    _("Recommended backend: {backend}").format(backend=backend)
+                    + "\n",
                 )
             else:
                 self.info.insert(
@@ -205,6 +210,19 @@ class GUIInstaller:
             top, text=_("Automatic model selection"), variable=auto_var
         ).pack(anchor="w", padx=10, pady=5)
 
+        preset_var = tk.StringVar(value=self.preset)
+        preset_frame = ttk.LabelFrame(top, text=_("Preset"))
+        preset_frame.pack(fill="x", padx=10, pady=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Minimal"), variable=preset_var, value="minimal"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Full"), variable=preset_var, value="full"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Custom"), variable=preset_var, value="custom"
+        ).pack(side=tk.LEFT, padx=5)
+
         manual_var = tk.StringVar(value=self.backend or "remote")
         manual_frame = ttk.LabelFrame(top, text=_("Manual backend"))
         manual_frame.pack(fill="x", padx=10, pady=5)
@@ -245,13 +263,16 @@ class GUIInstaller:
         def apply_config() -> None:
             self.auto_select = auto_var.get()
             self.backend = manual_var.get()
+            self.preset = preset_var.get()
 
             try:
-                vram = self._parse_float(vram_var.get(), "Min VRAM")
-                ram = self._parse_float(ram_var.get(), "Min RAM")
+                vram = self._parse_float(vram_var.get(), _("Min VRAM (GB)"))
+                ram = self._parse_float(ram_var.get(), _("Min RAM (GB)"))
             except ValueError:
                 return
 
+            self.auto_select = auto_var.get()
+            self.backend = manual_var.get()
             self.model_specs = {
                 "requires_gpu": req_gpu_var.get(),
                 "min_vram_gb": vram,
@@ -269,7 +290,7 @@ class GUIInstaller:
         if path and path.exists():
             webbrowser.open(path.as_uri())
         else:
-            messagebox.showerror("Guide", "Guide not found")
+            messagebox.showerror(_("Guide"), _("Guide not found"))
 
     # --- Finalization -----------------------------------------------------
     def _is_admin(self) -> bool:
@@ -310,8 +331,10 @@ class GUIInstaller:
                 self.progress.stop()
                 self.progress.config(mode="determinate", value=0)
                 if messagebox.askyesno(
-                    "Installer",
-                    "Administrator rights required. Relaunch with elevation?",
+                    _("Installer"),
+                    _(
+                        "Administrator rights required. Relaunch with elevation?"
+                    ),
                 ):
                     params = " ".join(f'"{arg}"' for arg in sys.argv)
                     ctypes.windll.shell32.ShellExecuteW(

@@ -7,31 +7,64 @@ if (-not (Test-Path $CacheDir)) {
 }
 
 $logPath = Join-Path $CacheDir 'install.log'
-Start-Transcript -Path $logPath -Force | Out-Null
+Write-Host "Starting installation transcript at $logPath"
+Start-Transcript -Path $logPath -Force -IncludeInvocationHeader | Out-Null
 try {
     Write-Host "Installing Windows AI services..."
+
+    function Get-OrDownloadTool {
+        param(
+            [string]$CommandName,
+            [string]$Url,
+            [string]$DownloadName,
+            [string]$RelativePath = '',
+            [switch]$IsZip
+        )
+        $cmd = Get-Command $CommandName -ErrorAction SilentlyContinue
+        if ($cmd) { return $cmd.Path }
+        Write-Error "$CommandName not found; attempting download."
+        $dest = Join-Path $CacheDir $DownloadName
+        Invoke-WebRequest -Uri $Url -OutFile $dest -UseBasicParsing
+        if ($IsZip) {
+            Expand-Archive -Path $dest -DestinationPath $CacheDir -Force
+            if ($RelativePath) { return Join-Path $CacheDir $RelativePath }
+        } else {
+            return $dest
+        }
+    }
 
     # Start a new snapshot so we can rollback these actions later
     if (Get-Command python -ErrorAction SilentlyContinue) {
         python -m installer.snapshot create
     } else {
-        Write-Error "python not found; snapshot creation skipped."
+        Write-Error "Required command 'python' not found; snapshot creation skipped."
     }
 
+    $nssmPath = Get-OrDownloadTool 'nssm.exe' 'https://nssm.cc/release/nssm-2.24.zip' 'nssm.zip' 'nssm-2.24\win64\nssm.exe' -IsZip
+    $mkcertPath = Get-OrDownloadTool 'mkcert.exe' 'https://dl.filippo.io/mkcert/latest?for=windows/amd64' 'mkcert.exe'
+    $nodePath = Get-OrDownloadTool 'node.exe' 'https://nodejs.org/dist/v20.12.1/node-v20.12.1-win-x64.zip' 'node.zip' 'node-v20.12.1-win-x64\node.exe' -IsZip
+
+    if (-not $nodePath) {
+        Write-Error "Unable to locate node executable; install aborted."
+        return
     $nssmCmd = Get-Command nssm.exe -ErrorAction SilentlyContinue
     if (-not $nssmCmd) {
-        Write-Error "nssm.exe not found; attempting download."
+        Write-Error "Required command 'nssm.exe' not found; attempting download to cache."
         $nssmZip = Join-Path $CacheDir 'nssm.zip'
         $nssmUrl = 'https://nssm.cc/release/nssm-2.24.zip'
-        Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
-        Expand-Archive -Path $nssmZip -DestinationPath $CacheDir -Force
+        try {
+            Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+            Expand-Archive -Path $nssmZip -DestinationPath $CacheDir -Force
+        } catch {
+            Write-Error "Failed to download nssm: $_"
+        }
         $nssmPath = Join-Path $CacheDir 'nssm-2.24\win64\nssm.exe'
     } else {
         $nssmPath = $nssmCmd.Path
     }
 
     if (Test-Path $nssmPath) {
-        Start-Process -FilePath $nssmPath -ArgumentList 'install','WindowsAIService','node','apps\server.js' -Wait
+        Start-Process -FilePath $nssmPath -ArgumentList 'install','WindowsAIService',$nodePath,'apps\server.js' -Wait
         if (Get-Command python -ErrorAction SilentlyContinue) {
             python -m installer.snapshot record service WindowsAIService
         }
@@ -41,10 +74,14 @@ try {
 
     $mkcertCmd = Get-Command mkcert -ErrorAction SilentlyContinue
     if (-not $mkcertCmd) {
-        Write-Error "mkcert not found; attempting download."
+        Write-Error "Required command 'mkcert' not found; attempting download to cache."
         $mkcertPath = Join-Path $CacheDir 'mkcert.exe'
         $mkcertUrl = 'https://dl.filippo.io/mkcert/latest?for=windows/amd64'
-        Invoke-WebRequest -Uri $mkcertUrl -OutFile $mkcertPath -UseBasicParsing
+        try {
+            Invoke-WebRequest -Uri $mkcertUrl -OutFile $mkcertPath -UseBasicParsing
+        } catch {
+            Write-Error "Failed to download mkcert: $_"
+        }
     } else {
         $mkcertPath = $mkcertCmd.Path
     }
@@ -65,7 +102,7 @@ try {
             Write-Error $_
         }
     } else {
-        Write-Error "New-NetFirewallRule not available; firewall rule not added."
+        Write-Error "Required command 'New-NetFirewallRule' not found; firewall rule not added."
     }
 
     Write-Host "Install complete."
