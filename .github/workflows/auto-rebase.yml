@@ -1,0 +1,49 @@
+name: Dependabot Auto Rebase
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  rebase-dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request rebase on conflicted/behind Dependabot PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            for (const pr of prs) {
+              if (pr.user.login !== 'dependabot[bot]') continue;
+
+              const { data: full } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+
+              const dirty = full.mergeable_state === 'dirty' || full.mergeable_state === 'behind';
+              const unmergeable = full.mergeable === false;
+
+              if (dirty || unmergeable) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: '@dependabot rebase'
+                });
+                console.log(`Requested rebase for #${pr.number}`);
+              }
+            }

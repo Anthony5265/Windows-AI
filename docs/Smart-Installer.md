@@ -24,6 +24,14 @@ This document sketches a design for an automated installer that sets up an AI ec
 3. **Download and Installation**
    - For remote services, install the necessary SDKs or Python packages.
    - For local models, download compatible model weights in the background. Use progress indicators and verify checksums.
+
+     ```python
+     from model_discovery.discovery import fetch_llm
+
+     # Download a small model from Hugging Face into ``./models/distilbert``
+     fetch_llm("distilbert/distilbert-base-uncased", "./models/distilbert")
+     ```
+
    - Install open-source model libraries and workflow frameworks, and other
      community packages. Include optional paid services if the user wants them.
 
@@ -63,6 +71,12 @@ python -m installer.cli --install-all
 
 The GUI's **Install All** button performs the same operation.
 
+### Custom Plugin Catalog
+
+The plugin manager reads its catalog from ``plugins/catalog.json`` by default.
+Set the ``WINDOWS_AI_PLUGIN_CATALOG`` environment variable to override this
+path when testing or using a custom catalog.
+
 ## Configuration Examples
 
 A plugin declares the packages it needs in a small Python module. Place the file
@@ -98,6 +112,18 @@ subprocess.check_call([sys.executable, "-m", "pip", "install", "transformers"])
 ```
 
 This pseudocode only scratches the surface but illustrates how the installer might check hardware details and install dependencies programmatically.
+
+## Logging
+
+The installer records errors to ``%USERPROFILE%\AI\Logs\installer.log``.  Set
+the ``WINDOWS_AI_LOG_LEVEL`` environment variable (for example ``DEBUG`` or
+``INFO``) to print messages to the console while running:
+
+```
+WINDOWS_AI_LOG_LEVEL=DEBUG python -m installer.cli --install-all
+```
+
+Only when the configured level is below ``ERROR`` are console messages shown.
 
 ## Troubleshooting
 

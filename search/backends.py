@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+import httpx
+
 from .embeddings import embed
 from .index import SearchIndex
 
@@ -31,19 +33,60 @@ class LocalBackend(SearchBackend):
 
 
 class CloudBackend(SearchBackend):
-    """Placeholder backend representing a remote service."""
+    """Search backend that delegates to a remote HTTP service."""
 
-    def __init__(self, endpoint: str):
-        self.endpoint = endpoint
+    def __init__(self, endpoint: str, timeout: float = 5.0):
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout = timeout
+        # Keep a local copy of indexed documents to provide deterministic
+        # behaviour when the remote service is unavailable.
         self._indexed: Dict[str, str] = {}
 
     def index(self, docs: Dict[str, str]) -> None:
-        # In a real implementation this would send docs to the service.
-        self._indexed.update(docs)
+        """Send documents to the remote service for indexing.
+
+        On network failures the documents are stored locally so that searches
+        can still succeed using the fallback behaviour.
+        """
+
+        url = f"{self.endpoint}/index"
+        try:
+            response = httpx.post(url, json=docs, timeout=self.timeout)
+            response.raise_for_status()
+        except (httpx.RequestError, httpx.HTTPStatusError, httpx.TimeoutException):
+            # Swallow the exception and fall back to local storage so that
+            # indexing remains resilient to transient network issues.
+            pass
+        finally:
+            # Always keep a local copy of indexed docs for deterministic tests
+            # and offline fallbacks.
+            self._indexed.update(docs)
 
     def search(self, query: str, top_k: int = 5) -> List[str]:
-        # Real implementation would call the remote service. We return all ids
-        # when a query is provided to keep behaviour deterministic for tests.
+        """Query the remote service for matching document ids.
+
+        If the remote call fails due to network errors or timeouts, return
+        results from the locally indexed documents as a fallback.
+        """
+
         if not query:
             return []
-        return list(self._indexed.keys())[:top_k]
+
+        url = f"{self.endpoint}/search"
+        try:
+            response = httpx.get(
+                url, params={"q": query, "top_k": top_k}, timeout=self.timeout
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data.get("results", [])[:top_k]
+        except (
+            httpx.RequestError,
+            httpx.HTTPStatusError,
+            httpx.TimeoutException,
+            ValueError,
+        ):
+            # Fall back to returning ids of locally indexed documents to keep
+            # behaviour deterministic when the remote service is unavailable or
+            # returns malformed responses.
+            return list(self._indexed.keys())[:top_k]

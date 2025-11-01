@@ -1,0 +1,1 @@
+name: pr-ai-reviewon:  pull_request:    types: [opened, synchronize, reopened]jobs:  review:    runs-on: ubuntu-latest    permissions:      pull-requests: write      contents: read    env:      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

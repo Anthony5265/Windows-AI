@@ -2,8 +2,45 @@
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any, Dict, List
+
+
+class CleanupResult(dict):
+    """Mapping wrapper that is also comparable to a list of recommendations."""
+
+    def __init__(self, recommendations: List[Dict[str, Any]], summary: Dict[str, int]) -> None:
+        rec_copy = [dict(item) for item in recommendations]
+        summary_copy = dict(summary)
+        super().__init__(recommendations=rec_copy, summary=summary_copy)
+        self._recommendations = rec_copy
+        self._summary = summary_copy
+
+    def __getitem__(self, key):  # type: ignore[override]
+        if key == "recommendations":
+            return list(self._recommendations)
+        if key == "summary":
+            return dict(self._summary)
+        return super().__getitem__(key)
+
+    def get(self, key, default=None):  # type: ignore[override]
+        if key == "recommendations":
+            return list(self._recommendations)
+        if key == "summary":
+            return dict(self._summary)
+        return super().get(key, default)
+
+    def __eq__(self, other):  # type: ignore[override]
+        if isinstance(other, list):
+            return self._recommendations == other
+        return dict.__eq__(self, other)
+
+    def __repr__(self) -> str:
+        return (
+            f"CleanupResult(recommendations={self._recommendations!r}, "
+            f"summary={self._summary!r})"
+        )
 
 
 class ExplorerAI:
@@ -18,41 +55,42 @@ class ExplorerAI:
         self.model = model
         self._logs: List[str] = []
 
-    def suggest_cleanup(self, files: List[str]) -> Dict[str, Any]:
+    def suggest_cleanup(self, files: List[str]) -> CleanupResult:
         """Return model suggestions for cleaning up *files*.
 
-        The function inspects file sizes and extensions to build a richer
-        prompt and returns a summary of recommended actions for each file.
-
-        Parameters
-        ----------
-        files:
-            A list of file names that might require clean up.
-
-        Returns
-        -------
-        Dict[str, Any]
-            ``{"suggestion": str, "actions": Dict[str, str]}``
+        The method inspects each file's size and extension before constructing
+        the prompt sent to the underlying ``model``. The model should return a
+        JSON string describing recommended actions for each file. Along with the
+        per-file recommendations, a summary of the recommended actions is
+        provided in the returned value.
         """
 
-        details: List[str] = []
-        actions: Dict[str, str] = {}
+        file_info: List[Dict[str, Any]] = []
         for path in files:
-            size = os.path.getsize(path) if os.path.exists(path) else 0
-            ext = os.path.splitext(path)[1].lower()
-            if ext in {".tmp", ".log"}:
-                action = "delete"
-            elif size > 1_000_000:
-                action = "compress"
-            else:
-                action = "none"
-            actions[path] = action
-            details.append(f"{path} ({size} bytes, {ext or 'no ext'})")
+            try:
+                size = os.path.getsize(path)
+                ext = os.path.splitext(path)[1]
+            except OSError:
+                # Skip files that cannot be accessed
+                continue
+            file_info.append({"name": path, "size": size, "extension": ext})
 
-        prompt = "cleanup: " + ", ".join(details)
+        prompt = json.dumps({"files": file_info})
         self._logs.append(prompt)
-        suggestion = self.model.generate(prompt)
-        return {"suggestion": suggestion, "actions": actions}
+
+        response = self.model.generate(prompt)
+        try:
+            recommendations = json.loads(response)
+        except json.JSONDecodeError:
+            recommendations = []
+
+        summary: Dict[str, int] = {}
+        for item in recommendations:
+            action = item.get("action")
+            if action:
+                summary[action] = summary.get(action, 0) + 1
+
+        return CleanupResult(recommendations, summary)
 
     def get_logs(self) -> List[str]:
         """Return recorded prompts."""

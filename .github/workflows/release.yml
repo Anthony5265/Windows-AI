@@ -6,10 +6,36 @@ on:
 
 jobs:
   semantic-release:
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - run: npm ci || npm i
       - run: npx semantic-release || echo "semantic-release not configured"
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build installers
+        shell: pwsh
+        run: ./build_installer.ps1
+      - name: Compress x86
+        shell: pwsh
+        run: Compress-Archive -Path dist_x86/* -DestinationPath windows_ai_installer_x86.zip
+      - name: Compress x64
+        shell: pwsh
+        run: Compress-Archive -Path dist_x64/* -DestinationPath windows_ai_installer_x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows_ai_installer_x86
+          path: windows_ai_installer_x86.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows_ai_installer_x64
+          path: windows_ai_installer_x64.zip

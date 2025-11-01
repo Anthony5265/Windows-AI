@@ -8,7 +8,7 @@ from typing import Dict, Protocol
 import hashlib
 import hmac
 import os
-
+from itertools import cycle
 
 
 class Provider(Protocol):
@@ -35,70 +35,53 @@ class InMemoryProvider:
 
 
 class FilesystemProvider:
-    """Store uploaded files on the local filesystem.
+    """Store blobs on the local filesystem under ``root``."""
 
-    ``name`` is treated as a file name relative to the base directory
-    provided at construction time.  The base directory is created if it
-    does not already exist.
-    """
-
-    def __init__(self, base: str | Path) -> None:
-        self.base = Path(base)
-        self.base.mkdir(parents=True, exist_ok=True)
-
-    def _path(self, name: str) -> Path:
-        return self.base / name
+    def __init__(self, root: str | Path) -> None:
+        self.root = Path(root)
+        self.root.mkdir(parents=True, exist_ok=True)
 
     def upload(self, name: str, data: bytes) -> None:  # pragma: no cover - tiny
-        self._path(name).write_bytes(data)
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
 
     def download(self, name: str) -> bytes | None:  # pragma: no cover - tiny
-        path = self._path(name)
+        path = self.root / name
         return path.read_bytes() if path.exists() else None
 
 
-def _keystream(key: bytes, iv: bytes, length: int) -> bytes:
-    """Generate a pseudo-random keystream using HMAC-SHA256."""
+def _xor(data: bytes, key: bytes) -> bytes:
+    return bytes(a ^ b for a, b in zip(data, cycle(key)))
 
-    stream = b""
-    counter = 0
-    while len(stream) < length:
-        block = hmac.new(key, iv + counter.to_bytes(4, "big"), hashlib.sha256).digest()
-        stream += block
-        counter += 1
-    return stream[:length]
+
+def _derive_key(password: str) -> bytes:
+    return hashlib.sha256(password.encode()).digest()
 
 
 def encrypt(data: bytes, password: str) -> bytes:
-    """Encrypt ``data`` with ``password`` using HMAC for confidentiality and integrity.
+    """Encrypt ``data`` with ``password`` using HMAC-authenticated XOR."""
 
-    The returned blob is ``IV || ciphertext || tag`` where ``tag`` is an HMAC
-    over the IV and ciphertext.  A random 16-byte IV is used for each
-    encryption.
-    """
-
-    key = hashlib.sha256(password.encode()).digest()
+    key = _derive_key(password)
     iv = os.urandom(16)
-    stream = _keystream(key, iv, len(data))
-    ciphertext = bytes(a ^ b for a, b in zip(data, stream))
-    tag = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
-    return iv + ciphertext + tag
+    keystream = hmac.new(key, iv, hashlib.sha256).digest()
+    ciphertext = _xor(data, keystream)
+    mac = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
+    return iv + mac + ciphertext
 
 
 def decrypt(data: bytes, password: str) -> bytes:
-    """Decrypt ``data`` with ``password`` and verify integrity."""
+    """Decrypt ``data`` with ``password`` verifying integrity."""
 
-    key = hashlib.sha256(password.encode()).digest()
-    if len(data) < 16 + 32:
-        raise ValueError("ciphertext too short")
+    key = _derive_key(password)
     iv = data[:16]
-    tag = data[-32:]
-    ciphertext = data[16:-32]
+    mac = data[16:48]
+    ciphertext = data[48:]
     expected = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
-    if not hmac.compare_digest(tag, expected):
-        raise ValueError("HMAC verification failed")
-    stream = _keystream(key, iv, len(ciphertext))
-    return bytes(a ^ b for a, b in zip(ciphertext, stream))
+    if not hmac.compare_digest(mac, expected):
+        raise ValueError("integrity check failed")
+    keystream = hmac.new(key, iv, hashlib.sha256).digest()
+    return _xor(ciphertext, keystream)
 
 
 @dataclass

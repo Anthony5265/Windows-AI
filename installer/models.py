@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import logging
+import time
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List
 import urllib.request
+import logging
+import time
 
 
 # ``ModelInfo`` captures metadata about downloadable model files.  Instead of
@@ -108,19 +113,33 @@ def select_inference_mode(task: str, policy: str = "hybrid") -> str:
 
 
 def verify_checksum(path: str | Path, expected: str) -> bool:
-    """Check the SHA256 hash of ``path`` against ``expected``."""
+    """Check the SHA256 hash of ``path`` against ``expected``.
 
+    If the checksum does not match, the file is removed and the deletion is
+    logged via ``logging``.
+    """
+
+    path = Path(path)
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
-    return h.hexdigest().lower() == expected.lower()
+    if h.hexdigest().lower() != expected.lower():
+        logging.warning("Checksum mismatch for %s; deleting", path)
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        return False
+    return True
 
 
 def download_model(
     name: str,
     dest_dir: str | Path,
     progress: Callable[[int, int], None] | None = None,
+    retries: int = 3,
+    timeout: float | None = 10,
 ) -> Path:
     """Download a model and verify its checksum.
 
@@ -132,6 +151,10 @@ def download_model(
         Directory where the model will be stored.
     progress:
         Optional callback receiving ``bytes_downloaded`` and ``total_bytes``.
+    retries:
+        Number of times to retry failed chunk downloads.
+    timeout:
+        Timeout (in seconds) passed to ``urllib.request.urlopen``.
 
     Returns
     -------
@@ -143,19 +166,42 @@ def download_model(
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / info.filename
+    if dest_path.exists():
+        dest_path.unlink()
 
-    with urllib.request.urlopen(info.url) as resp:
-        total = int(resp.getheader("Content-Length", 0))
-        downloaded = 0
-        with open(dest_path, "wb") as fh:
-            while True:
-                chunk = resp.read(8192)
-                if not chunk:
-                    break
-                fh.write(chunk)
-                downloaded += len(chunk)
-                if progress:
-                    progress(downloaded, total)
+    downloaded = 0
+    total: int | None = None
+    attempt = 0
+    backoff = 1
+
+    while True:
+        try:
+            req = urllib.request.Request(info.url)
+            if downloaded:
+                req.add_header("Range", f"bytes={downloaded}-")
+            with urllib.request.urlopen(req, timeout=timeout) as resp, open(
+                dest_path, "ab"
+            ) as fh:
+                if total is None:
+                    length = resp.getheader("Content-Length")
+                    if length is not None:
+                        total = int(length) + downloaded
+                while True:
+                    chunk = resp.read(8192)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    downloaded += len(chunk)
+                    if progress:
+                        progress(downloaded, total or 0)
+            if total is None or downloaded >= total:
+                break
+        except Exception:
+            if attempt >= retries:
+                raise
+            time.sleep(backoff)
+            backoff *= 2
+            attempt += 1
 
     if info.checksum and not verify_checksum(dest_path, info.checksum):
         raise ValueError("Checksum mismatch for model " + name)

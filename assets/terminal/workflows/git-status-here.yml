@@ -5,3 +5,4 @@ description: Runs git status in the current working directory.
 inputs: []
 run:
   mode: shell
+  command: "git status --short"
