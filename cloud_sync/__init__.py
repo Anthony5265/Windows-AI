@@ -60,11 +60,11 @@ def _derive_key(password: str) -> bytes:
 
 
 def encrypt(data: bytes, password: str) -> bytes:
-    """Encrypt ``data`` with ``password`` using XOR and HMAC authentication."""
+    """Encrypt ``data`` with ``password`` using HMAC-authenticated XOR."""
 
     key = _derive_key(password)
     iv = os.urandom(16)
-    keystream = hashlib.sha256(iv + key).digest()
+    keystream = hmac.new(key, iv, hashlib.sha256).digest()
     ciphertext = _xor(data, keystream)
     mac = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
     return iv + mac + ciphertext
@@ -80,7 +80,7 @@ def decrypt(data: bytes, password: str) -> bytes:
     expected = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
     if not hmac.compare_digest(mac, expected):
         raise ValueError("integrity check failed")
-    keystream = hashlib.sha256(iv + key).digest()
+    keystream = hmac.new(key, iv, hashlib.sha256).digest()
     return _xor(ciphertext, keystream)
 
 

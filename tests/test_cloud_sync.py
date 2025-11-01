@@ -48,6 +48,12 @@ def test_decrypt_integrity_failure():
         decrypt(bytes(tampered), "pw")
 
 
+def test_decrypt_wrong_password():
+    token = encrypt(b"secret", "pw")
+    with pytest.raises(ValueError):
+        decrypt(token, "wrong")
+
+
 def test_filesystem_provider_round_trip(tmp_path):
     provider = FilesystemProvider(tmp_path / "storage")
     sync = CloudSync(provider, "pw")
