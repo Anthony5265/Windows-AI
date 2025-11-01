@@ -2,9 +2,10 @@
 import { fileURLToPath } from "url";
 import path from "path";
 import chokidar from "chokidar";
-import * as shell from "./plugins/shell.js";
-import * as files from "./plugins/files.js";
+import * => shell from "./plugins/shell.js";
+import * => files from "./plugins/files.js";
 import { ask } from "./plugins/openai.js";
+import { ask as askLocal } from "./plugins/ollama.js"; // Added from PR
 import { dispatchWorkflow } from "./plugins/github.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,8 @@ class JobQueue {
         return await files.write(job.path, job.content);
       case "ask":
         return { answer: await ask(job.prompt) };
+      case "ask.local": // Added from PR
+        return { answer: await askLocal(job.prompt) }; // Added from PR
       case "github.dispatch":
         return await dispatchWorkflow(
           job.owner,
