@@ -14,8 +14,8 @@ def test_accessibility_logs(monkeypatch, caplog):
         settings = sysinfo._detect_accessibility()
     assert settings == {"screen_reader": False, "high_contrast": False}
     msgs = [record.message for record in caplog.records]
-    assert any("Linux" in m and "high_contrast" in m for m in msgs)
-    assert any("Linux" in m and "screen_reader" in m for m in msgs)
+    assert any("platform=Linux" in m and "step=high_contrast" in m for m in msgs)
+    assert any("platform=Linux" in m and "step=screen_reader" in m for m in msgs)
 
 
 def test_xr_hardware_logs(monkeypatch, caplog):
@@ -26,4 +26,7 @@ def test_xr_hardware_logs(monkeypatch, caplog):
     with caplog.at_level(logging.DEBUG, logger=sysinfo.logger.name):
         info = sysinfo._detect_xr_hardware()
     assert info == {"xr_capable": False, "xr_runtime": None}
-    assert any("Linux" in r.message and "XR runtime" in r.message for r in caplog.records)
+    assert any(
+        "platform=Linux" in r.message and "step=xr_runtime" in r.message
+        for r in caplog.records
+    )

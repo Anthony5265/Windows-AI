@@ -1,3 +1,12 @@
 $ErrorActionPreference="Stop"
-$response = Invoke-RestMethod http://127.0.0.1:15777/health -ErrorAction Stop
-if (-not $response.ok) { Write-Error "Agent health check failed" }
+try {
+    $response = Invoke-RestMethod http://127.0.0.1:15777/health
+    if (-not $response.ok) {
+        throw "Agent health check failed"
+    }
+    Write-Host "OK"
+}
+catch {
+    Write-Error $_;
+    exit 1
+}

@@ -1,5 +1,8 @@
 {
   "name": "windows-ai-actions",
   "version": "0.1.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
 }

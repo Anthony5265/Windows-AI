@@ -32,7 +32,8 @@ def test_analyze_processes_records_prompt(monkeypatch):
     model = DummyModel()
     tm = TaskManagerAI(model)
     # Stub psutil so metrics are deterministic
-    monkeypatch.setattr("windows_ai.task_manager.psutil", DummyPsutil())
+    monkeypatch.setattr(task_manager, "psutil", fake_psutil)
+
     result = tm.analyze_processes(["proc1", "proc2"])
     expected = (
         "analyze: proc1 (cpu=10.0%, mem=100.0MB), "

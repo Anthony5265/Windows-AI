@@ -46,3 +46,34 @@ def select_backend(task: str, specs: Dict[str, Any]) -> str:
         return "remote"
 
     return "local"
+
+
+def select_preset(preset: str, specs: Dict[str, Any]) -> str:
+    """Return an appropriate backend for a given preset.
+
+    Parameters
+    ----------
+    preset:
+        One of ``"minimal"``, ``"full"`` or ``"custom"``.  ``"minimal`` always
+        uses a remote model, ``"full"`` prefers a local model but falls back to a
+        hybrid setup when hardware requirements are not met and ``"custom"``
+        behaves like :func:`select_backend`.
+    specs:
+        Hardware requirements to evaluate for local execution.
+
+    Returns
+    -------
+    str
+        ``"local"``, ``"hybrid"`` or ``"remote"`` depending on the preset and
+        detected hardware capabilities.
+    """
+
+    preset = preset.lower()
+    if preset == "minimal":
+        return "remote"
+
+    backend = select_backend("default", specs)
+    if preset == "full" and backend == "remote":
+        return "hybrid"
+
+    return backend
