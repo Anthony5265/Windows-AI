@@ -12,6 +12,11 @@ Please ensure tests pass locally before requesting a review.
 
 ## Branching and rebasing
 
+This project uses [pre-commit](https://pre-commit.com/) to run linters and formatters.
+
+- Install pre-commit with `pip install pre-commit`.
+- Run `pre-commit install` to set up the git hook.
+- Before pushing, run `pre-commit run --all-files`.
 - Create feature branches from `main`.
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
@@ -41,4 +46,3 @@ Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
   1. Open the draft release on GitHub.
   2. Review the generated notes and version, adjusting as needed.
   3. Publish the release to create the tag.
-
