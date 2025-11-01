@@ -15,6 +15,13 @@ def test_run_multi_word_command():
     assert out == "hello world"
 
 
+def test_injection_attempt_does_not_execute():
+    """Ensure shell metacharacters don't trigger additional commands."""
+    engine = TerminalEngine()
+    out = engine.run("echo safe; echo hacked")
+    assert out == "safe; echo hacked"
+
+
 def test_rejects_piped_command():
     engine = TerminalEngine()
     with pytest.raises(ValueError):

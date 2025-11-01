@@ -1,0 +1,29 @@
+name: build-tray
+on:
+  push:
+    paths:
+      - "windows-ai-tray/**"
+      - ".github/workflows/build-tray.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: |
+          cd windows-ai-tray
+          npm ci || npm i
+      - name: Package (zip)
+        run: |
+          cd windows-ai-tray
+          mkdir -p dist
+          powershell -NoLogo -NoProfile -Command "Compress-Archive -Path * -DestinationPath dist/windows-ai-tray.zip -Force"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-ai-tray
+          path: windows-ai-tray/dist/windows-ai-tray.zip
