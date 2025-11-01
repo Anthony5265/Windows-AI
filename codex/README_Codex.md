@@ -34,11 +34,16 @@ Stop when no "todo" tasks remain or ~90 minutes pass; output a session summary a
 
 ### Updating PR branches
 
-Use the script `codex/SCRIPTS/update_prs.ps1` to bring all open pull request branches up to date with `main`.
+Use the PowerShell scripts under `codex/SCRIPTS` to sync all open pull request branches with the latest `main`:
+
+- **Rebase:** `update_prs.ps1`
+- **Merge:** `merge_prs.ps1`
+
 Run from the repo root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\codex\SCRIPTS\update_prs.ps1
+powershell -ExecutionPolicy Bypass -File .\codex\SCRIPTS\update_prs.ps1   # rebase
+powershell -ExecutionPolicy Bypass -File .\codex\SCRIPTS\merge_prs.ps1    # merge
 ```
 
-The script requires the GitHub CLI (`gh`) and is also exposed as the `update-prs` task in `codex/manifest.json`.
+The scripts require the GitHub CLI (`gh`) and are exposed as the `update-prs` and `merge-prs` tasks in `codex/manifest.json`.

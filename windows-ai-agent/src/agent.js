@@ -1,1 +1,98 @@
-#!/usr/bin/env nodeimport { fileURLToPath } from 'url';import path from 'path';import chokidar from 'chokidar';import * as shell from './plugins/shell.js';import * as files from './plugins/files.js';import { ask } from './plugins/openai.js';import { ask as askLocal } from './plugins/ollama.js';import { dispatchWorkflow } from './plugins/github.js';const __filename = fileURLToPath(import.meta.url);const __dirname  = path.dirname(__filename);const args = process.argv.slice(2);const flags = new Set(args.filter(a => a.startsWith('--')));const verbose = flags.has('--verbose');function log(...a){ if (verbose) console.log('[agent]', ...a); }class JobQueue {  constructor(){ this.q = []; this.running = false; }  add(job){ this.q.push(job); this.run(); }  async run(){    if (this.running) return;    this.running = true;    while(this.q.length){      const job = this.q.shift();      try {        log('running', job.type);        const res = await this.handle(job);        console.log(JSON.stringify({ok:true, type:job.type, result:res}, null, 2));      } catch(e){        console.error(JSON.stringify({ok:false, type:job.type, error:e.message}));      }    }    this.running = false;  }  async handle(job){    switch(job.type){      case 'shell': return await shell.exec(job.command, job.options || {});      case 'files.read': return await files.read(job.path);      case 'files.write': return await files.write(job.path, job.content);      case 'ask': return { answer: await ask(job.prompt) };      case 'ask.local': return { answer: await askLocal(job.prompt) };      case 'github.dispatch': return await dispatchWorkflow(job.owner, job.repo, job.workflow_id, job.ref || 'main', job.inputs || {});      default: throw new Error('unknown job type ' + job.type);    }  }}const queue = new JobQueue();// Support single-shot mode for CLIconst onceIdx = args.indexOf('--once');const jobIdx  = args.indexOf('--job');if (onceIdx !== -1 && jobIdx !== -1 && args[jobIdx+1]) {  const job = JSON.parse(args[jobIdx+1]);  queue.add(job);}// Optional folder watcherfunction startWatcher(folder){  const watcher = chokidar.watch(folder, { ignoreInitial:true });  watcher.on('add', p => queue.add({ type:'ask', prompt:`Summarize new file: ${p}` }));  watcher.on('change', p => queue.add({ type:'ask', prompt:`Summarize changes in file: ${p}` }));  console.log('Watching', folder);}const watchIdx = args.indexOf('--watch');if (watchIdx !== -1) {  const dir = args[watchIdx+1] || process.cwd();  startWatcher(dir);}if (onceIdx === -1) {  console.log('Windows AI Agent ready. Use `wai` CLI for single-shot jobs, or run with --watch <dir>.');}
+#!/usr/bin/env node
+import { fileURLToPath } from "url";
+import path from "path";
+import chokidar from "chokidar";
+import * => shell from "./plugins/shell.js";
+import * => files from "./plugins/files.js";
+import { ask } from "./plugins/openai.js";
+import { ask as askLocal } from "./plugins/ollama.js"; // Added from PR
+import { dispatchWorkflow } from "./plugins/github.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const args = process.argv.slice(2);
+const flags = new Set(args.filter((a) => a.startsWith("--")));
+const verbose = flags.has("--verbose");
+function log(...a) {
+  if (verbose) console.log("[agent]", ...a);
+}
+class JobQueue {
+  constructor() {
+    this.q = [];
+    this.running = false;
+  }
+  add(job) {
+    this.q.push(job);
+    this.run();
+  }
+  async run() {
+    if (this.running) return;
+    this.running = true;
+    while (this.q.length) {
+      const job = this.q.shift();
+      try {
+        log("running", job.type);
+        const res = await this.handle(job);
+        console.log(
+          JSON.stringify({ ok: true, type: job.type, result: res }, null, 2),
+        );
+      } catch (e) {
+        console.error(
+          JSON.stringify({ ok: false, type: job.type, error: e.message }),
+        );
+      }
+    }
+    this.running = false;
+  }
+  async handle(job) {
+    switch (job.type) {
+      case "shell":
+        return await shell.exec(job.command, job.options || {});
+      case "files.read":
+        return await files.read(job.path);
+      case "files.write":
+        return await files.write(job.path, job.content);
+      case "ask":
+        return { answer: await ask(job.prompt) };
+      case "ask.local": // Added from PR
+        return { answer: await askLocal(job.prompt) }; // Added from PR
+      case "github.dispatch":
+        return await dispatchWorkflow(
+          job.owner,
+          job.repo,
+          job.workflow_id,
+          job.ref || "main",
+          job.inputs || {},
+        );
+      default:
+        throw new Error("unknown job type " + job.type);
+    }
+  }
+}
+const queue = new JobQueue(); // Support single-shot mode for CLI
+const onceIdx = args.indexOf("--once");
+const jobIdx = args.indexOf("--job");
+if (onceIdx !== -1 && jobIdx !== -1 && args[jobIdx + 1]) {
+  const job = JSON.parse(args[jobIdx + 1]);
+  queue.add(job);
+}
+// Optional folder watcher
+function startWatcher(folder) {
+  const watcher = chokidar.watch(folder, { ignoreInitial: true });
+  watcher.on("add", (p) =>
+    queue.add({ type: "ask", prompt: `Summarize new file: ${p}` }),
+  );
+  watcher.on("change", (p) =>
+    queue.add({ type: "ask", prompt: `Summarize changes in file: ${p}` }),
+  );
+  console.log("Watching", folder);
+}
+const watchIdx = args.indexOf("--watch");
+if (watchIdx !== -1) {
+  const dir = args[watchIdx + 1] || process.cwd();
+  startWatcher(dir);
+}
+if (onceIdx === -1) {
+  console.log(
+    "Windows AI Agent ready. Use `wai` CLI for single-shot jobs, or run with --watch <dir>.",
+  );
+}

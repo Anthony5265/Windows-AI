@@ -100,6 +100,10 @@ class GuiCore:
     """Minimal GUI core placeholder with overlays and hotkeys."""
 
     def __init__(self, model: Optional[Model] = None):
+        """Initialize the core with a model.
+
+        If *model* is None, a :class:`SimpleModel` instance is created.
+        """
         self.model = model if model is not None else SimpleModel()
         self.launched = False
         self._logs: List[str] = []

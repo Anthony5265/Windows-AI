@@ -5,6 +5,15 @@ extend the Control Center with new capabilities such as model integrations or
 automation tools.  Community contributions are welcome—use the guidelines below
 to add your plugin.
 
+## Built-in Framework Plugins
+
+The default catalog ships with common AI frameworks to jump-start development:
+
+- **Transformers** – `pip install transformers`
+- **Torch** – `pip install torch`
+- **TensorFlow** – `pip install tensorflow`
+- **LangChain** – `pip install langchain`
+
 ## Adding a Plugin
 
 1. Edit `plugins/catalog.json` and append a new entry under the `plugins`
@@ -42,3 +51,18 @@ Installation commands execute inside a temporary sandbox directory with a very
 limited environment.  Avoid commands that modify global system state and do not
 rely on environment variables beyond `PATH`.
 
+
+## Publishing Guidelines
+
+1. Start the marketplace service:
+
+   ```bash
+   uvicorn marketplace.main:app
+   ```
+
+2. Open the Marketplace panel in the Control Center or send a `POST` request to `/plugins`
+   using the fields described in the `PluginMetadata` schema within
+   `openapi/windows-ai.yaml`.
+
+3. The catalog is stored in `plugins/catalog.json`. Review your entry and submit
+   documentation via pull request when proposing new plugins.
