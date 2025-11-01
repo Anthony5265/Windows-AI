@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import socket
 import threading
-from typing import List
+import time
+from typing import Dict, List
 
 from .protocol import SecureProtocol
 
@@ -20,14 +21,19 @@ class MeshHub:
         port: int = 0,
         discovery_port: int = 0,
         key: bytes | None = None,
+        heartbeat_timeout: float = 10.0,
+        prune_interval: float = 1.0,
     ) -> None:
         self.host = host
         self.port = port
         self.discovery_port = discovery_port
         self.protocol = SecureProtocol(key)
         self._nodes: List[socket.socket] = []
+        self._last_heartbeat: Dict[socket.socket, float] = {}
         self._running = False
         self._lock = threading.Lock()
+        self.heartbeat_timeout = heartbeat_timeout
+        self.prune_interval = prune_interval
 
     # --------------------------------------------------------------- lifecycle
     def start(self) -> None:
@@ -56,6 +62,11 @@ class MeshHub:
         )
         self._server_thread.start()
 
+        self._prune_thread = threading.Thread(
+            target=self._prune_loop, daemon=True
+        )
+        self._prune_thread.start()
+
     def stop(self) -> None:
         self._running = False
         try:
@@ -67,12 +78,17 @@ class MeshHub:
         except Exception:
             pass
         with self._lock:
-            for node in self._nodes:
+            for node in list(self._nodes):
                 try:
                     node.close()
                 except Exception:
                     pass
             self._nodes.clear()
+            self._last_heartbeat.clear()
+        try:
+            self._prune_thread.join(timeout=1)
+        except Exception:
+            pass
 
     # ------------------------------------------------------------- discovery
     def _discovery_loop(self) -> None:
@@ -92,8 +108,56 @@ class MeshHub:
                 conn, _addr = self._server_sock.accept()
             except OSError:
                 break
+            conn.settimeout(self.prune_interval)
             with self._lock:
                 self._nodes.append(conn)
+                self._last_heartbeat[conn] = time.time()
+            threading.Thread(target=self._node_loop, args=(conn,), daemon=True).start()
+
+    def _node_loop(self, conn: socket.socket) -> None:
+        while self._running:
+            try:
+                header = conn.recv(4)
+                if not header:
+                    break
+                length = int.from_bytes(header, "big")
+                data = b""
+                while len(data) < length:
+                    chunk = conn.recv(length - len(data))
+                    if not chunk:
+                        break
+                    data += chunk
+                if len(data) != length:
+                    break
+                with self._lock:
+                    self._last_heartbeat[conn] = time.time()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+        with self._lock:
+            if conn in self._nodes:
+                self._nodes.remove(conn)
+            # `_last_heartbeat` entries are pruned in `_prune_loop`.
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    def _prune_loop(self) -> None:
+        while self._running:
+            time.sleep(self.prune_interval)
+            now = time.time()
+            with self._lock:
+                for conn, ts in list(self._last_heartbeat.items()):
+                    if now - ts > self.heartbeat_timeout:
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        if conn in self._nodes:
+                            self._nodes.remove(conn)
+                        self._last_heartbeat.pop(conn, None)
 
     # ---------------------------------------------------------- task handling
     def distribute_task(self, task: str) -> None:
@@ -106,5 +170,38 @@ class MeshHub:
                 try:
                     conn.sendall(packet)
                 except OSError:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
                     self._nodes.remove(conn)
+
+    # ----------------------------------------------------------- heartbeat
+    def _node_listener(self, conn: socket.socket) -> None:
+        while self._running:
+            try:
+                header = conn.recv(4)
+                if not header:
+                    break
+                length = int.from_bytes(header, "big")
+                data = b""
+                while len(data) < length:
+                    chunk = conn.recv(length - len(data))
+                    if not chunk:
+                        break
+                    data += chunk
+                if len(data) != length:
+                    break
+                if self.protocol.decrypt(data) == b"HB":
+                    with self._lock:
+                        if conn in self._nodes:
+                            self._nodes[conn] = time.time()
+            except OSError:
+                break
+        with self._lock:
+            self._nodes.pop(conn, None)
+        try:
+            conn.close()
+        except Exception:
+            pass
 

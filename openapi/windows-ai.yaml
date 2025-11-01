@@ -163,3 +163,32 @@ paths:
                     type: array
                     items:
                       type: string
+components:
+  schemas:
+    PluginMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        command:
+          type: string
+        paid:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        rating:
+          type: number
+        dependencies:
+          type: array
+          items:
+            type: string
+        signature:
+          type: string
+      required:
+        - name
+        - description
+        - command

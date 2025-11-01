@@ -1,0 +1,14 @@
+name: openai-key-check
+on: { workflow_dispatch: {} }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail fast if secret missing (compile-time)
+        if: ${{ secrets.OPENAI_API_KEY == '' }}
+        run: echo "OPENAI_API_KEY missing in repo Secrets" && exit 1
+      - name: Show length (run-time env)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "OPENAI_API_KEY length: ${#OPENAI_API_KEY}"

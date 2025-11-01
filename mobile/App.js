@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button } from 'react-native';
+import { View, Text, TextInput, Button, Alert } from 'react-native';
+import { loginRequest, pairRequest } from './api';
 
 export default function App() {
   const [username, setUsername] = useState('');
@@ -8,14 +9,22 @@ export default function App() {
   const [deviceId, setDeviceId] = useState('');
   const [token, setToken] = useState(null);
 
-  const login = () => {
-    // Placeholder auth
-    setLoggedIn(true);
+  const login = async () => {
+    try {
+      await loginRequest(username, password);
+      setLoggedIn(true);
+    } catch (err) {
+      Alert.alert('Login failed', err.message);
+    }
   };
 
   const pair = async () => {
-    // Placeholder API call
-    setToken('demo-token');
+    try {
+      const received = await pairRequest(deviceId);
+      setToken(received);
+    } catch (err) {
+      Alert.alert('Pairing failed', err.message);
+    }
   };
 
   if (!loggedIn) {
@@ -51,3 +60,4 @@ export default function App() {
     </View>
   );
 }
+

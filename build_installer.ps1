@@ -2,7 +2,10 @@
 # Run from repository root on Windows
 
 param(
-    [string]$PythonExe = "python"
+    [string]$PythonExe = "python",
+    [string]$CertPath = "",
+    [string]$TimestampServer = "",
+    [string[]]$PythonOptions = @('--embed')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,17 +30,54 @@ if (Test-Path 'requirements.txt') {
     & $PythonExe -m pip install -r requirements.txt
 }
 
-# run PyInstaller
-Write-Output "Running PyInstaller..."
-& $PythonExe -m PyInstaller --noconfirm --onefile --windowed installer/gui_installer.py --name 'WindowsAI_Installer'
-
-# copy assets
-$dist = Join-Path (Get-Location) 'dist'
+# run PyInstaller for both architectures
+$architectures = @('x86', 'x64')
 $resources = @('install','plugins','assets','config','control_center','automation','windows_ai')
-foreach ($res in $resources) {
-    if (Test-Path $res) {
-        Copy-Item $res -Destination (Join-Path $dist $res) -Recurse -Force
+
+foreach ($arch in $architectures) {
+    Write-Output "Running PyInstaller for $arch..."
+
+    $dist = Join-Path (Get-Location) "dist_$arch"
+    $build = Join-Path (Get-Location) "build_$arch"
+
+    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+    if (Test-Path $build) { Remove-Item $build -Recurse -Force }
+
+    $pyArgs = @(
+        '--noconfirm','--onefile','--windowed','installer/gui_installer.py',
+        '--name',"WindowsAI_Installer_$arch",
+        '--distpath',$dist,
+        '--workpath',$build,
+        '--specpath',$build,
+        '--target-arch',$arch
+    )
+
+    foreach ($opt in $PythonOptions) {
+        $pyArgs += '--python-option'
+        $pyArgs += $opt
     }
+
+    & $PythonExe -m PyInstaller @pyArgs
+
+    foreach ($res in $resources) {
+        if (Test-Path $res) {
+            Copy-Item $res -Destination (Join-Path $dist $res) -Recurse -Force
+        }
+    }
+
+    Write-Output "Installer built at $dist\WindowsAI_Installer_$arch.exe"
+}
+
+$installerExe = Join-Path $dist 'WindowsAI_Installer.exe'
+if ($CertPath -and $TimestampServer) {
+    if (Test-Path $CertPath) {
+        Write-Output "Signing installer..."
+        & "SignTool.exe" sign /fd SHA256 /f $CertPath /tr $TimestampServer /td SHA256 $installerExe
+    } else {
+        Write-Output "Certificate not found at $CertPath. Skipping signing."
+    }
+} else {
+    Write-Output "CertPath or TimestampServer not provided. Skipping signing."
 }
 
 Write-Output "Installer built at dist\WindowsAI_Installer.exe"
