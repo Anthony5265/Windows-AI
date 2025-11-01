@@ -8,12 +8,14 @@ it can run in constrained environments.
 from __future__ import annotations
 
 import os
+import ctypes
 import subprocess
 import sys
 import threading
 from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
+from installer.locales import _
 
 if __package__ is None or __package__ == "":  # pragma: no cover - script entry
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -30,13 +32,16 @@ class GUIInstaller:
         try:
             self.root = root or tk.Tk()
         except tk.TclError as exc:  # pragma: no cover - environment specific
-            raise RuntimeError("tkinter is not available or no display is found") from exc
+            raise RuntimeError(
+                _("tkinter is not available or no display is found")
+            ) from exc
 
-        self.root.title("Windows AI Installer")
+        self.root.title(_("Windows AI Installer"))
 
         # configuration defaults
         self.auto_select: bool = True
         self.backend: str | None = None
+        self.preset: str = "minimal"
         self.model_specs = {
             "requires_gpu": True,
             "min_vram_gb": 4.0,
@@ -47,18 +52,18 @@ class GUIInstaller:
         button_frame.pack(padx=10, pady=10)
 
         ttk.Button(
-            button_frame, text="Detect System", command=self.detect_system
+            button_frame, text=_("Detect System"), command=self.detect_system
         ).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Add API Key", command=self.add_api_key).pack(
+        ttk.Button(button_frame, text=_("Add API Key"), command=self.add_api_key).pack(
             side=tk.LEFT, padx=5
         )
-        ttk.Button(button_frame, text="Check API Key", command=self.check_api_key).pack(
+        ttk.Button(button_frame, text=_("Check API Key"), command=self.check_api_key).pack(
             side=tk.LEFT, padx=5
         )
         ttk.Button(
-            button_frame, text="Install Dependencies", command=self.install_all
+            button_frame, text=_("Install Dependencies"), command=self.install_all
         ).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Configure", command=self.open_config).pack(
+        ttk.Button(button_frame, text=_("Configure"), command=self.open_config).pack(
             side=tk.LEFT, padx=5
         )
 
@@ -68,6 +73,22 @@ class GUIInstaller:
         self.progress = ttk.Progressbar(self.root, length=300, mode="determinate")
         self.progress.pack(padx=10, pady=10)
         self.root.protocol("WM_DELETE_WINDOW", self._finalize)
+
+    @staticmethod
+    def _parse_float(value: str, label: str) -> float | None:
+        """Convert a string to ``float`` while reporting errors."""
+
+        value = value.strip()
+        if not value:
+            return None
+        try:
+            return float(value)
+        except Exception:
+            messagebox.showerror(
+                _("Configuration"),
+                _("{label} must be a number").format(label=label),
+            )
+            raise ValueError from None
 
     # --- System detection -------------------------------------------------
     def detect_system(self) -> None:
@@ -90,11 +111,18 @@ class GUIInstaller:
             for k, v in info.items():
                 self.info.insert(tk.END, f"{k}: {v}\n")
             if self.auto_select:
-                backend = model_selector.select_backend("default", self.model_specs)
+                backend = model_selector.select_preset(self.preset, self.model_specs)
                 self.backend = backend
-                self.info.insert(tk.END, f"Recommended backend: {backend}\n")
+                self.info.insert(
+                    tk.END,
+                    _("Recommended backend: {backend}").format(backend=backend)
+                    + "\n",
+                )
             else:
-                self.info.insert(tk.END, f"Manual backend: {self.backend}\n")
+                self.info.insert(
+                    tk.END,
+                    _("Manual backend: {backend}").format(backend=self.backend) + "\n",
+                )
             self.info.config(state="disabled")
 
         self.root.after(0, update)
@@ -102,11 +130,14 @@ class GUIInstaller:
     # --- API key handling -------------------------------------------------
     def add_api_key(self) -> None:
         """Prompt the user for an API key and store it on disk."""
-        service = simpledialog.askstring("API Key", "Service name:", parent=self.root)
+        service = simpledialog.askstring(_("API Key"), _("Service name:"), parent=self.root)
         if not service:
             return
         key = simpledialog.askstring(
-            "API Key", f"Enter API key for {service}:", show="*", parent=self.root
+            _("API Key"),
+            _("Enter API key for {service}:").format(service=service),
+            show="*",
+            parent=self.root,
         )
         if not key:
             return
@@ -114,9 +145,11 @@ class GUIInstaller:
         self.progress.start()
         try:
             api_keys.save_key(service, key)
-            messagebox.showinfo("API Key", f"Saved key for {service}")
+            messagebox.showinfo(
+                _("API Key"), _("Saved key for {service}").format(service=service)
+            )
         except Exception as exc:  # pragma: no cover - GUI path
-            messagebox.showerror("API Key", str(exc))
+            messagebox.showerror(_("API Key"), str(exc))
         finally:
             self.progress.stop()
             self.progress.config(mode="determinate", value=0)
@@ -124,7 +157,7 @@ class GUIInstaller:
     def check_api_key(self) -> None:
         """Verify whether a stored key exists for a service."""
 
-        service = simpledialog.askstring("API Key", "Service name:", parent=self.root)
+        service = simpledialog.askstring(_("API Key"), _("Service name:"), parent=self.root)
         if not service:
             return
         self.progress.config(mode="indeterminate")
@@ -132,9 +165,13 @@ class GUIInstaller:
         try:
             key = api_keys.load_key(service)
             if key:
-                messagebox.showinfo("API Key", f"Key stored for {service}")
+                messagebox.showinfo(
+                    _("API Key"), _("Key stored for {service}").format(service=service)
+                )
             else:
-                messagebox.showinfo("API Key", f"No key stored for {service}")
+                messagebox.showinfo(
+                    _("API Key"), _("No key stored for {service}").format(service=service)
+                )
         finally:
             self.progress.stop()
             self.progress.config(mode="determinate", value=0)
@@ -156,7 +193,7 @@ class GUIInstaller:
             self.progress.stop()
             self.progress.config(mode="determinate", value=0)
             messagebox.showinfo(
-                "Installer", "Plugin and tool dependencies installed"
+                _("Installer"), _("Plugin and tool dependencies installed")
             )
 
         self.root.after(0, update)
@@ -166,31 +203,44 @@ class GUIInstaller:
         """Open the advanced configuration panel."""
 
         top = tk.Toplevel(self.root)
-        top.title("Configuration")
+        top.title(_("Configuration"))
 
         auto_var = tk.BooleanVar(value=self.auto_select)
         ttk.Checkbutton(
-            top, text="Automatic model selection", variable=auto_var
+            top, text=_("Automatic model selection"), variable=auto_var
         ).pack(anchor="w", padx=10, pady=5)
 
-        manual_var = tk.StringVar(value=self.backend or "remote")
-        manual_frame = ttk.LabelFrame(top, text="Manual backend")
-        manual_frame.pack(fill="x", padx=10, pady=5)
+        preset_var = tk.StringVar(value=self.preset)
+        preset_frame = ttk.LabelFrame(top, text=_("Preset"))
+        preset_frame.pack(fill="x", padx=10, pady=5)
         ttk.Radiobutton(
-            manual_frame, text="Local", variable=manual_var, value="local"
+            preset_frame, text=_("Minimal"), variable=preset_var, value="minimal"
         ).pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(
-            manual_frame, text="Remote", variable=manual_var, value="remote"
+            preset_frame, text=_("Full"), variable=preset_var, value="full"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            preset_frame, text=_("Custom"), variable=preset_var, value="custom"
         ).pack(side=tk.LEFT, padx=5)
 
-        specs_frame = ttk.LabelFrame(top, text="Advanced requirements")
+        manual_var = tk.StringVar(value=self.backend or "remote")
+        manual_frame = ttk.LabelFrame(top, text=_("Manual backend"))
+        manual_frame.pack(fill="x", padx=10, pady=5)
+        ttk.Radiobutton(
+            manual_frame, text=_("Local"), variable=manual_var, value="local"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            manual_frame, text=_("Remote"), variable=manual_var, value="remote"
+        ).pack(side=tk.LEFT, padx=5)
+
+        specs_frame = ttk.LabelFrame(top, text=_("Advanced requirements"))
         specs_frame.pack(fill="x", padx=10, pady=5)
         req_gpu_var = tk.BooleanVar(value=self.model_specs.get("requires_gpu", True))
-        ttk.Checkbutton(specs_frame, text="Requires GPU", variable=req_gpu_var).grid(
+        ttk.Checkbutton(specs_frame, text=_("Requires GPU"), variable=req_gpu_var).grid(
             row=0, column=0, columnspan=2, sticky="w"
         )
 
-        ttk.Label(specs_frame, text="Min VRAM (GB)").grid(row=1, column=0, sticky="w")
+        ttk.Label(specs_frame, text=_("Min VRAM (GB)")).grid(row=1, column=0, sticky="w")
         vram_var = tk.StringVar(
             value=(
                 "" if self.model_specs.get("min_vram_gb") is None else str(self.model_specs.get("min_vram_gb"))
@@ -200,7 +250,7 @@ class GUIInstaller:
             row=1, column=1, sticky="w"
         )
 
-        ttk.Label(specs_frame, text="Min RAM (GB)").grid(row=2, column=0, sticky="w")
+        ttk.Label(specs_frame, text=_("Min RAM (GB)")).grid(row=2, column=0, sticky="w")
         ram_var = tk.StringVar(
             value=(
                 "" if self.model_specs.get("min_ram_gb") is None else str(self.model_specs.get("min_ram_gb"))
@@ -213,23 +263,45 @@ class GUIInstaller:
         def apply_config() -> None:
             self.auto_select = auto_var.get()
             self.backend = manual_var.get()
+            self.preset = preset_var.get()
 
-            def _to_float(val: str) -> float | None:
-                try:
-                    return float(val)
-                except Exception:
-                    return None
+            try:
+                vram = self._parse_float(vram_var.get(), _("Min VRAM (GB)"))
+                ram = self._parse_float(ram_var.get(), _("Min RAM (GB)"))
+            except ValueError:
+                return
 
+            self.auto_select = auto_var.get()
+            self.backend = manual_var.get()
             self.model_specs = {
                 "requires_gpu": req_gpu_var.get(),
-                "min_vram_gb": _to_float(vram_var.get()),
-                "min_ram_gb": _to_float(ram_var.get()),
+                "min_vram_gb": vram,
+                "min_ram_gb": ram,
             }
             top.destroy()
 
-        ttk.Button(top, text="Apply", command=apply_config).pack(pady=5)
+        ttk.Button(top, text=_("Apply"), command=apply_config).pack(pady=5)
+
+    # --- Guide handling ---------------------------------------------------
+    def open_guide(self) -> None:
+        """Open the quick-start guide in the selected language."""
+
+        path = self._guide_paths.get(self._lang_var.get())
+        if path and path.exists():
+            webbrowser.open(path.as_uri())
+        else:
+            messagebox.showerror(_("Guide"), _("Guide not found"))
 
     # --- Finalization -----------------------------------------------------
+    def _is_admin(self) -> bool:
+        """Return True if running with administrator rights."""
+
+        try:
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:  # pragma: no cover - platform dependent
+            # If the API is unavailable (e.g. non-Windows), assume admin.
+            return True
+
     def _run_install_script(self) -> None:
         base = (
             Path(sys.executable).resolve().parent
@@ -255,10 +327,26 @@ class GUIInstaller:
         self.progress.start()
         self.root.update()
         try:
+            if not self._is_admin():
+                self.progress.stop()
+                self.progress.config(mode="determinate", value=0)
+                if messagebox.askyesno(
+                    _("Installer"),
+                    _(
+                        "Administrator rights required. Relaunch with elevation?"
+                    ),
+                ):
+                    params = " ".join(f'"{arg}"' for arg in sys.argv)
+                    ctypes.windll.shell32.ShellExecuteW(
+                        None, "runas", sys.executable, params, None, 1
+                    )
+                return
             self._run_install_script()
-            messagebox.showinfo("Installer", "Setup complete")
+            messagebox.showinfo(_("Installer"), _("Setup complete"))
         except Exception as exc:  # pragma: no cover - environment specific
-            messagebox.showerror("Installer", f"Post-install step failed: {exc}")
+            messagebox.showerror(
+                _("Installer"), _("Post-install step failed: {exc}").format(exc=exc)
+            )
         finally:
             self.progress.stop()
             self.root.destroy()

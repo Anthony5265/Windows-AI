@@ -1,41 +1,32 @@
 import logging
 
-import pytest
-
 import windows_ai.system_info as sysinfo
 
 
-def test_accessibility_logs_failure(monkeypatch, caplog):
+def _raise(*args, **kwargs):
+    raise RuntimeError("boom")
+
+
+def test_accessibility_logs(monkeypatch, caplog):
     monkeypatch.setattr(sysinfo.platform, "system", lambda: "Linux")
-
-    def fake_check_output(cmd, stderr=None):
-        if "high-contrast" in cmd:
-            raise RuntimeError("fail")
-        return b"false"
-
-    monkeypatch.setattr(sysinfo.subprocess, "check_output", fake_check_output)
-
-    with caplog.at_level(logging.DEBUG, logger="windows_ai.system_info"):
-        sysinfo._detect_accessibility()
-
-    assert any(
-        "Linux" in record.getMessage() and "high-contrast" in record.getMessage()
-        for record in caplog.records
-    )
+    monkeypatch.setattr(sysinfo.subprocess, "check_output", _raise)
+    with caplog.at_level(logging.DEBUG, logger=sysinfo.logger.name):
+        settings = sysinfo._detect_accessibility()
+    assert settings == {"screen_reader": False, "high_contrast": False}
+    msgs = [record.message for record in caplog.records]
+    assert any("platform=Linux" in m and "step=high_contrast" in m for m in msgs)
+    assert any("platform=Linux" in m and "step=screen_reader" in m for m in msgs)
 
 
-def test_xr_runtime_logs_failure(monkeypatch, caplog):
+def test_xr_hardware_logs(monkeypatch, caplog):
     monkeypatch.setattr(sysinfo.platform, "system", lambda: "Linux")
-
-    def fake_load_runtime():
-        raise RuntimeError("no runtime")
-
-    monkeypatch.setattr(sysinfo, "load_runtime", fake_load_runtime)
-
-    with caplog.at_level(logging.DEBUG, logger="windows_ai.system_info"):
-        sysinfo._detect_xr_hardware()
-
+    def fail_runtime():
+        raise RuntimeError("boom")
+    monkeypatch.setattr(sysinfo, "load_runtime", fail_runtime)
+    with caplog.at_level(logging.DEBUG, logger=sysinfo.logger.name):
+        info = sysinfo._detect_xr_hardware()
+    assert info == {"xr_capable": False, "xr_runtime": None}
     assert any(
-        "Linux" in record.getMessage() and "XR runtime" in record.getMessage()
-        for record in caplog.records
+        "platform=Linux" in r.message and "step=xr_runtime" in r.message
+        for r in caplog.records
     )

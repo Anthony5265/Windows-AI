@@ -8,8 +8,10 @@ helper to detect missing Python package dependencies so the GUI can warn the
 user before installation begins.
 """
 
-from typing import Iterable, List
+from typing import Iterable, Iterator, List
 import importlib.util
+
+from . import local_llm
 
 try:  # pragma: no cover - optional dependency
     import pyttsx3  # type: ignore
@@ -30,6 +32,10 @@ class Assistant:
     def __init__(self, enable_voice: bool = False) -> None:
         self.enable_voice = bool(enable_voice and pyttsx3 is not None)
         self._tts = pyttsx3.init() if self.enable_voice else None
+        try:  # pragma: no cover - model loading is optional
+            local_llm.load_model()
+        except Exception:
+            pass
 
     # --- core helpers -------------------------------------------------
     def speak(self, text: str) -> None:
@@ -51,7 +57,7 @@ class Assistant:
         ]
         return "\n".join(f"{i + 1}. {s}" for i, s in enumerate(steps))
 
-    def answer(self, question: str) -> str:
+    def _rule_based_answer(self, question: str) -> str:
         """Return a canned answer for *question* using keyword rules."""
 
         q = question.lower()
@@ -66,6 +72,20 @@ class Assistant:
         if "system" in q or "scan" in q:
             return "Press 'Detect System' to gather hardware information."
         return "I'm not sure how to help with that. Please consult the docs."
+
+    def answer_stream(self, question: str) -> Iterator[str]:
+        """Yield an answer for *question* from the local model if available."""
+
+        try:
+            yield from local_llm.answer_stream(question)
+            return
+        except Exception:
+            yield self._rule_based_answer(question)
+
+    def answer(self, question: str) -> str:
+        """Return an answer for *question* using the local model if possible."""
+
+        return "".join(self.answer_stream(question))
 
     def check_dependencies(self, packages: Iterable[str]) -> List[str]:
         """Return a list of packages from *packages* that are not installed."""
