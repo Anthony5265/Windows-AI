@@ -1,7 +1,3 @@
-import threading
-import time
-from pathlib import Path
-
 import pytest
 
 try:
@@ -72,6 +68,8 @@ def test_cancel_install(monkeypatch, tk_root):
     assert calls == ["a"]
     assert messages["title"] == "Install"
     assert "Installation cancelled" in messages["message"]
+    assert "Installed: a" in messages["message"]
+    assert "Skipped: b" in messages["message"]
     assert str(gui.install_btn["state"]) == "disabled"
     assert str(gui.api_btn["state"]) == "disabled"
     assert str(gui.ask_btn["state"]) == "disabled"
