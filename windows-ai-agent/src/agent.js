@@ -65,4 +65,31 @@ class JobQueue {
     }
   }
 }
-const queue = new JobQueue(); // Support single-shot mode for CLIconst onceIdx = args.indexOf('--once');const jobIdx  = args.indexOf('--job');if (onceIdx !== -1 && jobIdx !== -1 && args[jobIdx+1]) {  const job = JSON.parse(args[jobIdx+1]);  queue.add(job);}// Optional folder watcherfunction startWatcher(folder){  const watcher = chokidar.watch(folder, { ignoreInitial:true });  watcher.on('add', p => queue.add({ type:'ask', prompt:`Summarize new file: ${p}` }));  watcher.on('change', p => queue.add({ type:'ask', prompt:`Summarize changes in file: ${p}` }));  console.log('Watching', folder);}const watchIdx = args.indexOf('--watch');if (watchIdx !== -1) {  const dir = args[watchIdx+1] || process.cwd();  startWatcher(dir);}if (onceIdx === -1) {  console.log('Windows AI Agent ready. Use `wai` CLI for single-shot jobs, or run with --watch <dir>.');}
+const queue = new JobQueue(); // Support single-shot mode for CLI
+const onceIdx = args.indexOf("--once");
+const jobIdx = args.indexOf("--job");
+if (onceIdx !== -1 && jobIdx !== -1 && args[jobIdx + 1]) {
+  const job = JSON.parse(args[jobIdx + 1]);
+  queue.add(job);
+}
+// Optional folder watcher
+function startWatcher(folder) {
+  const watcher = chokidar.watch(folder, { ignoreInitial: true });
+  watcher.on("add", (p) =>
+    queue.add({ type: "ask", prompt: `Summarize new file: ${p}` }),
+  );
+  watcher.on("change", (p) =>
+    queue.add({ type: "ask", prompt: `Summarize changes in file: ${p}` }),
+  );
+  console.log("Watching", folder);
+}
+const watchIdx = args.indexOf("--watch");
+if (watchIdx !== -1) {
+  const dir = args[watchIdx + 1] || process.cwd();
+  startWatcher(dir);
+}
+if (onceIdx === -1) {
+  console.log(
+    "Windows AI Agent ready. Use `wai` CLI for single-shot jobs, or run with --watch <dir>.",
+  );
+}
