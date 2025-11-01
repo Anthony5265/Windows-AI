@@ -24,6 +24,14 @@ This document sketches a design for an automated installer that sets up an AI ec
 3. **Download and Installation**
    - For remote services, install the necessary SDKs or Python packages.
    - For local models, download compatible model weights in the background. Use progress indicators and verify checksums.
+
+     ```python
+     from model_discovery.discovery import fetch_llm
+
+     # Download a small model from Hugging Face into ``./models/distilbert``
+     fetch_llm("distilbert/distilbert-base-uncased", "./models/distilbert")
+     ```
+
    - Install open-source model libraries and workflow frameworks, and other
      community packages. Include optional paid services if the user wants them.
 

@@ -1,1 +1,20 @@
-name: Gitleakson:  workflow_dispatch:  pull_request:  push:    branches:      - mainjobs:  gitleaks:    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v4      - uses: zricethezav/gitleaks-action@v2
+name: gitleaks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: zricethezav/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+

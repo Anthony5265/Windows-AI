@@ -1,0 +1,64 @@
+name: Auto Close Stale Conflicted Dependabot PRs
+on:
+  schedule:
+    - cron: "15 */6 * * *"  # every 6 hours (staggered from rebase)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  close-conflicts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close stale conflicted dependabot PRs (non-security)
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const now = new Date();
+            const maxDays = 14;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            for (const pr of prs) {
+              if (pr.user.login !== 'dependabot[bot]') continue;
+
+              const hasSecurityLabel = (pr.labels || []).some(l => String(l.name).toLowerCase().includes('security'));
+              if (hasSecurityLabel) continue;
+
+              const { data: full } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+
+              const created = new Date(pr.created_at);
+              const ageDays = (now - created) / (1000*60*60*24);
+              const unmergeable = full.mergeable === false || full.mergeable_state === 'dirty';
+
+              if (unmergeable && ageDays >= maxDays) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: "Closing due to unresolved merge conflicts older than 14 days. Feel free to reopen after rebasing. 🤖"
+                });
+
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  state: "closed"
+                });
+
+                console.log(`Closed PR #${pr.number}`);
+              }
+            }
