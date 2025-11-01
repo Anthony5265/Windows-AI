@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import venv
+import logging
 from pathlib import Path
 from typing import Iterable
 import shutil
@@ -20,6 +21,8 @@ CONFIG_DIR = Path.home() / ".windows_ai"
 BASE_DIR = CONFIG_DIR / "venvs"
 ENV_RECORD_FILE = CONFIG_DIR / "envs.json"
 BASE_DIR.mkdir(parents=True, exist_ok=True)
+
+logger = logging.getLogger(__name__)
 
 
 def _use_conda() -> bool:
@@ -63,7 +66,15 @@ def create_env(name: str, backend: str | None = None) -> Path:
     backend = backend or ("conda" if _use_conda() else "venv")
     if not env_path.exists():
         if backend == "conda":
-            subprocess.check_call(["conda", "create", "-y", "-p", str(env_path), "python"])
+            cmd = ["conda", "create", "-y", "-p", str(env_path), "python"]
+            try:
+                subprocess.check_call(cmd, stderr=subprocess.PIPE, text=True)
+            except subprocess.CalledProcessError as exc:
+                logger.error("Command %s failed with stderr: %s", exc.cmd, exc.stderr)
+                raise RuntimeError(
+                    "Failed to create environment '%s' using conda. Command %s failed: %s"
+                    % (name, exc.cmd, exc.stderr)
+                ) from exc
         else:
             venv.EnvBuilder(with_pip=True).create(env_path)
     _record_env_path(name, env_path)
@@ -97,6 +108,26 @@ def load_recorded_envs() -> dict[str, str]:
         return {}
 
 
+def remove_env(name: str) -> None:
+    """Remove the environment named ``name`` and update the record file."""
+
+    env_path = BASE_DIR / name
+    shutil.rmtree(env_path, ignore_errors=True)
+
+    if not ENV_RECORD_FILE.exists():
+        return
+
+    data = load_recorded_envs()
+    if name not in data:
+        return
+
+    del data[name]
+    if data:
+        ENV_RECORD_FILE.write_text(json.dumps(data, indent=2))
+    else:
+        ENV_RECORD_FILE.unlink()
+
+
 __all__ = [
     "CONFIG_DIR",
     "BASE_DIR",
@@ -104,5 +135,6 @@ __all__ = [
     "create_env",
     "python_executable",
     "install_packages",
+    "remove_env",
     "load_recorded_envs",
 ]

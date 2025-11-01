@@ -15,13 +15,17 @@ export async function executeAction(req: ActionRequest): Promise<any> {
     case 'shell': {
       const cmd = req.params?.command;
       if (!cmd) throw new ValidationError('Missing command');
+
+      // Only allow alphanumeric, whitespace, dashes, underscores, dots and slashes
       if (!/^[-\w\s/.]+$/.test(cmd)) {
         throw new ValidationError('Command contains disallowed characters');
       }
+
       const [program, ...args] = cmd.trim().split(/\s+/);
       if (!ALLOWED_COMMANDS.has(program)) {
         throw new ValidationError(`Command not allowed: ${program}`);
       }
+
       const isWindows = process.platform === 'win32';
       return await new Promise((resolve, reject) => {
         const child = spawn(program, args, isWindows ? { shell: true } : undefined);
@@ -29,15 +33,18 @@ export async function executeAction(req: ActionRequest): Promise<any> {
         let stderr = '';
         child.stdout.on('data', (d) => (stdout += d));
         child.stderr.on('data', (d) => (stderr += d));
+
         const timeoutMs = req.params?.timeout_ms ?? 10000;
         const timer = setTimeout(() => {
           child.kill();
           reject(new Error('Command timed out'));
         }, timeoutMs);
+
         child.on('error', (err) => {
           clearTimeout(timer);
           reject(err);
         });
+
         child.on('close', (code) => {
           clearTimeout(timer);
           if (code !== 0) {
@@ -48,11 +55,13 @@ export async function executeAction(req: ActionRequest): Promise<any> {
         });
       });
     }
+
     case 'read_file': {
       const path = req.params?.path;
       if (!path) throw new ValidationError('Missing path');
       return { content: await fs.readFile(path, 'utf8') };
     }
+
     case 'write_file': {
       const path = req.params?.path;
       if (!path) throw new ValidationError('Missing path');
@@ -60,14 +69,17 @@ export async function executeAction(req: ActionRequest): Promise<any> {
       await fs.writeFile(path, content, 'utf8');
       return { ok: true };
     }
+
     case 'get_system_info': {
       return {
         platform: os.platform(),
         arch: os.arch(),
-        release: os.release()
+        release: os.release(),
       };
     }
+
     default:
       throw new ValidationError(`Unknown action: ${req.action}`);
   }
 }
+

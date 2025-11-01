@@ -33,6 +33,12 @@ test('shell rejects command not in whitelist', async () => {
   );
 });
 
+test('shell rejects command with pipe', async () => {
+  await assert.rejects(
+    executeAction({ action: 'shell', params: { command: 'ls | cat' } })
+  );
+});
+
 test('write_file and read_file', async () => {
   const tmp = path.join(process.cwd(), 'tmp.txt');
   await executeAction({ action: 'write_file', params: { path: tmp, content: 'hi' } });
@@ -46,3 +52,4 @@ test('get_system_info returns fields', async () => {
   assert.ok(res.platform);
   assert.ok(res.arch);
 });
+

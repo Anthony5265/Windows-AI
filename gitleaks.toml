@@ -1,0 +1,4 @@
+title = "Windows AI gitleaks config"
+[allowlist]
+description = "Allow local test tokens and placeholders"
+regexes = ['''(?i)fake|placeholder|test-key|local-only''']
