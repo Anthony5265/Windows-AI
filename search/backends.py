@@ -53,8 +53,9 @@ class CloudBackend(SearchBackend):
         try:
             response = httpx.post(url, json=docs, timeout=self.timeout)
             response.raise_for_status()
-        except httpx.HTTPError:
-            # Swallow the exception and fall back to local storage.
+        except (httpx.RequestError, httpx.HTTPStatusError, httpx.TimeoutException):
+            # Swallow the exception and fall back to local storage so that
+            # indexing remains resilient to transient network issues.
             pass
         finally:
             # Always keep a local copy of indexed docs for deterministic tests
@@ -79,7 +80,13 @@ class CloudBackend(SearchBackend):
             response.raise_for_status()
             data = response.json()
             return data.get("results", [])[:top_k]
-        except httpx.HTTPError:
+        except (
+            httpx.RequestError,
+            httpx.HTTPStatusError,
+            httpx.TimeoutException,
+            ValueError,
+        ):
             # Fall back to returning ids of locally indexed documents to keep
-            # behaviour deterministic when the remote service is unavailable.
+            # behaviour deterministic when the remote service is unavailable or
+            # returns malformed responses.
             return list(self._indexed.keys())[:top_k]
