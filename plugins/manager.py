@@ -171,14 +171,14 @@ class PluginManager:
             else:
                 raise
 
-    # ------------------------------------------------------------- uninstallation
+    # -------------------------------------------------------------- uninstallation
     def uninstall(
         self,
         plugin: Plugin,
         messagebox=None,
         _stack: set[str] | None = None,
     ) -> None:
-        """Uninstall a plugin and any unneeded dependencies."""
+        """Uninstall a plugin and remove unused dependencies."""
 
         if plugin.name not in self._installed:
             return
@@ -189,54 +189,57 @@ class PluginManager:
             raise ValueError("Cyclic dependency detected")
         _stack.add(plugin.name)
 
-        # Remove dependencies first when no other installed plugin requires them
-        for dep_name in plugin.dependencies:
-            dep = self.get_plugin(dep_name)
-            if dep is None:
-                raise ValueError(f"Missing dependency: {dep_name}")
-
-            # Determine if another installed plugin still relies on this dependency
-            shared = False
-            for other_name in self._installed:
-                if other_name == plugin.name:
-                    continue
-                other_plugin = self.get_plugin(other_name)
-                if other_plugin and dep_name in other_plugin.dependencies:
-                    shared = True
-                    break
-
-            if not shared and dep_name in self._installed:
-                # Recursively uninstall the dependency when no one else needs it
-                self.uninstall(dep, messagebox, _stack)
-
-        _stack.remove(plugin.name)
-
         try:
-            raw_args = shlex.split(plugin.command, posix=os.name != "nt")
-            if not raw_args:
-                raise ValueError("Empty command")
-
-            if os.name == "nt":
-                exe = raw_args[0]
-                i = 1
-                while i < len(raw_args) and Path(exe).suffix == "":
-                    exe += f" {raw_args[i]}"
-                    i += 1
-                args = [exe, *raw_args[i:]]
-            else:
-                args = raw_args
-
-            if args[0] in self.ALLOWED_COMMANDS and len(args) > 1:
-                args[1] = "uninstall"
-                if args[0] == "pip" and "-y" not in args and "--yes" not in args:
-                    args.append("-y")
-            self.sandbox_run(args)
+            uninstall_args = self._build_uninstall_args(plugin.command)
+            if uninstall_args:
+                self.sandbox_run(uninstall_args)
             self._installed.discard(plugin.name)
         except Exception as exc:  # pragma: no cover - subprocess path
             if messagebox is not None:
-                messagebox.showerror("Plugin Uninstall", f"Failed to uninstall {plugin.name}: {exc}")
+                messagebox.showerror(
+                    "Plugin Uninstall", f"Failed to uninstall {plugin.name}: {exc}"
+                )
             else:
                 raise
+
+        # Remove dependencies if nothing else requires them
+        for dep_name in plugin.dependencies:
+            dep = self.get_plugin(dep_name)
+            if dep and dep.name in self._installed:
+                still_needed = any(
+                    dep_name in p.dependencies
+                    for p in self.plugins
+                    if p.name in self._installed
+                )
+                if not still_needed:
+                    self.uninstall(dep, messagebox, _stack)
+
+        _stack.remove(plugin.name)
+
+    def _build_uninstall_args(self, command: str) -> list[str] | None:
+        """Derive an uninstall command from the installation command."""
+
+        raw_args = shlex.split(command, posix=os.name != "nt")
+        if not raw_args:
+            return None
+
+        tool = raw_args[0]
+        if tool == "pip":
+            pkgs = [arg for arg in raw_args[2:] if not arg.startswith("-")]
+            if not pkgs:
+                return None
+            return ["pip", "uninstall", "-y", *pkgs]
+        if tool == "npm":
+            pkgs = [arg for arg in raw_args[2:] if not arg.startswith("-")]
+            if not pkgs:
+                return None
+            return ["npm", "uninstall", *pkgs]
+        if tool == "brew":
+            pkgs = [arg for arg in raw_args[2:] if not arg.startswith("-")]
+            if not pkgs:
+                return None
+            return ["brew", "uninstall", *pkgs]
+        return None
 
 
 __all__ = ["Plugin", "PluginManager", "load_catalog", "SANDBOX_DIR"]
