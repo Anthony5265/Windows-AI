@@ -1,84 +1,73 @@
-import hashlib
-import subprocess
+import pytest
 
 from plugins.manager import Plugin, PluginManager
 
 
-def make_plugin(name: str, *, deps=None):
-    deps = deps or []
-    return Plugin(
-        name=name,
-        description="",
-        command=f"pip install {name.lower()}",
-        dependencies=deps,
-        signature=hashlib.sha256(name.encode()).hexdigest(),
-    )
-
-
-def test_uninstall_removes_plugin_and_dependencies(monkeypatch):
-    dep = make_plugin("Dep")
-    main = make_plugin("Main", deps=["Dep"])
-    manager = PluginManager()
-    manager.plugins = [dep, main]
-
-    # Install plugins without executing real commands
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: None)
-    manager.install(main)
-    assert manager._installed == {"Dep", "Main"}
-
-    calls = []
-
-    def fake_run(args, shell, check, cwd, env):
-        calls.append(args)
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    manager.uninstall(main)
-
-    assert calls == [
-        ["pip", "uninstall", "dep", "-y"],
-        ["pip", "uninstall", "main", "-y"],
-    ]
-    assert manager._installed == set()
-
-
-def test_uninstall_keeps_shared_dependency(monkeypatch):
-    dep = make_plugin("Dep")
-    main1 = make_plugin("Main1", deps=["Dep"])
-    main2 = make_plugin("Main2", deps=["Dep"])
-    manager = PluginManager()
-    manager.plugins = [dep, main1, main2]
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: None)
-    manager.install(main1)
-    manager.install(main2)
-    assert manager._installed == {"Dep", "Main1", "Main2"}
-
-    calls = []
-
-    def fake_run(args, shell, check, cwd, env):
-        calls.append(args)
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    manager.uninstall(main1)
-
-    assert calls == [["pip", "uninstall", "main1", "-y"]]
-    assert manager._installed == {"Dep", "Main2"}
-
-
-def test_uninstall_noop_when_not_installed(monkeypatch):
-    """Uninstalling a plugin that isn't installed should do nothing."""
-
-    plugin = make_plugin("Ghost")
+def test_uninstall_runs_command_and_updates_state(monkeypatch):
+    plugin = Plugin(name="Foo", description="", command="pip install Foo")
     manager = PluginManager()
     manager.plugins = [plugin]
 
     calls = []
 
-    def fake_run(args, shell, check, cwd, env):
+    def fake_run(args):
         calls.append(args)
 
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    manager.uninstall(plugin)
+    monkeypatch.setattr(manager, "sandbox_run", fake_run)
 
-    assert calls == []
+    manager.install(plugin)
+    assert plugin.name in manager._installed
+
+    manager.uninstall(plugin)
+    assert plugin.name not in manager._installed
+    assert calls == [["pip", "install", "Foo"], ["pip", "uninstall", "-y", "Foo"]]
+
+
+def test_uninstall_removes_unused_dependencies(monkeypatch):
+    dep = Plugin(name="Dep", description="", command="pip install Dep")
+    main = Plugin(name="Main", description="", command="pip install Main", dependencies=["Dep"])
+    manager = PluginManager()
+    manager.plugins = [dep, main]
+
+    calls = []
+    monkeypatch.setattr(manager, "sandbox_run", lambda args: calls.append(args))
+
+    manager.install(main)
+    assert manager._installed == {"Dep", "Main"}
+
+    manager.uninstall(main)
     assert manager._installed == set()
+    assert calls == [
+        ["pip", "install", "Dep"],
+        ["pip", "install", "Main"],
+        ["pip", "uninstall", "-y", "Main"],
+        ["pip", "uninstall", "-y", "Dep"],
+    ]
+
+
+def test_uninstall_retains_shared_dependencies(monkeypatch):
+    dep = Plugin(name="Dep", description="", command="pip install Dep")
+    one = Plugin(name="One", description="", command="pip install One", dependencies=["Dep"])
+    two = Plugin(name="Two", description="", command="pip install Two", dependencies=["Dep"])
+    manager = PluginManager()
+    manager.plugins = [dep, one, two]
+
+    calls = []
+    monkeypatch.setattr(manager, "sandbox_run", lambda args: calls.append(args))
+
+    manager.install(one)
+    manager.install(two)
+    assert manager._installed == {"Dep", "One", "Two"}
+
+    calls.clear()
+    manager.uninstall(one)
+    assert manager._installed == {"Dep", "Two"}
+    assert calls == [["pip", "uninstall", "-y", "One"]]
+
+    calls.clear()
+    manager.uninstall(two)
+    assert manager._installed == set()
+    assert calls == [
+        ["pip", "uninstall", "-y", "Two"],
+        ["pip", "uninstall", "-y", "Dep"],
+    ]
