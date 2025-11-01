@@ -1,1 +1,23 @@
-version: 2updates:  - package-ecosystem: npm    directory: "/"    schedule:      interval: weekly    reviewers:      - "Anthony5265"  - package-ecosystem: npm    directory: "/apps/actions-api"    schedule:      interval: weekly    reviewers:      - "Anthony5265"  - package-ecosystem: npm    directory: "/mobile"    schedule:      interval: weekly    reviewers:      - "Anthony5265"  - package-ecosystem: pip    directory: "/"    schedule:      interval: weekly    reviewers:      - "Anthony5265"  - package-ecosystem: github-actions    directory: "/"    schedule:      interval: weekly    reviewers:      - "Anthony5265"
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
