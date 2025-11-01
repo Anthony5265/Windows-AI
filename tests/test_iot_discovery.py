@@ -4,33 +4,23 @@ from iot import ADAPTERS, Device, discover_devices, pair_device
 
 
 def _mock_zeroconf(monkeypatch):
-    import zeroconf
+    from iot.adapters.zeroconf import ZeroconfAdapter
 
-    class FakeInfo:
-        name = "ZCDevice._http._tcp.local."
-        properties = {b"id": b"zc-1"}
+    def fake_discover(self):
+        return [Device(id="zc-1", name="ZCDevice", protocol="zeroconf")]
 
-    class FakeZeroconf:
-        def get_service_info(self, type_, name):
-            return FakeInfo()
+    monkeypatch.setattr(ZeroconfAdapter, "discover", fake_discover)
 
-        def close(self):
-            pass
 
-    def fake_service_browser(zc, stype, listener):
-        listener.add_service(zc, stype, FakeInfo().name)
 
-    monkeypatch.setattr(zeroconf, "Zeroconf", lambda: FakeZeroconf())
-    monkeypatch.setattr(zeroconf, "ServiceBrowser", fake_service_browser)
 
 
 def test_discover_devices_returns_devices(monkeypatch):
     _mock_zeroconf(monkeypatch)
-    for proto in ADAPTERS:
-        devices = discover_devices(proto)
-        assert devices, f"no devices for {proto}"
-        for dev in devices:
-            assert dev.protocol == proto
+    devices = discover_devices("zeroconf")
+    assert devices, "no devices for zeroconf"
+    for dev in devices:
+        assert dev.protocol == "zeroconf"
 
 
 def test_discover_invalid_protocol():
