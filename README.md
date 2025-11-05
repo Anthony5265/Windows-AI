@@ -1,4 +1,4 @@
-# ✨ Windows AI: Transform Your PC into a Super-Intelligent Assistant! ✨
+# Windows AI
 
 ## Imagine a Windows PC That Thinks With You, For You.
 
@@ -143,63 +143,3 @@ To start the main Python FastAPI application:
 ```bash
 uvicorn windows_ai.main:app --host 0.0.0.0 --port 8010
 ```
-
-#### Running Node.js Services
-
-To start specific Node.js services (e.g., actions or proxy):
-```bash
-npm run start:actions
-```
-or
-```bash
-npm run start:proxy
-```
-
-### Testing
-
-To run the project's tests:
-
-*   **All tests (Python and Node.js)**:
-    ```bash
-    npm test
-    ```
-*   **Python tests (using pytest)**:
-    ```bash
-    pytest
-    ```
-
-### Contributing
-
-We welcome contributions to the Windows AI project! Please refer to the `CONTRIBUTING.md` file for detailed guidelines on:
-
-*   Pull Request process (merge queue, labels)
-*   Branching and rebasing strategies
-*   Commit message conventions (Conventional Commits)
-*   Release procedures
-
-### License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
-### Security & Privacy
-
-Windows AI is designed with security and privacy in mind, especially given its deep integration with your system and network. We are committed to implementing robust security measures and transparent privacy practices. More detailed information will be provided as the project evolves.
-
-### Community & Support
-
-Join our growing community! We encourage you to:
-
-*   **Report Bugs**: If you encounter any issues, please open an issue on our GitHub repository.
-*   **Suggest Features**: Have an idea for a new feature? Let us know by opening a feature request.
-*   **Ask Questions**: For general questions or discussions, feel free to use GitHub Discussions (if enabled) or reach out through our community channels (to be announced).
-
-### Roadmap
-
-The development of Windows AI is structured into several key phases:
-
-*   **Phase 0 — Definition + Safety Net**: Completed. Established goals, runtime, UI, secrets policy, branching model, and foundational safety files.
-*   **Phase 1 — Core Agent**: (Next Step) Focuses on the Node.js agent service with plugins, CLI, PowerShell installer, CI build, and dedicated documentation.
-*   **Phase 2 — Main Chat GUI & Tray App**: Development of the primary, feature-rich chat interface (like ChatGPT) as the main control center, alongside a complementary lightweight Electron-based tray application.
-*   **Phase 3 — Integrations**: Implementing advanced integrations like GitHub triggers and automation.
-*   **Phase 4 — Packaging**: Finalizing the Windows installer build and release pipeline.
-*   **Mesh Network Integration**: Future phase focused on transforming the local home network into an AI-integrated mesh, with the Windows AI PC acting as the central host.

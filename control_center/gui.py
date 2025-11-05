@@ -7,9 +7,7 @@ to switch between local models and remote APIs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional
-import platform
-import threading
+from typing import Dict, Optional, Callable
 
 try:  # pragma: no cover - import may fail on headless systems
     import tkinter as tk  # type: ignore

@@ -44,12 +44,12 @@ def test_node_reconnects_after_hub_restart() -> None:
                 break
         time.sleep(0.1)
 
-    hub.distribute_task("two")
-    for _ in range(50):
-        if len(received) == 2:
-            break
-        time.sleep(0.1)
-    assert received == ["one", "two"]
+    hub.distribute_task("again")
+    time.sleep(0.2)
+
+    assert "again" in received
+    assert len(hub._nodes) == 1
+    assert len(hub._last_heartbeat) == 1
 
     node.stop()
     hub.stop()

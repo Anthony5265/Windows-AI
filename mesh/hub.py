@@ -176,7 +176,6 @@ class MeshHub:
                         conn.close()
                     except Exception:
                         pass
-                    if conn in self._nodes:
-                        self._nodes.remove(conn)
-                    self._last_heartbeat.pop(conn, None)
+                    self._nodes.remove(conn)
+
 

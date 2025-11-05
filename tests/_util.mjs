@@ -19,9 +19,6 @@ const DEFAULT_CANDIDATES = [
   },
 ];
 
-const VERSION_PATTERN = /Python\s+(\d+)\.(\d+)(?:\.(\d+))?/i;
-const MIN_SUPPORTED_MAJOR = 3;
-
 function splitCommandLine(spec) {
   const segments = [];
   let current = '';
@@ -76,111 +73,46 @@ function splitCommandLine(spec) {
   return segments;
 }
 
-function cloneCandidate(candidate) {
-  return {
-    cmd: candidate.cmd,
-    runArgs: [...candidate.runArgs],
-    detectArgs: [...candidate.detectArgs],
-  };
-}
-
 function resolveCandidates() {
   const envCmd = process.env.PYTHON?.trim();
-  const resolved = [];
-
-  if (envCmd) {
-    const [cmd, ...args] = splitCommandLine(envCmd);
-    if (cmd) {
-      resolved.push({
-        cmd,
-        runArgs: args,
-        detectArgs: [...args, '--version'],
-      });
-    }
+  if (!envCmd) {
+    return DEFAULT_CANDIDATES;
   }
 
-  for (const candidate of DEFAULT_CANDIDATES) {
-    resolved.push(cloneCandidate(candidate));
+  const [cmd, ...args] = splitCommandLine(envCmd);
+  if (!cmd) {
+    return DEFAULT_CANDIDATES;
   }
 
-  const seen = new Set();
-  const unique = [];
-
-  for (const candidate of resolved) {
-    const key = `${candidate.cmd}\u0000${candidate.runArgs.join('\u0000')}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    unique.push(candidate);
-  }
-
-  return unique;
+  return [
+    {
+      cmd,
+      runArgs: args,
+      detectArgs: [...args, '--version'],
+    },
+    ...DEFAULT_CANDIDATES,
+  ];
 }
 
-function parsePythonVersion(output) {
-  if (!output) {
-    return null;
-  }
-
-  const match = output.match(VERSION_PATTERN);
-  if (!match) {
-    return null;
-  }
-
-  return {
-    major: Number.parseInt(match[1], 10),
-    minor: Number.parseInt(match[2], 10),
-    patch: match[3] ? Number.parseInt(match[3], 10) : null,
-  };
-}
-
-function isSupportedVersion(version) {
-  if (!version || Number.isNaN(version.major)) {
-    return false;
-  }
-
-  if (version.major < MIN_SUPPORTED_MAJOR) {
-    return false;
-  }
-
-  return true;
-}
-
-function probePython(candidate) {
+function isPythonCandidate(candidate) {
   const result = spawnSync(candidate.cmd, candidate.detectArgs, { encoding: 'utf8' });
 
-  if (result.error || result.signal) {
-    return null;
+  if (result.error) {
+    return false;
   }
 
   if (typeof result.status === 'number' && result.status !== 0) {
-    return null;
+    return false;
   }
 
-  const combinedOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-  const version = parsePythonVersion(combinedOutput);
-
-  if (!isSupportedVersion(version)) {
-    return null;
-  }
-
-  return {
-    version,
-    rawOutput: combinedOutput,
-  };
+  const combinedOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+  return /Python/i.test(combinedOutput);
 }
 
 export function detectPython() {
   for (const candidate of resolveCandidates()) {
-    const probe = probePython(candidate);
-    if (probe) {
-      return {
-        cmd: candidate.cmd,
-        args: [...candidate.runArgs],
-        version: probe.version,
-        versionOutput: probe.rawOutput,
-      };
+    if (isPythonCandidate(candidate)) {
+      return { cmd: candidate.cmd, args: [...candidate.runArgs] };
     }
   }
 

@@ -35,9 +35,6 @@ def test_checksum_failure_deletes_file(tmp_path, monkeypatch, caplog):
         checksum="0" * 64,
     )
     monkeypatch.setattr(models, "MODEL_REGISTRY", {"bad": model})
-    monkeypatch.setattr(
-        models.urllib.request, "urlopen", lambda *args, **kwargs: DummyResponse(data)
-    )
     monkeypatch.setattr(models.urllib.request, "urlopen", lambda url, timeout=None: DummyResponse(data))
 
     caplog.set_level(logging.WARNING)

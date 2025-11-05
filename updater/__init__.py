@@ -9,7 +9,11 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import os
+import shutil
 import subprocess
+import sys
+import tempfile
 from typing import Callable
 from urllib.request import urlopen
 
