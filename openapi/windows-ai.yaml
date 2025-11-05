@@ -1,27 +1,40 @@
 openapi: 3.1.0
 info:
-  title: Windows AI Actions API
-  version: 0.2.0
+  title: Windows AI API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3000
+    description: Local development server
 paths:
   /api/actions/execute:
     post:
-      summary: Execute a system action
+      summary: Execute a named action on the host.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: ../codex/SCHEMAS/actions.request.schema.json
+              type: object
+              properties:
+                action:
+                  type: string
+                params:
+                  type: object
       responses:
         "200":
-          description: Result
+          description: Command result.
           content:
             application/json:
               schema:
-                $ref: ../codex/SCHEMAS/actions.response.schema.json
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: string
   /api/mobile/pair:
     post:
-      summary: Create a pairing token for a mobile device
+      summary: Create a pairing token for a mobile device.
       requestBody:
         required: true
         content:
@@ -31,7 +44,6 @@ paths:
               properties:
                 deviceId:
                   type: string
-              required: [deviceId]
       responses:
         "200":
           description: Pairing token
@@ -46,7 +58,7 @@ paths:
                     type: string
   /api/mobile/command:
     post:
-      summary: Execute a command from a paired mobile device
+      summary: Execute an action on behalf of a paired device.
       requestBody:
         required: true
         content:
@@ -58,8 +70,6 @@ paths:
                   type: string
                 action:
                   type: string
-                params:
-                  type: object
       responses:
         "200":
           description: Action result
@@ -71,10 +81,10 @@ paths:
                   ok:
                     type: boolean
                   result:
-                    type: object
+                    type: string
   /api/mesh/distribute:
     post:
-      summary: Distribute a task to mesh nodes
+      summary: Distribute a task to mesh nodes.
       requestBody:
         required: true
         content:
@@ -84,10 +94,9 @@ paths:
               properties:
                 task:
                   type: string
-              required: [task]
       responses:
         "200":
-          description: Distribution acknowledgement
+          description: Distribution result
           content:
             application/json:
               schema:
@@ -96,13 +105,10 @@ paths:
                   ok:
                     type: boolean
                   result:
-                    type: object
-                    properties:
-                      distributed:
-                        type: string
+                    type: string
   /api/iot/event:
     post:
-      summary: Handle an IoT device event
+      summary: Submit an IoT device event.
       requestBody:
         required: true
         content:
@@ -114,10 +120,9 @@ paths:
                   type: string
                 event:
                   type: string
-              required: [deviceId, event]
       responses:
         "200":
-          description: Event acknowledgement
+          description: Event acknowledgment
           content:
             application/json:
               schema:
@@ -125,16 +130,9 @@ paths:
                 properties:
                   ok:
                     type: boolean
-                  result:
-                    type: object
-                    properties:
-                      deviceId:
-                        type: string
-                      event:
-                        type: string
   /api/search/query:
     post:
-      summary: Query a set of documents
+      summary: Query a set of documents and return matching ids.
       requestBody:
         required: true
         content:
@@ -146,12 +144,9 @@ paths:
                   type: string
                 documents:
                   type: object
-                  additionalProperties:
-                    type: string
-              required: [query]
       responses:
         "200":
-          description: Matching document ids
+          description: Query results
           content:
             application/json:
               schema:
@@ -163,32 +158,4 @@ paths:
                     type: array
                     items:
                       type: string
-components:
-  schemas:
-    PluginMetadata:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        command:
-          type: string
-        paid:
-          type: boolean
-        metadata:
-          type: object
-          additionalProperties:
-            type: string
-        rating:
-          type: number
-        dependencies:
-          type: array
-          items:
-            type: string
-        signature:
-          type: string
-      required:
-        - name
-        - description
-        - command
+components: {}

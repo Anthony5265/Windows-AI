@@ -6,8 +6,10 @@ import { createPairingToken, handleRemoteCommand } from './mobile';
 import { distributeTask } from './mesh';
 import { handleDeviceEvent } from './iot';
 import { searchDocuments } from './search';
+import { fileURLToPath } from 'node:url';
 
 export const app = express();
+
 app.use(express.json());
 
 app.post('/api/mobile/pair', (req, res) => {
@@ -18,7 +20,13 @@ app.post('/api/mobile/pair', (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
@@ -33,7 +41,13 @@ app.post('/api/mobile/command', async (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
@@ -48,7 +62,13 @@ app.post('/api/actions/execute', async (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
@@ -62,7 +82,13 @@ app.post('/api/mesh/distribute', (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
@@ -76,7 +102,13 @@ app.post('/api/iot/event', (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
@@ -90,18 +122,23 @@ app.post('/api/search/query', (req, res) => {
     if (err instanceof ValidationError) {
       res.status(400).json({ ok: false, error: { message: err.message } });
     } else {
-      console.error({ level: 'error', message: err.message, stack: err.stack });
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: err.message,
+          stack: err.stack,
+        }),
+      );
       res.status(500).json({ ok: false, error: { message: 'Internal server error' } });
     }
   }
 });
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
     console.log(
-      JSON.stringify({ level: 'info', message: 'actions api listening', port })
+      JSON.stringify({ level: 'info', message: 'actions api listening', port }),
     );
   });
 }
-

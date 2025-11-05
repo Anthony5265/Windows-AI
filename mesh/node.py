@@ -52,41 +52,57 @@ class MeshNode:
         """Connect to the hub at *addr*."""
 
         self._addr = addr
-        self._sock = socket.create_connection(addr)
         self._running = True
-        self._thread = threading.Thread(target=self._listen, daemon=True)
+        # Background thread handles listening and reconnection attempts
+        self._thread = threading.Thread(
+            target=self._listen_loop, daemon=True
+        )
         self._thread.start()
+        # Separate heartbeat thread periodically pings the hub
         self._heartbeat_thread = threading.Thread(
             target=self._heartbeat_loop, daemon=True
         )
         self._heartbeat_thread.start()
 
-    def _listen(self) -> None:
+    def _listen_loop(self) -> None:
+        """Listen for tasks and reconnect if the connection drops."""
+
         while self._running:
-            sock = self._sock
-            if sock is None:
+            if self._sock is None:
                 if not self._reconnect():
-                    break
-                continue
+                    time.sleep(self.reconnect_interval)
+                    continue
             try:
-                header = sock.recv(4)
-                if not header:
-                    raise OSError
-                length = int.from_bytes(header, "big")
-                data = b""
-                while len(data) < length:
-                    chunk = sock.recv(length - len(data))
-                    if not chunk:
-                        raise OSError
-                    data += chunk
-                message = self.protocol.decrypt(data).decode()
-                self.handle_task(message)
+                self._listen()
             except OSError:
-                try:
-                    sock.close()
-                except Exception:
-                    pass
+                pass
+            finally:
+                # ensure socket is closed so that reconnect can occur
+                sock = self._sock
+                if sock is not None:
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
                 self._sock = None
+
+    def _listen(self) -> None:
+        sock = self._sock
+        if sock is None:
+            raise OSError
+        while self._running:
+            header = sock.recv(4)
+            if not header:
+                raise OSError
+            length = int.from_bytes(header, "big")
+            data = b""
+            while len(data) < length:
+                chunk = sock.recv(length - len(data))
+                if not chunk:
+                    raise OSError
+                data += chunk
+            message = self.protocol.decrypt(data).decode()
+            self.handle_task(message)
 
     def stop(self) -> None:
         self._running = False

@@ -1,12 +1,27 @@
-# Rollback and Uninstall
+# Rollback and Snapshot Removal
 
-Windows AI records the system changes performed during installation so that they can be undone later.
+The installer and updater capture configuration snapshots before modifying
+system files. Each snapshot is associated with a feature name and stored in
+`~/.windows_ai/snapshots`.
 
-## Snapshots
+## Rolling back
 
-Running the installer creates a snapshot file under `~/.windows_ai/` that lists the services and firewall rules added by the setup process.
-Use the Control Center's **Snapshot** button to manually create a snapshot before making further changes and **Restore** to revert the environment.
+When an installation or update fails, the modules restore the affected feature
+from its snapshot:
 
-## Uninstall
+```python
+from snapshot import rollback
+rollback("install")
+```
 
-The `install/uninstall.ps1` script reads the snapshot and removes any recorded services and firewall rules, returning the machine to its previous state.
+## Removing snapshots
+
+Successful operations automatically remove their snapshots. Snapshots can also
+be removed manually:
+
+```python
+from snapshot import remove
+remove("install")
+```
+
+Deleting the `snapshots` directory will remove all stored backups.

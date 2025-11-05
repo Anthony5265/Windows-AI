@@ -8,7 +8,7 @@ COPY . .
 
 # Install Python and Node dependencies
 RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir pytest psutil \
+    && pip install --no-cache-dir pytest psutil pre-commit \
     && npm ci
 
 CMD ["bash"]

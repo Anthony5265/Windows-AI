@@ -45,6 +45,7 @@ class MeshHub:
 
         # Discovery UDP socket
         self._discovery_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._discovery_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._discovery_sock.bind((self.host, self.discovery_port))
         self.discovery_port = self._discovery_sock.getsockname()[1]
         self._discovery_thread = threading.Thread(
@@ -54,6 +55,7 @@ class MeshHub:
 
         # TCP server for node connections
         self._server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server_sock.bind((self.host, self.port))
         self.port = self._server_sock.getsockname()[1]
         self._server_sock.listen()
@@ -174,34 +176,7 @@ class MeshHub:
                         conn.close()
                     except Exception:
                         pass
-                    self._nodes.remove(conn)
-
-    # ----------------------------------------------------------- heartbeat
-    def _node_listener(self, conn: socket.socket) -> None:
-        while self._running:
-            try:
-                header = conn.recv(4)
-                if not header:
-                    break
-                length = int.from_bytes(header, "big")
-                data = b""
-                while len(data) < length:
-                    chunk = conn.recv(length - len(data))
-                    if not chunk:
-                        break
-                    data += chunk
-                if len(data) != length:
-                    break
-                if self.protocol.decrypt(data) == b"HB":
-                    with self._lock:
-                        if conn in self._nodes:
-                            self._nodes[conn] = time.time()
-            except OSError:
-                break
-        with self._lock:
-            self._nodes.pop(conn, None)
-        try:
-            conn.close()
-        except Exception:
-            pass
+                    if conn in self._nodes:
+                        self._nodes.remove(conn)
+                    self._last_heartbeat.pop(conn, None)
 

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
 except Exception:  # pragma: no cover - xr package optional
+
     def load_runtime():  # type: ignore[misc]
         return None
 
@@ -56,13 +57,14 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = bool(screen_reader.value)
         except Exception:
-            logger.warning(
-                "platform=%s step=screen_reader detection failed",
+            logger.debug(
+                "%s: failed to detect screen_reader",
                 system,
                 exc_info=True,
             )
 
         try:
+
             class HIGHCONTRAST(ctypes.Structure):
                 _fields_ = [
                     ("cbSize", ctypes.c_uint),
@@ -77,8 +79,8 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = bool(hc.dwFlags & HCF_HIGHCONTRASTON)
         except Exception:
-            logger.warning(
-                "platform=%s step=high_contrast detection failed",
+            logger.debug(
+                "%s: failed to detect high_contrast",
                 system,
                 exc_info=True,
             )
@@ -94,8 +96,8 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = out.strip() == b"1"
         except Exception:
-            logger.warning(
-                "platform=%s step=screen_reader detection failed",
+            logger.debug(
+                "%s: failed to detect screen_reader",
                 system,
                 exc_info=True,
             )
@@ -110,8 +112,8 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = out.strip() == b"1"
         except Exception:
-            logger.warning(
-                "platform=%s step=high_contrast detection failed",
+            logger.debug(
+                "%s: failed to detect high_contrast",
                 system,
                 exc_info=True,
             )
@@ -131,8 +133,8 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            logger.warning(
-                "platform=%s step=high_contrast detection failed",
+            logger.debug(
+                "%s: failed to detect high_contrast",
                 system,
                 exc_info=True,
             )
@@ -151,8 +153,8 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            logger.warning(
-                "platform=%s step=screen_reader detection failed",
+            logger.debug(
+                "%s: failed to detect screen_reader",
                 system,
                 exc_info=True,
             )
@@ -179,11 +181,35 @@ def _detect_xr_hardware() -> Dict[str, Any]:
             info["xr_capable"] = True
             info["xr_runtime"] = getattr(runtime, "__name__", str(runtime))
     except Exception:
-        logger.warning(
-            "platform=%s step=xr_runtime detection failed",
-            platform.system(),
-            exc_info=True,
-        )
+        _log_detection_failure(platform.system(), "XR runtime")
+    return info
+
+
+_REQUIRED_DEFAULTS: Dict[str, Any] = {
+    "cpu_count": 1,
+    "gpu_name": "unknown",
+    "screen_reader": False,
+    "high_contrast": False,
+    "xr_capable": False,
+    "xr_runtime": None,
+}
+
+
+def _self_check(info: Dict[str, Any]) -> Dict[str, Any]:
+    """Ensure required keys exist and auto-repair missing values.
+
+    The function fills in sensible defaults when expected fields are missing or
+    contain obviously invalid values.  It returns the repaired dictionary.
+    """
+
+    repaired = False
+    for key, default in _REQUIRED_DEFAULTS.items():
+        value = info.get(key)
+        if value in (None, "") or (key == "cpu_count" and int(value) <= 0):
+            info[key] = default
+            repaired = True
+    if repaired:
+        logger.warning("system information incomplete; applied defaults")
     return info
 
 
@@ -191,13 +217,9 @@ def detect_system() -> Dict[str, Any]:
     """Return system information including basic accessibility settings."""
 
     info: Dict[str, Any] = _detect_system()
-    if info.get("gpu_name") is None:
-        info["gpu_name"] = "unknown"
-
     info.update(_detect_accessibility())
     info.update(_detect_xr_hardware())
-    return info
+    return _self_check(info)
 
 
 __all__ = ["detect_system"]
-
