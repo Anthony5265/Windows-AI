@@ -1,6 +1,8 @@
 # Windows AI Actions API
 
-This API exposes system functionality such as shell commands, mesh networking, IoT events and search utilities. All endpoints accept and return JSON.
+The Windows AI platform exposes REST endpoints for local features. The interfaces are standardized in [openapi/windows-ai.yaml](../openapi/windows-ai.yaml) and are served from `http://localhost:3000`.
+
+All endpoints accept and return JSON.
 
 ## Endpoints
 
