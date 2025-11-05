@@ -7,9 +7,6 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List
-import urllib.request
-import logging
-import time
 
 
 # ``ModelInfo`` captures metadata about downloadable model files.  Instead of
