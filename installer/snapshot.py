@@ -16,6 +16,9 @@ import logging
 import shutil
 from typing import Set
 
+from snapshot import capture as capture_config
+from snapshot import rollback as rollback_config
+
 # Location of the snapshot record
 CONFIG_DIR = Path.home() / ".windows_ai"
 SNAPSHOT_FILE = CONFIG_DIR / "snapshot.json"
@@ -139,6 +142,22 @@ def load_snapshot() -> Snapshot:
     return Snapshot.load()
 
 
+def snapshot_config(feature: str, path: Path | str) -> None:
+    """Capture configuration at ``path`` for ``feature``.
+
+    This delegates to :mod:`snapshot`'s :func:`capture` helper so that the
+    installer can restore individual features if a later step fails.
+    """
+
+    capture_config(feature, path)
+
+
+def rollback_feature(feature: str) -> None:
+    """Roll back configuration for ``feature`` using stored snapshots."""
+
+    rollback_config(feature)
+
+
 __all__ = [
     "Snapshot",
     "SNAPSHOT_FILE",
@@ -148,6 +167,8 @@ __all__ = [
     "record_firewall_rule",
     "restore",
     "load_snapshot",
+    "snapshot_config",
+    "rollback_feature",
 ]
 
 
