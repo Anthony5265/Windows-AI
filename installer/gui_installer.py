@@ -110,14 +110,15 @@ class GUIInstaller:
             self.info.delete("1.0", tk.END)
             for k, v in info.items():
                 self.info.insert(tk.END, f"{k}: {v}\n")
-            if self.auto_select:
-                backend = model_selector.select_preset(self.preset, self.model_specs)
+            if self.auto_select or self.backend == "hybrid":
+                backend = model_selector.select_backend("default", self.model_specs)
                 self.backend = backend
-                self.info.insert(
-                    tk.END,
-                    _("Recommended backend: {backend}").format(backend=backend)
-                    + "\n",
+                msg = (
+                    _("Recommended backend: {backend}")
+                    if self.auto_select
+                    else _("Hybrid backend resolved to {backend}")
                 )
+                self.info.insert(tk.END, msg.format(backend=backend) + "\n")
             else:
                 self.info.insert(
                     tk.END,
@@ -210,27 +211,17 @@ class GUIInstaller:
             top, text=_("Automatic model selection"), variable=auto_var
         ).pack(anchor="w", padx=10, pady=5)
 
-        preset_var = tk.StringVar(value=self.preset)
-        preset_frame = ttk.LabelFrame(top, text=_("Preset"))
-        preset_frame.pack(fill="x", padx=10, pady=5)
-        ttk.Radiobutton(
-            preset_frame, text=_("Minimal"), variable=preset_var, value="minimal"
-        ).pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(
-            preset_frame, text=_("Full"), variable=preset_var, value="full"
-        ).pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(
-            preset_frame, text=_("Custom"), variable=preset_var, value="custom"
-        ).pack(side=tk.LEFT, padx=5)
-
-        manual_var = tk.StringVar(value=self.backend or "remote")
+        manual_var = tk.StringVar(value=self.backend or "hybrid")
         manual_frame = ttk.LabelFrame(top, text=_("Manual backend"))
         manual_frame.pack(fill="x", padx=10, pady=5)
         ttk.Radiobutton(
             manual_frame, text=_("Local"), variable=manual_var, value="local"
         ).pack(side=tk.LEFT, padx=5)
         ttk.Radiobutton(
-            manual_frame, text=_("Remote"), variable=manual_var, value="remote"
+            manual_frame, text=_("Cloud"), variable=manual_var, value="remote"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Radiobutton(
+            manual_frame, text=_("Hybrid"), variable=manual_var, value="hybrid"
         ).pack(side=tk.LEFT, padx=5)
 
         specs_frame = ttk.LabelFrame(top, text=_("Advanced requirements"))

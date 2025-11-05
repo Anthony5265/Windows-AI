@@ -47,20 +47,6 @@ try {
     if (-not $nodePath) {
         Write-Error "Unable to locate node executable; install aborted."
         return
-    $nssmCmd = Get-Command nssm.exe -ErrorAction SilentlyContinue
-    if (-not $nssmCmd) {
-        Write-Error "Required command 'nssm.exe' not found; attempting download to cache."
-        $nssmZip = Join-Path $CacheDir 'nssm.zip'
-        $nssmUrl = 'https://nssm.cc/release/nssm-2.24.zip'
-        try {
-            Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
-            Expand-Archive -Path $nssmZip -DestinationPath $CacheDir -Force
-        } catch {
-            Write-Error "Failed to download nssm: $_"
-        }
-        $nssmPath = Join-Path $CacheDir 'nssm-2.24\win64\nssm.exe'
-    } else {
-        $nssmPath = $nssmCmd.Path
     }
 
     if (Test-Path $nssmPath) {
@@ -70,20 +56,6 @@ try {
         }
     } else {
         Write-Error "Unable to locate nssm executable; service installation skipped."
-    }
-
-    $mkcertCmd = Get-Command mkcert -ErrorAction SilentlyContinue
-    if (-not $mkcertCmd) {
-        Write-Error "Required command 'mkcert' not found; attempting download to cache."
-        $mkcertPath = Join-Path $CacheDir 'mkcert.exe'
-        $mkcertUrl = 'https://dl.filippo.io/mkcert/latest?for=windows/amd64'
-        try {
-            Invoke-WebRequest -Uri $mkcertUrl -OutFile $mkcertPath -UseBasicParsing
-        } catch {
-            Write-Error "Failed to download mkcert: $_"
-        }
-    } else {
-        $mkcertPath = $mkcertCmd.Path
     }
 
     if (Test-Path $mkcertPath) {

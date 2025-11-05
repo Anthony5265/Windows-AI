@@ -7,7 +7,9 @@ to switch between local models and remote APIs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional
+import platform
+import threading
 
 try:  # pragma: no cover - import may fail on headless systems
     import tkinter as tk  # type: ignore
@@ -26,6 +28,8 @@ from plugins.manager import PluginManager
 from security import AuditLogger, PermissionManager
 from optimization import tuning
 from eco.scheduler import EcoScheduler
+from eco.monitor import EcoMonitor
+from eco.tracker import PowerInfo
 from updater import Updater
 from installer import snapshot
 
@@ -33,6 +37,16 @@ try:  # pragma: no cover - optional dependency
     import qrcode  # type: ignore
 except Exception:  # pragma: no cover
     qrcode = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    import speech_recognition as sr  # type: ignore
+except Exception:  # pragma: no cover
+    sr = None  # type: ignore[assignment]
+
+try:  # pragma: no cover - optional dependency
+    import pyttsx3  # type: ignore
+except Exception:  # pragma: no cover
+    pyttsx3 = None  # type: ignore[assignment]
 
 __all__ = ["ChatGUI", "DashboardManager", "main"]
 
@@ -82,7 +96,7 @@ class ChatGUI:
         root: Optional["tk.Tk"] = None,
         backends: Optional[Dict[str, Backend]] = None,
         scheduler: Optional[EcoScheduler] = None,
-        permission_prompt: Optional[Callable[[str, str], bool]] = None,
+        monitor: Optional[EcoMonitor] = None,
     ) -> None:
         if tk is None or ttk is None:
             raise RuntimeError("tkinter is not available")
@@ -108,9 +122,23 @@ class ChatGUI:
         self.permission_manager.prompt("control_center", "network", prompt_cb)
         self.dashboard_manager = DashboardManager()
         self.scheduler = scheduler or EcoScheduler()
+        self.eco_monitor = monitor or EcoMonitor(scheduler=self.scheduler)
         self.updater = Updater()
 
+        # Accessibility
+        acc = self._detect_accessibility()
+        self.screen_reader_enabled = acc.get("screen_reader", False)
+        self.high_contrast_enabled = acc.get("high_contrast", False)
+        self.speech_enabled = False
+        self._tts = pyttsx3.init() if pyttsx3 else None
+        self._recognizer = sr.Recognizer() if sr else None
+        self._mic = sr.Microphone() if sr else None
+        self._sr_thread: threading.Thread | None = None
+
         self._build_widgets()
+
+        if self.high_contrast_enabled:
+            self._apply_high_contrast()
 
         # Allow external plugins to modify the GUI
         for plugin in get_plugins():  # pragma: no cover - runtime hook
@@ -192,6 +220,9 @@ class ChatGUI:
             input_frame, text="Defer", command=self.schedule_message
         ).pack(side="left", padx=5)
         ttk.Button(
+            input_frame, text="Eco", command=self._open_eco_settings
+        ).pack(side="left", padx=5)
+        ttk.Button(
             input_frame, text="Scheduler", command=self._open_scheduler_settings
         ).pack(side="left", padx=5)
         ttk.Button(
@@ -202,6 +233,9 @@ class ChatGUI:
         ).pack(side="left", padx=5)
         ttk.Button(
             input_frame, text="Restore", command=self._restore_snapshot
+        ).pack(side="left", padx=5)
+        ttk.Button(
+            input_frame, text="Accessibility", command=self._open_accessibility_settings
         ).pack(side="left", padx=5)
 
     def _create_snapshot(self) -> None:
@@ -229,6 +263,116 @@ class ChatGUI:
         self.chat.insert("end", "[Optimization] Reverted profile\n")
         self.chat.see("end")
 
+    # -------------------------------------------------------- Accessibility
+    def _detect_accessibility(self) -> Dict[str, bool]:
+        """Inspect basic Windows accessibility settings."""
+        info = {"screen_reader": False, "high_contrast": False}
+        if platform.system() == "Windows":  # pragma: no cover - OS dependent
+            try:
+                import ctypes
+
+                SPI_GETSCREENREADER = 70
+                SPI_GETHIGHCONTRAST = 67
+
+                flag = ctypes.c_int()
+                if ctypes.windll.user32.SystemParametersInfoW(
+                    SPI_GETSCREENREADER, 0, ctypes.byref(flag), 0
+                ):
+                    info["screen_reader"] = bool(flag.value)
+
+                class HIGHCONTRAST(ctypes.Structure):
+                    _fields_ = [
+                        ("cbSize", ctypes.c_uint),
+                        ("dwFlags", ctypes.c_uint),
+                        ("lpszDefaultScheme", ctypes.c_wchar_p),
+                    ]
+
+                hc = HIGHCONTRAST()
+                hc.cbSize = ctypes.sizeof(HIGHCONTRAST)
+                if ctypes.windll.user32.SystemParametersInfoW(
+                    SPI_GETHIGHCONTRAST, hc.cbSize, ctypes.byref(hc), 0
+                ):
+                    info["high_contrast"] = bool(hc.dwFlags & 1)
+            except Exception:
+                pass
+        return info
+
+    def _apply_high_contrast(self) -> None:
+        """Apply a minimal high contrast theme to the chat widgets."""
+        self.root.configure(bg="black")
+        self.chat.configure(bg="black", fg="white")
+        self.entry.configure(bg="black", fg="white", insertbackground="white")
+
+    def _speak(self, text: str) -> None:
+        """Speak text when screen reader mode is enabled."""
+        if self.screen_reader_enabled and self._tts:
+            threading.Thread(
+                target=lambda: (self._tts.say(text), self._tts.runAndWait()),
+                daemon=True,
+            ).start()
+
+    def _listen_loop(self) -> None:
+        """Background speech recognition loop."""
+        if not (self._recognizer and self._mic):
+            return
+        while self.speech_enabled:
+            with self._mic as source:
+                audio = self._recognizer.listen(source)
+            try:
+                text = self._recognizer.recognize_google(audio)
+            except Exception:
+                text = ""
+            if text:
+                self.entry.insert("end", text + " ")
+
+    def _toggle_speech_recognition(self) -> None:
+        """Start or stop the speech recognition loop."""
+        if not self._recognizer or not self._mic:
+            return
+        self.speech_enabled = not self.speech_enabled
+        if self.speech_enabled:
+            self._sr_thread = threading.Thread(
+                target=self._listen_loop, daemon=True
+            )
+            self._sr_thread.start()
+
+    def _open_accessibility_settings(self) -> None:
+        """Allow enabling speech recognition and screen reader hooks."""
+        win = tk.Toplevel(self.root)
+        win.title("Accessibility")
+
+        sr_var = tk.BooleanVar(value=self.screen_reader_enabled)
+        sp_var = tk.BooleanVar(value=self.speech_enabled)
+        hc_var = tk.BooleanVar(value=self.high_contrast_enabled)
+
+        ttk.Checkbutton(win, text="Screen reader", variable=sr_var).grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
+        ttk.Checkbutton(win, text="Speech input", variable=sp_var).grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
+        ttk.Checkbutton(win, text="High contrast", variable=hc_var).grid(
+            row=2, column=0, sticky="w", padx=5, pady=5
+        )
+
+        def save() -> None:
+            self.screen_reader_enabled = sr_var.get()
+            if self.speech_enabled != sp_var.get():
+                self._toggle_speech_recognition()
+            self.high_contrast_enabled = hc_var.get()
+            if self.high_contrast_enabled:
+                self._apply_high_contrast()
+            else:
+                # simple reset by recreating widgets' colors
+                self.root.configure(bg="SystemButtonFace")
+                self.chat.configure(bg="white", fg="black")
+                self.entry.configure(bg="white", fg="black", insertbackground="black")
+            win.destroy()
+
+        ttk.Button(win, text="Save", command=save).grid(
+            row=3, column=0, padx=5, pady=5, sticky="e"
+        )
+
     # ------------------------------------------------------------- Scheduling
     def schedule_message(self) -> None:
         """Schedule the current entry text for the next off-peak window."""
@@ -242,10 +386,12 @@ class ChatGUI:
             response = backend.generate(prompt)
             self.chat.insert("end", f"[Off-peak] Bot: {response}\n")
             self.chat.see("end")
+            self._speak(f"Bot: {response}")
 
         self.scheduler.schedule(run)
         self.chat.insert("end", f"[Scheduled] {prompt}\n")
         self.chat.see("end")
+        self._speak(f"Scheduled {prompt}")
         self.entry.delete(0, "end")
 
     def _open_scheduler_settings(self) -> None:
@@ -268,6 +414,36 @@ class ChatGUI:
 
         ttk.Button(win, text="Save", command=save).grid(
             row=2, column=0, columnspan=2, pady=5
+        )
+
+    def _open_eco_settings(self) -> None:
+        """Show current energy usage and scheduler options."""
+
+        win = tk.Toplevel(self.root)
+        win.title("Eco Settings")
+
+        def fmt(info: PowerInfo) -> str:
+            percent = f"{info.percent:.0f}%" if info.percent is not None else "n/a"
+            if info.secs_left is None or info.secs_left < 0:
+                left = "n/a"
+            else:
+                left = f"{info.secs_left // 60}m"
+            plugged = (
+                "yes"
+                if info.power_plugged
+                else "no" if info.power_plugged is not None else "n/a"
+            )
+            return f"Battery: {percent}\nTime left: {left}\nPlugged in: {plugged}"
+
+        label = ttk.Label(win, text=fmt(self.eco_monitor.sample()), justify="left")
+        label.pack(padx=5, pady=5)
+
+        def refresh() -> None:
+            label.config(text=fmt(self.eco_monitor.sample()))
+
+        ttk.Button(win, text="Refresh", command=refresh).pack(pady=5)
+        ttk.Button(win, text="Scheduler", command=self._open_scheduler_settings).pack(
+            pady=5
         )
 
     def _open_update_settings(self) -> None:
@@ -503,10 +679,12 @@ class ChatGUI:
         if not prompt:
             return
         self.chat.insert("end", f"You: {prompt}\n")
+        self._speak(f"You: {prompt}")
         self.entry.delete(0, "end")
         backend = self.backends[self.backend_var.get()]
         response = backend.generate(prompt)
         self.chat.insert("end", f"Bot: {response}\n")
+        self._speak(f"Bot: {response}")
         self.chat.see("end")
 
     # ---------------------------------------------------------- Sync settings

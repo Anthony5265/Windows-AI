@@ -23,7 +23,7 @@ def test_register_and_unregister_callbacks():
     # Unregister with different casing to ensure case-insensitive removal
     assert mgr.unregister_voice_command("HELLO") is True
 
-    # Subsequent unregister attempts should report False
+    # Subsequent unregister calls should report nothing removed
     assert mgr.unregister_gesture("swipe_left") is False
     assert mgr.unregister_voice_command("hello") is False
 
