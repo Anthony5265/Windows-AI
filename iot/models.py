@@ -24,4 +24,4 @@ class DeviceAdapter:
 
     def pair(self, device: Device) -> bool:
         """Pair with *device* and return True on success."""
-        return True
+        return device.protocol == self.protocol

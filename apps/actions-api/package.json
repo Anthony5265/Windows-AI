@@ -1,1 +1,23 @@
-{"name":"actions-api","version":"1.0.0","description":"Express Actions API for Windows AI","main":"dist/src/index.js","type":"commonjs","scripts":{"build":"tsc","start":"node dist/src/index.js","test":"echo \"No tests\" && exit 0","prepare":"husky install"},"dependencies":{"express":"^5.1.0"},"devDependencies":{"@types/express":"^5.0.3","@types/node":"^24.2.0","ts-node":"^10.9.2","typescript":"^5.9.2","husky":"^9.1.7"}}
+{
+  "name": "actions-api",
+  "version": "1.0.0",
+  "description": "Express Actions API for Windows AI",
+  "main": "dist/src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "test": "node --loader ts-node/esm --test test/*.test.ts",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "husky": "^9.1.7"
+  }
+}

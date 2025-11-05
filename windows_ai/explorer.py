@@ -67,12 +67,10 @@ class ExplorerAI:
 
         file_info: List[Dict[str, Any]] = []
         for path in files:
-            try:
-                size = os.path.getsize(path)
-                ext = os.path.splitext(path)[1]
-            except OSError:
-                # Skip files that cannot be accessed
-                continue
+            # Collect metadata up front so it's available for prompting and
+            # for the structured summary returned to callers.
+            size = os.path.getsize(path)
+            ext = os.path.splitext(path)[1]
             file_info.append({"name": path, "size": size, "extension": ext})
 
         prompt = json.dumps({"files": file_info})
@@ -80,17 +78,24 @@ class ExplorerAI:
 
         response = self.model.generate(prompt)
         try:
-            recommendations = json.loads(response)
+            model_data = json.loads(response)
         except json.JSONDecodeError:
-            recommendations = []
+            model_data = []
 
-        summary: Dict[str, int] = {}
-        for item in recommendations:
-            action = item.get("action")
-            if action:
-                summary[action] = summary.get(action, 0) + 1
+        # Map the model's recommended action by file name for quick lookup.
+        actions = {item.get("name"): item.get("action") for item in model_data if isinstance(item, dict)}
 
-        return CleanupResult(recommendations, summary)
+        summary: List[Dict[str, Any]] = []
+        for info in file_info:
+            summary.append(
+                {
+                    "name": info["name"],
+                    "size": info["size"],
+                    "extension": info["extension"],
+                    "action": actions.get(info["name"], "none"),
+                }
+            )
+        return summary
 
     def get_logs(self) -> List[str]:
         """Return recorded prompts."""

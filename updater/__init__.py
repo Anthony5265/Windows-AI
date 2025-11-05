@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
-import os
-import shutil
 import subprocess
-import sys
-import tempfile
 from typing import Callable
 from urllib.request import urlopen
+
+from snapshot import capture as snapshot_capture
+from snapshot import rollback as snapshot_rollback
+from snapshot import remove as snapshot_remove
 
 __all__ = ["Updater"]
 
@@ -199,26 +199,24 @@ class Updater:
 
     # ------------------------------------------------------------------
     # Snapshot and rollback
-    def _snapshot_path(self) -> Path:
-        return Path(tempfile.mkdtemp(prefix="waisnap_"))
+    def _feature(self) -> str:
+        """Return the snapshot feature name for this installation."""
+
+        return "install"
 
     def create_snapshot(self) -> Path:
-        """Create a snapshot of the install directory and return it."""
+        """Capture a snapshot of the install directory and return its path."""
 
-        snap = self._snapshot_path()
-        if self.install_dir.exists():
-            shutil.copytree(self.install_dir, snap / "install", dirs_exist_ok=True)
-        return snap
+        return snapshot_capture(self._feature(), self.install_dir)
 
-    def rollback(self, snapshot: Path) -> None:
-        """Restore the install directory from *snapshot*."""
+    def rollback(self, snapshot: Path | None = None) -> None:
+        """Restore the install directory from the stored snapshot."""
 
         try:
             self.run_uninstall()
         finally:
-            if self.install_dir.exists():
-                shutil.rmtree(self.install_dir)
-            shutil.copytree(snapshot / "install", self.install_dir, dirs_exist_ok=True)
+            snapshot_rollback(self._feature())
+            snapshot_remove(self._feature())
 
     # ------------------------------------------------------------------
     # Installation helpers
@@ -257,6 +255,7 @@ class Updater:
         snapshot = self.create_snapshot()
         try:
             self.run_install(package_path)
+            snapshot_remove(self._feature())
         except Exception:
             self.rollback(snapshot)
             raise

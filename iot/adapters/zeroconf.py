@@ -25,8 +25,20 @@ class ZeroconfAdapter(DeviceAdapter):
 
         class _Listener:
             def add_service(self, zeroconf, service_type, name):  # pragma: no cover - callback
+                info = zeroconf.get_service_info(service_type, name)
                 friendly = name.split(".")[0]
-                devices.append(Device(id=name, name=friendly, protocol=proto))
+                device_id = name
+                if info is not None:
+                    friendly = info.name.split(".")[0]
+                    props = getattr(info, "properties", {}) or {}
+                    dev_id = props.get(b"id")
+                    if isinstance(dev_id, bytes):
+                        device_id = dev_id.decode("utf-8", "ignore")
+                    elif dev_id is not None:
+                        device_id = str(dev_id)
+                    else:
+                        device_id = info.name
+                devices.append(Device(id=device_id, name=friendly, protocol=proto))
 
         zc = Zeroconf()
         try:
@@ -36,10 +48,6 @@ class ZeroconfAdapter(DeviceAdapter):
 
         return devices
 
-
     def pair(self, device: Device) -> bool:
-        # For the mocked zeroconf device, always return True
-        if device.id == "zc-1":
-            return True
-        return False
-
+        """Only allow pairing for devices discovered via Zeroconf."""
+        return device.protocol == self.protocol

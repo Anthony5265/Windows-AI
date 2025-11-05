@@ -1,14 +1,10 @@
 import os
-from typing import Any, Dict
+from typing import Dict, Any, Iterable
 from fastapi import FastAPI, HTTPException, Request
 import httpx
 
-from windows_ai.agents import DomainAgent, Agent
-from domains import (
-    natural_language_processing,
-    audio_processing,
-    computer_vision,
-)
+from agents import DomainAgent, Agent, CollaborationProtocol
+from domains import natural_language_processing, audio_processing, computer_vision
 
 app = FastAPI()
 
@@ -21,13 +17,13 @@ DOMAIN_MODULES: Dict[str, Any] = {
 
 
 class AgentHub:
-    """In-memory registry for agents."""
+    """In-memory registry for agents and collaboration protocols."""
 
     def __init__(self) -> None:
         self._agents: Dict[str, Agent] = {}
-        self._last_train: Dict[str, Any] = {}
-        self._last_run: Dict[str, Any] = {}
+        self._protocols: Dict[str, CollaborationProtocol] = {}
 
+    # -- Agent lifecycle -------------------------------------------------
     def register(self, name: str, domain_key: str) -> None:
         try:
             module = DOMAIN_MODULES[domain_key]
@@ -41,7 +37,16 @@ class AgentHub:
         self._last_train.pop(name, None)
         self._last_run.pop(name, None)
 
-    def train(self, name: str, data: Any) -> Dict[str, Any]:
+    def deregister(self, name: str) -> None:
+        agent = self._agents.pop(name, None)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Agent not registered")
+        agent.teardown()
+
+    def list_agents(self) -> Iterable[str]:
+        return self._agents.keys()
+
+    def train(self, name: str, data: Any) -> Any:
         agent = self._agents.get(name)
         if agent is None:
             raise HTTPException(status_code=404, detail="Agent not registered")
@@ -60,13 +65,15 @@ class AgentHub:
 
 hub = AgentHub()
 
-ACTIONS_URL = os.getenv(
+# Base URLs for downstream services. These can be overridden via
+# environment variables to support custom deployments, while still
+# providing sensible local defaults.
+ACTIONS_URL = os.environ.get(
     "ACTIONS_URL", "http://localhost:3000/api/actions/execute"
 )
-PROXY_URL = os.getenv(
+PROXY_URL = os.environ.get(
     "PROXY_URL", "http://localhost:11434/v1/chat/completions"
 )
-
 
 @app.get("/health")
 async def health():
@@ -82,8 +89,12 @@ async def pipeline_sample():
             )
             action.raise_for_status()
             action_data = action.json()
-        except httpx.HTTPError as exc:
+        except httpx.RequestError as exc:
             return {"error": f"Action service unreachable: {exc}"}
+        except httpx.HTTPStatusError as exc:
+            return {
+                "error": f"Action service error: {exc.response.status_code}"
+            }
 
         try:
             proxy = await client.post(
@@ -91,10 +102,15 @@ async def pipeline_sample():
             )
             proxy.raise_for_status()
             proxy_data = proxy.json()
-        except httpx.HTTPError as exc:
+        except httpx.RequestError as exc:
             return {
                 "action": action_data,
                 "error": f"Proxy service unreachable: {exc}",
+            }
+        except httpx.HTTPStatusError as exc:
+            return {
+                "action": action_data,
+                "error": f"Proxy service error: {exc.response.status_code}",
             }
 
     return {"action": action_data, "proxy": proxy_data}
@@ -105,6 +121,21 @@ async def register_agent(name: str, domain: str):
     """Register a new agent bound to a capability domain."""
 
     hub.register(name, domain)
+    return {"ok": True}
+
+
+@app.get("/agents")
+async def list_agents():
+    """Return the names of registered agents."""
+
+    return {"agents": list(hub.list_agents())}
+
+
+@app.delete("/agents/{name}")
+async def remove_agent(name: str):
+    """Deregister an agent and release its resources."""
+
+    hub.deregister(name)
     return {"ok": True}
 
 
@@ -122,3 +153,16 @@ async def run_agent(name: str, request: Request):
     task = payload.get("task")
     result = hub.run(name, task)
     return {"result": result}
+
+
+@app.get("/marketplace")
+async def marketplace():
+    """Fetch available agents from a remote marketplace."""
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(MARKETPLACE_URL)
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as exc:
+            return {"agents": [], "error": str(exc)}
