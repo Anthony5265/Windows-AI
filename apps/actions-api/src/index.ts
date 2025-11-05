@@ -1,11 +1,11 @@
 import express from 'express';
-import { executeAction } from './actions';
-import { normalize } from './normalize';
-import { ValidationError } from './errors';
-import { createPairingToken, handleRemoteCommand } from './mobile';
-import { distributeTask } from './mesh';
-import { handleDeviceEvent } from './iot';
-import { searchDocuments } from './search';
+import { executeAction } from './actions.js';
+import { normalize } from './normalize.js';
+import { ValidationError } from './errors.js';
+import { createPairingToken, handleRemoteCommand } from './mobile.js';
+import { distributeTask } from './mesh.js';
+import { handleDeviceEvent } from './iot.js';
+import { searchDocuments } from './search.js';
 import { fileURLToPath } from 'node:url';
 
 export const app = express();

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { executeAction } from '../src/actions';
+import { executeAction } from '../src/actions.js';
 
 test('shell executes command', async () => {
   const result = await executeAction({ action: 'shell', params: { command: 'echo hello' } });
