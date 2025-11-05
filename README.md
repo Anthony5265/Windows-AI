@@ -73,6 +73,14 @@ Windows AI now has a **complete, functional system**! Here's what's ready:
 - **Typing indicators** and loading states
 - **Character counter** and input validation
 
+#### 🤖 Automation System
+- **Folder Watchers** - Monitor directories for file changes and trigger AI actions
+- **Scheduled Tasks** - Run AI tasks on a schedule (cron or interval-based)
+- **Web UI** - Easy-to-use interface for managing automations
+- **Real-time execution** - Automations run in the background
+- **Action types** - Organize files, summarize documents, analyze content, run system checks
+- **Flexible scheduling** - Cron expressions, intervals (1h, 30m), or one-time tasks
+
 ### 🚀 Quick Start
 
 **Start everything with one command:**
