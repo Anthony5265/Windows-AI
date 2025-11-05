@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import os from 'os';
-import { ValidationError } from './errors';
+import { ValidationError } from './errors.js';
 
 const ALLOWED_COMMANDS = new Set(['echo', 'ls', 'cat', 'pwd', 'dir', 'type']);
 
