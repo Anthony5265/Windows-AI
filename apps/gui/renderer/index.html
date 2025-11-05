@@ -29,6 +29,12 @@
         </svg>
         Automation
       </button>
+      <button class="nav-btn" data-tab="plugins">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/><path d="m15.4 17.4 3.2 3.2m-3.2-13.2 3.2-3.2M2.6 10.6 5.8 7.4m13.2 13.2-3.2-3.2M10.6 2.6 7.4 5.8m13.2 13.2-3.2-3.2M2.6 17.4l3.2-3.2"/>
+        </svg>
+        Plugins
+      </button>
       <button class="nav-btn" data-tab="settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>
@@ -327,6 +333,51 @@
       </div>
     </div>
   </section>
+
+  <!-- Plugins Tab -->
+  <section id="plugins" class="tab">
+    <div class="plugins-container">
+      <h2>🔌 Plugin Marketplace</h2>
+      <p class="plugins-subtitle">Extend Windows AI with powerful plugins</p>
+
+      <div class="plugins-header">
+        <div class="plugins-stats">
+          <span id="pluginsCount" class="stat-badge">0 plugins</span>
+          <span id="pluginsActive" class="stat-badge active">0 active</span>
+        </div>
+        <div class="plugins-filter">
+          <select id="pluginTypeFilter">
+            <option value="all">All Types</option>
+            <option value="action">Actions</option>
+            <option value="tool">Tools</option>
+            <option value="integration">Integrations</option>
+            <option value="automation">Automation</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="pluginsList" class="plugins-grid">
+        <!-- Plugins will be loaded here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Plugin Details Modal -->
+  <div id="pluginModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="pluginModalTitle">Plugin Details</h3>
+        <button class="modal-close" onclick="document.getElementById('pluginModal').classList.add('hidden')">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="pluginModalBody"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('pluginModal').classList.add('hidden')">Close</button>
+        <button class="btn-primary" id="pluginModalAction">Enable</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <footer>

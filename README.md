@@ -83,10 +83,17 @@ Windows AI now has a **complete, functional system**! Here's what's ready:
 
 #### 🔌 Plugin System
 - **Extensible Architecture** - Add custom AI actions, tools, and integrations
-- **Built-in Plugins** - Web search, file organizer, system information
+- **6 Built-in Plugins:**
+  - 🔍 **Web Search** - DuckDuckGo integration for current information
+  - 📁 **File Organizer** - Intelligent file categorization and organization
+  - 💻 **System Info** - Real-time system monitoring and metrics
+  - 🐙 **GitHub Integration** - Manage repos, issues, and PRs
+  - ⚡ **Code Executor** - Safe sandboxed code execution (Python, JS, Bash)
+  - 📅 **Calendar** - Event and reminder management
 - **Plugin Types** - Actions, Tools, Integrations, Automation triggers
 - **Dynamic Loading** - Plugins load at runtime without restart
-- **REST API** - Manage and execute plugins via API endpoints
+- **REST API** - 8 endpoints for plugin management and execution
+- **Plugin Marketplace UI** - Browse, enable/disable, and manage plugins
 - **Easy Development** - Simple base classes to extend
 
 ### 🚀 Quick Start
