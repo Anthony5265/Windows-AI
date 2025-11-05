@@ -53,10 +53,7 @@ class MeshNode:
 
         self._addr = addr
         self._running = True
-        # Background thread handles listening and reconnection attempts
-        self._thread = threading.Thread(
-            target=self._listen_loop, daemon=True
-        )
+        self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
         # Separate heartbeat thread periodically pings the hub
         self._heartbeat_thread = threading.Thread(
@@ -64,14 +61,20 @@ class MeshNode:
         )
         self._heartbeat_thread.start()
 
-    def _listen_loop(self) -> None:
-        """Listen for tasks and reconnect if the connection drops."""
+    def _run(self) -> None:
+        """Listen for tasks and reconnect on failure."""
 
         while self._running:
-            if self._sock is None:
+            self._listen()
+            if self._running and self._sock is None:
                 if not self._reconnect():
-                    time.sleep(self.reconnect_interval)
-                    continue
+                    break
+
+    def _listen(self) -> None:
+        sock = self._sock
+        if sock is None:
+            return
+        while self._running:
             try:
                 self._listen()
             except OSError:
@@ -85,6 +88,7 @@ class MeshNode:
                     except Exception:
                         pass
                 self._sock = None
+                break
 
     def _listen(self) -> None:
         sock = self._sock

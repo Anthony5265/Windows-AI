@@ -1,10 +1,14 @@
 import os
-from typing import Dict, Any, Iterable
+from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Request
 import httpx
 
-from agents import DomainAgent, Agent, CollaborationProtocol
-from domains import natural_language_processing, audio_processing, computer_vision
+from windows_ai.agents import DomainAgent, Agent
+from domains import (
+    natural_language_processing,
+    audio_processing,
+    computer_vision,
+)
 
 app = FastAPI()
 
@@ -36,6 +40,15 @@ class AgentHub:
         self._agents[name] = agent
         self._last_train.pop(name, None)
         self._last_run.pop(name, None)
+
+    def deregister(self, name: str) -> None:
+        agent = self._agents.pop(name, None)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Agent not registered")
+        agent.teardown()
+
+    def list_agents(self) -> Iterable[str]:
+        return self._agents.keys()
 
     def deregister(self, name: str) -> None:
         agent = self._agents.pop(name, None)
