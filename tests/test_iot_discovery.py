@@ -4,20 +4,17 @@ from iot import ADAPTERS, Device, discover_devices, pair_device
 
 
 def _mock_zeroconf(monkeypatch):
-    import zeroconf
-    import iot.adapters.zeroconf as zc_adapter
+    import iot.adapters.zeroconf as zc
 
-    def fake_discover(self):
-        return [Device(id="zc-1", name="ZCDevice", protocol="zeroconf")]
+    class FakeZeroconf:
+        def close(self):
+            pass
 
-    monkeypatch.setattr(ZeroconfAdapter, "discover", fake_discover)
+    def fake_service_browser(zc_instance, service_type, listener):
+        listener.add_service(zc_instance, service_type, "ZCDevice._http._tcp.local.")
 
-
-
-    monkeypatch.setattr(zeroconf, "Zeroconf", lambda: FakeZeroconf())
-    monkeypatch.setattr(zeroconf, "ServiceBrowser", fake_service_browser)
-    monkeypatch.setattr(zc_adapter, "Zeroconf", lambda: FakeZeroconf())
-    monkeypatch.setattr(zc_adapter, "ServiceBrowser", fake_service_browser)
+    monkeypatch.setattr(zc, "Zeroconf", lambda: FakeZeroconf())
+    monkeypatch.setattr(zc, "ServiceBrowser", fake_service_browser)
 
 
 def test_discover_devices_returns_devices(monkeypatch):

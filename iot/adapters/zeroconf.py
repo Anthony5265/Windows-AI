@@ -48,10 +48,6 @@ class ZeroconfAdapter(DeviceAdapter):
 
         return devices
 
-
     def pair(self, device: Device) -> bool:
-        # For the mocked zeroconf device, always return True
-        if device.id == "zc-1":
-            return True
-        return False
-
+        """Only allow pairing for devices discovered via Zeroconf."""
+        return device.protocol == self.protocol
