@@ -81,6 +81,14 @@ Windows AI now has a **complete, functional system**! Here's what's ready:
 - **Action types** - Organize files, summarize documents, analyze content, run system checks
 - **Flexible scheduling** - Cron expressions, intervals (1h, 30m), or one-time tasks
 
+#### 🔌 Plugin System
+- **Extensible Architecture** - Add custom AI actions, tools, and integrations
+- **Built-in Plugins** - Web search, file organizer, system information
+- **Plugin Types** - Actions, Tools, Integrations, Automation triggers
+- **Dynamic Loading** - Plugins load at runtime without restart
+- **REST API** - Manage and execute plugins via API endpoints
+- **Easy Development** - Simple base classes to extend
+
 ### 🚀 Quick Start
 
 **Start everything with one command:**

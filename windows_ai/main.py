@@ -33,6 +33,9 @@ from windows_ai.scheduler import (
     TaskScheduler, ScheduledTask, EXAMPLE_TASKS
 )
 
+# Import plugin system
+from windows_ai.plugins.registry import PluginRegistry
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -63,6 +66,7 @@ CHAT_HISTORY_FILE = DATA_DIR / "chat_history.json"
 CONFIG_FILE = DATA_DIR / "config.json"
 WATCHERS_CONFIG_FILE = DATA_DIR / "watchers.json"
 SCHEDULER_CONFIG_FILE = DATA_DIR / "scheduler.json"
+PLUGINS_DIR = Path(__file__).parent / "plugins" / "builtin"
 
 # Agenthub URL
 AGENTHUB_URL = os.getenv("AGENTHUB_URL", "http://localhost:8000")
@@ -233,6 +237,9 @@ config_manager = ConfigManager()
 # Initialize automation systems
 folder_watcher_manager = FolderWatcherManager(WATCHERS_CONFIG_FILE)
 task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE)
+
+# Initialize plugin system
+plugin_registry = PluginRegistry(PLUGINS_DIR)
 
 # =====================================================================
 # Automation Callbacks
@@ -682,6 +689,74 @@ async def get_example_tasks():
     return {"examples": EXAMPLE_TASKS}
 
 # =====================================================================
+# Plugin System Endpoints
+# =====================================================================
+
+@app.get("/plugins")
+async def list_plugins():
+    """List all registered plugins"""
+    return {"plugins": plugin_registry.list_plugins()}
+
+@app.get("/plugins/{plugin_id}")
+async def get_plugin(plugin_id: str):
+    """Get specific plugin details"""
+    plugin = plugin_registry.get_plugin(plugin_id)
+    if not plugin:
+        raise HTTPException(status_code=404, detail="Plugin not found")
+    return {
+        **plugin.metadata.to_dict(),
+        "initialized": plugin.metadata.id in plugin_registry._initialized_plugins,
+        "schema": plugin.get_schema()
+    }
+
+@app.post("/plugins/{plugin_id}/execute")
+async def execute_plugin(plugin_id: str, request: Dict[str, Any]):
+    """Execute a plugin"""
+    result = await plugin_registry.execute_plugin(plugin_id, **request)
+    return result
+
+@app.post("/plugins/{plugin_id}/enable")
+async def enable_plugin(plugin_id: str):
+    """Enable a plugin"""
+    success = await plugin_registry.enable_plugin(plugin_id)
+    if success:
+        return {"message": "Plugin enabled successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Plugin not found or failed to enable")
+
+@app.post("/plugins/{plugin_id}/disable")
+async def disable_plugin(plugin_id: str):
+    """Disable a plugin"""
+    success = await plugin_registry.disable_plugin(plugin_id)
+    if success:
+        return {"message": "Plugin disabled successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Plugin not found or failed to disable")
+
+@app.post("/plugins/{plugin_id}/reload")
+async def reload_plugin(plugin_id: str):
+    """Reload a plugin from disk"""
+    success = await plugin_registry.reload_plugin(plugin_id)
+    if success:
+        return {"message": "Plugin reloaded successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Plugin not found or failed to reload")
+
+@app.get("/plugins/types/{plugin_type}")
+async def get_plugins_by_type(plugin_type: str):
+    """Get all plugins of a specific type"""
+    try:
+        from windows_ai.plugins.base import PluginType
+        ptype = PluginType(plugin_type)
+        plugins = plugin_registry.get_plugins_by_type(ptype)
+        return {
+            "type": plugin_type,
+            "plugins": [p.metadata.to_dict() for p in plugins]
+        }
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid plugin type")
+
+# =====================================================================
 # WebSocket Support
 # =====================================================================
 
@@ -772,6 +847,12 @@ async def startup_event():
     await task_scheduler.start()
     logger.info(f"Task scheduler started: {len(task_scheduler.tasks)} tasks configured")
 
+    # Load and initialize plugins
+    logger.info("Loading plugins...")
+    await plugin_registry.load_plugins()
+    await plugin_registry.initialize_plugins()
+    logger.info(f"Plugins loaded: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
+
     logger.info("Backend is ready!")
 
 @app.on_event("shutdown")
@@ -783,6 +864,10 @@ async def shutdown_event():
     logger.info("Stopping automation systems...")
     await folder_watcher_manager.stop_all()
     await task_scheduler.stop()
+
+    # Shutdown plugins
+    logger.info("Shutting down plugins...")
+    await plugin_registry.shutdown_plugins()
 
     # Save configurations
     chat_history.save_history()
