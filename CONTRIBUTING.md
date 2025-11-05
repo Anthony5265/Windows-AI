@@ -21,32 +21,9 @@ This project uses [pre-commit](https://pre-commit.com/) to run linters and forma
 - Before pushing, run `git fetch origin && git rebase origin/main`.
 - Resolve conflicts locally before opening or refreshing a PR.
 
-## Commit Messages
+## Inactive Issues and Pull Requests
 
-This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification.
-Each commit message should be structured as:
-
-```
-<type>(optional scope): <description>
-```
-
-Examples:
-
-- `feat: add OAuth support`
-- `fix(ui): correct button color`
-- `chore: update dependencies`
-
-Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
-
-## Development Container
-
-This repository includes a VS Code Dev Container configuration to provide a
-consistent development environment.
-
-1. Install [Visual Studio Code](https://code.visualstudio.com/) and the **Dev Containers** extension.
-2. Open the command palette and run **Dev Containers: Open Folder in Container...** (or **Reopen in Container** if the folder is already open).
-3. Select the repository folder and VS Code will build the container using the provided `Dockerfile`.
-4. After the build completes, all project build and test dependencies are available inside the container.
+Issues and pull requests with no activity for 30 days are automatically labeled `stale` and may be closed after 60 days. Add a comment or push a new commit to keep the discussion active.
 
 ## Releases
 
