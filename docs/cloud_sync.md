@@ -6,6 +6,10 @@ password before leaving the local machine.  The default implementation ships
 with an in-memory provider used for testing, while real deployments can supply
 implementations for services like S3, Dropbox or Google Drive.
 
+Convenience helpers like `backup_profile`, `restore_profile`, `backup_model` and
+`restore_model` wrap the lower level file APIs and apply a simple naming
+convention for the stored blobs.
+
 ## Basic Usage
 
 ```python
@@ -14,7 +18,15 @@ from cloud_sync import CloudSync, InMemoryProvider
 provider = InMemoryProvider()
 sync = CloudSync(provider, password="secret", conflict_resolution="local")
 
-sync.backup_file("profile.json", "profile")
+# back up a profile
+sync.backup_profile("profile.json")
+
+# back up a downloaded model
+sync.backup_model("models/llama.bin", "llama.bin")
+
+# later restore
+sync.restore_profile("profile.json")
+sync.restore_model("models/llama.bin", "llama.bin")
 ```
 
 ## Conflict Resolution

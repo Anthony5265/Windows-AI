@@ -143,6 +143,27 @@ class CloudSync:
             return "downloaded"
         raise RuntimeError("sync conflict")
 
+    # --- Convenience helpers ---------------------------------------------
+    def backup_profile(self, profile_path: str | Path) -> None:
+        """Encrypt and upload the user profile."""
+
+        self.backup_file(profile_path, "profile")
+
+    def restore_profile(self, profile_path: str | Path) -> bool:
+        """Restore the user profile if available."""
+
+        return self.restore_file(profile_path, "profile")
+
+    def backup_model(self, model_path: str | Path, model_name: str) -> None:
+        """Encrypt and upload a model file under ``model_name``."""
+
+        self.backup_file(model_path, f"models/{model_name}")
+
+    def restore_model(self, model_path: str | Path, model_name: str) -> bool:
+        """Restore a model file previously backed up."""
+
+        return self.restore_file(model_path, f"models/{model_name}")
+
 
 __all__ = [
     "Provider",
