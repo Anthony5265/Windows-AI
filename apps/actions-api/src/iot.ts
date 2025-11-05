@@ -14,4 +14,3 @@ export function handleDeviceEvent(req: DeviceEventRequest) {
   // Placeholder implementation
   return { deviceId, event };
 }
-
