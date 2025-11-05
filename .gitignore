@@ -12,3 +12,11 @@ models/
 Thumbs.db
 .gemini/
 gha-creds-*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
