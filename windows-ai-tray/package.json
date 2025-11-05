@@ -1,1 +1,16 @@
-{  "name": "windows-ai-tray",  "version": "0.1.0",  "private": true,  "description": "Minimal Electron tray for Windows AI",  "main": "main.js",  "scripts": {    "start": "electron ."  },  "devDependencies": {    "electron": "^38.4.0"  }}
+{
+  "name": "windows-ai-tray",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows AI System Tray Application with Quick Commands",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "electron": "^38.4.0"
+  }
+}

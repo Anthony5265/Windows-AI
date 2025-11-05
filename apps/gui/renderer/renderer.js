@@ -546,4 +546,278 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)
   }
 });
 
+// =====================================================================
+// Automation - Folder Watchers & Scheduled Tasks
+// =====================================================================
+
+const addWatcherBtn = document.getElementById('addWatcherBtn');
+const addTaskBtn = document.getElementById('addTaskBtn');
+const watcherModal = document.getElementById('watcherModal');
+const taskModal = document.getElementById('taskModal');
+const saveWatcherBtn = document.getElementById('saveWatcherBtn');
+const saveTaskBtn = document.getElementById('saveTaskBtn');
+
+// Load watchers from backend
+async function loadWatchers() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/watchers`);
+    const data = await response.json();
+    const watchersList = document.getElementById('watchersList');
+
+    if (data.watchers && data.watchers.length > 0) {
+      watchersList.innerHTML = data.watchers.map(watcher => `
+        <div class="automation-card" data-id="${watcher.id}">
+          <div class="automation-card-content">
+            <div class="automation-card-title">
+              📁 ${watcher.name}
+              <span class="status-badge ${watcher.running ? 'active' : 'inactive'}">
+                ${watcher.running ? '● Active' : '○ Inactive'}
+              </span>
+            </div>
+            <div class="automation-card-description">${watcher.path}</div>
+            <div class="automation-card-meta">
+              <span>Patterns: ${watcher.patterns.join(', ')}</span>
+              <span>Events: ${watcher.events.join(', ')}</span>
+              <span>Action: ${watcher.action}</span>
+            </div>
+          </div>
+          <div class="automation-card-actions">
+            <button class="icon-btn" onclick="toggleWatcher('${watcher.id}', ${watcher.running})">
+              ${watcher.running ? '⏸' : '▶'}
+            </button>
+            <button class="icon-btn danger" onclick="deleteWatcher('${watcher.id}')">🗑</button>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      watchersList.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <p>No folder watchers configured</p>
+          <p class="hint">Click "Add Watcher" to monitor folders for file changes</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading watchers:', error);
+  }
+}
+
+// Load tasks from backend
+async function loadTasks() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/tasks`);
+    const data = await response.json();
+    const tasksList = document.getElementById('tasksList');
+
+    if (data.tasks && data.tasks.length > 0) {
+      tasksList.innerHTML = data.tasks.map(task => {
+        const nextRun = task.next_run ? new Date(task.next_run).toLocaleString() : 'N/A';
+        return `
+          <div class="automation-card" data-id="${task.id}">
+            <div class="automation-card-content">
+              <div class="automation-card-title">
+                ⏰ ${task.name}
+                <span class="status-badge ${task.enabled ? 'active' : 'inactive'}">
+                  ${task.enabled ? '● Enabled' : '○ Disabled'}
+                </span>
+              </div>
+              <div class="automation-card-description">${task.description}</div>
+              <div class="automation-card-meta">
+                <span>Schedule: ${task.schedule}</span>
+                <span>Next run: ${nextRun}</span>
+                <span>Runs: ${task.run_count}</span>
+              </div>
+            </div>
+            <div class="automation-card-actions">
+              <button class="icon-btn" onclick="toggleTask('${task.id}', ${task.enabled})">
+                ${task.enabled ? '⏸' : '▶'}
+              </button>
+              <button class="icon-btn danger" onclick="deleteTask('${task.id}')">🗑</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      tasksList.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <p>No scheduled tasks configured</p>
+          <p class="hint">Click "Add Task" to schedule AI tasks to run automatically</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading tasks:', error);
+  }
+}
+
+// Toggle watcher on/off
+window.toggleWatcher = async function(watcherId, isRunning) {
+  try {
+    const endpoint = isRunning ? 'stop' : 'start';
+    const response = await fetch(`${BACKEND_URL}/automation/watchers/${watcherId}/${endpoint}`, {
+      method: 'POST'
+    });
+    if (response.ok) {
+      await loadWatchers();
+      updateStatus(`Watcher ${isRunning ? 'stopped' : 'started'}`);
+    }
+  } catch (error) {
+    console.error('Error toggling watcher:', error);
+    updateStatus('Error toggling watcher');
+  }
+};
+
+// Delete watcher
+window.deleteWatcher = async function(watcherId) {
+  if (!confirm('Are you sure you want to delete this watcher?')) return;
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/watchers/${watcherId}`, {
+      method: 'DELETE'
+    });
+    if (response.ok) {
+      await loadWatchers();
+      updateStatus('Watcher deleted');
+    }
+  } catch (error) {
+    console.error('Error deleting watcher:', error);
+    updateStatus('Error deleting watcher');
+  }
+};
+
+// Toggle task on/off
+window.toggleTask = async function(taskId, isEnabled) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !isEnabled })
+    });
+    if (response.ok) {
+      await loadTasks();
+      updateStatus(`Task ${isEnabled ? 'disabled' : 'enabled'}`);
+    }
+  } catch (error) {
+    console.error('Error toggling task:', error);
+    updateStatus('Error toggling task');
+  }
+};
+
+// Delete task
+window.deleteTask = async function(taskId) {
+  if (!confirm('Are you sure you want to delete this task?')) return;
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/tasks/${taskId}`, {
+      method: 'DELETE'
+    });
+    if (response.ok) {
+      await loadTasks();
+      updateStatus('Task deleted');
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    updateStatus('Error deleting task');
+  }
+};
+
+// Open watcher modal
+addWatcherBtn?.addEventListener('click', () => {
+  watcherModal.classList.remove('hidden');
+});
+
+// Save watcher
+saveWatcherBtn?.addEventListener('click', async () => {
+  const watcher = {
+    id: `watcher-${Date.now()}`,
+    name: document.getElementById('watcherName').value,
+    path: document.getElementById('watcherPath').value,
+    patterns: document.getElementById('watcherPatterns').value.split(',').map(p => p.trim()),
+    events: [
+      document.getElementById('watchCreated').checked ? 'created' : null,
+      document.getElementById('watchModified').checked ? 'modified' : null,
+      document.getElementById('watchDeleted').checked ? 'deleted' : null
+    ].filter(Boolean),
+    action: document.getElementById('watcherAction').value,
+    custom_prompt: document.getElementById('watcherPrompt').value || null,
+    enabled: true,
+    recursive: true
+  };
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/watchers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(watcher)
+    });
+    if (response.ok) {
+      watcherModal.classList.add('hidden');
+      await loadWatchers();
+      updateStatus('Watcher created successfully');
+      // Clear form
+      document.getElementById('watcherName').value = '';
+      document.getElementById('watcherPath').value = '';
+      document.getElementById('watcherPatterns').value = '';
+      document.getElementById('watcherPrompt').value = '';
+    }
+  } catch (error) {
+    console.error('Error creating watcher:', error);
+    updateStatus('Error creating watcher');
+  }
+});
+
+// Open task modal
+addTaskBtn?.addEventListener('click', () => {
+  taskModal.classList.remove('hidden');
+});
+
+// Save task
+saveTaskBtn?.addEventListener('click', async () => {
+  const task = {
+    id: `task-${Date.now()}`,
+    name: document.getElementById('taskName').value,
+    description: document.getElementById('taskDescription').value,
+    schedule_type: document.getElementById('taskScheduleType').value,
+    schedule: document.getElementById('taskSchedule').value,
+    action: document.getElementById('taskAction').value,
+    prompt: document.getElementById('taskPrompt').value,
+    enabled: true
+  };
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/automation/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(task)
+    });
+    if (response.ok) {
+      taskModal.classList.add('hidden');
+      await loadTasks();
+      updateStatus('Task created successfully');
+      // Clear form
+      document.getElementById('taskName').value = '';
+      document.getElementById('taskDescription').value = '';
+      document.getElementById('taskSchedule').value = '';
+      document.getElementById('taskPrompt').value = '';
+    } else {
+      const error = await response.json();
+      updateStatus(`Error: ${error.detail}`);
+    }
+  } catch (error) {
+    console.error('Error creating task:', error);
+    updateStatus('Error creating task');
+  }
+});
+
+// Load automation data when tab is opened
+document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
+  loadWatchers();
+  loadTasks();
+});
+
 console.log('Windows AI Renderer initialized');

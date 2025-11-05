@@ -13,7 +13,8 @@ Windows AI now has a **complete, functional chat interface** with:
 ✅ **Multi-Model Support** - Support for OpenAI, Anthropic, Ollama
 ✅ **Dark/Light Themes** - Automatic theme detection
 ✅ **Settings Management** - Configurable AI parameters
-✅ **Workflow Integration** - Ready for automation tasks
+✅ **Automation System** - Folder watchers and scheduled tasks
+✅ **System Tray** - Quick command access with global hotkey
 
 ---
 
@@ -179,6 +180,65 @@ Windows-AI/
 - **Dark Mode**: Easy on the eyes
 - **System**: Follows your OS preference
 - **Instant Switch**: Change themes on the fly
+
+### 🤖 Automation
+
+Windows AI includes powerful automation features to make your workflows intelligent and proactive.
+
+#### Folder Watchers
+
+Monitor directories for file changes and trigger AI actions automatically:
+
+1. **Navigate to Automation Tab**: Click the "Automation" tab in the GUI
+2. **Add a Watcher**: Click "+ Add Watcher"
+3. **Configure**:
+   - **Name**: e.g., "Downloads Organizer"
+   - **Folder Path**: Path to monitor (e.g., `/home/user/Downloads`)
+   - **File Patterns**: Comma-separated patterns (e.g., `*.pdf, *.docx`)
+   - **Events**: Select which events to watch (created, modified, deleted)
+   - **Action**: Choose what AI should do:
+     - **Organize** - Sort files into folders
+     - **Summarize** - Create document summaries
+     - **Analyze** - Analyze file content
+     - **Custom** - Write your own prompt
+4. **Save**: The watcher starts automatically
+
+**Example Use Cases:**
+- Auto-organize downloads into categorized folders
+- Summarize PDFs when they arrive
+- Analyze log files for errors
+- Backup important documents
+
+#### Scheduled Tasks
+
+Run AI tasks on a schedule:
+
+1. **Navigate to Automation Tab**: Click the "Automation" tab
+2. **Add a Task**: Click "+ Add Task"
+3. **Configure**:
+   - **Name**: e.g., "Daily Summary"
+   - **Description**: What the task does
+   - **Schedule Type**:
+     - **Interval**: Run every N hours/minutes (e.g., `1h`, `30m`, `2d`)
+     - **Cron**: Use cron expressions (e.g., `0 9 * * *` for 9 AM daily)
+     - **Once**: Run at a specific time
+   - **Schedule**: The schedule value
+   - **Action**: Type of task to run
+   - **Prompt**: Instructions for the AI
+4. **Save**: Task will run according to schedule
+
+**Example Use Cases:**
+- Daily morning briefing at 9 AM
+- Hourly system health checks
+- Weekly cleanup and organization
+- End-of-day summaries
+
+#### Managing Automations
+
+- **Toggle On/Off**: Click the play/pause button
+- **Delete**: Click the trash icon
+- **View Status**: See if watchers are running and when tasks last ran
+- **Next Run Time**: Scheduled tasks show when they'll execute next
 
 ---
 
