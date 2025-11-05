@@ -38,6 +38,16 @@ Examples:
 
 Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
 
+## Development Container
+
+This repository includes a VS Code Dev Container configuration to provide a
+consistent development environment.
+
+1. Install [Visual Studio Code](https://code.visualstudio.com/) and the **Dev Containers** extension.
+2. Open the command palette and run **Dev Containers: Open Folder in Container...** (or **Reopen in Container** if the folder is already open).
+3. Select the repository folder and VS Code will build the container using the provided `Dockerfile`.
+4. After the build completes, all project build and test dependencies are available inside the container.
+
 ## Releases
 
 - Label pull requests so Release Drafter can categorize them (e.g. `feature`, `enhancement`, `bug`, `documentation`, `docs`, `chore`, `refactor`).
