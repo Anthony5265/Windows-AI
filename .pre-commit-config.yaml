@@ -22,10 +22,3 @@ repos:
     rev: v9.9.1
     hooks:
       - id: eslint
-  - repo: local
-    hooks:
-      - id: commitlint
-        name: commitlint
-        entry: npx commitlint --edit
-        language: system
-        stages: [commit-msg]

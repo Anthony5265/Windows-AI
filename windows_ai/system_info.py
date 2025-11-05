@@ -22,15 +22,10 @@ from .system_info_core import detect_system as _detect_system
 
 logger = logging.getLogger(__name__)
 
-
-def _log_detection_failure(system: str, step: str) -> None:
-    """Log a failure when a detection step raises an exception."""
-
-    logger.debug("%s: failed to detect %s", system, step, exc_info=True)
-
 try:  # optional dependency used for XR runtime detection
     from xr import load_runtime
 except Exception:  # pragma: no cover - xr package optional
+
     def load_runtime():  # type: ignore[misc]
         return None
 
@@ -62,9 +57,14 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = bool(screen_reader.value)
         except Exception:
-            _log_detection_failure(system, "screen_reader")
+            logger.debug(
+                "%s: failed to detect screen_reader",
+                system,
+                exc_info=True,
+            )
 
         try:
+
             class HIGHCONTRAST(ctypes.Structure):
                 _fields_ = [
                     ("cbSize", ctypes.c_uint),
@@ -79,7 +79,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = bool(hc.dwFlags & HCF_HIGHCONTRASTON)
         except Exception:
-            _log_detection_failure(system, "high_contrast")
+            logger.debug(
+                "%s: failed to detect high_contrast",
+                system,
+                exc_info=True,
+            )
     elif system == "Darwin":
         try:  # pragma: no cover - macOS only
             out = subprocess.check_output(
@@ -92,7 +96,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["screen_reader"] = out.strip() == b"1"
         except Exception:
-            _log_detection_failure(system, "screen_reader")
+            logger.debug(
+                "%s: failed to detect screen_reader",
+                system,
+                exc_info=True,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -104,7 +112,11 @@ def _detect_accessibility() -> Dict[str, bool]:
             )
             settings["high_contrast"] = out.strip() == b"1"
         except Exception:
-            _log_detection_failure(system, "high_contrast")
+            logger.debug(
+                "%s: failed to detect high_contrast",
+                system,
+                exc_info=True,
+            )
     else:  # Linux/other
         try:  # pragma: no cover - optional dependencies
             out = subprocess.check_output(
@@ -121,7 +133,11 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            _log_detection_failure(system, "high_contrast")
+            logger.debug(
+                "%s: failed to detect high_contrast",
+                system,
+                exc_info=True,
+            )
         try:
             out = subprocess.check_output(
                 [
@@ -137,7 +153,11 @@ def _detect_accessibility() -> Dict[str, bool]:
                 "1",
             }
         except Exception:
-            _log_detection_failure(system, "screen_reader")
+            logger.debug(
+                "%s: failed to detect screen_reader",
+                system,
+                exc_info=True,
+            )
 
     return settings
 
@@ -165,17 +185,41 @@ def _detect_xr_hardware() -> Dict[str, Any]:
     return info
 
 
+_REQUIRED_DEFAULTS: Dict[str, Any] = {
+    "cpu_count": 1,
+    "gpu_name": "unknown",
+    "screen_reader": False,
+    "high_contrast": False,
+    "xr_capable": False,
+    "xr_runtime": None,
+}
+
+
+def _self_check(info: Dict[str, Any]) -> Dict[str, Any]:
+    """Ensure required keys exist and auto-repair missing values.
+
+    The function fills in sensible defaults when expected fields are missing or
+    contain obviously invalid values.  It returns the repaired dictionary.
+    """
+
+    repaired = False
+    for key, default in _REQUIRED_DEFAULTS.items():
+        value = info.get(key)
+        if value in (None, "") or (key == "cpu_count" and int(value) <= 0):
+            info[key] = default
+            repaired = True
+    if repaired:
+        logger.warning("system information incomplete; applied defaults")
+    return info
+
+
 def detect_system() -> Dict[str, Any]:
     """Return system information including basic accessibility settings."""
 
     info: Dict[str, Any] = _detect_system()
-    if info.get("gpu_name") is None:
-        info["gpu_name"] = "unknown"
-
     info.update(_detect_accessibility())
     info.update(_detect_xr_hardware())
-    return info
+    return _self_check(info)
 
 
 __all__ = ["detect_system"]
-
