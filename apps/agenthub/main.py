@@ -65,9 +65,15 @@ class AgentHub:
 
 hub = AgentHub()
 
-ACTIONS_URL = os.getenv("ACTIONS_URL", "http://localhost:3000/api/actions/execute")
-PROXY_URL = os.getenv("PROXY_URL", "http://localhost:11434/v1/chat/completions")
-MARKETPLACE_URL = os.getenv("MARKETPLACE_URL", "https://example.com/agents")
+# Base URLs for downstream services. These can be overridden via
+# environment variables to support custom deployments, while still
+# providing sensible local defaults.
+ACTIONS_URL = os.environ.get(
+    "ACTIONS_URL", "http://localhost:3000/api/actions/execute"
+)
+PROXY_URL = os.environ.get(
+    "PROXY_URL", "http://localhost:11434/v1/chat/completions"
+)
 
 @app.get("/health")
 async def health():
@@ -83,8 +89,12 @@ async def pipeline_sample():
             )
             action.raise_for_status()
             action_data = action.json()
-        except httpx.HTTPError as exc:
+        except httpx.RequestError as exc:
             return {"error": f"Action service unreachable: {exc}"}
+        except httpx.HTTPStatusError as exc:
+            return {
+                "error": f"Action service error: {exc.response.status_code}"
+            }
 
         try:
             proxy = await client.post(
@@ -92,10 +102,15 @@ async def pipeline_sample():
             )
             proxy.raise_for_status()
             proxy_data = proxy.json()
-        except httpx.HTTPError as exc:
+        except httpx.RequestError as exc:
             return {
                 "action": action_data,
                 "error": f"Proxy service unreachable: {exc}",
+            }
+        except httpx.HTTPStatusError as exc:
+            return {
+                "action": action_data,
+                "error": f"Proxy service error: {exc.response.status_code}",
             }
 
     return {"action": action_data, "proxy": proxy_data}
