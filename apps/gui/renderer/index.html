@@ -23,12 +23,11 @@
         </svg>
         Chat
       </button>
-      <button class="nav-btn" data-tab="workflows">
+      <button class="nav-btn" data-tab="automation">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 3v18M3 9h18M3 15h18M15 3v18"/>
+          <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
         </svg>
-        Workflows
+        Automation
       </button>
       <button class="nav-btn" data-tab="settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -134,20 +133,147 @@
     </div>
   </section>
 
-  <!-- Workflows Tab -->
-  <section id="workflows" class="tab">
-    <div class="workflows-container">
-      <h2>Workflow Automation</h2>
-      <div class="workflow-grid">
-        <div class="workflow-card">
-          <h3>Test Echo Workflow</h3>
-          <p>Run a simple test workflow to verify the system</p>
-          <button id="runEcho" class="workflow-btn">Run Workflow</button>
+  <!-- Automation Tab -->
+  <section id="automation" class="tab">
+    <div class="automation-container">
+      <h2>🤖 Automation</h2>
+      <p class="automation-subtitle">Set up folder watchers and scheduled tasks to automate Windows AI</p>
+
+      <!-- Folder Watchers Section -->
+      <div class="automation-section">
+        <div class="section-header">
+          <h3>📁 Folder Watchers</h3>
+          <button id="addWatcherBtn" class="add-btn">+ Add Watcher</button>
+        </div>
+        <div id="watchersList" class="automation-list">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p>No folder watchers configured</p>
+            <p class="hint">Click "Add Watcher" to monitor folders for file changes</p>
+          </div>
         </div>
       </div>
-      <pre id="wfOut" class="workflow-output"></pre>
+
+      <!-- Scheduled Tasks Section -->
+      <div class="automation-section">
+        <div class="section-header">
+          <h3>⏰ Scheduled Tasks</h3>
+          <button id="addTaskBtn" class="add-btn">+ Add Task</button>
+        </div>
+        <div id="tasksList" class="automation-list">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <p>No scheduled tasks configured</p>
+            <p class="hint">Click "Add Task" to schedule AI tasks to run automatically</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
+
+  <!-- Watcher Modal -->
+  <div id="watcherModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Folder Watcher</h3>
+        <button class="modal-close" onclick="document.getElementById('watcherModal').classList.add('hidden')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Name</label>
+          <input id="watcherName" type="text" placeholder="e.g., Downloads Organizer" />
+        </div>
+        <div class="form-group">
+          <label>Folder Path</label>
+          <input id="watcherPath" type="text" placeholder="e.g., /home/user/Downloads" />
+        </div>
+        <div class="form-group">
+          <label>File Patterns (comma-separated)</label>
+          <input id="watcherPatterns" type="text" placeholder="e.g., *.pdf, *.docx, *.txt" />
+        </div>
+        <div class="form-group">
+          <label>Events to Watch</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="watchCreated" checked> Created</label>
+            <label><input type="checkbox" id="watchModified"> Modified</label>
+            <label><input type="checkbox" id="watchDeleted"> Deleted</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Action</label>
+          <select id="watcherAction">
+            <option value="organize">Organize Files</option>
+            <option value="summarize">Summarize Content</option>
+            <option value="analyze">Analyze File</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Custom Prompt (optional)</label>
+          <textarea id="watcherPrompt" rows="3" placeholder="Custom instructions for the AI..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('watcherModal').classList.add('hidden')">Cancel</button>
+        <button class="btn-primary" id="saveWatcherBtn">Save Watcher</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="taskModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Scheduled Task</h3>
+        <button class="modal-close" onclick="document.getElementById('taskModal').classList.add('hidden')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Name</label>
+          <input id="taskName" type="text" placeholder="e.g., Daily Summary" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input id="taskDescription" type="text" placeholder="What does this task do?" />
+        </div>
+        <div class="form-group">
+          <label>Schedule Type</label>
+          <select id="taskScheduleType">
+            <option value="interval">Interval</option>
+            <option value="cron">Cron Expression</option>
+            <option value="once">One Time</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Schedule</label>
+          <input id="taskSchedule" type="text" placeholder="e.g., 1h, 30m, 0 9 * * * (cron)" />
+          <small class="hint">Interval: 1h, 30m, 1d | Cron: 0 9 * * * (9 AM daily) | Once: 2025-12-31T09:00:00</small>
+        </div>
+        <div class="form-group">
+          <label>Action</label>
+          <select id="taskAction">
+            <option value="summarize">Summarize</option>
+            <option value="system_check">System Check</option>
+            <option value="cleanup">Cleanup</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>AI Prompt</label>
+          <textarea id="taskPrompt" rows="3" placeholder="Instructions for the AI..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="document.getElementById('taskModal').classList.add('hidden')">Cancel</button>
+        <button class="btn-primary" id="saveTaskBtn">Save Task</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Settings Tab -->
   <section id="settings" class="tab">

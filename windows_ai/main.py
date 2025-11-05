@@ -25,6 +25,14 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import httpx
 
+# Import automation systems
+from windows_ai.folder_watcher import (
+    FolderWatcherManager, WatcherConfig, EXAMPLE_WATCHERS
+)
+from windows_ai.scheduler import (
+    TaskScheduler, ScheduledTask, EXAMPLE_TASKS
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -53,6 +61,8 @@ DATA_DIR = Path.home() / ".windows-ai"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 CHAT_HISTORY_FILE = DATA_DIR / "chat_history.json"
 CONFIG_FILE = DATA_DIR / "config.json"
+WATCHERS_CONFIG_FILE = DATA_DIR / "watchers.json"
+SCHEDULER_CONFIG_FILE = DATA_DIR / "scheduler.json"
 
 # Agenthub URL
 AGENTHUB_URL = os.getenv("AGENTHUB_URL", "http://localhost:8000")
@@ -219,6 +229,73 @@ class ConfigManager:
 
 # Initialize config manager
 config_manager = ConfigManager()
+
+# Initialize automation systems
+folder_watcher_manager = FolderWatcherManager(WATCHERS_CONFIG_FILE)
+task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE)
+
+# =====================================================================
+# Automation Callbacks
+# =====================================================================
+
+async def handle_file_event(watcher_id: str, watcher_name: str, event_type: str,
+                            file_path: str, action: str, custom_prompt: Optional[str]):
+    """Handle file system events from folder watchers"""
+    logger.info(f"File event: {event_type} - {file_path} (watcher: {watcher_name})")
+
+    try:
+        # Prepare prompt based on action
+        if action == "organize":
+            prompt = custom_prompt or f"Organize this file: {file_path}. Suggest an appropriate folder structure."
+        elif action == "summarize":
+            prompt = custom_prompt or f"Summarize the contents of this file: {file_path}"
+        elif action == "analyze":
+            prompt = custom_prompt or f"Analyze this file and provide insights: {file_path}"
+        else:
+            prompt = custom_prompt or f"Process this file: {file_path}"
+
+        # Create a system message with file context
+        messages = [
+            {"role": "system", "content": f"File event: {event_type} on {file_path}"},
+            {"role": "user", "content": prompt}
+        ]
+
+        # Call AI
+        response = await call_llm(messages, model="gpt-3.5-turbo")
+
+        logger.info(f"AI response for {file_path}: {response[:100]}...")
+
+        # TODO: Store automation results or send notification
+
+    except Exception as e:
+        logger.error(f"Error handling file event: {e}")
+
+
+async def handle_scheduled_task(task_id: str, task_name: str, action: str, prompt: str):
+    """Handle scheduled task execution"""
+    logger.info(f"Executing scheduled task: {task_name}")
+
+    try:
+        # Prepare messages
+        messages = [
+            {"role": "system", "content": f"Scheduled task: {task_name} (action: {action})"},
+            {"role": "user", "content": prompt}
+        ]
+
+        # Call AI
+        response = await call_llm(messages, model="gpt-3.5-turbo")
+
+        logger.info(f"Task {task_name} completed: {response[:100]}...")
+
+        # TODO: Store task results or send notification
+
+    except Exception as e:
+        logger.error(f"Error executing scheduled task: {e}")
+
+
+# Set callbacks
+folder_watcher_manager.set_event_callback(handle_file_event)
+task_scheduler.set_task_callback(handle_scheduled_task)
 
 # =====================================================================
 # LiteLLM Integration
@@ -478,6 +555,133 @@ async def list_models():
     }
 
 # =====================================================================
+# Folder Watcher Endpoints
+# =====================================================================
+
+@app.get("/automation/watchers")
+async def list_watchers():
+    """List all folder watchers"""
+    return {"watchers": folder_watcher_manager.list_watchers()}
+
+@app.get("/automation/watchers/{watcher_id}")
+async def get_watcher(watcher_id: str):
+    """Get specific folder watcher"""
+    watcher = folder_watcher_manager.get_watcher(watcher_id)
+    if not watcher:
+        raise HTTPException(status_code=404, detail="Watcher not found")
+    return {
+        **watcher.to_dict(),
+        "running": watcher_id in folder_watcher_manager.observers
+    }
+
+@app.post("/automation/watchers")
+async def create_watcher(watcher: Dict[str, Any]):
+    """Create a new folder watcher"""
+    try:
+        config = WatcherConfig(**watcher)
+        success = await folder_watcher_manager.add_watcher(config)
+        if success:
+            return {"message": "Watcher created successfully", "id": config.id}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create watcher")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/automation/watchers/{watcher_id}")
+async def update_watcher(watcher_id: str, updates: Dict[str, Any]):
+    """Update folder watcher configuration"""
+    success = await folder_watcher_manager.update_watcher(watcher_id, updates)
+    if success:
+        return {"message": "Watcher updated successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Watcher not found")
+
+@app.delete("/automation/watchers/{watcher_id}")
+async def delete_watcher(watcher_id: str):
+    """Delete a folder watcher"""
+    success = await folder_watcher_manager.remove_watcher(watcher_id)
+    if success:
+        return {"message": "Watcher deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Watcher not found")
+
+@app.post("/automation/watchers/{watcher_id}/start")
+async def start_watcher(watcher_id: str):
+    """Start a folder watcher"""
+    success = await folder_watcher_manager.start_watcher(watcher_id)
+    if success:
+        return {"message": "Watcher started successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Watcher not found or already running")
+
+@app.post("/automation/watchers/{watcher_id}/stop")
+async def stop_watcher(watcher_id: str):
+    """Stop a folder watcher"""
+    success = await folder_watcher_manager.stop_watcher(watcher_id)
+    if success:
+        return {"message": "Watcher stopped successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Watcher not found or not running")
+
+@app.get("/automation/watchers/examples/list")
+async def get_example_watchers():
+    """Get example watcher configurations"""
+    return {"examples": EXAMPLE_WATCHERS}
+
+# =====================================================================
+# Scheduled Tasks Endpoints
+# =====================================================================
+
+@app.get("/automation/tasks")
+async def list_tasks():
+    """List all scheduled tasks"""
+    return {"tasks": task_scheduler.list_tasks()}
+
+@app.get("/automation/tasks/{task_id}")
+async def get_task(task_id: str):
+    """Get specific scheduled task"""
+    task = task_scheduler.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task.to_dict()
+
+@app.post("/automation/tasks")
+async def create_task(task: Dict[str, Any]):
+    """Create a new scheduled task"""
+    try:
+        config = ScheduledTask(**task)
+        success = await task_scheduler.add_task(config)
+        if success:
+            return {"message": "Task created successfully", "id": config.id}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create task")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/automation/tasks/{task_id}")
+async def update_task(task_id: str, updates: Dict[str, Any]):
+    """Update scheduled task configuration"""
+    success = await task_scheduler.update_task(task_id, updates)
+    if success:
+        return {"message": "Task updated successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+@app.delete("/automation/tasks/{task_id}")
+async def delete_task(task_id: str):
+    """Delete a scheduled task"""
+    success = await task_scheduler.remove_task(task_id)
+    if success:
+        return {"message": "Task deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+@app.get("/automation/tasks/examples/list")
+async def get_example_tasks():
+    """Get example scheduled task configurations"""
+    return {"examples": EXAMPLE_TASKS}
+
+# =====================================================================
 # WebSocket Support
 # =====================================================================
 
@@ -559,14 +763,31 @@ async def startup_event():
     logger.info("Windows AI Backend starting up...")
     logger.info(f"Data directory: {DATA_DIR}")
     logger.info(f"Chat history loaded: {len(chat_history.conversations)} conversations")
+
+    # Start automation systems
+    logger.info("Starting automation systems...")
+    await folder_watcher_manager.start_all()
+    logger.info(f"Folder watchers started: {len(folder_watcher_manager.observers)} active")
+
+    await task_scheduler.start()
+    logger.info(f"Task scheduler started: {len(task_scheduler.tasks)} tasks configured")
+
     logger.info("Backend is ready!")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up on shutdown"""
     logger.info("Windows AI Backend shutting down...")
+
+    # Stop automation systems
+    logger.info("Stopping automation systems...")
+    await folder_watcher_manager.stop_all()
+    await task_scheduler.stop()
+
+    # Save configurations
     chat_history.save_history()
     config_manager.save_config()
+
     logger.info("Shutdown complete")
 
 # =====================================================================
