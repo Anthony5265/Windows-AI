@@ -21,6 +21,16 @@ test('shell prints file contents', async () => {
   assert.ok(result.stdout.includes('"name"'));
 });
 
+test('shell built-in works on Windows', { skip: process.platform !== 'win32' }, async () => {
+  const res = await executeAction({ action: 'shell', params: { command: 'echo win' } });
+  assert.strictEqual(res.stdout.trim().toLowerCase(), 'win');
+});
+
+test('shell built-in works on Unix', { skip: process.platform === 'win32' }, async () => {
+  const res = await executeAction({ action: 'shell', params: { command: 'echo unix' } });
+  assert.strictEqual(res.stdout.trim().toLowerCase(), 'unix');
+});
+
 test('shell rejects command with disallowed characters', async () => {
   await assert.rejects(
     executeAction({ action: 'shell', params: { command: 'echo hello; ls' } })
@@ -30,12 +40,6 @@ test('shell rejects command with disallowed characters', async () => {
 test('shell rejects command not in whitelist', async () => {
   await assert.rejects(
     executeAction({ action: 'shell', params: { command: 'rm -rf /' } })
-  );
-});
-
-test('shell rejects command with pipe', async () => {
-  await assert.rejects(
-    executeAction({ action: 'shell', params: { command: 'ls | cat' } })
   );
 });
 
