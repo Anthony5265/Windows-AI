@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
-import { executeAction } from './actions';
-import { normalize } from './normalize';
-import { ValidationError } from './errors';
+import { executeAction } from './actions.js';
+import { normalize } from './normalize.js';
+import { ValidationError } from './errors.js';
 
 interface TokenInfo {
   deviceId: string;
