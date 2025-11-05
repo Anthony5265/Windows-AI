@@ -59,12 +59,24 @@ def _derive_key(password: str) -> bytes:
     return hashlib.sha256(password.encode()).digest()
 
 
+def _keystream(key: bytes, iv: bytes, length: int) -> bytes:
+    """Generate a pseudo-random keystream via HMAC-SHA256."""
+
+    out = bytearray()
+    counter = 0
+    while len(out) < length:
+        ctr = counter.to_bytes(4, "big")
+        out.extend(hmac.new(key, iv + ctr, hashlib.sha256).digest())
+        counter += 1
+    return bytes(out[:length])
+
+
 def encrypt(data: bytes, password: str) -> bytes:
-    """Encrypt ``data`` with ``password`` using HMAC-authenticated XOR."""
+    """Encrypt ``data`` with ``password`` using a stream cipher and HMAC."""
 
     key = _derive_key(password)
     iv = os.urandom(16)
-    keystream = hmac.new(key, iv, hashlib.sha256).digest()
+    keystream = _keystream(key, iv, len(data))
     ciphertext = _xor(data, keystream)
     mac = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
     return iv + mac + ciphertext
@@ -80,7 +92,7 @@ def decrypt(data: bytes, password: str) -> bytes:
     expected = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
     if not hmac.compare_digest(mac, expected):
         raise ValueError("integrity check failed")
-    keystream = hmac.new(key, iv, hashlib.sha256).digest()
+    keystream = _keystream(key, iv, len(ciphertext))
     return _xor(ciphertext, keystream)
 
 
