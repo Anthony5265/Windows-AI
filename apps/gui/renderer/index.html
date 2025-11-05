@@ -1,31 +1,214 @@
 <!doctype html>
 <html><head>
 <meta charset="utf-8"/>
-<title>Windows AI — Command Center</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Windows AI — Your Intelligent Assistant</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* http://127.0.0.1:*">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<header><h1>Windows AI</h1>
-<nav>
-  <button data-tab="chat">Chat</button>
-  <button data-tab="workflows">Workflows</button>
-  <button data-tab="settings">Settings</button>
-</nav></header>
+<header>
+  <div class="header-content">
+    <h1>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      Windows AI
+    </h1>
+    <nav>
+      <button class="nav-btn active" data-tab="chat">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Chat
+      </button>
+      <button class="nav-btn" data-tab="workflows">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M9 3v18M3 9h18M3 15h18M15 3v18"/>
+        </svg>
+        Workflows
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6M5 5l4 4m6 6l4 4M1 12h6m6 0h6M5 19l4-4m6-6l4-4"/>
+        </svg>
+        Settings
+      </button>
+    </nav>
+  </div>
+</header>
+
 <main>
-<section id="chat" class="tab active">
-  <div id="chat-log"></div>
-</section>
-<section id="workflows" class="tab">
-  <button id="runEcho">Run sample echo</button>
-  <pre id="wfOut"></pre>
-</section>
-<section id="settings" class="tab">
-  <label>Theme <select id="theme"><option>system</option><option>light</option><option>dark</option></select></label>
-  <label>Bind <input id="bind" value="127.0.0.1"/></label>
-  <button id="saveCfg">Save</button>
-</section>
+  <!-- Chat Tab -->
+  <section id="chat" class="tab active">
+    <div class="chat-container">
+      <div class="chat-sidebar">
+        <button id="newChatBtn" class="new-chat-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New Chat
+        </button>
+        <div id="conversationList" class="conversation-list">
+          <!-- Conversations will be loaded here -->
+        </div>
+      </div>
+
+      <div class="chat-main">
+        <div id="chatMessages" class="chat-messages">
+          <div class="welcome-message">
+            <h2>👋 Welcome to Windows AI</h2>
+            <p>Your intelligent assistant for everything Windows</p>
+            <div class="quick-actions">
+              <button class="quick-action" data-prompt="Help me organize my files">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                Organize Files
+              </button>
+              <button class="quick-action" data-prompt="What system information can you show me?">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                  <line x1="7" y1="2" x2="7" y2="22"/>
+                  <line x1="17" y1="2" x2="17" y2="22"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <line x1="2" y1="7" x2="7" y2="7"/>
+                  <line x1="2" y1="17" x2="7" y2="17"/>
+                  <line x1="17" y1="17" x2="22" y2="17"/>
+                  <line x1="17" y1="7" x2="22" y2="7"/>
+                </svg>
+                System Info
+              </button>
+              <button class="quick-action" data-prompt="Help me automate a task">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Automation
+              </button>
+              <button class="quick-action" data-prompt="What can you help me with?">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Learn More
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-container">
+          <div class="chat-input-wrapper">
+            <textarea
+              id="chatInput"
+              placeholder="Message Windows AI..."
+              rows="1"
+              maxlength="2000"
+            ></textarea>
+            <button id="sendBtn" class="send-btn" disabled>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="model-selector">
+              <select id="modelSelect">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="ollama/llama2">Llama 2 (Local)</option>
+              </select>
+            </span>
+            <span class="char-count"><span id="charCount">0</span>/2000</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Workflows Tab -->
+  <section id="workflows" class="tab">
+    <div class="workflows-container">
+      <h2>Workflow Automation</h2>
+      <div class="workflow-grid">
+        <div class="workflow-card">
+          <h3>Test Echo Workflow</h3>
+          <p>Run a simple test workflow to verify the system</p>
+          <button id="runEcho" class="workflow-btn">Run Workflow</button>
+        </div>
+      </div>
+      <pre id="wfOut" class="workflow-output"></pre>
+    </div>
+  </section>
+
+  <!-- Settings Tab -->
+  <section id="settings" class="tab">
+    <div class="settings-container">
+      <h2>Settings</h2>
+
+      <div class="settings-group">
+        <h3>Appearance</h3>
+        <div class="setting-item">
+          <label for="theme">Theme</label>
+          <select id="theme" class="setting-input">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Network</h3>
+        <div class="setting-item">
+          <label for="bind">Backend Address</label>
+          <input id="bind" class="setting-input" value="127.0.0.1" placeholder="127.0.0.1"/>
+        </div>
+        <div class="setting-item">
+          <label for="port">Backend Port</label>
+          <input id="port" type="number" class="setting-input" value="8010" placeholder="8010"/>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>AI Models</h3>
+        <div class="setting-item">
+          <label for="defaultModel">Default Model</label>
+          <select id="defaultModel" class="setting-input">
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="temperature">Temperature</label>
+          <input id="temperature" type="range" min="0" max="1" step="0.1" value="0.7" class="setting-input"/>
+          <span id="tempValue">0.7</span>
+        </div>
+      </div>
+
+      <div class="settings-actions">
+        <button id="saveCfg" class="save-btn">Save Settings</button>
+        <button id="resetCfg" class="reset-btn">Reset to Defaults</button>
+      </div>
+    </div>
+  </section>
 </main>
-<footer><span id="env"></span></footer>
+
+<footer>
+  <div class="footer-content">
+    <span id="env" class="env-info"></span>
+    <span id="status" class="status-indicator">●  Ready</span>
+  </div>
+</footer>
+
 <script src="./renderer.js"></script>
 </body></html>
