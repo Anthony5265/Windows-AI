@@ -67,8 +67,9 @@ app.post('/api/actions/execute', auth, async (req, res) => {
         return ok(res, { result: out });
       }
       case 'process.kill': {
-        const pid = Number(params?.pid); if (!pid || pid < 100) return res.status(400).json({ ok:false, error:'invalid_pid' });
-        child_process.execSync(`taskkill /PID ${pid} /F`); return ok(res, { result: 'killed' });
+        const pid = Number(params?.pid); if (!pid || pid < 100 || !Number.isInteger(pid)) return res.status(400).json({ ok:false, error:'invalid_pid' });
+        // Use spawn instead of execSync to prevent command injection
+        child_process.execFileSync('taskkill', ['/PID', String(pid), '/F']); return ok(res, { result: 'killed' });
       }
       case 'shell.run': {
         const cmd = params?.command; if (!cmd) return res.status(400).json({ ok:false, error:'missing_command' });
@@ -77,14 +78,20 @@ app.post('/api/actions/execute', auth, async (req, res) => {
         return ok(res, { result: out });
       }
       case 'registry.get': {
-        const key = params?.key; if (!key) return res.status(400).json({ ok:false, error:'missing_key' });
-        const out = child_process.execSync(`reg query "${key}"`, { encoding:'utf8' });
+        const key = params?.key; if (!key || typeof key !== 'string') return res.status(400).json({ ok:false, error:'missing_key' });
+        // Validate registry key format to prevent injection
+        if (!/^[A-Z_]+\\[\\A-Za-z0-9_\- ]+$/.test(key)) return res.status(400).json({ ok:false, error:'invalid_key_format' });
+        const out = child_process.execFileSync('reg', ['query', key], { encoding:'utf8' });
         return ok(res, { result: out });
       }
       case 'registry.set': {
         const key = params?.key; const name = params?.name || ''; const type = params?.type || 'REG_SZ'; const val = params?.value || '';
-        if (!key) return res.status(400).json({ ok:false, error:'missing_key' });
-        child_process.execSync(`reg add "${key}" /v "${name}" /t ${type} /d "${val}" /f`, { encoding:'utf8' });
+        if (!key || typeof key !== 'string') return res.status(400).json({ ok:false, error:'missing_key' });
+        // Validate inputs to prevent injection
+        if (!/^[A-Z_]+\\[\\A-Za-z0-9_\- ]+$/.test(key)) return res.status(400).json({ ok:false, error:'invalid_key_format' });
+        const validTypes = ['REG_SZ', 'REG_DWORD', 'REG_BINARY', 'REG_MULTI_SZ', 'REG_EXPAND_SZ'];
+        if (!validTypes.includes(type)) return res.status(400).json({ ok:false, error:'invalid_type' });
+        child_process.execFileSync('reg', ['add', key, '/v', name, '/t', type, '/d', String(val), '/f'], { encoding:'utf8' });
         return ok(res, { result: 'ok' });
       }
       case 'echo': return ok(res, { result: params || {} });

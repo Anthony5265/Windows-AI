@@ -52,7 +52,7 @@ def input_processor(image: Any) -> "Image.Image":
     return img
 
 
-def task_planner(processed_image: "Image.Image") -> Dict[str, Any]:
+def task_planner(processed_image: "Image.Image", dark_threshold: float = 100.0) -> Dict[str, Any]:
     """Plan the sequence of vision tasks to perform.
 
     The planner currently performs a very small amount of reasoning.  A local
