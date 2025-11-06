@@ -12,8 +12,12 @@ def load_strings(lang: str | None = None) -> dict[str, str]:
     """
 
     if lang is None:
-        loc, _ = locale.getdefaultlocale()
-        lang = (loc or "en")[:2]
+        try:
+            # Use getlocale() instead of deprecated getdefaultlocale()
+            loc = locale.getlocale()[0]
+            lang = (loc or "en")[:2]
+        except (AttributeError, ValueError):
+            lang = "en"
     else:
         lang = lang[:2]
 
