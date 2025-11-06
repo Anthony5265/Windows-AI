@@ -53,11 +53,21 @@ foreach ($arch in $architectures) {
     )
 
     foreach ($opt in $PythonOptions) {
-        $pyArgs += '--python-option'
-        $pyArgs += $opt
+        $pyArgs += "--python-option=$opt"
     }
 
     & $PythonExe -m PyInstaller @pyArgs
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "PyInstaller failed for $arch architecture with exit code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+
+    $installerPath = Join-Path $dist "WindowsAI_Installer_$arch.exe"
+    if (-not (Test-Path $installerPath)) {
+        Write-Error "PyInstaller did not produce expected output: $installerPath"
+        exit 1
+    }
 
     foreach ($res in $resources) {
         if (Test-Path $res) {
@@ -65,7 +75,7 @@ foreach ($arch in $architectures) {
         }
     }
 
-    Write-Output "Installer built at $dist\WindowsAI_Installer_$arch.exe"
+    Write-Output "Installer built successfully at $installerPath"
 }
 
 $installerExe = Join-Path $dist 'WindowsAI_Installer.exe'
