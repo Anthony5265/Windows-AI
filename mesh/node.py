@@ -73,26 +73,6 @@ class MeshNode:
     def _listen(self) -> None:
         sock = self._sock
         if sock is None:
-            return
-        while self._running:
-            try:
-                self._listen()
-            except OSError:
-                pass
-            finally:
-                # ensure socket is closed so that reconnect can occur
-                sock = self._sock
-                if sock is not None:
-                    try:
-                        sock.close()
-                    except Exception:
-                        pass
-                self._sock = None
-                break
-
-    def _listen(self) -> None:
-        sock = self._sock
-        if sock is None:
             raise OSError
         while self._running:
             header = sock.recv(4)

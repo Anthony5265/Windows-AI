@@ -1,1 +1,7 @@
-backend: locallocal:  storage_path: data/search_index.jsoncloud:  endpoint: https://example.com/search
+backend: local
+
+local:
+  storage_path: data/search_index.json
+
+cloud:
+  endpoint: https://example.com/search
