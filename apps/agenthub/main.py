@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 from fastapi import FastAPI, HTTPException, Request
 import httpx
 
@@ -20,12 +20,19 @@ DOMAIN_MODULES: Dict[str, Any] = {
 }
 
 
+class CollaborationProtocol:
+    """Base class for agent collaboration protocols."""
+    pass
+
+
 class AgentHub:
     """In-memory registry for agents and collaboration protocols."""
 
     def __init__(self) -> None:
         self._agents: Dict[str, Agent] = {}
         self._protocols: Dict[str, CollaborationProtocol] = {}
+        self._last_train: Dict[str, Any] = {}
+        self._last_run: Dict[str, Any] = {}
 
     # -- Agent lifecycle -------------------------------------------------
     def register(self, name: str, domain_key: str) -> None:
@@ -40,15 +47,6 @@ class AgentHub:
         self._agents[name] = agent
         self._last_train.pop(name, None)
         self._last_run.pop(name, None)
-
-    def deregister(self, name: str) -> None:
-        agent = self._agents.pop(name, None)
-        if agent is None:
-            raise HTTPException(status_code=404, detail="Agent not registered")
-        agent.teardown()
-
-    def list_agents(self) -> Iterable[str]:
-        return self._agents.keys()
 
     def deregister(self, name: str) -> None:
         agent = self._agents.pop(name, None)
@@ -86,6 +84,9 @@ ACTIONS_URL = os.environ.get(
 )
 PROXY_URL = os.environ.get(
     "PROXY_URL", "http://localhost:11434/v1/chat/completions"
+)
+MARKETPLACE_URL = os.environ.get(
+    "MARKETPLACE_URL", "https://api.windowsai.example.com/marketplace"
 )
 
 @app.get("/health")
