@@ -1,1 +1,0 @@
-name: daily-ai-summaryon:  schedule: [{ cron: "0 23 * * *" }]  workflow_dispatch:jobs:  summarize:    runs-on: ubuntu-latest    permissions:      contents: write    env:      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
