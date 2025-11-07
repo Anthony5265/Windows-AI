@@ -1,9 +1,0 @@
-pull_request_rules:
-  - name: auto-merge clean dependabot updates
-    conditions:
-      - author=dependabot[bot]
-      - status-success=CI
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: squash
