@@ -1,1 +1,0 @@
-queue_rules:  - name: default    conditions:      - '#approved-reviews-by>=1'pull_request_rules:  - name: default merge queue    conditions:      - base=main      - label=ready-to-merge    actions:      queue:        name: default        merge_method: squash
