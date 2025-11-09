@@ -20,3 +20,18 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+
+# Temporary files
+tmp*.txt
+*.tmp
+test_*.txt
+
+# Build artifacts
+release-*/
+
+# Session logs
+*SESSION*.md
+*WORK_SESSION*.md
+
+# Data files
+*.csv
