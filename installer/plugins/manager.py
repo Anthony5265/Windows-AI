@@ -184,7 +184,7 @@ class PluginManager:
             executable = Path(args[0])
             if not executable.is_absolute() and executable.name not in self.ALLOWED_COMMANDS:
                 raise ValueError("Command not allowed")
-            subprocess.run(args, shell=False, check=True)
+            subprocess.run(args, shell=False, check=True, cwd=None, env=None)
             self.installed.append(plugin.name)
             self._save_state()
             if progress is not None:

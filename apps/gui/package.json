@@ -4,6 +4,7 @@
   "description": "Windows AI Desktop Application - Electron GUI",
   "author": "Windows AI Contributors",
   "private": true,
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -14,7 +15,7 @@
     "test": "echo \"No tests\""
   },
   "devDependencies": {
-    "electron-builder": "26.0.12",
-    "electron": "38.4.0"
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
   }
 }

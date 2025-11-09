@@ -100,7 +100,7 @@ def main():
         sizes=[(size, size) for size in sizes]
     )
 
-    print(f"✓ Icons created successfully!")
+    print("Icons created successfully!")
     print(f"  - {os.path.join(icon_dir, 'icon.png')}")
     print(f"  - {os.path.join(icon_dir, 'icon.ico')}")
     print(f"  - {os.path.join(build_dir, 'icon.png')}")

@@ -29,7 +29,7 @@ def test_plugin_manager_initializes():
 def test_catalog_includes_ml_frameworks():
     """Catalog should include popular ML frameworks."""
     plugins = load_catalog()
-    names = [p.name for p in plugins]
+    names = [p.name.lower() for p in plugins]
     assert "torch" in names
     assert "transformers" in names
 

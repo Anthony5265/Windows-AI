@@ -76,7 +76,11 @@ else
 fi
 
 echo "  Installing Python dependencies..."
-pip3 install -r requirements.txt --quiet
+if command -v uv &> /dev/null; then
+    uv pip install -r requirements.txt --quiet
+else
+    source .venv/bin/activate && pip install -r requirements.txt --quiet
+fi
 if [ $? -eq 0 ]; then
     print_success "Python dependencies installed"
 else
@@ -90,7 +94,11 @@ echo ""
 print_step "Running tests..."
 
 echo "  Running Python tests..."
-python3 -m pytest tests/ -v --ignore=tests/test_gui_download_speed.py --ignore=tests/test_api_keys.py --ignore=tests/test_installer_cli.py -x 2>&1 | grep -E "(PASSED|FAILED|ERROR|test session starts|passed|failed)" || true
+if command -v uv &> /dev/null; then
+    uv run python3 -m pytest tests/ -v --ignore=tests/test_gui_download_speed.py --ignore=tests/test_api_keys.py --ignore=tests/test_installer_cli.py -x 2>&1 | grep -E "(PASSED|FAILED|ERROR|test session starts|passed|failed)" || true
+else
+    source .venv/bin/activate && python3 -m pytest tests/ -v --ignore=tests/test_gui_download_speed.py --ignore=tests/test_api_keys.py --ignore=tests/test_installer_cli.py -x 2>&1 | grep -E "(PASSED|FAILED|ERROR|test session starts|passed|failed)" || true
+fi
 
 echo ""
 
@@ -113,7 +121,11 @@ echo ""
 
 # Step 5: Generate icons
 print_step "Generating application icons..."
-python3 scripts/create_icon.py
+if command -v uv &> /dev/null; then
+    uv run python3 scripts/create_icon.py
+else
+    source .venv/bin/activate && python3 scripts/create_icon.py
+fi
 print_success "Icons generated"
 echo ""
 
@@ -123,7 +135,8 @@ print_step "Building Electron GUI executable..."
 cd apps/gui
 
 echo "  Installing GUI dependencies..."
-npm install --silent electron electron-builder
+mkdir -p node_modules
+npm install --no-workspaces --prefix . electron electron-builder --silent
 
 echo "  Building Windows installer (x64)..."
 npm run build -- --win --x64 2>&1 | tail -20

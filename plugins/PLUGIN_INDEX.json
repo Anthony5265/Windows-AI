@@ -1,0 +1,20 @@
+{
+  "total_categories": 14,
+  "categories": {
+    "social_media": 0,
+    "testing": 12,
+    "local_models": 3,
+    "swarm_generated": 42,
+    "browsers": 13,
+    "ide": 0,
+    "cloud_storage": 0,
+    "windows": 3,
+    "ai_models": 10,
+    "agents": 0,
+    "auto_generated": 0,
+    "datascience": 17,
+    "devops": 11,
+    "rag": 0
+  },
+  "timestamp": "2025-11-08 12:46:26"
+}

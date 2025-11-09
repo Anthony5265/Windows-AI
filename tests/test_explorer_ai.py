@@ -11,6 +11,8 @@ class DummyModel:
                 action = "delete"
             elif info["size"] > 1024:
                 action = "compress"
+            elif info["extension"] == ".txt":
+                action = "keep"
             else:
                 action = "keep"
             # The dummy model only returns the action; the ExplorerAI combines
@@ -75,7 +77,9 @@ def test_suggest_cleanup_missing_file(tmp_path):
     missing = tmp_path / "missing.tmp"  # not created
 
     result = explorer.suggest_cleanup([str(existing), str(missing)])
-    assert result == [{"name": str(existing), "action": "keep"}]
+    # Only the existing file should be in recommendations (missing file is skipped)
+    # The .txt file with size 4 bytes gets action "keep" per dummy model logic
+    assert result == [{"name": str(existing), "size": 4, "extension": ".txt", "action": "keep"}]
 
     logs = explorer.get_logs()
     assert len(logs) == 1

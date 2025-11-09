@@ -20,6 +20,14 @@ extraResources:
     to: "config"
     filter:
       - "**/*"
+  - from: "../../dist/windows-ai-backend"
+    to: "backend"
+    filter:
+      - "**/*"
+  - from: "../../nssm-2.24/win64"
+    to: "service"
+    filter:
+      - "nssm.exe"
 win:
   target:
     - target: nsis
@@ -31,7 +39,7 @@ win:
         - x64
   icon: build/icon.ico
   artifactName: "WindowsAI-${version}-${arch}.${ext}"
-  publisherName: "Windows AI"
+
   verifyUpdateCodeSignature: false
 nsis:
   oneClick: false
@@ -45,5 +53,7 @@ nsis:
   uninstallerIcon: build/icon.ico
   license: ../../LICENSE
   warningsAsErrors: false
+  include: build/installer.nsh
+  runAfterFinish: true
 portable:
   artifactName: "WindowsAI-Portable-${version}-${arch}.${ext}"

@@ -878,6 +878,23 @@ async def shutdown_event():
 # =====================================================================
 # Main Entry Point
 # =====================================================================
+# Integration Layer - IoT, Mesh, Model Discovery, Cloud Sync, Search
+# =====================================================================
+
+from windows_ai.integrations import router as integrations_router, initialize_integrations
+
+# Include integration routes
+app.include_router(integrations_router)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize all subsystems on startup"""
+    logger.info("Windows AI Backend starting up...")
+    logger.info("Initializing integrations (IoT, Mesh, Models, Cloud, Search)...")
+    initialize_integrations()
+    logger.info("Backend is ready!")
+
+# =====================================================================
 
 if __name__ == "__main__":
     import uvicorn
