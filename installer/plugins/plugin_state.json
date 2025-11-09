@@ -1,18 +1,10 @@
 {
   "installed": [
+    "Torch",
     "Transformers",
     "Transformers",
     "Torch",
     "TensorFlow",
-    "LangChain",
-    "Transformers",
-    "Transformers",
-    "Torch",
-    "TensorFlow",
-    "LangChain",
-    "Transformers",
-    "Transformers",
-    "Transformers",
-    "Transformers"
+    "LangChain"
   ]
 }
