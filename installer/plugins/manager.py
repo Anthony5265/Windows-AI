@@ -20,6 +20,8 @@ STATE_PATH = Path(__file__).resolve().with_name("plugin_state.json")
 DEFAULT_CATALOG_PATH = Path(__file__).resolve().parents[2] / "plugins" / "catalog.json"
 CATALOG_PATH = Path(os.environ.get("WINDOWS_AI_PLUGIN_CATALOG", DEFAULT_CATALOG_PATH))
 
+SANDBOX_DIR = Path(__file__).resolve().parents[2] / "sandbox"
+
 
 @dataclass
 class Plugin:
@@ -32,6 +34,7 @@ class Plugin:
     metadata: dict | None = None
     rating: float | None = None
     dependencies: list | None = None
+    signature: str | None = None
 
 
 def load_catalog(path: Path = CATALOG_PATH) -> list[Plugin]:
@@ -64,6 +67,7 @@ def load_catalog(path: Path = CATALOG_PATH) -> list[Plugin]:
             "metadata": entry.get("metadata"),
             "rating": entry.get("rating"),
             "dependencies": entry.get("dependencies"),
+            "signature": entry.get("signature"),
         }
         plugins.append(Plugin(**plugin_data))
     return plugins
@@ -177,6 +181,16 @@ class PluginManager:
     def install(self, plugin: Plugin, messagebox=None, progress=None) -> None:
         """Run the installation command for a plugin."""
 
+        # Install dependencies first
+        if plugin.dependencies:
+            for dep_name in plugin.dependencies:
+                dep_plugin = self.get_plugin(dep_name)
+                if dep_plugin:
+                    # Check case-insensitively if already installed
+                    already_installed = any(inst.lower() == dep_plugin.name.lower() for inst in self.installed)
+                    if not already_installed:
+                        self.install(dep_plugin, messagebox=messagebox, progress=progress)
+
         try:
             args = shlex.split(plugin.command)
             if not args:
@@ -184,7 +198,18 @@ class PluginManager:
             executable = Path(args[0])
             if not executable.is_absolute() and executable.name not in self.ALLOWED_COMMANDS:
                 raise ValueError("Command not allowed")
-            subprocess.run(args, shell=False, check=True, cwd=None, env=None)
+            
+            # Verify signature if present
+            if hasattr(plugin, 'signature') and plugin.signature:
+                raise ValueError("Signature verification not implemented")
+            
+            subprocess.run(
+                args, 
+                shell=False, 
+                check=True, 
+                cwd=str(SANDBOX_DIR),
+                env={"PATH": os.environ.get("PATH", "")}
+            )
             self.installed.append(plugin.name)
             self._save_state()
             if progress is not None:
