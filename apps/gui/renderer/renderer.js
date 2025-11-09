@@ -426,30 +426,7 @@ temperatureInput.addEventListener('input', () => {
   tempValue.textContent = temperatureInput.value;
 });
 
-// Save settings
-document.getElementById('saveCfg').addEventListener('click', async () => {
-  const config = {
-    ui: {
-      theme: themeSelect.value
-    },
-    network: {
-      bind: document.getElementById('bind').value,
-      port: document.getElementById('port').value
-    },
-    model: {
-      default: document.getElementById('defaultModel').value,
-      temperature: parseFloat(temperatureInput.value)
-    }
-  };
-
-  try {
-    await window.winAI.writeConfig(config);
-    alert('Settings saved successfully!');
-    applyTheme(config.ui.theme);
-  } catch (error) {
-    alert('Error saving settings: ' + error.message);
-  }
-});
+// Note: Save settings handler is defined later with backend integration
 
 // Reset settings
 document.getElementById('resetCfg').addEventListener('click', () => {
@@ -492,52 +469,7 @@ function updateStatus(message) {
   statusEl.textContent = `●  ${message}`;
 }
 
-// =====================================================================
-// Initialization
-// =====================================================================
-
-(async () => {
-  try {
-    // Display environment info
-    const env = await window.winAI.envInfo();
-    document.getElementById('env').textContent =
-      `${env.platform}/${env.arch} • Electron ${env.versions.electron} • Node ${env.versions.node}`;
-
-    // Load config
-    const cfg = await window.winAI.readConfig();
-    if (cfg) {
-      if (cfg.network?.bind) document.getElementById('bind').value = cfg.network.bind;
-      if (cfg.network?.port) document.getElementById('port').value = cfg.network.port;
-      if (cfg.ui?.theme) {
-        themeSelect.value = cfg.ui.theme;
-        applyTheme(cfg.ui.theme);
-      }
-      if (cfg.model?.default) document.getElementById('defaultModel').value = cfg.model.default;
-      if (cfg.model?.temperature) {
-        temperatureInput.value = cfg.model.temperature;
-        tempValue.textContent = cfg.model.temperature;
-      }
-    }
-
-    // Check backend connectivity
-    try {
-      const response = await fetch(`${BACKEND_URL}/health`, { timeout: 2000 });
-      if (response.ok) {
-        updateStatus('Connected to backend');
-        loadConversations();
-      } else {
-        updateStatus('Backend unreachable');
-      }
-    } catch (error) {
-      updateStatus('Backend offline - Please start the backend service');
-      console.warn('Backend not available:', error);
-    }
-
-  } catch (error) {
-    console.error('Initialization error:', error);
-    updateStatus('Initialization error');
-  }
-})();
+// Note: Initialization moved to enhanced initialization section below
 
 // Listen for system theme changes
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
@@ -818,6 +750,455 @@ saveTaskBtn?.addEventListener('click', async () => {
 document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
   loadWatchers();
   loadTasks();
+});
+
+// =====================================================================
+// Plugin Marketplace
+// =====================================================================
+
+let allPlugins = [];
+let currentPluginFilter = 'all';
+
+// Load plugins from backend
+async function loadPlugins() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/plugins`);
+    if (!response.ok) {
+      throw new Error('Failed to load plugins');
+    }
+
+    const data = await response.json();
+    allPlugins = data.plugins || [];
+
+    // Update stats
+    document.getElementById('pluginsCount').textContent = `${allPlugins.length} plugins`;
+    const activeCount = allPlugins.filter(p => p.enabled).length;
+    document.getElementById('pluginsActive').textContent = `${activeCount} active`;
+
+    displayPlugins();
+  } catch (error) {
+    console.error('Error loading plugins:', error);
+    document.getElementById('pluginsList').innerHTML = `
+      <div class="empty-state">
+        <p>Failed to load plugins</p>
+        <p class="hint">Make sure the backend is running at ${BACKEND_URL}</p>
+      </div>
+    `;
+  }
+}
+
+// Display plugins in grid
+function displayPlugins() {
+  const pluginsList = document.getElementById('pluginsList');
+
+  // Filter plugins
+  let filtered = allPlugins;
+  if (currentPluginFilter !== 'all') {
+    filtered = allPlugins.filter(p => p.type === currentPluginFilter);
+  }
+
+  if (filtered.length === 0) {
+    pluginsList.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/>
+        </svg>
+        <p>No plugins found</p>
+        <p class="hint">Try a different filter or check back later</p>
+      </div>
+    `;
+    return;
+  }
+
+  pluginsList.innerHTML = filtered.map(plugin => `
+    <div class="plugin-card ${plugin.enabled ? 'enabled' : 'disabled'}">
+      <div class="plugin-card-header">
+        <div class="plugin-icon">${getPluginIcon(plugin.type)}</div>
+        <div class="plugin-info">
+          <h3 class="plugin-name">${plugin.name || plugin.id}</h3>
+          <span class="plugin-type">${plugin.type}</span>
+        </div>
+        <div class="plugin-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" ${plugin.enabled ? 'checked' : ''}
+                   onchange="togglePlugin('${plugin.id}', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <p class="plugin-description">${plugin.description || 'No description available'}</p>
+      <div class="plugin-meta">
+        <span>v${plugin.version || '1.0.0'}</span>
+        <span>${plugin.author || 'Unknown'}</span>
+      </div>
+      <div class="plugin-actions">
+        <button class="btn-secondary" onclick="showPluginDetails('${plugin.id}')">Details</button>
+        ${plugin.enabled && plugin.actions ?
+          `<button class="btn-primary" onclick="executePlugin('${plugin.id}')">Execute</button>` :
+          ''
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+// Get icon for plugin type
+function getPluginIcon(type) {
+  const icons = {
+    'action': '⚡',
+    'tool': '🔧',
+    'integration': '🔗',
+    'automation': '🤖',
+    'ui': '🎨'
+  };
+  return icons[type] || '🔌';
+}
+
+// Toggle plugin enabled/disabled
+window.togglePlugin = async function(pluginId, enabled) {
+  try {
+    const endpoint = enabled ? 'enable' : 'disable';
+    const response = await fetch(`${BACKEND_URL}/plugins/${pluginId}/${endpoint}`, {
+      method: 'POST'
+    });
+
+    if (response.ok) {
+      // Update local state
+      const plugin = allPlugins.find(p => p.id === pluginId);
+      if (plugin) {
+        plugin.enabled = enabled;
+      }
+
+      // Reload plugins
+      await loadPlugins();
+      updateStatus(`Plugin ${enabled ? 'enabled' : 'disabled'}`);
+    } else {
+      throw new Error('Failed to toggle plugin');
+    }
+  } catch (error) {
+    console.error('Error toggling plugin:', error);
+    updateStatus('Error toggling plugin');
+    // Revert checkbox
+    await loadPlugins();
+  }
+};
+
+// Show plugin details in modal
+window.showPluginDetails = async function(pluginId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/plugins/${pluginId}`);
+    const plugin = await response.json();
+
+    const modal = document.getElementById('pluginModal');
+    document.getElementById('pluginModalTitle').textContent = plugin.name || plugin.id;
+
+    const actions = plugin.schema?.actions || [];
+    const actionsList = actions.length > 0
+      ? `<h4>Available Actions</h4><ul>${actions.map(a => `<li><strong>${a.name}</strong>: ${a.description || 'No description'}</li>`).join('')}</ul>`
+      : '<p>No actions available</p>';
+
+    document.getElementById('pluginModalBody').innerHTML = `
+      <p><strong>ID:</strong> ${plugin.id}</p>
+      <p><strong>Type:</strong> ${plugin.type}</p>
+      <p><strong>Version:</strong> ${plugin.version || '1.0.0'}</p>
+      <p><strong>Author:</strong> ${plugin.author || 'Unknown'}</p>
+      <p><strong>Description:</strong> ${plugin.description || 'No description'}</p>
+      ${actionsList}
+      <p><strong>Enabled:</strong> ${plugin.enabled ? 'Yes' : 'No'}</p>
+      <p><strong>Initialized:</strong> ${plugin.initialized ? 'Yes' : 'No'}</p>
+    `;
+
+    const actionBtn = document.getElementById('pluginModalAction');
+    actionBtn.textContent = plugin.enabled ? 'Disable' : 'Enable';
+    actionBtn.onclick = async () => {
+      await togglePlugin(pluginId, !plugin.enabled);
+      modal.classList.add('hidden');
+    };
+
+    modal.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error loading plugin details:', error);
+    updateStatus('Error loading plugin details');
+  }
+};
+
+// Execute plugin (simplified - prompts for action)
+window.executePlugin = async function(pluginId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/plugins/${pluginId}`);
+    const plugin = await response.json();
+
+    const actions = plugin.schema?.actions || [];
+    if (actions.length === 0) {
+      alert('This plugin has no executable actions');
+      return;
+    }
+
+    // For now, execute the first action with empty params
+    // In production, show action selector modal
+    const action = actions[0].name;
+
+    const execResponse = await fetch(`${BACKEND_URL}/plugins/${pluginId}/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action, parameters: {} })
+    });
+
+    const result = await execResponse.json();
+    alert(`Plugin executed:\n${JSON.stringify(result, null, 2)}`);
+    updateStatus('Plugin executed successfully');
+  } catch (error) {
+    console.error('Error executing plugin:', error);
+    alert('Error executing plugin: ' + error.message);
+  }
+};
+
+// Plugin filter
+document.getElementById('pluginTypeFilter')?.addEventListener('change', (e) => {
+  currentPluginFilter = e.target.value;
+  displayPlugins();
+});
+
+// Load plugins when tab is opened
+document.querySelector('[data-tab="plugins"]')?.addEventListener('click', () => {
+  loadPlugins();
+});
+
+// =====================================================================
+// Enhanced Settings with Backend Integration
+// =====================================================================
+
+// Load settings from backend
+async function loadSettingsFromBackend() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/config`);
+    if (response.ok) {
+      const config = await response.json();
+
+      // Apply settings to UI
+      if (config.theme) {
+        themeSelect.value = config.theme;
+        applyTheme(config.theme);
+      }
+      if (config.model) {
+        document.getElementById('defaultModel').value = config.model;
+      }
+      if (config.temperature !== undefined) {
+        temperatureInput.value = config.temperature;
+        tempValue.textContent = config.temperature;
+      }
+
+      updateStatus('Settings loaded from backend');
+    }
+  } catch (error) {
+    console.error('Error loading settings from backend:', error);
+  }
+}
+
+// Save settings to backend
+async function saveSettingsToBackend(config) {
+  try {
+    // Save each config key individually
+    for (const [key, value] of Object.entries(config)) {
+      const response = await fetch(`${BACKEND_URL}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save ${key}`);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error saving settings to backend:', error);
+    return false;
+  }
+}
+
+// Override the save settings handler to use backend
+document.getElementById('saveCfg').addEventListener('click', async () => {
+  const config = {
+    ui: {
+      theme: themeSelect.value
+    },
+    network: {
+      bind: document.getElementById('bind').value,
+      port: document.getElementById('port').value
+    },
+    model: {
+      default: document.getElementById('defaultModel').value,
+      temperature: parseFloat(temperatureInput.value)
+    }
+  };
+
+  try {
+    // Save to local config (existing functionality)
+    await window.winAI.writeConfig(config);
+
+    // Save to backend
+    const backendSaved = await saveSettingsToBackend({
+      theme: config.ui.theme,
+      model: config.model.default,
+      temperature: config.model.temperature
+    });
+
+    if (backendSaved) {
+      alert('Settings saved successfully!');
+      applyTheme(config.ui.theme);
+      updateStatus('Settings saved');
+    } else {
+      alert('Settings saved locally, but failed to sync with backend');
+    }
+  } catch (error) {
+    alert('Error saving settings: ' + error.message);
+    updateStatus('Error saving settings');
+  }
+});
+
+// =====================================================================
+// Dynamic Model Loading
+// =====================================================================
+
+async function loadAvailableModels() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/models`);
+    if (!response.ok) return;
+
+    const data = await response.json();
+    const models = data.models || [];
+
+    // Update model select dropdowns
+    const modelSelectChat = document.getElementById('modelSelect');
+    const modelSelectSettings = document.getElementById('defaultModel');
+
+    const modelOptions = models.map(model =>
+      `<option value="${model.id}">${model.name}</option>`
+    ).join('');
+
+    if (modelSelectChat) {
+      modelSelectChat.innerHTML = modelOptions;
+    }
+    if (modelSelectSettings) {
+      modelSelectSettings.innerHTML = modelOptions;
+    }
+
+    updateStatus('Models loaded');
+  } catch (error) {
+    console.error('Error loading models:', error);
+  }
+}
+
+// =====================================================================
+// Real-time Health Monitoring
+// =====================================================================
+
+let healthCheckInterval = null;
+
+async function checkBackendHealth() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/health`, {
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.status === 'healthy') {
+        updateStatus('Connected - Backend healthy');
+        return true;
+      } else {
+        updateStatus('Backend degraded');
+        return false;
+      }
+    } else {
+      updateStatus('Backend unreachable');
+      return false;
+    }
+  } catch (error) {
+    updateStatus('Backend offline');
+    return false;
+  }
+}
+
+function startHealthMonitoring() {
+  // Check health every 30 seconds
+  healthCheckInterval = setInterval(checkBackendHealth, 30000);
+
+  // Initial check
+  checkBackendHealth();
+}
+
+function stopHealthMonitoring() {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval);
+    healthCheckInterval = null;
+  }
+}
+
+// =====================================================================
+// Enhanced Initialization
+// =====================================================================
+
+(async () => {
+  try {
+    // Display environment info
+    const env = await window.winAI.envInfo();
+    document.getElementById('env').textContent =
+      `${env.platform}/${env.arch} • Electron ${env.versions.electron} • Node ${env.versions.node}`;
+
+    // Load config from local file first
+    const cfg = await window.winAI.readConfig();
+    if (cfg) {
+      if (cfg.network?.bind) document.getElementById('bind').value = cfg.network.bind;
+      if (cfg.network?.port) document.getElementById('port').value = cfg.network.port;
+      if (cfg.ui?.theme) {
+        themeSelect.value = cfg.ui.theme;
+        applyTheme(cfg.ui.theme);
+      }
+      if (cfg.model?.default) document.getElementById('defaultModel').value = cfg.model.default;
+      if (cfg.model?.temperature) {
+        temperatureInput.value = cfg.model.temperature;
+        tempValue.textContent = cfg.model.temperature;
+      }
+    }
+
+    // Check backend connectivity
+    updateStatus('Connecting to backend...');
+    try {
+      const response = await fetch(`${BACKEND_URL}/health`, {
+        signal: AbortSignal.timeout(3000)
+      });
+
+      if (response.ok) {
+        updateStatus('Connected to backend');
+
+        // Load data from backend
+        loadConversations();
+        loadAvailableModels();
+        loadSettingsFromBackend();
+
+        // Start health monitoring
+        startHealthMonitoring();
+      } else {
+        updateStatus('Backend unreachable');
+      }
+    } catch (error) {
+      updateStatus('Backend offline - Please start the backend service');
+      console.warn('Backend not available:', error);
+    }
+
+  } catch (error) {
+    console.error('Initialization error:', error);
+    updateStatus('Initialization error');
+  }
+})();
+
+// Cleanup on window close
+window.addEventListener('beforeunload', () => {
+  stopHealthMonitoring();
 });
 
 console.log('Windows AI Renderer initialized');
