@@ -1,6 +1,7 @@
-"""Plugin package exposing the plugin manager and catalog loader."""
+"""
+Plugins package for Windows AI.
 
-from .manager import Plugin, PluginManager, load_catalog
+This package contains plugin definitions and management.
+"""
 
-__all__ = ["Plugin", "PluginManager", "load_catalog"]
-
+__all__ = []

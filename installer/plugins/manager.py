@@ -29,6 +29,9 @@ class Plugin:
     description: str
     command: str
     paid: bool = False
+    metadata: dict | None = None
+    rating: float | None = None
+    dependencies: list | None = None
 
 
 def load_catalog(path: Path = CATALOG_PATH) -> list[Plugin]:
@@ -49,7 +52,21 @@ def load_catalog(path: Path = CATALOG_PATH) -> list[Plugin]:
         data = json.loads(text or "{}")
 
     entries = data.get("plugins", []) if isinstance(data, dict) else []
-    return [Plugin(**entry) for entry in entries]
+    # Create Plugin objects, handling optional fields
+    plugins = []
+    for entry in entries:
+        # Extract only the fields that Plugin accepts
+        plugin_data = {
+            "name": entry.get("name", ""),
+            "description": entry.get("description", ""),
+            "command": entry.get("command", ""),
+            "paid": entry.get("paid", False),
+            "metadata": entry.get("metadata"),
+            "rating": entry.get("rating"),
+            "dependencies": entry.get("dependencies"),
+        }
+        plugins.append(Plugin(**plugin_data))
+    return plugins
 
 
 class PluginManager:
@@ -75,6 +92,23 @@ class PluginManager:
             json.dumps({"installed": self.installed}, indent=2),
             encoding="utf-8",
         )
+
+    # --- Plugin Access ----------------------------------------------------
+    def get_plugin(self, name: str) -> Plugin | None:
+        """
+        Get a plugin by name (case-insensitive).
+
+        Args:
+            name: Plugin name to search for
+
+        Returns:
+            Plugin object if found, None otherwise
+        """
+        name_lower = name.lower()
+        for plugin in self.plugins:
+            if plugin.name.lower() == name_lower:
+                return plugin
+        return None
 
     # --- GUI -------------------------------------------------------------
     def run(self) -> None:

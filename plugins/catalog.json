@@ -37,7 +37,7 @@
             "dependencies": []
         },
         {
-            "name": "torch",
+            "name": "Torch",
             "description": "Deep learning framework for tensor computation and neural networks.",
             "command": "pip install torch",
             "paid": false,
@@ -49,7 +49,7 @@
             "dependencies": []
         },
         {
-            "name": "transformers",
+            "name": "Transformers",
             "description": "State-of-the-art machine learning models for natural language processing.",
             "command": "pip install transformers",
             "paid": false,
@@ -58,7 +58,31 @@
                 "author": "Hugging Face"
             },
             "rating": 4.8,
-            "dependencies": ["torch"]
+            "dependencies": ["Torch"]
+        },
+        {
+            "name": "TensorFlow",
+            "description": "End-to-end open source machine learning platform.",
+            "command": "pip install tensorflow",
+            "paid": false,
+            "metadata": {
+                "version": "2.14.0",
+                "author": "Google"
+            },
+            "rating": 4.7,
+            "dependencies": []
+        },
+        {
+            "name": "LangChain",
+            "description": "Framework for building LLM-powered applications with chains and agents.",
+            "command": "pip install langchain",
+            "paid": false,
+            "metadata": {
+                "version": "0.0.325",
+                "author": "LangChain"
+            },
+            "rating": 4.5,
+            "dependencies": []
         }
     ]
 }
