@@ -81,6 +81,14 @@ Windows AI now has a **complete, functional system**! Here's what's ready:
 - **Action types** - Organize files, summarize documents, analyze content, run system checks
 - **Flexible scheduling** - Cron expressions, intervals (1h, 30m), or one-time tasks
 
+#### 🔧 Watchdog Service (NEW)
+- **Auto-Restart** - Automatically restarts backend if it crashes
+- **Health Monitoring** - Continuous HTTP health checks
+- **Resource Tracking** - Monitors CPU, memory, and thread usage
+- **Smart Recovery** - Graceful restart with cooldown protection
+- **Production-Ready** - Comprehensive logging and error handling
+- **Easy Setup** - Simple startup scripts for all platforms
+
 #### 🔌 Plugin System
 - **Extensible Architecture** - Add custom AI actions, tools, and integrations
 - **6 Built-in Plugins:**
@@ -121,7 +129,12 @@ That's it! The backend, GUI, and tray will all start automatically.
 
 # Start just the tray
 ./start-tray.sh       # or start-tray.bat
+
+# Start the watchdog (monitors & auto-restarts backend)
+./start-watchdog.sh   # or start-watchdog.bat
 ```
+
+**Recommended for Production**: Use `start-watchdog.sh` instead of `start-backend.sh` to enable automatic monitoring and restart capabilities. See [docs/WATCHDOG.md](docs/WATCHDOG.md) for details.
 
 **Using the Quick Command (Tray):**
 1. Press `Ctrl+Shift+Space` anywhere
