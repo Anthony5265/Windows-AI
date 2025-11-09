@@ -2,6 +2,33 @@
 
 Thanks for your interest in improving Windows AI!
 
+## Repository Organization
+
+Before contributing, please familiarize yourself with our repository structure:
+
+- **Read [docs/DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md)** for a comprehensive guide to all directories
+- **Follow organization principles** outlined in the directory structure guide
+- **Keep the root directory clean** - only essential documentation and launch scripts belong there
+- **Place code in appropriate directories**:
+  - Python backend code → `windows_ai/`
+  - Node.js services → `apps/` or appropriate named directory
+  - Tests → `tests/` (mirror source structure)
+  - Documentation → `docs/`
+  - Plugins → `plugins/[category]/`
+  - Scripts → `scripts/`
+
+### File Placement Guidelines
+
+| What You're Adding | Where It Goes |
+|--------------------|---------------|
+| Python backend code | `windows_ai/` |
+| Node.js service | `apps/` or new named directory |
+| Plugin | `plugins/[category]/` |
+| Test | `tests/` (mirror source structure) |
+| User documentation | `docs/` |
+| API documentation | `docs/api_reference.md` or `openapi/` |
+| Build/utility script | `scripts/` (or root if essential) |
+
 ## Pull Requests
 
 - Keep your branch up to date with `main`. The `main` branch is protected and requires pull requests to be up to date before merging.
@@ -37,6 +64,24 @@ Examples:
 - `chore: update dependencies`
 
 Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
+
+## Code Organization Best Practices
+
+### Don't Commit These Files
+- Temporary files (`tmp*.txt`, `*.tmp`)
+- Build artifacts (except reference releases)
+- Session logs (`*SESSION*.md`, `*WORK_SESSION*.md`)
+- Large binary files (document download locations instead)
+- Test data files (unless essential for tests)
+
+These are already in `.gitignore`, but be mindful when using `git add .`
+
+### Keep Things Organized
+- Remove temporary files before committing
+- Update documentation when changing structure
+- Add tests in the appropriate `tests/` subdirectory
+- Follow existing naming conventions
+- Use descriptive directory and file names
 
 ## Releases
 

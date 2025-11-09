@@ -197,42 +197,38 @@ This project leverages a hybrid technology stack to deliver its functionalities:
 
 ### Project Structure
 
-The repository is organized into several key directories reflecting its multi-component nature:
+The repository is organized into several key directories reflecting its multi-component nature. For a comprehensive guide to the repository structure, see **[docs/DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md)**.
 
-*   `apps/`: Contains various Node.js applications (e.g., `actions`, `proxy`).
-*   `automation/`: Logic for automated tasks.
-*   `backends/`: Implementations for different backend services.
-*   `bin/`: Utility scripts, including `preflight.sh`.
-*   `cloud_sync/`: Cloud synchronization features.
-*   `codex/`: Code generation or analysis components.
-*   `config/`: Configuration files for various services.
-*   `control_center/`: Central control and management logic.
-*   `docs/`: Project documentation.
-*   `domains/`: Domain-specific business logic.
-*   `gui/`: Graphical user interface components (likely where the main chat GUI will reside).
-*   `install/`, `installer/`: Installation related files.
-*   `iot/`: Internet of Things integration.
-*   `marketplace/`: Marketplace integration components.
-*   `mesh/`: Mesh networking capabilities.
-*   `mobile/`: Mobile application components.
-*   `model_discovery/`: AI model discovery and management.
-*   `openapi/`: OpenAPI specifications for APIs.
-*   `optimization/`: Performance optimization modules.
-*   `performance/`: Performance monitoring and analysis.
-*   `plugins/`: Plugin management system.
-*   `scripts/`: General build and utility scripts.
-*   `sdk/`: Software Development Kit for extensions.
-*   `search/`: Search functionality.
-*   `security/`: Security-related features and configurations.
-*   `specs/`: Specification documents.
-*   `terminal/`: Terminal integration components.
-*   `tests/`: Comprehensive suite of unit and integration tests.
-*   `ui/`: User interface components.
-*   `updater/`: Application update mechanism.
-*   `windows_ai/`: Main Python application directory.
-*   `windows-ai-agent/`: Node.js agent service.
-*   `windows-ai-tray/`: Node.js system tray application.
-*   `xr/`: Extended Reality components.
+#### Core Application
+*   `windows_ai/`: Main Python backend (FastAPI with 72+ endpoints, 2,600+ lines of code)
+*   `windows-ai-agent/`: Node.js agent service
+*   `windows-ai-tray/`: System tray application (Electron)
+*   `apps/`: Node.js applications (actions, proxy, agenthub, etc.)
+
+#### Key Features
+*   `plugins/`: Plugin system with 6 built-in plugins and 2,600+ AI provider templates
+*   `automation/`: Automation engine (folder watchers, scheduled tasks)
+*   `gui/`: Main chat interface (Electron-based)
+*   `control_center/`: Central management and coordination
+*   `iot/`: Internet of Things integration
+*   `mesh/`: Mesh networking capabilities
+*   `mobile/`: Mobile companion app
+
+#### Development & Documentation
+*   `docs/`: All project documentation (60+ files)
+*   `tests/`: Comprehensive test suite
+*   `scripts/`: Build and utility scripts
+*   `installer/`: Multi-platform installation system
+
+#### Advanced Features
+*   `domains/`: Domain-specific logic (audio, computer vision)
+*   `sdk/`: Extension development kit
+*   `marketplace/`: Plugin marketplace
+*   `xr/`: Extended Reality support
+*   `cloud_sync/`: Cloud synchronization
+*   `search/`: Universal search
+
+📚 **See [docs/DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md) for detailed information about all 47 directories, organization principles, and maintenance guidelines.**
 
 ### Installation
 
