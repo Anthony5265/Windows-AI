@@ -1,122 +1,334 @@
 """
-Anyscale Plugin
-Llama, Mistral endpoints
+Anyscale Endpoints Plugin - Production Grade
+Scalable inference for Llama, Mistral, and other open-source models
 """
-from typing import Dict, Any
-import os
+from typing import Dict, Any, List, Optional
+import httpx
 import logging
-import aiohttp
+import os
 
 logger = logging.getLogger(__name__)
 
-class Plugin:
-    """Plugin for Anyscale integration"""
-    
+
+class AnyscalePlugin:
+    """Production Anyscale Endpoints integration"""
+
     def __init__(self):
-        self.name = "Anyscale"
-        self.version = "1.0.0"
-        self.description = "Llama, Mistral endpoints"
-        
-        # Configuration
         self.api_key = os.getenv("ANYSCALE_API_KEY", "")
         self.base_url = "https://api.endpoints.anyscale.com/v1"
-        self.timeout = 30
-    
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+
+        # Popular models on Anyscale
+        self.available_models = [
+            "meta-llama/Meta-Llama-3.1-70B-Instruct",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            "meta-llama/Llama-3-70b-chat-hf",
+            "meta-llama/Llama-3-8b-chat-hf",
+            "mistralai/Mixtral-8x7B-Instruct-v0.1",
+            "mistralai/Mistral-7B-Instruct-v0.1",
+            "codellama/CodeLlama-70b-Instruct-hf",
+            "google/gemma-7b-it"
+        ]
+
+        self.total_requests = 0
+        self.total_tokens = 0
+
+    async def chat(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute Anyscale request
-        
-        Args:
-            action (str): Action to perform (generate, analyze, etc.)
-            **kwargs: Additional parameters
-        
+        Chat completion using Anyscale Endpoints
+
+        Supported parameters:
+            messages: List of message dicts
+            model: Model to use
+            max_tokens: Maximum tokens
+            temperature: Sampling temperature
+            top_p: Top-p sampling
+            frequency_penalty: Frequency penalty
+            presence_penalty: Presence penalty
+            stream: Enable streaming
+
         Returns:
-            Dict with status and results
+            Dict with chat response
         """
+        if not self.api_key:
+            return {
+                "status": "error",
+                "message": "ANYSCALE_API_KEY not configured"
+            }
+
+        messages = kwargs.get("messages", [])
+        model = kwargs.get("model", "meta-llama/Meta-Llama-3.1-70B-Instruct")
+        max_tokens = kwargs.get("max_tokens", 512)
+        temperature = kwargs.get("temperature", 0.7)
+        top_p = kwargs.get("top_p", 1.0)
+        frequency_penalty = kwargs.get("frequency_penalty", 0.0)
+        presence_penalty = kwargs.get("presence_penalty", 0.0)
+        stream = kwargs.get("stream", False)
+
+        if not messages:
+            return {"status": "error", "message": "Messages are required"}
+
         try:
-            # Validate API key
-            if not self.api_key:
-                return {{
-                    "status": "error",
-                    "message": f"{{self.name}} API key not configured. Set {{self.api_key}} environment variable."
-                }}
-            
-            action = kwargs.get("action", "generate")
-            
-            # Route to appropriate handler
-            if action == "generate":
-                return await self._generate(**kwargs)
-            elif action == "analyze":
-                return await self._analyze(**kwargs)
-            elif action == "list":
-                return await self._list(**kwargs)
-            else:
-                return {{"status": "error", "message": f"Unknown action: {{action}}"}}
-                
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                        "top_p": top_p,
+                        "frequency_penalty": frequency_penalty,
+                        "presence_penalty": presence_penalty,
+                        "stream": stream
+                    }
+                )
+
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "message": f"API error: {response.status_code}",
+                        "details": response.text
+                    }
+
+                result = response.json()
+                self.total_requests += 1
+
+                if "usage" in result:
+                    self.total_tokens += result["usage"].get("total_tokens", 0)
+
+                return {
+                    "status": "success",
+                    "message": result["choices"][0]["message"],
+                    "model": model,
+                    "usage": result.get("usage", {}),
+                    "finish_reason": result["choices"][0].get("finish_reason")
+                }
+
         except Exception as e:
-            logger.error(f"{{self.name}} error: {{str(e)}}")
-            return {{"status": "error", "message": str(e)}}
-    
-    async def _generate(self, **kwargs) -> Dict[str, Any]:
-        """Generate content using Anyscale"""
+            logger.error(f"Anyscale chat error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def complete(self, **kwargs) -> Dict[str, Any]:
+        """
+        Text completion using Anyscale Endpoints
+
+        Supported parameters:
+            prompt: Text prompt
+            model: Model to use
+            max_tokens: Maximum tokens
+            temperature: Sampling temperature
+            top_p: Top-p sampling
+            frequency_penalty: Frequency penalty
+            presence_penalty: Presence penalty
+            stop: Stop sequences
+
+        Returns:
+            Dict with completion
+        """
+        if not self.api_key:
+            return {
+                "status": "error",
+                "message": "ANYSCALE_API_KEY not configured"
+            }
+
         prompt = kwargs.get("prompt", "")
-        model = kwargs.get("model", "default")
-        max_tokens = kwargs.get("max_tokens", 1000)
-        
-        async with aiohttp.ClientSession() as session:
-            headers = {{
-                "Authorization": f"Bearer {{self.api_key}}",
-                "Content-Type": "application/json"
-            }}
-            
-            payload = {{
-                "model": model,
-                "prompt": prompt,
-                "max_tokens": max_tokens
-            }}
-            
-            try:
-                async with session.post(
-                    f"{{self.base_url}}/completions",
-                    json=payload,
-                    headers=headers,
-                    timeout=self.timeout
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return {{"status": "success", "result": data}}
-                    else:
-                        error = await response.text()
-                        return {{"status": "error", "message": error, "status_code": response.status}}
-            except aiohttp.ClientError as e:
-                return {{"status": "error", "message": f"API request failed: {{str(e)}}"}}
-    
-    async def _analyze(self, **kwargs) -> Dict[str, Any]:
-        """Analyze content using Anyscale"""
-        text = kwargs.get("text", "")
-        
-        # Implement analysis logic here
-        return {{
-            "status": "success",
-            "analysis": {{"text_length": len(text)}}
-        }}
-    
-    async def _list(self, **kwargs) -> Dict[str, Any]:
-        """List available models/resources"""
-        
-        async with aiohttp.ClientSession() as session:
-            headers = {{"Authorization": f"Bearer {{self.api_key}}"}}
-            
-            try:
-                async with session.get(
-                    f"{{self.base_url}}/models",
-                    headers=headers,
-                    timeout=self.timeout
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return {{"status": "success", "models": data}}
-                    else:
-                        return {{"status": "error", "message": "Failed to list models"}}
-            except aiohttp.ClientError as e:
-                return {{"status": "error", "message": str(e)}}
+        model = kwargs.get("model", "meta-llama/Meta-Llama-3.1-70B-Instruct")
+        max_tokens = kwargs.get("max_tokens", 512)
+        temperature = kwargs.get("temperature", 0.7)
+        top_p = kwargs.get("top_p", 1.0)
+        frequency_penalty = kwargs.get("frequency_penalty", 0.0)
+        presence_penalty = kwargs.get("presence_penalty", 0.0)
+        stop = kwargs.get("stop", None)
+
+        if not prompt:
+            return {"status": "error", "message": "Prompt is required"}
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                        "top_p": top_p,
+                        "frequency_penalty": frequency_penalty,
+                        "presence_penalty": presence_penalty,
+                        "stop": stop
+                    }
+                )
+
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "message": f"API error: {response.status_code}",
+                        "details": response.text
+                    }
+
+                result = response.json()
+                self.total_requests += 1
+
+                if "usage" in result:
+                    self.total_tokens += result["usage"].get("total_tokens", 0)
+
+                return {
+                    "status": "success",
+                    "text": result["choices"][0]["text"],
+                    "model": model,
+                    "usage": result.get("usage", {}),
+                    "finish_reason": result["choices"][0].get("finish_reason")
+                }
+
+        except Exception as e:
+            logger.error(f"Anyscale completion error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def generate_embeddings(self, **kwargs) -> Dict[str, Any]:
+        """
+        Generate embeddings using Anyscale
+
+        Supported parameters:
+            input: Text or list of texts
+            model: Embedding model
+
+        Returns:
+            Dict with embeddings
+        """
+        if not self.api_key:
+            return {
+                "status": "error",
+                "message": "ANYSCALE_API_KEY not configured"
+            }
+
+        input_text = kwargs.get("input", "")
+        model = kwargs.get("model", "thenlper/gte-large")
+
+        if not input_text:
+            return {"status": "error", "message": "Input text is required"}
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/embeddings",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "input": input_text,
+                        "model": model
+                    }
+                )
+
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "message": f"API error: {response.status_code}",
+                        "details": response.text
+                    }
+
+                result = response.json()
+                self.total_requests += 1
+
+                return {
+                    "status": "success",
+                    "embeddings": [item["embedding"] for item in result["data"]],
+                    "model": model,
+                    "usage": result.get("usage", {})
+                }
+
+        except Exception as e:
+            logger.error(f"Anyscale embeddings error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def list_models(self) -> Dict[str, Any]:
+        """List available models"""
+        if not self.api_key:
+            return {
+                "status": "error",
+                "message": "ANYSCALE_API_KEY not configured"
+            }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(
+                    f"{self.base_url}/models",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}"
+                    }
+                )
+
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "message": f"API error: {response.status_code}"
+                    }
+
+                result = response.json()
+
+                return {
+                    "status": "success",
+                    "models": [
+                        {
+                            "id": model["id"],
+                            "created": model.get("created"),
+                            "owned_by": model.get("owned_by")
+                        }
+                        for model in result.get("data", [])
+                    ]
+                }
+
+        except Exception as e:
+            logger.error(f"Anyscale list models error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def get_available_models(self) -> List[str]:
+        """Get list of popular models"""
+        return self.available_models
+
+    def get_usage_stats(self) -> Dict[str, Any]:
+        """Get usage statistics"""
+        return {
+            "total_requests": self.total_requests,
+            "total_tokens": self.total_tokens
+        }
+
+
+# Plugin metadata
+PLUGIN_METADATA = {
+    "name": "Anyscale Endpoints",
+    "version": "1.0.0",
+    "description": "Scalable inference for Llama, Mistral, and other open-source models",
+    "author": "Windows-AI",
+    "capabilities": [
+        "chat",
+        "text_completion",
+        "embeddings",
+        "code_generation"
+    ],
+    "models": [
+        "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "meta-llama/Llama-3-70b-chat-hf",
+        "meta-llama/Llama-3-8b-chat-hf",
+        "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        "mistralai/Mistral-7B-Instruct-v0.1",
+        "codellama/CodeLlama-70b-Instruct-hf",
+        "google/gemma-7b-it"
+    ],
+    "documentation": "https://docs.anyscale.com/"
+}
+
+
+def create_plugin():
+    """Factory function to create plugin instance"""
+    return AnyscalePlugin()
