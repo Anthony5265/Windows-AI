@@ -1,6 +1,6 @@
 """
 Timestamp Converter Plugin - Utility
-Unix timestamp conversion
+Timestamp Converter integration
 """
 from typing import Dict, Any
 import logging
@@ -13,7 +13,7 @@ class Plugin:
     def __init__(self):
         self.name = "Timestamp Converter"
         self.version = "1.0.0"
-        self.description = "Unix timestamp conversion"
+        self.description = "Timestamp Converter integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

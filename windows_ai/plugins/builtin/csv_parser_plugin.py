@@ -1,6 +1,6 @@
 """
-CSV Parser Plugin - Utility
-CSV parsing and conversion
+Csv Parser Plugin - Utility
+Csv Parser integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for CSV Parser functionality"""
+    """Utility plugin for Csv Parser functionality"""
     
     def __init__(self):
-        self.name = "CSV Parser"
+        self.name = "Csv Parser"
         self.version = "1.0.0"
-        self.description = "CSV parsing and conversion"
+        self.description = "Csv Parser integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

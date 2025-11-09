@@ -1,6 +1,6 @@
 """
 Hash Generator Plugin - Utility
-MD5/SHA hash generation
+Hash Generator integration
 """
 from typing import Dict, Any
 import logging
@@ -13,7 +13,7 @@ class Plugin:
     def __init__(self):
         self.name = "Hash Generator"
         self.version = "1.0.0"
-        self.description = "MD5/SHA hash generation"
+        self.description = "Hash Generator integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

@@ -1,6 +1,6 @@
 """
 Regex Tester Plugin - Utility
-Regular expression testing
+Regex Tester integration
 """
 from typing import Dict, Any
 import logging
@@ -13,7 +13,7 @@ class Plugin:
     def __init__(self):
         self.name = "Regex Tester"
         self.version = "1.0.0"
-        self.description = "Regular expression testing"
+        self.description = "Regex Tester integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

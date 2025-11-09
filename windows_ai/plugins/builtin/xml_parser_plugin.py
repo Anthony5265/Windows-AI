@@ -1,6 +1,6 @@
 """
-XML Parser Plugin - Utility
-XML validation and parsing
+Xml Parser Plugin - Utility
+Xml Parser integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for XML Parser functionality"""
+    """Utility plugin for Xml Parser functionality"""
     
     def __init__(self):
-        self.name = "XML Parser"
+        self.name = "Xml Parser"
         self.version = "1.0.0"
-        self.description = "XML validation and parsing"
+        self.description = "Xml Parser integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

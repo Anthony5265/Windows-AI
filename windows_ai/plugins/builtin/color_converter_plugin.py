@@ -1,6 +1,6 @@
 """
 Color Converter Plugin - Utility
-RGB/HEX/HSL conversion
+Color Converter integration
 """
 from typing import Dict, Any
 import logging
@@ -13,7 +13,7 @@ class Plugin:
     def __init__(self):
         self.name = "Color Converter"
         self.version = "1.0.0"
-        self.description = "RGB/HEX/HSL conversion"
+        self.description = "Color Converter integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

@@ -1,6 +1,6 @@
 """
 Text Analyzer Plugin - Utility
-Integration with Text Analyzer
+Text Analyzer integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for analyzing text length, words, sentiment"""
+    """Utility plugin for Text Analyzer functionality"""
     
     def __init__(self):
         self.name = "Text Analyzer"
         self.version = "1.0.0"
-        self.description = "Integration with Text Analyzer"
+        self.description = "Text Analyzer integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

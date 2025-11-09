@@ -1,6 +1,6 @@
 """
 Base64 Encoder Plugin - Utility
-Base64 encoding/decoding
+Base64 Encoder integration
 """
 from typing import Dict, Any
 import logging
@@ -13,7 +13,7 @@ class Plugin:
     def __init__(self):
         self.name = "Base64 Encoder"
         self.version = "1.0.0"
-        self.description = "Base64 encoding/decoding"
+        self.description = "Base64 Encoder integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

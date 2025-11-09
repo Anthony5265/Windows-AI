@@ -1,6 +1,6 @@
 """
-JSON Parser Plugin - Utility
-Integration with JSON Parser
+Json Parser Plugin - Utility
+Json Parser integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for parsing and formatting JSON"""
+    """Utility plugin for Json Parser functionality"""
     
     def __init__(self):
-        self.name = "JSON Parser"
+        self.name = "Json Parser"
         self.version = "1.0.0"
-        self.description = "Integration with JSON Parser"
+        self.description = "Json Parser integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

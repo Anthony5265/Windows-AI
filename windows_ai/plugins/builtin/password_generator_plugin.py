@@ -1,6 +1,6 @@
 """
 Password Generator Plugin - Utility
-Integration with Password Generator
+Password Generator integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for generating secure passwords"""
+    """Utility plugin for Password Generator functionality"""
     
     def __init__(self):
         self.name = "Password Generator"
         self.version = "1.0.0"
-        self.description = "Integration with Password Generator"
+        self.description = "Password Generator integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

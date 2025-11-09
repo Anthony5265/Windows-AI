@@ -1,6 +1,6 @@
 """
-UUID Generator Plugin - Utility
-UUID generation
+Uuid Generator Plugin - Utility
+Uuid Generator integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for UUID Generator functionality"""
+    """Utility plugin for Uuid Generator functionality"""
     
     def __init__(self):
-        self.name = "UUID Generator"
+        self.name = "Uuid Generator"
         self.version = "1.0.0"
-        self.description = "UUID generation"
+        self.description = "Uuid Generator integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

@@ -1,6 +1,6 @@
 """
-YAML Parser Plugin - Utility
-YAML validation and parsing
+Yaml Parser Plugin - Utility
+Yaml Parser integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for YAML Parser functionality"""
+    """Utility plugin for Yaml Parser functionality"""
     
     def __init__(self):
-        self.name = "YAML Parser"
+        self.name = "Yaml Parser"
         self.version = "1.0.0"
-        self.description = "YAML validation and parsing"
+        self.description = "Yaml Parser integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""

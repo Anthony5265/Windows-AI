@@ -1,6 +1,6 @@
 """
-QR Code Generator Plugin - Utility
-Integration with QR Code Generator
+Qr Code Generator Plugin - Utility
+Qr Code Generator integration
 """
 from typing import Dict, Any
 import logging
@@ -8,12 +8,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Plugin:
-    """Utility plugin for generating QR codes"""
+    """Utility plugin for Qr Code Generator functionality"""
     
     def __init__(self):
-        self.name = "QR Code Generator"
+        self.name = "Qr Code Generator"
         self.version = "1.0.0"
-        self.description = "Integration with QR Code Generator"
+        self.description = "Qr Code Generator integration"
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute utility function"""
