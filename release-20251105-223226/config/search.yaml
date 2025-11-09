@@ -1,7 +1,0 @@
-backend: local
-
-local:
-  storage_path: data/search_index.json
-
-cloud:
-  endpoint: https://example.com/search
