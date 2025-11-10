@@ -327,6 +327,43 @@
         </div>
       </div>
 
+      <div class="settings-group">
+        <h3>Updates</h3>
+        <div class="setting-item">
+          <label for="autoCheck">
+            <input type="checkbox" id="autoCheck" checked/>
+            Automatically check for updates
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="autoDownload">
+            <input type="checkbox" id="autoDownload" checked/>
+            Automatically download updates
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="updateChannel">Update Channel</label>
+          <select id="updateChannel" class="setting-input">
+            <option value="stable">Stable (Recommended)</option>
+            <option value="beta">Beta (Pre-release)</option>
+            <option value="alpha">Alpha (Experimental)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="checkInterval">Check Interval</label>
+          <select id="checkInterval" class="setting-input">
+            <option value="1">Every hour</option>
+            <option value="6" selected>Every 6 hours</option>
+            <option value="12">Every 12 hours</option>
+            <option value="24">Daily</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <button id="checkNowBtn" class="btn-secondary">Check for Updates Now</button>
+          <span id="updateStatus"></span>
+        </div>
+      </div>
+
       <div class="settings-actions">
         <button id="saveCfg" class="save-btn">Save Settings</button>
         <button id="resetCfg" class="reset-btn">Reset to Defaults</button>
@@ -380,6 +417,31 @@
   </div>
 </main>
 
+<!-- Update Notification -->
+<div id="updateNotification" class="update-notification" style="display: none;">
+  <div class="update-content">
+    <div class="update-header">
+      <h3>🎉 Update Available</h3>
+      <button class="update-dismiss-btn" title="Dismiss">&times;</button>
+    </div>
+    <div class="update-body">
+      <p class="update-version">Version 0.0.0</p>
+      <div class="update-changelog">
+        <p>Loading changelog...</p>
+      </div>
+      <p class="update-size">Size: 0 MB</p>
+      <div class="update-progress" style="display: none;">
+        <div class="update-progress-bar" style="width: 0%;"></div>
+        <span class="update-progress-text">Downloading...</span>
+      </div>
+    </div>
+    <div class="update-footer">
+      <button class="update-details-btn btn-secondary">View Details</button>
+      <button class="update-install-btn btn-primary">Download & Install</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-content">
     <span id="env" class="env-info"></span>
@@ -388,4 +450,5 @@
 </footer>
 
 <script src="./renderer.js"></script>
+<script src="../updater.js"></script>
 </body></html>

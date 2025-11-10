@@ -39,6 +39,9 @@ from windows_ai.plugins.registry import PluginRegistry
 # Import model manager
 from windows_ai.model_manager import ModelManager
 
+# Import update system
+from windows_ai.updater.update_client import UpdateClient, UpdateStatus
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -246,6 +249,9 @@ plugin_registry = PluginRegistry(PLUGINS_DIR)
 
 # Initialize model manager
 model_manager = ModelManager()
+
+# Initialize update client
+update_client = None  # Will be initialized on startup with config
 
 # =====================================================================
 # Automation Callbacks
@@ -900,6 +906,102 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("WebSocket connection closed")
 
 # =====================================================================
+# Update Management Endpoints
+# =====================================================================
+
+@app.get("/updates/status")
+async def get_update_status():
+    """Get current update status"""
+    if update_client is None:
+        return {
+            "status": "disabled",
+            "message": "Update system not initialized"
+        }
+
+    return update_client.get_status_info()
+
+@app.post("/updates/check")
+async def check_for_updates():
+    """Manually check for updates"""
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    try:
+        update_info = await update_client.check_for_updates()
+        return {
+            "update_available": update_info is not None,
+            "update_info": update_info.to_dict() if update_info else None,
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error checking for updates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/updates/download")
+async def download_update():
+    """Download available update"""
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    if update_client.available_update is None:
+        raise HTTPException(status_code=400, detail="No update available to download")
+
+    try:
+        installer_path = await update_client.download_update()
+        return {
+            "success": installer_path is not None,
+            "installer_path": str(installer_path) if installer_path else None,
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error downloading update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/updates/install")
+async def install_update():
+    """Install downloaded update"""
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    try:
+        success = await update_client.install_update()
+        return {
+            "success": success,
+            "message": "Update installation started" if success else "Failed to start installation",
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error installing update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/updates/preferences")
+async def get_update_preferences():
+    """Get update preferences from config"""
+    config = config_manager.get_config()
+    return config.get("update_preferences", {
+        "auto_check": True,
+        "auto_download": True,
+        "channel": "stable",
+        "check_interval_hours": 6
+    })
+
+@app.post("/updates/preferences")
+async def set_update_preferences(preferences: Dict[str, Any]):
+    """Update update preferences"""
+    config = config_manager.get_config()
+    config["update_preferences"] = preferences
+    config_manager.save_config()
+
+    # Reconfigure update client if running
+    global update_client
+    if update_client:
+        update_client.channel = preferences.get("channel", "stable")
+        update_client.auto_download = preferences.get("auto_download", True)
+        update_client.check_interval = timedelta(hours=preferences.get("check_interval_hours", 6))
+
+    return {"message": "Update preferences saved", "preferences": preferences}
+
+# =====================================================================
 # Startup/Shutdown Events
 # =====================================================================
 
@@ -923,6 +1025,40 @@ async def startup_event():
     await plugin_registry.load_plugins()
     await plugin_registry.initialize_plugins()
     logger.info(f"Plugins loaded: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
+
+    # Initialize update client
+    logger.info("Initializing update system...")
+    global update_client
+    try:
+        config = config_manager.get_config()
+        update_prefs = config.get("update_preferences", {
+            "auto_check": True,
+            "auto_download": True,
+            "channel": "stable",
+            "check_interval_hours": 6
+        })
+
+        # Get current version from package
+        current_version = app.version  # Or read from VERSION file
+
+        update_client = UpdateClient(
+            current_version=current_version,
+            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
+            channel=update_prefs.get("channel", "stable"),
+            auto_download=update_prefs.get("auto_download", True),
+            check_interval_hours=update_prefs.get("check_interval_hours", 6)
+        )
+
+        # Start background update checker if auto-check enabled
+        if update_prefs.get("auto_check", True):
+            asyncio.create_task(update_client.run_background_checker())
+            logger.info("Update background checker started")
+        else:
+            logger.info("Automatic update checking disabled")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize update system: {e}")
+        logger.warning("Continuing without update system")
 
     logger.info("Backend is ready!")
 
