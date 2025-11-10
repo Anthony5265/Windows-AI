@@ -965,6 +965,298 @@ document.querySelector('[data-tab="plugins"]')?.addEventListener('click', () => 
 });
 
 // =====================================================================
+// Model Management UI
+// =====================================================================
+
+let allModels = [];
+let installedModels = [];
+let currentModelFilter = 'all';
+let currentDownload = null;
+let downloadCheckInterval = null;
+
+// Load available models
+async function loadAvailableModelsData() {
+  try {
+    const recommendedOnly = currentModelFilter === 'recommended';
+    const category = (currentModelFilter === 'all' || currentModelFilter === 'recommended')
+      ? null
+      : currentModelFilter;
+
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (recommendedOnly) params.append('recommended_only', 'true');
+
+    const response = await fetch(`${BACKEND_URL}/models/available?${params}`);
+    if (!response.ok) {
+      throw new Error('Failed to load models');
+    }
+
+    const data = await response.json();
+    allModels = data.models || [];
+
+    // Load installed models
+    await loadInstalledModels();
+
+    // Update stats
+    document.getElementById('modelsAvailable').textContent = `${allModels.length} available`;
+    document.getElementById('modelsInstalled').textContent = `${installedModels.length} installed`;
+
+    displayModels();
+  } catch (error) {
+    console.error('Error loading models:', error);
+    document.getElementById('modelsList').innerHTML = `
+      <div class="empty-state">
+        <p>Failed to load models</p>
+        <p class="hint">Make sure the backend is running at ${BACKEND_URL}</p>
+      </div>
+    `;
+  }
+}
+
+// Load installed models
+async function loadInstalledModels() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/installed`);
+    if (response.ok) {
+      const data = await response.json();
+      installedModels = data.models || [];
+
+      // Mark installed models
+      allModels.forEach(model => {
+        model.installed = installedModels.some(m => m.id === model.id);
+      });
+    }
+  } catch (error) {
+    console.warn('Could not load installed models:', error);
+  }
+}
+
+// Display models in grid
+function displayModels() {
+  const modelsList = document.getElementById('modelsList');
+
+  if (allModels.length === 0) {
+    modelsList.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <p>No models found</p>
+        <p class="hint">Try a different filter</p>
+      </div>
+    `;
+    return;
+  }
+
+  modelsList.innerHTML = allModels.map(model => `
+    <div class="model-card ${model.installed ? 'installed' : ''}">
+      <div class="model-card-header">
+        <div class="model-icon">${getModelIcon(model.category)}</div>
+        <div class="model-info">
+          <h3 class="model-name">${model.name}</h3>
+          <span class="model-category">${model.category}</span>
+        </div>
+        ${model.recommended ? '<span class="model-badge recommended">⭐ Recommended</span>' : ''}
+      </div>
+      <p class="model-description">${model.description}</p>
+      <div class="model-meta">
+        <span class="model-size">📦 ${model.size}</span>
+        <span class="model-provider">${model.provider}</span>
+      </div>
+      ${model.capabilities ? `
+        <div class="model-capabilities">
+          ${model.capabilities.map(cap => `<span class="capability-tag">${cap}</span>`).join('')}
+        </div>
+      ` : ''}
+      <div class="model-actions">
+        <button class="btn-secondary" onclick="showModelDetails('${model.id}')">Details</button>
+        ${model.installed
+          ? `<button class="btn-danger" onclick="deleteModel('${model.id}')">Delete</button>`
+          : `<button class="btn-primary" onclick="downloadModel('${model.id}', '${model.name}')">Download</button>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+// Get icon for model category
+function getModelIcon(category) {
+  const icons = {
+    'general': '🤖',
+    'coding': '💻',
+    'chat': '💬',
+    'lightweight': '⚡',
+    'premium': '⭐'
+  };
+  return icons[category] || '📦';
+}
+
+// Show model details
+window.showModelDetails = async function(modelId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/${encodeURIComponent(modelId)}`);
+    const model = await response.json();
+
+    const modal = document.getElementById('modelModal');
+    document.getElementById('modelModalTitle').textContent = model.name || model.id;
+
+    document.getElementById('modelModalBody').innerHTML = `
+      <p><strong>ID:</strong> ${model.id}</p>
+      <p><strong>Provider:</strong> ${model.provider}</p>
+      <p><strong>Category:</strong> ${model.category}</p>
+      <p><strong>Size:</strong> ${model.size}</p>
+      <p><strong>Description:</strong> ${model.description || 'No description'}</p>
+      ${model.capabilities ? `
+        <p><strong>Capabilities:</strong> ${model.capabilities.join(', ')}</p>
+      ` : ''}
+      ${model.recommended ? '<p><strong>Status:</strong> <span class="badge-success">Recommended</span></p>' : ''}
+      <p><strong>Installed:</strong> ${model.installed ? 'Yes' : 'No'}</p>
+    `;
+
+    const actionBtn = document.getElementById('modelModalAction');
+    if (model.installed) {
+      actionBtn.textContent = 'Delete';
+      actionBtn.className = 'btn-danger';
+      actionBtn.onclick = async () => {
+        await deleteModel(modelId);
+        modal.classList.add('hidden');
+      };
+    } else {
+      actionBtn.textContent = 'Download';
+      actionBtn.className = 'btn-primary';
+      actionBtn.onclick = async () => {
+        await downloadModel(modelId, model.name);
+        modal.classList.add('hidden');
+      };
+    }
+
+    modal.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error loading model details:', error);
+    updateStatus('Error loading model details');
+  }
+};
+
+// Download model
+window.downloadModel = async function(modelId, modelName) {
+  try {
+    // Show download modal
+    const downloadModal = document.getElementById('downloadModal');
+    document.getElementById('downloadModelName').textContent = modelName;
+    document.getElementById('downloadPercent').textContent = '0%';
+    document.getElementById('downloadProgressBar').style.width = '0%';
+    document.getElementById('downloadSpeed').textContent = '';
+    document.getElementById('downloadSize').textContent = '';
+    downloadModal.classList.remove('hidden');
+
+    // Start download
+    const response = await fetch(`${BACKEND_URL}/models/${encodeURIComponent(modelId)}/download`, {
+      method: 'POST'
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      currentDownload = modelId;
+      updateStatus('Download started...');
+
+      // Start polling for progress
+      downloadCheckInterval = setInterval(async () => {
+        await checkDownloadProgress(modelId);
+      }, 1000);
+    } else {
+      throw new Error('Failed to start download');
+    }
+  } catch (error) {
+    console.error('Error downloading model:', error);
+    alert('Error downloading model: ' + error.message);
+    document.getElementById('downloadModal').classList.add('hidden');
+  }
+};
+
+// Check download progress
+async function checkDownloadProgress(modelId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/${encodeURIComponent(modelId)}/download/status`);
+    const status = await response.json();
+
+    if (status.status === 'downloading') {
+      const percent = status.progress || 0;
+      document.getElementById('downloadPercent').textContent = `${percent}%`;
+      document.getElementById('downloadProgressBar').style.width = `${percent}%`;
+
+      if (status.downloaded && status.total) {
+        const downloaded = (status.downloaded / 1024 / 1024).toFixed(1);
+        const total = (status.total / 1024 / 1024).toFixed(1);
+        document.getElementById('downloadSize').textContent = `${downloaded} MB / ${total} MB`;
+      }
+    } else if (status.status === 'completed') {
+      // Download complete
+      clearInterval(downloadCheckInterval);
+      document.getElementById('downloadModal').classList.add('hidden');
+      currentDownload = null;
+      updateStatus('Model downloaded successfully!');
+
+      // Reload models
+      await loadAvailableModelsData();
+    } else if (status.status === 'failed') {
+      // Download failed
+      clearInterval(downloadCheckInterval);
+      document.getElementById('downloadModal').classList.add('hidden');
+      currentDownload = null;
+      updateStatus('Model download failed');
+      alert('Download failed. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error checking download progress:', error);
+  }
+}
+
+// Cancel download
+document.getElementById('cancelDownload')?.addEventListener('click', () => {
+  if (downloadCheckInterval) {
+    clearInterval(downloadCheckInterval);
+  }
+  document.getElementById('downloadModal').classList.add('hidden');
+  currentDownload = null;
+  updateStatus('Download cancelled');
+});
+
+// Delete model
+window.deleteModel = async function(modelId) {
+  if (!confirm('Are you sure you want to delete this model? This cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/${encodeURIComponent(modelId)}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      updateStatus('Model deleted successfully');
+      await loadAvailableModelsData();
+    } else {
+      throw new Error('Failed to delete model');
+    }
+  } catch (error) {
+    console.error('Error deleting model:', error);
+    alert('Error deleting model: ' + error.message);
+  }
+};
+
+// Model filter
+document.getElementById('modelCategoryFilter')?.addEventListener('change', (e) => {
+  currentModelFilter = e.target.value;
+  loadAvailableModelsData();
+});
+
+// Load models when tab is opened
+document.querySelector('[data-tab="models"]')?.addEventListener('click', () => {
+  loadAvailableModelsData();
+});
+
+// =====================================================================
 // Enhanced Settings with Backend Integration
 // =====================================================================
 

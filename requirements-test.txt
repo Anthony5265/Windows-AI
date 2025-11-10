@@ -1,0 +1,48 @@
+# Testing Framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-timeout>=2.1.0
+pytest-xdist>=3.3.0  # For parallel test execution
+
+# HTTP Testing
+httpx>=0.24.0
+requests-mock>=1.11.0
+
+# Async Testing
+aioresponses>=0.7.4
+asynctest>=0.13.0
+
+# E2E Testing
+playwright>=1.40.0
+pytest-playwright>=0.4.3
+
+# Performance Testing
+pytest-benchmark>=4.0.0
+locust>=2.15.0
+
+# Code Quality
+flake8>=6.0.0
+flake8-docstrings>=1.7.0
+black>=23.7.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# Security
+bandit>=1.7.5
+safety>=2.3.5
+
+# Test Data & Mocking
+faker>=19.3.0
+factory-boy>=3.3.0
+freezegun>=1.2.2
+responses>=0.23.1
+
+# Coverage & Reporting
+coverage[toml]>=7.3.0
+coverage-badge>=1.1.0
+
+# Type Checking Stubs
+types-requests>=2.31.0
+types-aiofiles>=23.1.0
