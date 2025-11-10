@@ -1,0 +1,357 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Windows AI Update Manifest",
+  "description": "Schema for Windows AI update manifest files",
+  "type": "object",
+  "required": ["version", "releases"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Manifest format version",
+      "const": "1.0"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last manifest update"
+    },
+    "releases": {
+      "type": "array",
+      "description": "List of available releases",
+      "items": {
+        "$ref": "#/definitions/release"
+      }
+    },
+    "channels": {
+      "type": "object",
+      "description": "Release channels configuration",
+      "properties": {
+        "stable": {
+          "$ref": "#/definitions/channel"
+        },
+        "beta": {
+          "$ref": "#/definitions/channel"
+        },
+        "alpha": {
+          "$ref": "#/definitions/channel"
+        }
+      }
+    },
+    "updateServer": {
+      "type": "object",
+      "description": "Update server configuration",
+      "properties": {
+        "baseUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL for downloads"
+        },
+        "cdnUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "CDN URL for downloads"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "release": {
+      "type": "object",
+      "required": ["version", "releaseDate", "files", "changelog"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Semantic version (e.g., 1.2.3)",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+        },
+        "releaseDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 release date"
+        },
+        "releaseNotes": {
+          "type": "string",
+          "description": "Markdown-formatted release notes"
+        },
+        "channel": {
+          "type": "string",
+          "enum": ["stable", "beta", "alpha"],
+          "description": "Release channel",
+          "default": "stable"
+        },
+        "critical": {
+          "type": "boolean",
+          "description": "Critical update (security fix, major bug)",
+          "default": false
+        },
+        "requiresRestart": {
+          "type": "boolean",
+          "description": "Requires application restart",
+          "default": true
+        },
+        "minimumVersion": {
+          "type": "string",
+          "description": "Minimum version that can update to this version",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
+        },
+        "files": {
+          "type": "object",
+          "required": ["installer"],
+          "properties": {
+            "installer": {
+              "$ref": "#/definitions/file"
+            },
+            "delta": {
+              "type": "array",
+              "description": "Delta/incremental update files",
+              "items": {
+                "$ref": "#/definitions/deltaFile"
+              }
+            }
+          }
+        },
+        "changelog": {
+          "type": "object",
+          "properties": {
+            "added": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "New features"
+            },
+            "changed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Changes in existing functionality"
+            },
+            "deprecated": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Soon-to-be removed features"
+            },
+            "removed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Removed features"
+            },
+            "fixed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Bug fixes"
+            },
+            "security": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Security fixes"
+            }
+          }
+        },
+        "signatures": {
+          "type": "object",
+          "description": "Code signing signatures",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "description": "SHA-256 signature"
+            },
+            "thumbprint": {
+              "type": "string",
+              "description": "Certificate thumbprint"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional metadata",
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "buildNumber": {
+              "type": "string"
+            },
+            "commitHash": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "required": ["url", "size", "sha256"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Download URL (relative to baseUrl or absolute)"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$",
+          "description": "SHA-256 checksum (hex)"
+        },
+        "md5": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{32}$",
+          "description": "MD5 checksum (hex, optional)"
+        },
+        "signedUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Signed download URL (for authenticated downloads)"
+        },
+        "mirrors": {
+          "type": "array",
+          "description": "Mirror download URLs",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "deltaFile": {
+      "type": "object",
+      "required": ["fromVersion", "url", "size", "sha256"],
+      "properties": {
+        "fromVersion": {
+          "type": "string",
+          "description": "Base version for this delta update"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Download URL for delta file"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Delta file size in bytes"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$",
+          "description": "SHA-256 checksum (hex)"
+        },
+        "patchAlgorithm": {
+          "type": "string",
+          "enum": ["bsdiff", "xdelta", "courgette"],
+          "description": "Patch algorithm used",
+          "default": "bsdiff"
+        }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Channel display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Channel description"
+        },
+        "latestVersion": {
+          "type": "string",
+          "description": "Latest version in this channel"
+        },
+        "updateFrequency": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly"],
+          "description": "Expected update frequency"
+        },
+        "autoUpdate": {
+          "type": "boolean",
+          "description": "Auto-update enabled by default",
+          "default": true
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": "1.0",
+      "lastUpdated": "2025-01-10T12:00:00Z",
+      "updateServer": {
+        "baseUrl": "https://updates.windows-ai.example.com",
+        "cdnUrl": "https://cdn.windows-ai.example.com"
+      },
+      "channels": {
+        "stable": {
+          "name": "Stable",
+          "description": "Production-ready releases",
+          "latestVersion": "0.5.0",
+          "updateFrequency": "monthly",
+          "autoUpdate": true
+        },
+        "beta": {
+          "name": "Beta",
+          "description": "Pre-release testing",
+          "latestVersion": "0.6.0-beta.1",
+          "updateFrequency": "weekly",
+          "autoUpdate": false
+        }
+      },
+      "releases": [
+        {
+          "version": "0.5.0",
+          "releaseDate": "2025-01-10T00:00:00Z",
+          "channel": "stable",
+          "critical": false,
+          "requiresRestart": true,
+          "files": {
+            "installer": {
+              "url": "/releases/0.5.0/WindowsAI-Setup-0.5.0.exe",
+              "size": 157286400,
+              "sha256": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890"
+            }
+          },
+          "changelog": {
+            "added": [
+              "Complete Ollama plugin with model management",
+              "Plugin marketplace UI",
+              "Health monitoring dashboard"
+            ],
+            "changed": [
+              "Improved GUI performance",
+              "Updated settings UI"
+            ],
+            "fixed": [
+              "Fixed memory leak in model loading",
+              "Fixed service startup issues"
+            ]
+          },
+          "metadata": {
+            "author": "Windows AI Team",
+            "buildNumber": "445",
+            "commitHash": "00d5e17"
+          }
+        }
+      ]
+    }
+  ]
+}

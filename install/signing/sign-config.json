@@ -1,0 +1,71 @@
+{
+  "_comment": "Windows AI Code Signing Configuration",
+  "_description": "Configuration for signing Windows AI installer with Authenticode certificate",
+
+  "certificatePath": "",
+  "certificatePassword": "",
+  "timestampServer": "http://timestamp.digicert.com",
+
+  "timestampServers": {
+    "digicert": "http://timestamp.digicert.com",
+    "sectigo": "http://timestamp.sectigo.com",
+    "globalsign": "http://timestamp.globalsign.com/tsa/r6advanced1",
+    "certum": "http://time.certum.pl"
+  },
+
+  "production": {
+    "_comment": "Production certificate configuration",
+    "certificatePath": "",
+    "certificatePassword": "",
+    "timestampServer": "http://timestamp.digicert.com",
+    "requireValidation": true
+  },
+
+  "test": {
+    "_comment": "Test certificate configuration",
+    "certificatePath": "test-cert.pfx",
+    "certificatePassword": "test1234",
+    "timestampServer": "http://timestamp.digicert.com",
+    "requireValidation": false
+  },
+
+  "signing": {
+    "hashAlgorithm": "SHA256",
+    "timeoutSeconds": 300,
+    "retryAttempts": 3,
+    "retryDelaySeconds": 5
+  },
+
+  "verification": {
+    "enabled": true,
+    "requireValidChain": false,
+    "allowTestCertificates": true
+  },
+
+  "notes": {
+    "procurement": [
+      "For production releases, obtain a code signing certificate from a trusted CA:",
+      "- DigiCert (recommended): https://www.digicert.com/code-signing",
+      "- Sectigo: https://sectigo.com/ssl-certificates-tls/code-signing",
+      "- GlobalSign: https://www.globalsign.com/en/code-signing-certificate"
+    ],
+    "requirements": [
+      "Organization Validation (OV) or Extended Validation (EV) certificate required",
+      "EV certificates provide immediate SmartScreen reputation",
+      "OV certificates require building reputation over time",
+      "Certificate must support Authenticode signing"
+    ],
+    "storage": [
+      "Store certificates securely (never commit to version control)",
+      "Use environment variables or secure key storage for passwords",
+      "Consider using Azure Key Vault or AWS KMS for production",
+      "For CI/CD, use GitHub Secrets or similar secure storage"
+    ],
+    "timestamping": [
+      "Timestamp servers ensure signatures remain valid after cert expiration",
+      "Multiple timestamp servers provided as fallback options",
+      "If primary timestamp server fails, signing will fail",
+      "Consider implementing retry logic with alternate servers"
+    ]
+  }
+}
