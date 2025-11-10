@@ -118,6 +118,26 @@ class Plugin:
                     "name": "check_status",
                     "description": "Check if Ollama is running and accessible",
                     "parameters": {}
+                },
+                {
+                    "name": "batch_embeddings",
+                    "description": "Generate embeddings for multiple texts efficiently",
+                    "parameters": {
+                        "model": {"type": "string", "required": True, "description": "Embedding model (e.g., nomic-embed-text)"},
+                        "texts": {"type": "array", "required": True, "description": "List of texts to embed"},
+                        "batch_size": {"type": "number", "required": False, "description": "Batch size (default: 10)"}
+                    }
+                },
+                {
+                    "name": "rag_query",
+                    "description": "Perform RAG query on documents",
+                    "parameters": {
+                        "query": {"type": "string", "required": True, "description": "User query"},
+                        "documents": {"type": "array", "required": True, "description": "List of documents to search"},
+                        "model": {"type": "string", "required": False, "description": "LLM model (default: llama3.2:3b)"},
+                        "embed_model": {"type": "string", "required": False, "description": "Embedding model (default: nomic-embed-text)"},
+                        "top_k": {"type": "number", "required": False, "description": "Number of chunks to retrieve (default: 3)"}
+                    }
                 }
             ]
         }
@@ -134,7 +154,9 @@ class Plugin:
                 "chat": self._chat,
                 "generate": self._generate,
                 "embeddings": self._embeddings,
-                "check_status": self._check_status
+                "check_status": self._check_status,
+                "batch_embeddings": self.batch_embeddings,
+                "rag_query": self.rag_query
             }
 
             if action not in action_map:
@@ -460,6 +482,259 @@ class Plugin:
             return {
                 "status": "error",
                 "message": f"Embeddings error: {str(e)}"
+            }
+
+    # =========================================================================
+    # Advanced Embeddings and RAG Support
+    # =========================================================================
+
+    async def batch_embeddings(self, model: str, texts: List[str],
+                              batch_size: int = 10) -> Dict[str, Any]:
+        """
+        Generate embeddings for multiple texts efficiently
+
+        Args:
+            model: Embedding model name (e.g., nomic-embed-text)
+            texts: List of texts to embed
+            batch_size: Number of texts to process concurrently
+
+        Returns:
+            Dictionary with embeddings array and metadata
+        """
+        try:
+            all_embeddings = []
+            failed_indices = []
+
+            # Process in batches to avoid overwhelming the server
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i:i + batch_size]
+                tasks = [self._embeddings(model=model, text=text) for text in batch]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                for j, result in enumerate(results):
+                    if isinstance(result, Exception):
+                        failed_indices.append(i + j)
+                        all_embeddings.append(None)
+                    elif result.get("status") == "success":
+                        all_embeddings.append(result["embeddings"])
+                    else:
+                        failed_indices.append(i + j)
+                        all_embeddings.append(None)
+
+            success_count = len([e for e in all_embeddings if e is not None])
+
+            return {
+                "status": "success" if success_count > 0 else "error",
+                "embeddings": all_embeddings,
+                "total": len(texts),
+                "success_count": success_count,
+                "failed_indices": failed_indices,
+                "dimension": len(all_embeddings[0]) if all_embeddings and all_embeddings[0] else 0,
+                "model": model
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Batch embeddings error: {str(e)}"
+            }
+
+    async def similarity_search(self, query_embedding: List[float],
+                               document_embeddings: List[List[float]],
+                               top_k: int = 5) -> Dict[str, Any]:
+        """
+        Find most similar documents using cosine similarity
+
+        Args:
+            query_embedding: Query embedding vector
+            document_embeddings: List of document embedding vectors
+            top_k: Number of top results to return
+
+        Returns:
+            Dictionary with top matching indices and similarity scores
+        """
+        try:
+            import numpy as np
+
+            query = np.array(query_embedding)
+            docs = np.array(document_embeddings)
+
+            # Compute cosine similarity
+            query_norm = query / np.linalg.norm(query)
+            docs_norm = docs / np.linalg.norm(docs, axis=1, keepdims=True)
+            similarities = np.dot(docs_norm, query_norm)
+
+            # Get top k indices
+            top_indices = np.argsort(similarities)[::-1][:top_k]
+            top_scores = similarities[top_indices]
+
+            results = [
+                {"index": int(idx), "score": float(score)}
+                for idx, score in zip(top_indices, top_scores)
+            ]
+
+            return {
+                "status": "success",
+                "results": results,
+                "top_k": len(results)
+            }
+
+        except ImportError:
+            return {
+                "status": "error",
+                "message": "NumPy is required for similarity search. Install with: pip install numpy"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Similarity search error: {str(e)}"
+            }
+
+    async def embed_documents_for_rag(self, documents: List[str],
+                                     model: str = "nomic-embed-text",
+                                     chunk_size: int = 512,
+                                     overlap: int = 50) -> Dict[str, Any]:
+        """
+        Embed documents with chunking for RAG applications
+
+        Args:
+            documents: List of document texts
+            model: Embedding model to use
+            chunk_size: Maximum characters per chunk
+            overlap: Character overlap between chunks
+
+        Returns:
+            Dictionary with embeddings, chunks, and metadata
+        """
+        try:
+            # Chunk documents
+            all_chunks = []
+            chunk_metadata = []
+
+            for doc_idx, doc in enumerate(documents):
+                # Simple chunking by character count
+                chunks = []
+                start = 0
+                while start < len(doc):
+                    end = start + chunk_size
+                    chunk = doc[start:end]
+                    chunks.append(chunk)
+                    chunk_metadata.append({
+                        "doc_index": doc_idx,
+                        "chunk_index": len(chunks) - 1,
+                        "start": start,
+                        "end": min(end, len(doc))
+                    })
+                    start = end - overlap if end < len(doc) else len(doc)
+
+                all_chunks.extend(chunks)
+
+            # Generate embeddings for all chunks
+            embed_result = await self.batch_embeddings(model, all_chunks)
+
+            if embed_result["status"] != "success":
+                return embed_result
+
+            return {
+                "status": "success",
+                "embeddings": embed_result["embeddings"],
+                "chunks": all_chunks,
+                "metadata": chunk_metadata,
+                "total_chunks": len(all_chunks),
+                "total_documents": len(documents),
+                "model": model,
+                "dimension": embed_result.get("dimension", 0)
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Document embedding error: {str(e)}"
+            }
+
+    async def rag_query(self, query: str, documents: List[str],
+                       model: str = "llama3.2:3b",
+                       embed_model: str = "nomic-embed-text",
+                       top_k: int = 3) -> Dict[str, Any]:
+        """
+        Perform RAG (Retrieval-Augmented Generation) query
+
+        Args:
+            query: User query
+            documents: List of documents to search
+            model: LLM model for generation
+            embed_model: Embedding model for retrieval
+            top_k: Number of relevant chunks to retrieve
+
+        Returns:
+            Dictionary with answer and retrieved context
+        """
+        try:
+            # Embed query
+            query_result = await self._embeddings(model=embed_model, text=query)
+            if query_result["status"] != "success":
+                return query_result
+
+            query_embedding = query_result["embeddings"]
+
+            # Embed documents
+            doc_result = await self.embed_documents_for_rag(
+                documents=documents,
+                model=embed_model
+            )
+            if doc_result["status"] != "success":
+                return doc_result
+
+            doc_embeddings = [e for e in doc_result["embeddings"] if e is not None]
+            chunks = doc_result["chunks"]
+
+            # Find most relevant chunks
+            search_result = await self.similarity_search(
+                query_embedding=query_embedding,
+                document_embeddings=doc_embeddings,
+                top_k=top_k
+            )
+
+            if search_result["status"] != "success":
+                return search_result
+
+            # Build context from top chunks
+            context_chunks = [
+                chunks[result["index"]]
+                for result in search_result["results"]
+            ]
+            context = "\n\n".join(context_chunks)
+
+            # Generate answer with context
+            prompt = f"""Context information:
+{context}
+
+Question: {query}
+
+Please answer the question based on the context provided above."""
+
+            answer_result = await self._generate(
+                model=model,
+                prompt=prompt,
+                temperature=0.7
+            )
+
+            if answer_result["status"] != "success":
+                return answer_result
+
+            return {
+                "status": "success",
+                "answer": answer_result["generated_text"],
+                "context": context_chunks,
+                "relevant_chunks": search_result["results"],
+                "model": model,
+                "embed_model": embed_model
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"RAG query error: {str(e)}"
             }
 
     # =========================================================================
