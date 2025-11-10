@@ -36,6 +36,9 @@ from windows_ai.scheduler import (
 # Import plugin system
 from windows_ai.plugins.registry import PluginRegistry
 
+# Import model manager
+from windows_ai.model_manager import ModelManager
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -240,6 +243,9 @@ task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE)
 
 # Initialize plugin system
 plugin_registry = PluginRegistry(PLUGINS_DIR)
+
+# Initialize model manager
+model_manager = ModelManager()
 
 # =====================================================================
 # Automation Callbacks
@@ -687,6 +693,71 @@ async def delete_task(task_id: str):
 async def get_example_tasks():
     """Get example scheduled task configurations"""
     return {"examples": EXAMPLE_TASKS}
+
+# =====================================================================
+# Model Management Endpoints
+# =====================================================================
+
+@app.get("/models/available")
+async def list_available_models(
+    category: Optional[str] = None,
+    recommended_only: bool = False
+):
+    """List available models from catalog"""
+    models = await model_manager.list_available_models(
+        category=category,
+        recommended_only=recommended_only
+    )
+    return {"models": models, "count": len(models)}
+
+@app.get("/models/installed")
+async def list_installed_models():
+    """List installed models"""
+    models = await model_manager.list_installed_models()
+    return {"models": models, "count": len(models)}
+
+@app.get("/models/{model_id}")
+async def get_model_info(model_id: str):
+    """Get detailed model information"""
+    info = await model_manager.get_model_info(model_id)
+    if "status" in info and info["status"] == "error":
+        raise HTTPException(status_code=404, detail=info["message"])
+    return info
+
+@app.post("/models/{model_id}/download")
+async def download_model(model_id: str, background_tasks: BackgroundTasks):
+    """Download a model"""
+    # Start download in background
+    async def do_download():
+        await model_manager.download_model(model_id)
+
+    background_tasks.add_task(do_download)
+
+    return {
+        "status": "started",
+        "message": f"Download of {model_id} started",
+        "model_id": model_id
+    }
+
+@app.get("/models/{model_id}/download/status")
+async def get_download_status(model_id: str):
+    """Get download status for a model"""
+    status = model_manager.get_download_status(model_id)
+    if status:
+        return status
+    else:
+        return {
+            "status": "not_found",
+            "message": "No active download for this model"
+        }
+
+@app.delete("/models/{model_id}")
+async def delete_model(model_id: str):
+    """Delete an installed model"""
+    result = await model_manager.delete_model(model_id)
+    if result["status"] == "error":
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result
 
 # =====================================================================
 # Plugin System Endpoints
