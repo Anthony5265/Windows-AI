@@ -1342,6 +1342,215 @@ footer {
 }
 
 /* ==========================================
+   Update Notification
+   ========================================== */
+
+.update-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--shadow);
+  z-index: 9999;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(500px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.update-content {
+  padding: 16px;
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.update-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.update-dismiss-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.update-dismiss-btn:hover {
+  color: var(--text-primary);
+}
+
+.update-body {
+  margin-bottom: 16px;
+}
+
+.update-version {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.update-changelog {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.update-size {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.update-progress {
+  margin-top: 12px;
+}
+
+.update-progress-bar {
+  height: 4px;
+  background: var(--primary-color);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.update-progress-text {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.update-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.update-details-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.update-details-btn:hover {
+  background: var(--surface-hover);
+}
+
+.update-install-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  border: none;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.update-install-btn:hover {
+  background: var(--primary-hover);
+}
+
+.update-install-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Update Status in Settings */
+#updateStatus {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+#updateStatus.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+#updateStatus.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+#updateStatus.info {
+  background: rgba(0, 120, 212, 0.1);
+  color: var(--primary-color);
+}
+
+#checkNowBtn {
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+#checkNowBtn:hover {
+  background: var(--primary-hover);
+}
+
+#checkNowBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinner for installing state */
+.spinner {
+  border: 3px solid rgba(0, 120, 212, 0.3);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 16px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==========================================
    Models Tab
    ========================================== */
 

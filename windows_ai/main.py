@@ -39,6 +39,9 @@ from windows_ai.plugins.registry import PluginRegistry
 # Import model manager
 from windows_ai.model_manager import ModelManager
 
+# Import update system
+from windows_ai.updater.update_client import UpdateClient, UpdateStatus
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -48,9 +51,73 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Windows AI Backend",
-    description="Central backend service for Windows AI assistant",
-    version="0.1.0"
+    title="Windows AI Backend API",
+    description="""
+## Windows AI - Your Intelligent Windows Assistant
+
+This API provides comprehensive functionality for the Windows AI assistant including:
+
+* **Chat**: Conversational AI with streaming support and model selection
+* **Automation**: Folder watchers and scheduled tasks for workflow automation
+* **Plugins**: Extensible plugin system with dynamic loading and execution
+* **Models**: AI model management with download and configuration
+* **Updates**: Automatic update checking, downloading, and installation
+* **System**: System information and health monitoring
+
+### Getting Started
+
+1. Ensure the backend is running on `http://localhost:8010`
+2. Use the `/health` endpoint to verify connectivity
+3. Start chatting via `/chat` or explore automation via `/automation/*`
+
+### Interactive Documentation
+
+* **Swagger UI**: [http://localhost:8010/docs](http://localhost:8010/docs)
+* **ReDoc**: [http://localhost:8010/redoc](http://localhost:8010/redoc)
+    """,
+    version="0.5.0",
+    contact={
+        "name": "Windows AI Team",
+        "url": "https://github.com/yourorg/Windows-AI",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    openapi_tags=[
+        {
+            "name": "health",
+            "description": "Health check and system status endpoints"
+        },
+        {
+            "name": "chat",
+            "description": "Conversational AI endpoints with streaming support"
+        },
+        {
+            "name": "automation",
+            "description": "Folder watchers and scheduled tasks for automation"
+        },
+        {
+            "name": "plugins",
+            "description": "Plugin management and execution"
+        },
+        {
+            "name": "models",
+            "description": "AI model management and configuration"
+        },
+        {
+            "name": "updates",
+            "description": "Auto-update system for application updates"
+        },
+        {
+            "name": "config",
+            "description": "Application configuration management"
+        },
+        {
+            "name": "websocket",
+            "description": "Real-time WebSocket communication"
+        }
+    ]
 )
 
 # Enable CORS for Electron app
@@ -247,6 +314,9 @@ plugin_registry = PluginRegistry(PLUGINS_DIR)
 # Initialize model manager
 model_manager = ModelManager()
 
+# Initialize update client
+update_client = None  # Will be initialized on startup with config
+
 # =====================================================================
 # Automation Callbacks
 # =====================================================================
@@ -367,19 +437,56 @@ async def stream_llm(messages: List[Dict[str, str]], model: str = "gpt-3.5-turbo
 # API Endpoints
 # =====================================================================
 
-@app.get("/")
+@app.get("/", tags=["health"])
 async def root():
-    """Root endpoint - health check"""
+    """
+    Root endpoint - API health check
+
+    Returns basic information about the API including version and status.
+    Use this endpoint to verify the API is accessible and running.
+
+    **Example Response:**
+    ```json
+    {
+        "status": "running",
+        "service": "Windows AI Backend",
+        "version": "0.5.0",
+        "timestamp": "2025-01-10T12:00:00"
+    }
+    ```
+    """
     return {
         "status": "running",
         "service": "Windows AI Backend",
-        "version": "0.1.0",
+        "version": "0.5.0",
         "timestamp": datetime.now().isoformat()
     }
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
 async def health_check():
-    """Health check endpoint"""
+    """
+    Comprehensive health check
+
+    Returns detailed health status of all backend components including
+    database, AI service, and connected services. Use this for monitoring
+    and diagnostics.
+
+    **Returns:**
+    - `status`: Overall health status (healthy/degraded/offline)
+    - `services`: Health of individual services and components
+
+    **Example Response:**
+    ```json
+    {
+        "status": "healthy",
+        "services": {
+            "backend": "running",
+            "agenthub": "connected",
+            "agent": "available"
+        }
+    }
+    ```
+    """
     return {
         "status": "healthy",
         "services": {
@@ -900,6 +1007,225 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("WebSocket connection closed")
 
 # =====================================================================
+# Update Management Endpoints
+# =====================================================================
+
+@app.get("/updates/status", tags=["updates"])
+async def get_update_status():
+    """
+    Get current update status
+
+    Returns the current status of the auto-update system including:
+    - Current version
+    - Update availability
+    - Download progress (if downloading)
+    - Update channel configuration
+
+    **Example Response:**
+    ```json
+    {
+        "status": "available",
+        "current_version": "0.5.0",
+        "available_update": {
+            "version": "0.6.0",
+            "size": 160000000,
+            "changelog": {...}
+        },
+        "download_progress": 0
+    }
+    ```
+    """
+    if update_client is None:
+        return {
+            "status": "disabled",
+            "message": "Update system not initialized"
+        }
+
+    return update_client.get_status_info()
+
+@app.post("/updates/check", tags=["updates"])
+async def check_for_updates():
+    """
+    Check for available updates
+
+    Manually trigger an update check against the update server.
+    Returns information about available updates if found.
+
+    **Returns:**
+    - `update_available`: Boolean indicating if update exists
+    - `update_info`: Detailed information about the update
+    - `status`: Current update system status
+
+    **Example Response:**
+    ```json
+    {
+        "update_available": true,
+        "update_info": {
+            "version": "0.6.0",
+            "release_date": "2025-02-01T00:00:00Z",
+            "size": 160000000,
+            "changelog": {
+                "added": ["New feature 1"],
+                "fixed": ["Bug fix 1"]
+            }
+        },
+        "status": "available"
+    }
+    ```
+    """
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    try:
+        update_info = await update_client.check_for_updates()
+        return {
+            "update_available": update_info is not None,
+            "update_info": update_info.to_dict() if update_info else None,
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error checking for updates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/updates/download", tags=["updates"])
+async def download_update():
+    """
+    Download available update
+
+    Starts downloading the available update to local storage.
+    Progress can be monitored via the `/updates/status` endpoint.
+
+    **Prerequisites:**
+    - An update must be available (check via `/updates/check`)
+
+    **Example Response:**
+    ```json
+    {
+        "success": true,
+        "installer_path": "C:\\Users\\...\\WindowsAI-Setup-0.6.0.exe",
+        "status": "downloaded"
+    }
+    ```
+    """
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    if update_client.available_update is None:
+        raise HTTPException(status_code=400, detail="No update available to download")
+
+    try:
+        installer_path = await update_client.download_update()
+        return {
+            "success": installer_path is not None,
+            "installer_path": str(installer_path) if installer_path else None,
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error downloading update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/updates/install", tags=["updates"])
+async def install_update():
+    """
+    Install downloaded update
+
+    Launches the update installer. The application will be closed and
+    restarted automatically by the installer.
+
+    **Prerequisites:**
+    - Update must be downloaded (via `/updates/download`)
+
+    **Warning:** This will restart the application!
+
+    **Example Response:**
+    ```json
+    {
+        "success": true,
+        "message": "Update installation started",
+        "status": "installing"
+    }
+    ```
+    """
+    if update_client is None:
+        raise HTTPException(status_code=503, detail="Update system not initialized")
+
+    try:
+        success = await update_client.install_update()
+        return {
+            "success": success,
+            "message": "Update installation started" if success else "Failed to start installation",
+            "status": update_client.status.value
+        }
+    except Exception as e:
+        logger.error(f"Error installing update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/updates/preferences", tags=["updates"])
+async def get_update_preferences():
+    """
+    Get update preferences
+
+    Returns the current auto-update configuration including:
+    - Auto-check enabled/disabled
+    - Auto-download enabled/disabled
+    - Update channel (stable/beta/alpha)
+    - Check interval in hours
+
+    **Example Response:**
+    ```json
+    {
+        "auto_check": true,
+        "auto_download": true,
+        "channel": "stable",
+        "check_interval_hours": 6
+    }
+    ```
+    """
+    config = config_manager.get_config()
+    return config.get("update_preferences", {
+        "auto_check": True,
+        "auto_download": True,
+        "channel": "stable",
+        "check_interval_hours": 6
+    })
+
+@app.post("/updates/preferences", tags=["updates"])
+async def set_update_preferences(preferences: Dict[str, Any]):
+    """
+    Update update preferences
+
+    Configure auto-update settings including check frequency,
+    auto-download behavior, and update channel.
+
+    **Request Body:**
+    ```json
+    {
+        "auto_check": true,
+        "auto_download": true,
+        "channel": "stable",
+        "check_interval_hours": 6
+    }
+    ```
+
+    **Channels:**
+    - `stable`: Production releases (recommended)
+    - `beta`: Pre-release versions
+    - `alpha`: Experimental builds
+    """
+    config = config_manager.get_config()
+    config["update_preferences"] = preferences
+    config_manager.save_config()
+
+    # Reconfigure update client if running
+    global update_client
+    if update_client:
+        update_client.channel = preferences.get("channel", "stable")
+        update_client.auto_download = preferences.get("auto_download", True)
+        update_client.check_interval = timedelta(hours=preferences.get("check_interval_hours", 6))
+
+    return {"message": "Update preferences saved", "preferences": preferences}
+
+# =====================================================================
 # Startup/Shutdown Events
 # =====================================================================
 
@@ -923,6 +1249,40 @@ async def startup_event():
     await plugin_registry.load_plugins()
     await plugin_registry.initialize_plugins()
     logger.info(f"Plugins loaded: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
+
+    # Initialize update client
+    logger.info("Initializing update system...")
+    global update_client
+    try:
+        config = config_manager.get_config()
+        update_prefs = config.get("update_preferences", {
+            "auto_check": True,
+            "auto_download": True,
+            "channel": "stable",
+            "check_interval_hours": 6
+        })
+
+        # Get current version from package
+        current_version = app.version  # Or read from VERSION file
+
+        update_client = UpdateClient(
+            current_version=current_version,
+            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
+            channel=update_prefs.get("channel", "stable"),
+            auto_download=update_prefs.get("auto_download", True),
+            check_interval_hours=update_prefs.get("check_interval_hours", 6)
+        )
+
+        # Start background update checker if auto-check enabled
+        if update_prefs.get("auto_check", True):
+            asyncio.create_task(update_client.run_background_checker())
+            logger.info("Update background checker started")
+        else:
+            logger.info("Automatic update checking disabled")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize update system: {e}")
+        logger.warning("Continuing without update system")
 
     logger.info("Backend is ready!")
 

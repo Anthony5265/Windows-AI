@@ -1282,6 +1282,17 @@ async function loadSettingsFromBackend() {
 
       updateStatus('Settings loaded from backend');
     }
+
+    // Load update preferences
+    const updateResponse = await fetch(`${BACKEND_URL}/updates/preferences`);
+    if (updateResponse.ok) {
+      const prefs = await updateResponse.json();
+      document.getElementById('autoCheck').checked = prefs.auto_check !== false;
+      document.getElementById('autoDownload').checked = prefs.auto_download !== false;
+      document.getElementById('updateChannel').value = prefs.channel || 'stable';
+      document.getElementById('checkInterval').value = prefs.check_interval_hours || 6;
+    }
+
   } catch (error) {
     console.error('Error loading settings from backend:', error);
   }
@@ -1337,16 +1348,66 @@ document.getElementById('saveCfg').addEventListener('click', async () => {
       temperature: config.model.temperature
     });
 
-    if (backendSaved) {
+    // Save update preferences
+    const updatePrefs = {
+      auto_check: document.getElementById('autoCheck').checked,
+      auto_download: document.getElementById('autoDownload').checked,
+      channel: document.getElementById('updateChannel').value,
+      check_interval_hours: parseInt(document.getElementById('checkInterval').value)
+    };
+
+    const updateResponse = await fetch(`${BACKEND_URL}/updates/preferences`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatePrefs)
+    });
+
+    if (backendSaved && updateResponse.ok) {
       alert('Settings saved successfully!');
       applyTheme(config.ui.theme);
       updateStatus('Settings saved');
     } else {
-      alert('Settings saved locally, but failed to sync with backend');
+      alert('Settings saved locally, but some backend settings may not have synced');
     }
   } catch (error) {
     alert('Error saving settings: ' + error.message);
     updateStatus('Error saving settings');
+  }
+});
+
+// Check for updates now button
+document.getElementById('checkNowBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('checkNowBtn');
+  const statusEl = document.getElementById('updateStatus');
+
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  statusEl.textContent = '';
+  statusEl.className = '';
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/updates/check`, {
+      method: 'POST'
+    });
+
+    const data = await response.json();
+
+    if (data.update_available && data.update_info) {
+      statusEl.textContent = `Update available: v${data.update_info.version}`;
+      statusEl.className = 'info';
+      // The update notification will be shown by updater.js
+    } else {
+      statusEl.textContent = 'You are up to date!';
+      statusEl.className = 'success';
+    }
+
+  } catch (error) {
+    console.error('Error checking for updates:', error);
+    statusEl.textContent = 'Error checking for updates';
+    statusEl.className = 'error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check for Updates Now';
   }
 });
 
