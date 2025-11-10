@@ -1340,3 +1340,214 @@ footer {
 .toggle-slider:hover {
   opacity: 0.9;
 }
+
+/* ==========================================
+   Models Tab
+   ========================================== */
+
+.models-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.models-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.models-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.models-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.models-filter select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.model-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.model-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.model-card.installed {
+  border-color: var(--success);
+}
+
+.model-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.model-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.model-info {
+  flex: 1;
+}
+
+.model-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.model-category {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+}
+
+.model-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.model-badge.recommended {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.model-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.model-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.model-size {
+  background: var(--background);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.model-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.capability-tag {
+  padding: 0.25rem 0.5rem;
+  background: var(--background);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.model-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* Button Variants */
+.btn-danger {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.badge-success {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Progress Bars */
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--background);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.download-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
