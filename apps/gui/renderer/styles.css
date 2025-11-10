@@ -1760,3 +1760,185 @@ footer {
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* ==========================================
+   Chat Toolbar (Search & Export)
+   ========================================== */
+
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-input {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+.toolbar-btn {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn:hover {
+  background: var(--surface-hover);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.toolbar-btn svg {
+  stroke: currentColor;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.export-format-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.export-format-select:focus {
+  border-color: var(--primary-color);
+}
+
+/* ==========================================
+   Conversation List Enhancements
+   ========================================== */
+
+.conversation-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.conversation-item-wrapper.active {
+  background: var(--surface-hover);
+  border-radius: 8px;
+}
+
+.conversation-item {
+  flex: 1;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-item:hover {
+  background: var(--surface-hover);
+}
+
+.conversation-delete-btn {
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+  line-height: 1;
+}
+
+.conversation-item-wrapper:hover .conversation-delete-btn {
+  opacity: 1;
+}
+
+.conversation-delete-btn:hover {
+  background: var(--error);
+  color: white;
+}
+
+/* ==========================================
+   Search Highlighting
+   ========================================== */
+
+.search-highlight {
+  background: rgba(255, 235, 59, 0.3);
+  border-left: 3px solid var(--warning);
+  animation: highlight-pulse 1s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% {
+    background: rgba(255, 235, 59, 0.3);
+  }
+  50% {
+    background: rgba(255, 235, 59, 0.5);
+  }
+}
+
+/* ==========================================
+   Connection Status Indicators
+   ========================================== */
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
