@@ -186,6 +186,107 @@
           </div>
         </div>
       </div>
+
+      <!-- Workflow Templates Section -->
+      <div class="automation-section">
+        <div class="section-header">
+          <h3>📋 Workflow Templates</h3>
+          <button id="refreshTemplatesBtn" class="add-btn">🔄 Refresh</button>
+        </div>
+        <div id="templatesList" class="templates-grid">
+          <div class="template-card" data-template="download-organizer">
+            <div class="template-icon">📁</div>
+            <h4>Download Organizer</h4>
+            <p>Automatically organize downloads by file type</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+          <div class="template-card" data-template="daily-briefing">
+            <div class="template-icon">📰</div>
+            <h4>Daily Briefing</h4>
+            <p>Morning summary of calendar and tasks</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+          <div class="template-card" data-template="backup-automation">
+            <div class="template-icon">💾</div>
+            <h4>Backup Automation</h4>
+            <p>Scheduled backup of important folders</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+          <div class="template-card" data-template="screenshot-ocr">
+            <div class="template-icon">📸</div>
+            <h4>Screenshot OCR</h4>
+            <p>Auto-organize and extract text from screenshots</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+          <div class="template-card" data-template="log-analyzer">
+            <div class="template-icon">📊</div>
+            <h4>Log Analyzer</h4>
+            <p>Parse and alert on error logs</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+          <div class="template-card" data-template="disk-cleanup">
+            <div class="template-icon">🧹</div>
+            <h4>Disk Cleanup</h4>
+            <p>Automated temp file cleanup</p>
+            <button class="btn-small btn-primary">Use Template</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution History Section -->
+      <div class="automation-section">
+        <div class="section-header">
+          <h3>📜 Execution History</h3>
+          <div class="history-filters">
+            <select id="historyFilter">
+              <option value="all">All Automations</option>
+              <option value="watchers">Watchers Only</option>
+              <option value="tasks">Tasks Only</option>
+            </select>
+            <select id="historyStatus">
+              <option value="all">All Status</option>
+              <option value="success">Success Only</option>
+              <option value="error">Errors Only</option>
+            </select>
+            <button id="clearHistoryBtn" class="btn-small btn-secondary">Clear History</button>
+          </div>
+        </div>
+        <div id="executionHistory" class="execution-timeline">
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <p>No execution history yet</p>
+            <p class="hint">Automation executions will appear here</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automation Stats Dashboard -->
+      <div class="automation-section">
+        <div class="section-header">
+          <h3>📊 Statistics</h3>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalAutomations">0</div>
+            <div class="stat-label">Total Automations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="activeAutomations">0</div>
+            <div class="stat-label">Active Now</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="executionsToday">0</div>
+            <div class="stat-label">Executions Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="successRate">0%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

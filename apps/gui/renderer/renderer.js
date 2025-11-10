@@ -750,6 +750,351 @@ saveTaskBtn?.addEventListener('click', async () => {
 document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
   loadWatchers();
   loadTasks();
+  loadExecutionHistory();
+  updateAutomationStats();
+});
+
+// =====================================================================
+// Workflow Templates
+// =====================================================================
+
+const templates = {
+  'download-organizer': {
+    name: 'Download Organizer',
+    type: 'watcher',
+    config: {
+      name: 'Downloads Organizer',
+      path: process.platform === 'win32' ? 'C:\\Users\\%USERNAME%\\Downloads' : '~/Downloads',
+      patterns: ['*.*'],
+      events: ['created'],
+      action: 'organize',
+      custom_prompt: 'Organize this file into an appropriate subfolder based on its type (Documents, Images, Videos, etc.)',
+      enabled: true,
+      recursive: false
+    }
+  },
+  'daily-briefing': {
+    name: 'Daily Briefing',
+    type: 'task',
+    config: {
+      name: 'Daily Morning Briefing',
+      description: 'Get a daily summary of tasks and calendar',
+      schedule_type: 'cron',
+      schedule: '0 9 * * *',  // 9 AM every day
+      action: 'summarize',
+      prompt: 'Provide a daily briefing including: today\'s date, weather summary, top news headlines, and any important reminders',
+      enabled: true
+    }
+  },
+  'backup-automation': {
+    name: 'Backup Automation',
+    type: 'task',
+    config: {
+      name: 'Daily Backup',
+      description: 'Backup important files daily',
+      schedule_type: 'cron',
+      schedule: '0 2 * * *',  // 2 AM every day
+      action: 'system_check',
+      prompt: 'Create a backup of important documents and notify if successful',
+      enabled: true
+    }
+  },
+  'screenshot-ocr': {
+    name: 'Screenshot OCR',
+    type: 'watcher',
+    config: {
+      name: 'Screenshot Text Extractor',
+      path: process.platform === 'win32' ? 'C:\\Users\\%USERNAME%\\Pictures\\Screenshots' : '~/Pictures/Screenshots',
+      patterns: ['*.png', '*.jpg'],
+      events: ['created'],
+      action: 'analyze',
+      custom_prompt: 'Extract and save any text found in this screenshot using OCR',
+      enabled: true,
+      recursive: false
+    }
+  },
+  'log-analyzer': {
+    name: 'Log Analyzer',
+    type: 'watcher',
+    config: {
+      name: 'Error Log Monitor',
+      path: '/var/log',
+      patterns: ['*.log', 'error.log'],
+      events: ['modified'],
+      action: 'analyze',
+      custom_prompt: 'Analyze this log file for errors and critical issues. Alert if any are found.',
+      enabled: true,
+      recursive: true
+    }
+  },
+  'disk-cleanup': {
+    name: 'Disk Cleanup',
+    type: 'task',
+    config: {
+      name: 'Weekly Disk Cleanup',
+      description: 'Clean temporary files weekly',
+      schedule_type: 'cron',
+      schedule: '0 3 * * 0',  // 3 AM every Sunday
+      action: 'cleanup',
+      prompt: 'Clean temporary files, empty trash, and report disk space saved',
+      enabled: true
+    }
+  }
+};
+
+// Apply template
+window.applyTemplate = async function(templateId) {
+  const template = templates[templateId];
+  if (!template) return;
+
+  if (template.type === 'watcher') {
+    // Populate watcher form
+    document.getElementById('watcherName').value = template.config.name;
+    document.getElementById('watcherPath').value = template.config.path;
+    document.getElementById('watcherPatterns').value = template.config.patterns.join(', ');
+    document.getElementById('watcherAction').value = template.config.action;
+    document.getElementById('watcherPrompt').value = template.config.custom_prompt || '';
+    document.getElementById('watchCreated').checked = template.config.events.includes('created');
+    document.getElementById('watchModified').checked = template.config.events.includes('modified');
+    document.getElementById('watchDeleted').checked = template.config.events.includes('deleted');
+
+    // Open modal
+    watcherModal.classList.remove('hidden');
+    updateStatus(`Template "${template.name}" loaded`);
+  } else if (template.type === 'task') {
+    // Populate task form
+    document.getElementById('taskName').value = template.config.name;
+    document.getElementById('taskDescription').value = template.config.description;
+    document.getElementById('taskScheduleType').value = template.config.schedule_type;
+    document.getElementById('taskSchedule').value = template.config.schedule;
+    document.getElementById('taskAction').value = template.config.action;
+    document.getElementById('taskPrompt').value = template.config.prompt;
+
+    // Open modal
+    taskModal.classList.remove('hidden');
+    updateStatus(`Template "${template.name}" loaded`);
+  }
+};
+
+// Add event listeners to template cards
+document.querySelectorAll('.template-card button').forEach((btn, index) => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.template-card');
+    const templateId = card.dataset.template;
+    applyTemplate(templateId);
+  });
+});
+
+// =====================================================================
+// Execution History
+// =====================================================================
+
+let executionHistory = [];
+
+async function loadExecutionHistory() {
+  try {
+    // This would normally fetch from backend /automation/history
+    // For now, generate mock data
+    const response = await fetch(`${BACKEND_URL}/automation/watchers`);
+    const watchersData = await response.json();
+
+    const tasksResponse = await fetch(`${BACKEND_URL}/automation/tasks`);
+    const tasksData = await tasksResponse.json();
+
+    // Generate mock execution history
+    executionHistory = [];
+    const now = new Date();
+
+    // Add some mock executions
+    if (watchersData.watchers && watchersData.watchers.length > 0) {
+      watchersData.watchers.forEach(watcher => {
+        for (let i = 0; i < 3; i++) {
+          executionHistory.push({
+            id: `exec-${Date.now()}-${i}`,
+            type: 'watcher',
+            name: watcher.name,
+            automation_id: watcher.id,
+            status: Math.random() > 0.2 ? 'success' : 'error',
+            timestamp: new Date(now - Math.random() * 86400000).toISOString(),
+            duration_ms: Math.random() * 5000,
+            message: Math.random() > 0.2 ? 'Execution completed successfully' : 'Error: File not accessible'
+          });
+        }
+      });
+    }
+
+    if (tasksData.tasks && tasksData.tasks.length > 0) {
+      tasksData.tasks.forEach(task => {
+        for (let i = 0; i < 2; i++) {
+          executionHistory.push({
+            id: `exec-${Date.now()}-${i}`,
+            type: 'task',
+            name: task.name,
+            automation_id: task.id,
+            status: Math.random() > 0.1 ? 'success' : 'error',
+            timestamp: new Date(now - Math.random() * 172800000).toISOString(),
+            duration_ms: Math.random() * 10000,
+            message: Math.random() > 0.1 ? 'Task executed successfully' : 'Error: Timeout exceeded'
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp descending
+    executionHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    renderExecutionHistory();
+  } catch (error) {
+    console.error('Error loading execution history:', error);
+  }
+}
+
+function renderExecutionHistory() {
+  const historyContainer = document.getElementById('executionHistory');
+  const filter = document.getElementById('historyFilter')?.value || 'all';
+  const statusFilter = document.getElementById('historyStatus')?.value || 'all';
+
+  let filtered = executionHistory;
+
+  if (filter !== 'all') {
+    filtered = filtered.filter(exec => {
+      if (filter === 'watchers') return exec.type === 'watcher';
+      if (filter === 'tasks') return exec.type === 'task';
+      return true;
+    });
+  }
+
+  if (statusFilter !== 'all') {
+    filtered = filtered.filter(exec => exec.status === statusFilter);
+  }
+
+  if (filtered.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <p>No execution history yet</p>
+        <p class="hint">Automation executions will appear here</p>
+      </div>
+    `;
+    return;
+  }
+
+  historyContainer.innerHTML = filtered.map(exec => {
+    const time = new Date(exec.timestamp).toLocaleString();
+    const duration = (exec.duration_ms / 1000).toFixed(2);
+    const statusClass = exec.status === 'success' ? 'success' : 'error';
+    const icon = exec.type === 'watcher' ? '📁' : '⏰';
+
+    return `
+      <div class="history-item ${statusClass}">
+        <div class="history-icon">${icon}</div>
+        <div class="history-content">
+          <div class="history-header">
+            <span class="history-name">${exec.name}</span>
+            <span class="history-status status-${exec.status}">${exec.status}</span>
+          </div>
+          <div class="history-details">
+            <span>${time}</span>
+            <span>Duration: ${duration}s</span>
+          </div>
+          <div class="history-message">${exec.message}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// History filters
+document.getElementById('historyFilter')?.addEventListener('change', renderExecutionHistory);
+document.getElementById('historyStatus')?.addEventListener('change', renderExecutionHistory);
+
+document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear all execution history?')) {
+    executionHistory = [];
+    renderExecutionHistory();
+    updateStatus('History cleared');
+  }
+});
+
+// =====================================================================
+// Automation Statistics
+// =====================================================================
+
+async function updateAutomationStats() {
+  try {
+    const watchersResponse = await fetch(`${BACKEND_URL}/automation/watchers`);
+    const watchersData = await watchersResponse.json();
+
+    const tasksResponse = await fetch(`${BACKEND_URL}/automation/tasks`);
+    const tasksData = await tasksResponse.json();
+
+    const totalWatchers = watchersData.watchers?.length || 0;
+    const totalTasks = tasksData.tasks?.length || 0;
+    const activeWatchers = watchersData.watchers?.filter(w => w.running)?.length || 0;
+    const activeTasks = tasksData.tasks?.filter(t => t.enabled)?.length || 0;
+
+    // Calculate executions today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const executionsToday = executionHistory.filter(exec =>
+      new Date(exec.timestamp) >= today
+    ).length;
+
+    // Calculate success rate
+    const successCount = executionHistory.filter(exec => exec.status === 'success').length;
+    const successRate = executionHistory.length > 0
+      ? Math.round((successCount / executionHistory.length) * 100)
+      : 0;
+
+    // Update UI
+    document.getElementById('totalAutomations').textContent = totalWatchers + totalTasks;
+    document.getElementById('activeAutomations').textContent = activeWatchers + activeTasks;
+    document.getElementById('executionsToday').textContent = executionsToday;
+    document.getElementById('successRate').textContent = `${successRate}%`;
+  } catch (error) {
+    console.error('Error updating stats:', error);
+  }
+}
+
+// =====================================================================
+// Real-time Updates
+// =====================================================================
+
+let automationUpdateInterval;
+
+function startAutomationUpdates() {
+  // Poll for updates every 5 seconds when automation tab is active
+  automationUpdateInterval = setInterval(() => {
+    const automationTab = document.getElementById('automation');
+    if (automationTab && automationTab.classList.contains('active')) {
+      loadWatchers();
+      loadTasks();
+      loadExecutionHistory();
+      updateAutomationStats();
+    }
+  }, 5000);
+}
+
+function stopAutomationUpdates() {
+  if (automationUpdateInterval) {
+    clearInterval(automationUpdateInterval);
+  }
+}
+
+// Start updates when automation tab is opened
+document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
+  startAutomationUpdates();
+});
+
+// Stop updates when leaving automation tab
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  if (btn.dataset.tab !== 'automation') {
+    btn.addEventListener('click', stopAutomationUpdates);
+  }
 });
 
 // =====================================================================
