@@ -903,3 +903,428 @@ Create `plugin.json`:
 ---
 
 *Last updated: 2025-01-10 | Windows AI v0.5.0*
+
+---
+
+## Real-World Plugin Examples
+
+This section provides complete examples of production-ready plugins with best practices.
+
+### Example 1: Integration Plugin - Ollama Enhanced
+
+A comprehensive integration plugin for local LLM management:
+
+```python
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
+from typing import Dict, Any, Optional
+import httpx
+
+class OllamaEnhancedPlugin(IntegrationPlugin):
+    """Enhanced Ollama integration with advanced features"""
+
+    def __init__(self):
+        metadata = PluginMetadata(
+            id="ollama_enhanced",
+            name="Ollama Enhanced",
+            description="Complete Ollama integration for local AI models",
+            version="3.0.0",
+            author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
+            enabled=True,
+            icon="🦙",
+            tags=["llm", "local", "ollama", "ai"],
+            requirements=["httpx>=0.24.0"]
+        )
+        super().__init__(metadata)
+        
+        self.config = {
+            "base_url": "http://localhost:11434",
+            "timeout": 120.0
+        }
+        self.connected = False
+
+    async def initialize(self) -> bool:
+        """Initialize and check connection"""
+        status = await self._check_status()
+        self.connected = status.get("status") == "success"
+        return True
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to Ollama service"""
+        if "base_url" in credentials:
+            self.config["base_url"] = credentials["base_url"]
+        
+        status = await self._check_status()
+        self.connected = status.get("status") == "success"
+        return self.connected
+
+    async def disconnect(self) -> bool:
+        """Cleanup"""
+        self.connected = False
+        return True
+
+    async def execute(
+        self,
+        action: str,
+        parameters: Dict[str, Any],
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute plugin action"""
+        # Action routing
+        if action == "chat":
+            return await self._chat(**parameters)
+        elif action == "list_models":
+            return await self._list_models()
+        # ... more actions
+
+    async def _chat(self, model: str, message: str, **kwargs):
+        """Chat with model"""
+        async with httpx.AsyncClient(timeout=self.config["timeout"]) as client:
+            response = await client.post(
+                f"{self.config['base_url']}/api/chat",
+                json={"model": model, "messages": [
+                    {"role": "user", "content": message}
+                ]}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "success": True,
+                    "data": {
+                        "response": data["message"]["content"],
+                        "model": model
+                    }
+                }
+```
+
+**Key Features:**
+- ✅ Proper error handling
+- ✅ Async/await throughout
+- ✅ Type hints
+- ✅ Configuration management
+- ✅ Connection lifecycle
+
+### Example 2: Action Plugin - File Organizer
+
+An action plugin that processes user input:
+
+```python
+from windows_ai.plugins.base import ActionPlugin, PluginMetadata, PluginType
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+class WindowsFileOrganizerPlugin(ActionPlugin):
+    """Intelligently organize files"""
+
+    def __init__(self):
+        metadata = PluginMetadata(
+            id="windows_file_organizer",
+            name="Windows File Organizer",
+            description="Organize files by type, date, or size",
+            version="1.0.0",
+            author="Windows AI Team",
+            plugin_type=PluginType.ACTION,
+            enabled=True,
+            icon="📁",
+            tags=["files", "organization"]
+        )
+        super().__init__(metadata)
+
+    async def execute(
+        self,
+        input_data: Any,
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute file organization"""
+        directory = Path(input_data)
+        strategy = kwargs.get("strategy", "type")
+        dry_run = kwargs.get("dry_run", True)
+
+        # Validate input
+        if not directory.exists():
+            return {
+                "success": False,
+                "error": f"Directory not found: {directory}",
+                "message": "Please provide a valid directory"
+            }
+
+        # Scan files
+        files = self._scan_files(directory)
+
+        # Organize based on strategy
+        if strategy == "type":
+            plan = self._organize_by_type(files, directory)
+        elif strategy == "date":
+            plan = self._organize_by_date(files, directory)
+        # ... more strategies
+
+        # Execute or preview
+        if dry_run:
+            return {
+                "success": True,
+                "result": self._preview(plan),
+                "message": "Preview generated (no files moved)"
+            }
+        else:
+            return {
+                "success": True,
+                "result": await self._execute_plan(plan),
+                "message": "Files organized successfully"
+            }
+
+    def _scan_files(self, directory: Path):
+        """Scan directory for files"""
+        return list(directory.glob("*"))
+
+    def _organize_by_type(self, files, base_dir):
+        """Organize by file type"""
+        plan = {}
+        for file in files:
+            ext = file.suffix.lower()
+            category = self._get_category(ext)
+            # Build organization plan...
+        return plan
+
+    def get_schema(self) -> Dict[str, Any]:
+        """Return parameter schema"""
+        return {
+            "type": "object",
+            "properties": {
+                "directory": {"type": "string"},
+                "strategy": {
+                    "type": "string",
+                    "enum": ["type", "date", "size"]
+                },
+                "dry_run": {"type": "boolean", "default": True}
+            },
+            "required": ["directory"]
+        }
+```
+
+**Key Features:**
+- ✅ Input validation
+- ✅ Dry-run mode for safety
+- ✅ Clear error messages
+- ✅ JSON schema for parameters
+- ✅ Comprehensive return format
+
+### Example 3: Tool Plugin - Clipboard Manager
+
+A tool plugin for system utilities:
+
+```python
+from windows_ai.plugins.base import ToolPlugin, PluginMetadata, PluginType
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass, asdict
+from datetime import datetime
+
+@dataclass
+class ClipboardItem:
+    """Clipboard history item"""
+    id: str
+    content: str
+    timestamp: str
+    pinned: bool = False
+
+class WindowsClipboardManagerPlugin(ToolPlugin):
+    """Advanced clipboard management"""
+
+    def __init__(self):
+        metadata = PluginMetadata(
+            id="windows_clipboard_manager",
+            name="Windows Clipboard Manager",
+            description="Clipboard history with search and pin",
+            version="1.0.0",
+            author="Windows AI Team",
+            plugin_type=PluginType.TOOL,
+            enabled=True,
+            icon="📋",
+            tags=["clipboard", "productivity"]
+        )
+        super().__init__(metadata)
+
+        self.history: List[ClipboardItem] = []
+        self.max_history = 1000
+
+    async def execute(
+        self,
+        query: str,
+        parameters: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute clipboard operation"""
+        action = query.lower().replace(" ", "_")
+
+        # Route to handlers
+        handlers = {
+            "get_history": self._get_history,
+            "search": self._search,
+            "pin": self._pin,
+            "clear": self._clear
+        }
+
+        if action in handlers:
+            result = await handlers[action](**kwargs)
+            return {"success": True, "result": result}
+        else:
+            return {
+                "success": False,
+                "error": f"Unknown action: {action}"
+            }
+
+    async def _get_history(self, limit: int = 50):
+        """Get clipboard history"""
+        items = self.history[:limit]
+        return {
+            "items": [asdict(item) for item in items],
+            "total_count": len(self.history)
+        }
+
+    async def _search(self, search_query: str):
+        """Search clipboard history"""
+        query_lower = search_query.lower()
+        matches = [
+            item for item in self.history
+            if query_lower in item.content.lower()
+        ]
+        return {
+            "items": [asdict(item) for item in matches],
+            "query": search_query
+        }
+
+    async def shutdown(self):
+        """Cleanup and save history"""
+        await self._save_history()
+```
+
+**Key Features:**
+- ✅ State management
+- ✅ Data persistence
+- ✅ Search functionality
+- ✅ Proper cleanup
+
+## Plugin Best Practices Summary
+
+### 1. Error Handling
+
+Always handle errors gracefully:
+
+```python
+try:
+    result = await some_operation()
+    return {"success": True, "result": result}
+except SpecificError as e:
+    logger.error(f"Operation failed: {e}")
+    return {
+        "success": False,
+        "error": str(e),
+        "message": "User-friendly error message"
+    }
+```
+
+### 2. Configuration
+
+Use dataclasses for configuration:
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class PluginConfig:
+    api_url: str = "https://api.example.com"
+    timeout: float = 30.0
+    retry_count: int = 3
+```
+
+### 3. Logging
+
+Use structured logging:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info(f"Processing file: {file_path}")
+logger.warning(f"Deprecated feature used: {feature}")
+logger.error(f"Failed to connect: {error}", exc_info=True)
+```
+
+### 4. Testing
+
+Write comprehensive tests:
+
+```python
+import pytest
+
+class TestMyPlugin:
+    @pytest.fixture
+    async def plugin(self):
+        plugin = MyPlugin()
+        await plugin.initialize()
+        yield plugin
+        await plugin.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_basic_operation(self, plugin):
+        result = await plugin.execute("test", {})
+        assert result["success"] is True
+```
+
+### 5. Documentation
+
+Document your plugin:
+
+```python
+class MyPlugin(ActionPlugin):
+    """
+    My Plugin - Description
+    
+    Features:
+    - Feature 1
+    - Feature 2
+    
+    Usage:
+        plugin.execute("action", {"param": "value"})
+    
+    Returns:
+        Dict with success, result, message
+    """
+```
+
+## Plugin Checklist
+
+Before publishing your plugin:
+
+- [ ] Follows plugin base class architecture
+- [ ] Has comprehensive error handling
+- [ ] Includes type hints
+- [ ] Has proper async/await usage
+- [ ] Implements required abstract methods
+- [ ] Has JSON schema for parameters
+- [ ] Includes unit tests (80%+ coverage)
+- [ ] Has clear documentation
+- [ ] Handles cleanup in shutdown()
+- [ ] Logs important events
+- [ ] Validates all inputs
+- [ ] Returns consistent response format
+- [ ] Has version number following semver
+- [ ] Lists all requirements
+
+## Getting Help
+
+- **Documentation**: `docs/`
+- **Examples**: `windows_ai/plugins/builtin/`
+- **Tests**: `tests/plugins/`
+- **Issues**: GitHub Issues
+- **Discussions**: GitHub Discussions
+
+## Next Steps
+
+1. Review the example plugins in `windows_ai/plugins/builtin/`
+2. Create your own plugin using the templates
+3. Write tests for your plugin
+4. Share your plugin with the community!
+

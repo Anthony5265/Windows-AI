@@ -412,20 +412,98 @@
         <div class="plugins-stats">
           <span id="pluginsCount" class="stat-badge">0 plugins</span>
           <span id="pluginsActive" class="stat-badge active">0 active</span>
+          <span id="pluginsUpdates" class="stat-badge warning" style="display:none;">0 updates</span>
         </div>
-        <div class="plugins-filter">
-          <select id="pluginTypeFilter">
+        <div class="plugins-actions">
+          <input type="text" id="pluginSearchInput" placeholder="Search plugins..." class="plugin-search-input" />
+          <select id="pluginTypeFilter" class="plugin-filter-select">
             <option value="all">All Types</option>
             <option value="action">Actions</option>
             <option value="tool">Tools</option>
             <option value="integration">Integrations</option>
             <option value="automation">Automation</option>
           </select>
+          <button id="refreshPluginsBtn" class="toolbar-btn" title="Refresh Plugins">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </button>
         </div>
       </div>
 
+      <div class="plugins-tabs">
+        <button class="plugin-tab-btn active" data-plugin-tab="all">All Plugins</button>
+        <button class="plugin-tab-btn" data-plugin-tab="installed">Installed</button>
+        <button class="plugin-tab-btn" data-plugin-tab="featured">Featured</button>
+      </div>
+
       <div id="pluginsList" class="plugins-grid">
-        <!-- Plugins will be loaded here -->
+        <div class="loading-indicator">
+          <svg class="spinner" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          <p>Loading plugins...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plugin Detail Modal -->
+    <div id="pluginDetailModal" class="modal" style="display:none;">
+      <div class="modal-content plugin-detail-modal">
+        <button class="modal-close" id="closePluginModal">&times;</button>
+        <div class="plugin-detail-header">
+          <div class="plugin-detail-icon" id="pluginDetailIcon">🔌</div>
+          <div class="plugin-detail-title">
+            <h2 id="pluginDetailName">Plugin Name</h2>
+            <p class="plugin-detail-author">by <span id="pluginDetailAuthor">Author</span></p>
+          </div>
+          <div class="plugin-detail-actions">
+            <button id="pluginEnableBtn" class="btn-primary">Enable</button>
+            <button id="pluginDisableBtn" class="btn-secondary" style="display:none;">Disable</button>
+            <button id="pluginUpdateBtn" class="btn-warning" style="display:none;">Update</button>
+          </div>
+        </div>
+
+        <div class="plugin-detail-info">
+          <div class="plugin-detail-badge">
+            <span id="pluginDetailVersion">v1.0.0</span>
+          </div>
+          <div class="plugin-detail-badge">
+            <span id="pluginDetailType">Type</span>
+          </div>
+          <div class="plugin-detail-status" id="pluginDetailStatus">
+            <span class="status-indicator"></span>
+            <span class="status-text">Disabled</span>
+          </div>
+        </div>
+
+        <div class="plugin-detail-body">
+          <div class="plugin-detail-section">
+            <h3>Description</h3>
+            <p id="pluginDetailDescription">Plugin description goes here...</p>
+          </div>
+
+          <div class="plugin-detail-section">
+            <h3>Features</h3>
+            <ul id="pluginDetailFeatures">
+              <!-- Features will be listed here -->
+            </ul>
+          </div>
+
+          <div class="plugin-detail-section" id="pluginDetailRequirementsSection" style="display:none;">
+            <h3>Requirements</h3>
+            <div id="pluginDetailRequirements" class="plugin-requirements">
+              <!-- Requirements will be listed here -->
+            </div>
+          </div>
+
+          <div class="plugin-detail-section" id="pluginDetailTagsSection">
+            <h3>Tags</h3>
+            <div id="pluginDetailTags" class="plugin-tags">
+              <!-- Tags will be listed here -->
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -555,5 +633,6 @@
 </footer>
 
 <script src="./renderer.js"></script>
+<script src="./plugins-marketplace.js"></script>
 <script src="../updater.js"></script>
 </body></html>
