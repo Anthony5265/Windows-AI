@@ -1549,9 +1549,402 @@ function stopHealthMonitoring() {
   }
 })();
 
+// =====================================================================
+// Model Management
+// =====================================================================
+
+let allModels = [];
+let installedModels = [];
+let downloadSocket = null;
+let currentFilter = 'all';
+
+// Load models on page load
+async function loadModels() {
+  try {
+    // Load available models
+    const availableResponse = await fetch(`${BACKEND_URL}/models/available`);
+    if (availableResponse.ok) {
+      const data = await availableResponse.json();
+      allModels = data.models || [];
+    }
+
+    // Load installed models
+    const installedResponse = await fetch(`${BACKEND_URL}/models/installed`);
+    if (installedResponse.ok) {
+      const data = await installedResponse.json();
+      installedModels = data.models || [];
+    }
+
+    // Load system specs and recommendations
+    const recsResponse = await fetch(`${BACKEND_URL}/models/recommended`);
+    if (recsResponse.ok) {
+      const data = await recsResponse.json();
+      displaySystemInfo(data.system_specs);
+    }
+
+    // Update stats
+    updateModelStats();
+
+    // Render models
+    renderModels();
+
+  } catch (error) {
+    console.error('Error loading models:', error);
+    const modelsList = document.getElementById('modelsList');
+    if (modelsList) {
+      modelsList.innerHTML = `
+        <div class="error-state">
+          <p>Failed to load models. Make sure the backend is running.</p>
+          <button onclick="loadModels()">Retry</button>
+        </div>
+      `;
+    }
+  }
+}
+
+function updateModelStats() {
+  const availableCount = document.getElementById('modelsAvailable');
+  const installedCount = document.getElementById('modelsInstalled');
+
+  if (availableCount) {
+    availableCount.textContent = `${allModels.length} available`;
+  }
+
+  if (installedCount) {
+    const installed = allModels.filter(m => m.installed).length;
+    installedCount.textContent = `${installed} installed`;
+  }
+}
+
+function displaySystemInfo(specs) {
+  // This could be displayed in a tooltip or info panel
+  console.log('System specs:', specs);
+
+  // Add GPU info to UI if available
+  if (specs.gpu && specs.gpu.available) {
+    const statsDiv = document.querySelector('.models-stats');
+    if (statsDiv && !document.getElementById('gpuInfo')) {
+      const gpuBadge = document.createElement('span');
+      gpuBadge.id = 'gpuInfo';
+      gpuBadge.className = 'stat-badge gpu';
+      gpuBadge.textContent = `🎮 ${specs.gpu.name}`;
+      gpuBadge.title = `GPU Memory: ${specs.gpu.memory_gb}GB`;
+      statsDiv.appendChild(gpuBadge);
+    }
+  }
+}
+
+function renderModels() {
+  const modelsList = document.getElementById('modelsList');
+  if (!modelsList) return;
+
+  const categoryFilter = document.getElementById('modelCategoryFilter');
+  const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+
+  // Filter models
+  let filteredModels = allModels;
+  if (selectedCategory !== 'all') {
+    if (selectedCategory === 'recommended') {
+      filteredModels = allModels.filter(m => m.recommended);
+    } else {
+      filteredModels = allModels.filter(m => m.category === selectedCategory);
+    }
+  }
+
+  if (filteredModels.length === 0) {
+    modelsList.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <p>No models found</p>
+      </div>
+    `;
+    return;
+  }
+
+  modelsList.innerHTML = filteredModels.map(model => createModelCard(model)).join('');
+
+  // Add event listeners to model cards
+  filteredModels.forEach(model => {
+    const card = document.getElementById(`model-${model.id.replace(/[:.]/g, '-')}`);
+    if (card) {
+      card.addEventListener('click', () => showModelDetails(model));
+    }
+  });
+}
+
+function createModelCard(model) {
+  const modelId = model.id.replace(/[:.]/g, '-');
+  const isInstalled = model.installed || false;
+  const suitability = model.suitability || 'good';
+  const tier = model.tier || 2;
+
+  // Create badges
+  const badges = [];
+  if (model.recommended) badges.push('<span class="badge recommended">Recommended</span>');
+  if (isInstalled) badges.push('<span class="badge installed">Installed</span>');
+  if (tier === 1) badges.push('<span class="badge tier1">Essential</span>');
+  if (model.gpu_optimized) badges.push('<span class="badge gpu">GPU Ready</span>');
+
+  return `
+    <div id="model-${modelId}" class="model-card ${isInstalled ? 'installed' : ''}" data-suitability="${suitability}">
+      <div class="model-header">
+        <h3>${model.name}</h3>
+        <div class="model-badges">${badges.join('')}</div>
+      </div>
+      <p class="model-description">${model.description}</p>
+      <div class="model-info">
+        <span class="model-size">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          ${model.size}
+        </span>
+        <span class="model-ram">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01"/>
+          </svg>
+          ${model.ram_required}
+        </span>
+        ${model.category ? `<span class="model-category">${model.category}</span>` : ''}
+      </div>
+      <div class="model-actions">
+        ${isInstalled ?
+          '<button class="btn-secondary btn-small" onclick="event.stopPropagation(); deleteModel(\'' + model.id + '\')">Delete</button>' :
+          '<button class="btn-primary btn-small" onclick="event.stopPropagation(); downloadModel(\'' + model.id + '\')">Download</button>'
+        }
+      </div>
+    </div>
+  `;
+}
+
+function showModelDetails(model) {
+  const modal = document.getElementById('modelModal');
+  const modalTitle = document.getElementById('modelModalTitle');
+  const modalBody = document.getElementById('modelModalBody');
+  const modalAction = document.getElementById('modelModalAction');
+
+  if (!modal) return;
+
+  modalTitle.textContent = model.name;
+
+  modalBody.innerHTML = `
+    <div class="model-details">
+      <p>${model.description}</p>
+      <div class="model-specs">
+        <div class="spec-item">
+          <strong>Size:</strong> ${model.size}
+        </div>
+        <div class="spec-item">
+          <strong>RAM Required:</strong> ${model.ram_required}
+        </div>
+        <div class="spec-item">
+          <strong>Category:</strong> ${model.category}
+        </div>
+        <div class="spec-item">
+          <strong>Provider:</strong> ${model.provider}
+        </div>
+        <div class="spec-item">
+          <strong>Quantization:</strong> ${model.quantization}
+        </div>
+        ${model.capabilities ? `
+          <div class="spec-item">
+            <strong>Capabilities:</strong> ${model.capabilities.join(', ')}
+          </div>
+        ` : ''}
+        ${model.suitability ? `
+          <div class="spec-item">
+            <strong>Suitability for your system:</strong>
+            <span class="suitability-${model.suitability}">${model.suitability}</span>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  if (model.installed) {
+    modalAction.textContent = 'Delete';
+    modalAction.className = 'btn-secondary';
+    modalAction.onclick = () => {
+      modal.classList.add('hidden');
+      deleteModel(model.id);
+    };
+  } else {
+    modalAction.textContent = 'Download';
+    modalAction.className = 'btn-primary';
+    modalAction.onclick = () => {
+      modal.classList.add('hidden');
+      downloadModel(model.id);
+    };
+  }
+
+  modal.classList.remove('hidden');
+}
+
+async function downloadModel(modelId) {
+  const downloadModal = document.getElementById('downloadModal');
+  const downloadTitle = document.getElementById('downloadModalTitle');
+  const downloadModelName = document.getElementById('downloadModelName');
+  const downloadPercent = document.getElementById('downloadPercent');
+  const downloadProgressBar = document.getElementById('downloadProgressBar');
+  const downloadSpeed = document.getElementById('downloadSpeed');
+  const downloadSize = document.getElementById('downloadSize');
+
+  if (!downloadModal) return;
+
+  // Find model info
+  const model = allModels.find(m => m.id === modelId);
+  if (model) {
+    downloadModelName.textContent = model.name;
+  }
+
+  downloadTitle.textContent = 'Downloading Model';
+  downloadPercent.textContent = '0%';
+  downloadProgressBar.style.width = '0%';
+  downloadSpeed.textContent = 'Initializing...';
+  downloadSize.textContent = '';
+
+  downloadModal.classList.remove('hidden');
+
+  // Connect to WebSocket for progress updates
+  try {
+    if (downloadSocket) {
+      downloadSocket.close();
+    }
+
+    downloadSocket = new WebSocket(`ws://127.0.0.1:8010/ws/models/download`);
+
+    downloadSocket.onopen = () => {
+      console.log('Download WebSocket connected');
+      // Request download
+      downloadSocket.send(JSON.stringify({
+        type: 'download',
+        model_id: modelId
+      }));
+    };
+
+    downloadSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'progress') {
+        downloadPercent.textContent = `${data.percent}%`;
+        downloadProgressBar.style.width = `${data.percent}%`;
+        downloadSize.textContent = `${data.downloaded_mb}MB / ${data.total_mb}MB`;
+      } else if (data.type === 'complete') {
+        downloadPercent.textContent = '100%';
+        downloadProgressBar.style.width = '100%';
+        downloadSpeed.textContent = 'Complete!';
+
+        setTimeout(() => {
+          downloadModal.classList.add('hidden');
+          loadModels(); // Refresh model list
+        }, 1500);
+
+        if (downloadSocket) {
+          downloadSocket.close();
+          downloadSocket = null;
+        }
+      } else if (data.type === 'error') {
+        downloadSpeed.textContent = 'Error: ' + data.message;
+        console.error('Download error:', data.message);
+
+        setTimeout(() => {
+          downloadModal.classList.add('hidden');
+        }, 3000);
+      }
+    };
+
+    downloadSocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      downloadSpeed.textContent = 'Connection error';
+
+      setTimeout(() => {
+        downloadModal.classList.add('hidden');
+      }, 2000);
+    };
+
+    downloadSocket.onclose = () => {
+      console.log('Download WebSocket closed');
+    };
+
+  } catch (error) {
+    console.error('Error starting download:', error);
+    alert('Failed to start download: ' + error.message);
+    downloadModal.classList.add('hidden');
+  }
+}
+
+async function deleteModel(modelId) {
+  if (!confirm(`Are you sure you want to delete model ${modelId}? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/${modelId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete model');
+    }
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      alert('Model deleted successfully');
+      loadModels(); // Refresh model list
+    } else {
+      alert('Error: ' + result.message);
+    }
+
+  } catch (error) {
+    console.error('Error deleting model:', error);
+    alert('Failed to delete model: ' + error.message);
+  }
+}
+
+// Filter models by category
+const modelCategoryFilter = document.getElementById('modelCategoryFilter');
+if (modelCategoryFilter) {
+  modelCategoryFilter.addEventListener('change', () => {
+    renderModels();
+  });
+}
+
+// Cancel download
+const cancelDownload = document.getElementById('cancelDownload');
+if (cancelDownload) {
+  cancelDownload.addEventListener('click', () => {
+    if (downloadSocket) {
+      downloadSocket.close();
+      downloadSocket = null;
+    }
+    document.getElementById('downloadModal').classList.add('hidden');
+  });
+}
+
+// Load models when models tab is opened
+const modelsTab = document.querySelector('[data-tab="models"]');
+if (modelsTab) {
+  modelsTab.addEventListener('click', () => {
+    // Delay loading to ensure tab is visible
+    setTimeout(() => {
+      if (!allModels.length) {
+        loadModels();
+      }
+    }, 100);
+  });
+}
+
 // Cleanup on window close
 window.addEventListener('beforeunload', () => {
   stopHealthMonitoring();
+  if (downloadSocket) {
+    downloadSocket.close();
+  }
 });
 
 console.log('Windows AI Renderer initialized');
