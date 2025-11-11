@@ -42,6 +42,18 @@ from windows_ai.model_manager import ModelManager
 # Import update system
 from windows_ai.updater.update_client import UpdateClient, UpdateStatus
 
+# Import new AI capabilities
+from windows_ai.context_manager import (
+    get_context_manager, initialize_context_system, ContextualAwarenessSystem
+)
+from windows_ai.xai import (
+    get_xai_system, initialize_xai_system, ExplainableAI,
+    ActionType, ActionExplanation
+)
+from windows_ai.hotkeys import (
+    get_hotkey_manager, initialize_hotkey_system, GlobalHotkeyManager
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -116,6 +128,22 @@ This API provides comprehensive functionality for the Windows AI assistant inclu
         {
             "name": "websocket",
             "description": "Real-time WebSocket communication"
+        },
+        {
+            "name": "rag",
+            "description": "Retrieval-Augmented Generation for semantic search and knowledge base"
+        },
+        {
+            "name": "context",
+            "description": "Contextual awareness and persistent memory system"
+        },
+        {
+            "name": "xai",
+            "description": "Explainable AI - transparency and action explanations"
+        },
+        {
+            "name": "hotkeys",
+            "description": "Global hotkey configuration and management"
         }
     ]
 )
@@ -143,6 +171,11 @@ AGENTHUB_URL = os.getenv("AGENTHUB_URL", "http://localhost:8000")
 
 # Windows AI Agent URL
 AGENT_URL = os.getenv("AGENT_URL", "http://localhost:3001")
+
+# Global instances for new AI capabilities
+context_manager: Optional[ContextualAwarenessSystem] = None
+xai_system: Optional[ExplainableAI] = None
+hotkey_manager: Optional[GlobalHotkeyManager] = None
 
 # =====================================================================
 # Data Models
@@ -1548,16 +1581,242 @@ async def shutdown_event():
 # =====================================================================
 
 from windows_ai.integrations import router as integrations_router, initialize_integrations
+from windows_ai.rag.api import router as rag_router
 
 # Include integration routes
 app.include_router(integrations_router)
+app.include_router(rag_router)
+
+
+# =====================================================================
+# Helper Functions for New AI Capabilities
+# =====================================================================
+
+def _register_hotkey_actions():
+    """Register actions for global hotkeys"""
+    if not hotkey_manager:
+        return
+
+    # Define action callbacks
+    def toggle_window():
+        """Toggle Windows AI window visibility"""
+        logger.info("Hotkey action: Toggle window")
+        # Would send message to Electron GUI via WebSocket
+        # For now, just log
+
+    def show_command_palette():
+        """Show quick command palette"""
+        logger.info("Hotkey action: Show command palette")
+
+    def start_voice_input():
+        """Start voice input"""
+        logger.info("Hotkey action: Start voice input")
+
+    def screenshot_analyze():
+        """Take screenshot and analyze"""
+        logger.info("Hotkey action: Screenshot analyze")
+
+    def clipboard_assist():
+        """AI assist with clipboard"""
+        logger.info("Hotkey action: Clipboard assist")
+
+    # Register callbacks
+    hotkey_manager.register_action("toggle_window", toggle_window)
+    hotkey_manager.register_action("show_command_palette", show_command_palette)
+    hotkey_manager.register_action("start_voice_input", start_voice_input)
+    hotkey_manager.register_action("screenshot_analyze", screenshot_analyze)
+    hotkey_manager.register_action("clipboard_assist", clipboard_assist)
+
+    logger.info("Registered all hotkey actions")
+
+
+# =====================================================================
+# API Endpoints for New Capabilities
+# =====================================================================
+
+# Context & Memory Endpoints
+
+@app.get("/context/current", tags=["context"])
+async def get_current_context():
+    """
+    Get current user context
+
+    Returns:
+        Current context snapshot including active app, task category, system metrics
+    """
+    if not context_manager:
+        raise HTTPException(status_code=503, detail="Context manager not initialized")
+
+    context_data = context_manager.get_relevant_context(limit=10)
+    return {
+        "status": "success",
+        "context": context_data
+    }
+
+
+@app.post("/context/memory", tags=["context"])
+async def add_memory(
+    event_type: str,
+    content: str,
+    metadata: Optional[Dict[str, Any]] = None,
+    importance: int = 5
+):
+    """
+    Add entry to persistent memory
+
+    Args:
+        event_type: Type of event (interaction, preference, task, learning)
+        content: Content of memory entry
+        metadata: Optional metadata
+        importance: Importance score (1-10)
+    """
+    if not context_manager:
+        raise HTTPException(status_code=503, detail="Context manager not initialized")
+
+    context_manager.add_memory(event_type, content, metadata or {}, importance)
+
+    return {
+        "status": "success",
+        "message": "Memory added"
+    }
+
+
+@app.post("/context/learn_preference", tags=["context"])
+async def learn_preference(key: str, value: Any):
+    """
+    Store a user preference
+
+    Args:
+        key: Preference key
+        value: Preference value
+    """
+    if not context_manager:
+        raise HTTPException(status_code=503, detail="Context manager not initialized")
+
+    context_manager.learn_preference(key, value)
+
+    return {
+        "status": "success",
+        "message": f"Learned preference: {key}"
+    }
+
+
+# XAI Endpoints
+
+@app.get("/xai/history", tags=["xai"])
+async def get_action_history(limit: int = 50, action_type: Optional[str] = None):
+    """
+    Get AI action history
+
+    Args:
+        limit: Maximum number of actions to return
+        action_type: Filter by action type
+    """
+    if not xai_system:
+        raise HTTPException(status_code=503, detail="XAI system not initialized")
+
+    # Convert string to ActionType if provided
+    filter_type = None
+    if action_type:
+        try:
+            filter_type = ActionType(action_type)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid action type: {action_type}")
+
+    history = xai_system.get_action_history(limit=limit, action_type=filter_type)
+
+    return {
+        "status": "success",
+        "count": len(history),
+        "actions": history
+    }
+
+
+@app.get("/xai/explain/{action_id}", tags=["xai"])
+async def explain_action(action_id: str):
+    """
+    Explain a past AI action - "Why did you do that?"
+
+    Args:
+        action_id: ID of the action to explain
+    """
+    if not xai_system:
+        raise HTTPException(status_code=503, detail="XAI system not initialized")
+
+    explanation = xai_system.explain_past_action(action_id)
+
+    if not explanation:
+        raise HTTPException(status_code=404, detail="Action not found")
+
+    return {
+        "status": "success",
+        "explanation": explanation
+    }
+
+
+# Hotkey Endpoints
+
+@app.get("/hotkeys", tags=["hotkeys"])
+async def get_hotkeys():
+    """Get all configured hotkeys"""
+    if not hotkey_manager:
+        raise HTTPException(status_code=503, detail="Hotkey manager not initialized")
+
+    hotkeys = hotkey_manager.get_all_hotkeys()
+
+    return {
+        "status": "success",
+        "count": len(hotkeys),
+        "hotkeys": hotkeys
+    }
+
+
+@app.post("/hotkeys/{name}/toggle", tags=["hotkeys"])
+async def toggle_hotkey(name: str, enabled: bool):
+    """
+    Enable or disable a hotkey
+
+    Args:
+        name: Hotkey name
+        enabled: Whether to enable or disable
+    """
+    if not hotkey_manager:
+        raise HTTPException(status_code=503, detail="Hotkey manager not initialized")
+
+    hotkey_manager.enable_hotkey(name, enabled)
+
+    return {
+        "status": "success",
+        "message": f"Hotkey '{name}' {'enabled' if enabled else 'disabled'}"
+    }
+
+
+# =====================================================================
+# Integration Layer - IoT, Mesh, Model Discovery, Cloud Sync, Search
+# =====================================================================
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize all subsystems on startup"""
+    global context_manager, xai_system, hotkey_manager
+
     logger.info("Windows AI Backend starting up...")
     logger.info("Initializing integrations (IoT, Mesh, Models, Cloud, Search)...")
     initialize_integrations()
+
+    # Initialize new AI capabilities
+    logger.info("Initializing Contextual Awareness System...")
+    context_manager = initialize_context_system(DATA_DIR / "context", start_monitoring=True)
+
+    logger.info("Initializing Explainable AI (XAI) System...")
+    xai_system = initialize_xai_system(DATA_DIR / "xai")
+
+    logger.info("Initializing Global Hotkey System...")
+    hotkey_manager = initialize_hotkey_system(DATA_DIR / "hotkeys", start_listening=True)
+
+    # Register hotkey actions
+    _register_hotkey_actions()
+
     logger.info("Backend is ready!")
 
 # =====================================================================
