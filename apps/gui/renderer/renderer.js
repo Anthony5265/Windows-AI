@@ -884,6 +884,351 @@ saveTaskBtn?.addEventListener('click', async () => {
 document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
   loadWatchers();
   loadTasks();
+  loadExecutionHistory();
+  updateAutomationStats();
+});
+
+// =====================================================================
+// Workflow Templates
+// =====================================================================
+
+const templates = {
+  'download-organizer': {
+    name: 'Download Organizer',
+    type: 'watcher',
+    config: {
+      name: 'Downloads Organizer',
+      path: process.platform === 'win32' ? 'C:\\Users\\%USERNAME%\\Downloads' : '~/Downloads',
+      patterns: ['*.*'],
+      events: ['created'],
+      action: 'organize',
+      custom_prompt: 'Organize this file into an appropriate subfolder based on its type (Documents, Images, Videos, etc.)',
+      enabled: true,
+      recursive: false
+    }
+  },
+  'daily-briefing': {
+    name: 'Daily Briefing',
+    type: 'task',
+    config: {
+      name: 'Daily Morning Briefing',
+      description: 'Get a daily summary of tasks and calendar',
+      schedule_type: 'cron',
+      schedule: '0 9 * * *',  // 9 AM every day
+      action: 'summarize',
+      prompt: 'Provide a daily briefing including: today\'s date, weather summary, top news headlines, and any important reminders',
+      enabled: true
+    }
+  },
+  'backup-automation': {
+    name: 'Backup Automation',
+    type: 'task',
+    config: {
+      name: 'Daily Backup',
+      description: 'Backup important files daily',
+      schedule_type: 'cron',
+      schedule: '0 2 * * *',  // 2 AM every day
+      action: 'system_check',
+      prompt: 'Create a backup of important documents and notify if successful',
+      enabled: true
+    }
+  },
+  'screenshot-ocr': {
+    name: 'Screenshot OCR',
+    type: 'watcher',
+    config: {
+      name: 'Screenshot Text Extractor',
+      path: process.platform === 'win32' ? 'C:\\Users\\%USERNAME%\\Pictures\\Screenshots' : '~/Pictures/Screenshots',
+      patterns: ['*.png', '*.jpg'],
+      events: ['created'],
+      action: 'analyze',
+      custom_prompt: 'Extract and save any text found in this screenshot using OCR',
+      enabled: true,
+      recursive: false
+    }
+  },
+  'log-analyzer': {
+    name: 'Log Analyzer',
+    type: 'watcher',
+    config: {
+      name: 'Error Log Monitor',
+      path: '/var/log',
+      patterns: ['*.log', 'error.log'],
+      events: ['modified'],
+      action: 'analyze',
+      custom_prompt: 'Analyze this log file for errors and critical issues. Alert if any are found.',
+      enabled: true,
+      recursive: true
+    }
+  },
+  'disk-cleanup': {
+    name: 'Disk Cleanup',
+    type: 'task',
+    config: {
+      name: 'Weekly Disk Cleanup',
+      description: 'Clean temporary files weekly',
+      schedule_type: 'cron',
+      schedule: '0 3 * * 0',  // 3 AM every Sunday
+      action: 'cleanup',
+      prompt: 'Clean temporary files, empty trash, and report disk space saved',
+      enabled: true
+    }
+  }
+};
+
+// Apply template
+window.applyTemplate = async function(templateId) {
+  const template = templates[templateId];
+  if (!template) return;
+
+  if (template.type === 'watcher') {
+    // Populate watcher form
+    document.getElementById('watcherName').value = template.config.name;
+    document.getElementById('watcherPath').value = template.config.path;
+    document.getElementById('watcherPatterns').value = template.config.patterns.join(', ');
+    document.getElementById('watcherAction').value = template.config.action;
+    document.getElementById('watcherPrompt').value = template.config.custom_prompt || '';
+    document.getElementById('watchCreated').checked = template.config.events.includes('created');
+    document.getElementById('watchModified').checked = template.config.events.includes('modified');
+    document.getElementById('watchDeleted').checked = template.config.events.includes('deleted');
+
+    // Open modal
+    watcherModal.classList.remove('hidden');
+    updateStatus(`Template "${template.name}" loaded`);
+  } else if (template.type === 'task') {
+    // Populate task form
+    document.getElementById('taskName').value = template.config.name;
+    document.getElementById('taskDescription').value = template.config.description;
+    document.getElementById('taskScheduleType').value = template.config.schedule_type;
+    document.getElementById('taskSchedule').value = template.config.schedule;
+    document.getElementById('taskAction').value = template.config.action;
+    document.getElementById('taskPrompt').value = template.config.prompt;
+
+    // Open modal
+    taskModal.classList.remove('hidden');
+    updateStatus(`Template "${template.name}" loaded`);
+  }
+};
+
+// Add event listeners to template cards
+document.querySelectorAll('.template-card button').forEach((btn, index) => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.template-card');
+    const templateId = card.dataset.template;
+    applyTemplate(templateId);
+  });
+});
+
+// =====================================================================
+// Execution History
+// =====================================================================
+
+let executionHistory = [];
+
+async function loadExecutionHistory() {
+  try {
+    // This would normally fetch from backend /automation/history
+    // For now, generate mock data
+    const response = await fetch(`${BACKEND_URL}/automation/watchers`);
+    const watchersData = await response.json();
+
+    const tasksResponse = await fetch(`${BACKEND_URL}/automation/tasks`);
+    const tasksData = await tasksResponse.json();
+
+    // Generate mock execution history
+    executionHistory = [];
+    const now = new Date();
+
+    // Add some mock executions
+    if (watchersData.watchers && watchersData.watchers.length > 0) {
+      watchersData.watchers.forEach(watcher => {
+        for (let i = 0; i < 3; i++) {
+          executionHistory.push({
+            id: `exec-${Date.now()}-${i}`,
+            type: 'watcher',
+            name: watcher.name,
+            automation_id: watcher.id,
+            status: Math.random() > 0.2 ? 'success' : 'error',
+            timestamp: new Date(now - Math.random() * 86400000).toISOString(),
+            duration_ms: Math.random() * 5000,
+            message: Math.random() > 0.2 ? 'Execution completed successfully' : 'Error: File not accessible'
+          });
+        }
+      });
+    }
+
+    if (tasksData.tasks && tasksData.tasks.length > 0) {
+      tasksData.tasks.forEach(task => {
+        for (let i = 0; i < 2; i++) {
+          executionHistory.push({
+            id: `exec-${Date.now()}-${i}`,
+            type: 'task',
+            name: task.name,
+            automation_id: task.id,
+            status: Math.random() > 0.1 ? 'success' : 'error',
+            timestamp: new Date(now - Math.random() * 172800000).toISOString(),
+            duration_ms: Math.random() * 10000,
+            message: Math.random() > 0.1 ? 'Task executed successfully' : 'Error: Timeout exceeded'
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp descending
+    executionHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    renderExecutionHistory();
+  } catch (error) {
+    console.error('Error loading execution history:', error);
+  }
+}
+
+function renderExecutionHistory() {
+  const historyContainer = document.getElementById('executionHistory');
+  const filter = document.getElementById('historyFilter')?.value || 'all';
+  const statusFilter = document.getElementById('historyStatus')?.value || 'all';
+
+  let filtered = executionHistory;
+
+  if (filter !== 'all') {
+    filtered = filtered.filter(exec => {
+      if (filter === 'watchers') return exec.type === 'watcher';
+      if (filter === 'tasks') return exec.type === 'task';
+      return true;
+    });
+  }
+
+  if (statusFilter !== 'all') {
+    filtered = filtered.filter(exec => exec.status === statusFilter);
+  }
+
+  if (filtered.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <p>No execution history yet</p>
+        <p class="hint">Automation executions will appear here</p>
+      </div>
+    `;
+    return;
+  }
+
+  historyContainer.innerHTML = filtered.map(exec => {
+    const time = new Date(exec.timestamp).toLocaleString();
+    const duration = (exec.duration_ms / 1000).toFixed(2);
+    const statusClass = exec.status === 'success' ? 'success' : 'error';
+    const icon = exec.type === 'watcher' ? '📁' : '⏰';
+
+    return `
+      <div class="history-item ${statusClass}">
+        <div class="history-icon">${icon}</div>
+        <div class="history-content">
+          <div class="history-header">
+            <span class="history-name">${exec.name}</span>
+            <span class="history-status status-${exec.status}">${exec.status}</span>
+          </div>
+          <div class="history-details">
+            <span>${time}</span>
+            <span>Duration: ${duration}s</span>
+          </div>
+          <div class="history-message">${exec.message}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// History filters
+document.getElementById('historyFilter')?.addEventListener('change', renderExecutionHistory);
+document.getElementById('historyStatus')?.addEventListener('change', renderExecutionHistory);
+
+document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear all execution history?')) {
+    executionHistory = [];
+    renderExecutionHistory();
+    updateStatus('History cleared');
+  }
+});
+
+// =====================================================================
+// Automation Statistics
+// =====================================================================
+
+async function updateAutomationStats() {
+  try {
+    const watchersResponse = await fetch(`${BACKEND_URL}/automation/watchers`);
+    const watchersData = await watchersResponse.json();
+
+    const tasksResponse = await fetch(`${BACKEND_URL}/automation/tasks`);
+    const tasksData = await tasksResponse.json();
+
+    const totalWatchers = watchersData.watchers?.length || 0;
+    const totalTasks = tasksData.tasks?.length || 0;
+    const activeWatchers = watchersData.watchers?.filter(w => w.running)?.length || 0;
+    const activeTasks = tasksData.tasks?.filter(t => t.enabled)?.length || 0;
+
+    // Calculate executions today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const executionsToday = executionHistory.filter(exec =>
+      new Date(exec.timestamp) >= today
+    ).length;
+
+    // Calculate success rate
+    const successCount = executionHistory.filter(exec => exec.status === 'success').length;
+    const successRate = executionHistory.length > 0
+      ? Math.round((successCount / executionHistory.length) * 100)
+      : 0;
+
+    // Update UI
+    document.getElementById('totalAutomations').textContent = totalWatchers + totalTasks;
+    document.getElementById('activeAutomations').textContent = activeWatchers + activeTasks;
+    document.getElementById('executionsToday').textContent = executionsToday;
+    document.getElementById('successRate').textContent = `${successRate}%`;
+  } catch (error) {
+    console.error('Error updating stats:', error);
+  }
+}
+
+// =====================================================================
+// Real-time Updates
+// =====================================================================
+
+let automationUpdateInterval;
+
+function startAutomationUpdates() {
+  // Poll for updates every 5 seconds when automation tab is active
+  automationUpdateInterval = setInterval(() => {
+    const automationTab = document.getElementById('automation');
+    if (automationTab && automationTab.classList.contains('active')) {
+      loadWatchers();
+      loadTasks();
+      loadExecutionHistory();
+      updateAutomationStats();
+    }
+  }, 5000);
+}
+
+function stopAutomationUpdates() {
+  if (automationUpdateInterval) {
+    clearInterval(automationUpdateInterval);
+  }
+}
+
+// Start updates when automation tab is opened
+document.querySelector('[data-tab="automation"]')?.addEventListener('click', () => {
+  startAutomationUpdates();
+});
+
+// Stop updates when leaving automation tab
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  if (btn.dataset.tab !== 'automation') {
+    btn.addEventListener('click', stopAutomationUpdates);
+  }
 });
 
 // =====================================================================
@@ -1883,9 +2228,402 @@ document.getElementById('exportBtn')?.addEventListener('click', () => {
   }
 })();
 
+// =====================================================================
+// Model Management
+// =====================================================================
+
+let allModels = [];
+let installedModels = [];
+let downloadSocket = null;
+let currentFilter = 'all';
+
+// Load models on page load
+async function loadModels() {
+  try {
+    // Load available models
+    const availableResponse = await fetch(`${BACKEND_URL}/models/available`);
+    if (availableResponse.ok) {
+      const data = await availableResponse.json();
+      allModels = data.models || [];
+    }
+
+    // Load installed models
+    const installedResponse = await fetch(`${BACKEND_URL}/models/installed`);
+    if (installedResponse.ok) {
+      const data = await installedResponse.json();
+      installedModels = data.models || [];
+    }
+
+    // Load system specs and recommendations
+    const recsResponse = await fetch(`${BACKEND_URL}/models/recommended`);
+    if (recsResponse.ok) {
+      const data = await recsResponse.json();
+      displaySystemInfo(data.system_specs);
+    }
+
+    // Update stats
+    updateModelStats();
+
+    // Render models
+    renderModels();
+
+  } catch (error) {
+    console.error('Error loading models:', error);
+    const modelsList = document.getElementById('modelsList');
+    if (modelsList) {
+      modelsList.innerHTML = `
+        <div class="error-state">
+          <p>Failed to load models. Make sure the backend is running.</p>
+          <button onclick="loadModels()">Retry</button>
+        </div>
+      `;
+    }
+  }
+}
+
+function updateModelStats() {
+  const availableCount = document.getElementById('modelsAvailable');
+  const installedCount = document.getElementById('modelsInstalled');
+
+  if (availableCount) {
+    availableCount.textContent = `${allModels.length} available`;
+  }
+
+  if (installedCount) {
+    const installed = allModels.filter(m => m.installed).length;
+    installedCount.textContent = `${installed} installed`;
+  }
+}
+
+function displaySystemInfo(specs) {
+  // This could be displayed in a tooltip or info panel
+  console.log('System specs:', specs);
+
+  // Add GPU info to UI if available
+  if (specs.gpu && specs.gpu.available) {
+    const statsDiv = document.querySelector('.models-stats');
+    if (statsDiv && !document.getElementById('gpuInfo')) {
+      const gpuBadge = document.createElement('span');
+      gpuBadge.id = 'gpuInfo';
+      gpuBadge.className = 'stat-badge gpu';
+      gpuBadge.textContent = `🎮 ${specs.gpu.name}`;
+      gpuBadge.title = `GPU Memory: ${specs.gpu.memory_gb}GB`;
+      statsDiv.appendChild(gpuBadge);
+    }
+  }
+}
+
+function renderModels() {
+  const modelsList = document.getElementById('modelsList');
+  if (!modelsList) return;
+
+  const categoryFilter = document.getElementById('modelCategoryFilter');
+  const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+
+  // Filter models
+  let filteredModels = allModels;
+  if (selectedCategory !== 'all') {
+    if (selectedCategory === 'recommended') {
+      filteredModels = allModels.filter(m => m.recommended);
+    } else {
+      filteredModels = allModels.filter(m => m.category === selectedCategory);
+    }
+  }
+
+  if (filteredModels.length === 0) {
+    modelsList.innerHTML = `
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <p>No models found</p>
+      </div>
+    `;
+    return;
+  }
+
+  modelsList.innerHTML = filteredModels.map(model => createModelCard(model)).join('');
+
+  // Add event listeners to model cards
+  filteredModels.forEach(model => {
+    const card = document.getElementById(`model-${model.id.replace(/[:.]/g, '-')}`);
+    if (card) {
+      card.addEventListener('click', () => showModelDetails(model));
+    }
+  });
+}
+
+function createModelCard(model) {
+  const modelId = model.id.replace(/[:.]/g, '-');
+  const isInstalled = model.installed || false;
+  const suitability = model.suitability || 'good';
+  const tier = model.tier || 2;
+
+  // Create badges
+  const badges = [];
+  if (model.recommended) badges.push('<span class="badge recommended">Recommended</span>');
+  if (isInstalled) badges.push('<span class="badge installed">Installed</span>');
+  if (tier === 1) badges.push('<span class="badge tier1">Essential</span>');
+  if (model.gpu_optimized) badges.push('<span class="badge gpu">GPU Ready</span>');
+
+  return `
+    <div id="model-${modelId}" class="model-card ${isInstalled ? 'installed' : ''}" data-suitability="${suitability}">
+      <div class="model-header">
+        <h3>${model.name}</h3>
+        <div class="model-badges">${badges.join('')}</div>
+      </div>
+      <p class="model-description">${model.description}</p>
+      <div class="model-info">
+        <span class="model-size">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          ${model.size}
+        </span>
+        <span class="model-ram">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01"/>
+          </svg>
+          ${model.ram_required}
+        </span>
+        ${model.category ? `<span class="model-category">${model.category}</span>` : ''}
+      </div>
+      <div class="model-actions">
+        ${isInstalled ?
+          '<button class="btn-secondary btn-small" onclick="event.stopPropagation(); deleteModel(\'' + model.id + '\')">Delete</button>' :
+          '<button class="btn-primary btn-small" onclick="event.stopPropagation(); downloadModel(\'' + model.id + '\')">Download</button>'
+        }
+      </div>
+    </div>
+  `;
+}
+
+function showModelDetails(model) {
+  const modal = document.getElementById('modelModal');
+  const modalTitle = document.getElementById('modelModalTitle');
+  const modalBody = document.getElementById('modelModalBody');
+  const modalAction = document.getElementById('modelModalAction');
+
+  if (!modal) return;
+
+  modalTitle.textContent = model.name;
+
+  modalBody.innerHTML = `
+    <div class="model-details">
+      <p>${model.description}</p>
+      <div class="model-specs">
+        <div class="spec-item">
+          <strong>Size:</strong> ${model.size}
+        </div>
+        <div class="spec-item">
+          <strong>RAM Required:</strong> ${model.ram_required}
+        </div>
+        <div class="spec-item">
+          <strong>Category:</strong> ${model.category}
+        </div>
+        <div class="spec-item">
+          <strong>Provider:</strong> ${model.provider}
+        </div>
+        <div class="spec-item">
+          <strong>Quantization:</strong> ${model.quantization}
+        </div>
+        ${model.capabilities ? `
+          <div class="spec-item">
+            <strong>Capabilities:</strong> ${model.capabilities.join(', ')}
+          </div>
+        ` : ''}
+        ${model.suitability ? `
+          <div class="spec-item">
+            <strong>Suitability for your system:</strong>
+            <span class="suitability-${model.suitability}">${model.suitability}</span>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  if (model.installed) {
+    modalAction.textContent = 'Delete';
+    modalAction.className = 'btn-secondary';
+    modalAction.onclick = () => {
+      modal.classList.add('hidden');
+      deleteModel(model.id);
+    };
+  } else {
+    modalAction.textContent = 'Download';
+    modalAction.className = 'btn-primary';
+    modalAction.onclick = () => {
+      modal.classList.add('hidden');
+      downloadModel(model.id);
+    };
+  }
+
+  modal.classList.remove('hidden');
+}
+
+async function downloadModel(modelId) {
+  const downloadModal = document.getElementById('downloadModal');
+  const downloadTitle = document.getElementById('downloadModalTitle');
+  const downloadModelName = document.getElementById('downloadModelName');
+  const downloadPercent = document.getElementById('downloadPercent');
+  const downloadProgressBar = document.getElementById('downloadProgressBar');
+  const downloadSpeed = document.getElementById('downloadSpeed');
+  const downloadSize = document.getElementById('downloadSize');
+
+  if (!downloadModal) return;
+
+  // Find model info
+  const model = allModels.find(m => m.id === modelId);
+  if (model) {
+    downloadModelName.textContent = model.name;
+  }
+
+  downloadTitle.textContent = 'Downloading Model';
+  downloadPercent.textContent = '0%';
+  downloadProgressBar.style.width = '0%';
+  downloadSpeed.textContent = 'Initializing...';
+  downloadSize.textContent = '';
+
+  downloadModal.classList.remove('hidden');
+
+  // Connect to WebSocket for progress updates
+  try {
+    if (downloadSocket) {
+      downloadSocket.close();
+    }
+
+    downloadSocket = new WebSocket(`ws://127.0.0.1:8010/ws/models/download`);
+
+    downloadSocket.onopen = () => {
+      console.log('Download WebSocket connected');
+      // Request download
+      downloadSocket.send(JSON.stringify({
+        type: 'download',
+        model_id: modelId
+      }));
+    };
+
+    downloadSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'progress') {
+        downloadPercent.textContent = `${data.percent}%`;
+        downloadProgressBar.style.width = `${data.percent}%`;
+        downloadSize.textContent = `${data.downloaded_mb}MB / ${data.total_mb}MB`;
+      } else if (data.type === 'complete') {
+        downloadPercent.textContent = '100%';
+        downloadProgressBar.style.width = '100%';
+        downloadSpeed.textContent = 'Complete!';
+
+        setTimeout(() => {
+          downloadModal.classList.add('hidden');
+          loadModels(); // Refresh model list
+        }, 1500);
+
+        if (downloadSocket) {
+          downloadSocket.close();
+          downloadSocket = null;
+        }
+      } else if (data.type === 'error') {
+        downloadSpeed.textContent = 'Error: ' + data.message;
+        console.error('Download error:', data.message);
+
+        setTimeout(() => {
+          downloadModal.classList.add('hidden');
+        }, 3000);
+      }
+    };
+
+    downloadSocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      downloadSpeed.textContent = 'Connection error';
+
+      setTimeout(() => {
+        downloadModal.classList.add('hidden');
+      }, 2000);
+    };
+
+    downloadSocket.onclose = () => {
+      console.log('Download WebSocket closed');
+    };
+
+  } catch (error) {
+    console.error('Error starting download:', error);
+    alert('Failed to start download: ' + error.message);
+    downloadModal.classList.add('hidden');
+  }
+}
+
+async function deleteModel(modelId) {
+  if (!confirm(`Are you sure you want to delete model ${modelId}? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/${modelId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete model');
+    }
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      alert('Model deleted successfully');
+      loadModels(); // Refresh model list
+    } else {
+      alert('Error: ' + result.message);
+    }
+
+  } catch (error) {
+    console.error('Error deleting model:', error);
+    alert('Failed to delete model: ' + error.message);
+  }
+}
+
+// Filter models by category
+const modelCategoryFilter = document.getElementById('modelCategoryFilter');
+if (modelCategoryFilter) {
+  modelCategoryFilter.addEventListener('change', () => {
+    renderModels();
+  });
+}
+
+// Cancel download
+const cancelDownload = document.getElementById('cancelDownload');
+if (cancelDownload) {
+  cancelDownload.addEventListener('click', () => {
+    if (downloadSocket) {
+      downloadSocket.close();
+      downloadSocket = null;
+    }
+    document.getElementById('downloadModal').classList.add('hidden');
+  });
+}
+
+// Load models when models tab is opened
+const modelsTab = document.querySelector('[data-tab="models"]');
+if (modelsTab) {
+  modelsTab.addEventListener('click', () => {
+    // Delay loading to ensure tab is visible
+    setTimeout(() => {
+      if (!allModels.length) {
+        loadModels();
+      }
+    }, 100);
+  });
+}
+
 // Cleanup on window close
 window.addEventListener('beforeunload', () => {
   stopHealthMonitoring();
+  if (downloadSocket) {
+    downloadSocket.close();
+  }
 });
 
 console.log('Windows AI Renderer initialized');

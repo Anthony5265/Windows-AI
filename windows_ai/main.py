@@ -659,20 +659,175 @@ async def update_config(update: ConfigUpdate):
     config_manager.set(update.key, update.value)
     return {"status": "updated", "key": update.key, "value": update.value}
 
-@app.get("/models")
+@app.get("/models", tags=["models"])
 async def list_models():
-    """List available AI models"""
-    return {
-        "models": [
-            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "OpenAI"},
-            {"id": "gpt-4", "name": "GPT-4", "provider": "OpenAI"},
-            {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI"},
-            {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic"},
-            {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "Anthropic"},
-            {"id": "ollama/llama2", "name": "Llama 2 (Local)", "provider": "Ollama"},
-            {"id": "ollama/mistral", "name": "Mistral (Local)", "provider": "Ollama"},
+    """List available AI models (cloud and local)"""
+    # Cloud models
+    cloud_models = [
+        {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "OpenAI", "type": "cloud"},
+        {"id": "gpt-4", "name": "GPT-4", "provider": "OpenAI", "type": "cloud"},
+        {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "type": "cloud"},
+        {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic", "type": "cloud"},
+        {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "Anthropic", "type": "cloud"},
+    ]
+
+    # Local models
+    try:
+        installed_models = await model_manager.list_installed_models()
+        local_models = [
+            {
+                "id": f"ollama/{m['id']}",
+                "name": f"{m['name']} (Local)",
+                "provider": "Ollama",
+                "type": "local",
+                "size": m.get("size", "Unknown"),
+                "modified": m.get("modified")
+            }
+            for m in installed_models
         ]
-    }
+        all_models = cloud_models + local_models
+    except Exception as e:
+        logger.warning(f"Could not list local models: {e}")
+        all_models = cloud_models
+
+    return {"models": all_models}
+
+@app.get("/models/available", tags=["models"])
+async def get_available_models(
+    category: Optional[str] = None,
+    recommended_only: bool = False
+):
+    """
+    Get available models from catalog
+
+    Args:
+        category: Filter by category (general, coding, chat, lightweight, premium, embeddings)
+        recommended_only: Only show recommended models
+    """
+    try:
+        models = await model_manager.list_available_models(
+            category=category,
+            recommended_only=recommended_only
+        )
+        return {
+            "status": "success",
+            "models": models,
+            "count": len(models)
+        }
+    except Exception as e:
+        logger.error(f"Error listing available models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models/installed", tags=["models"])
+async def get_installed_models():
+    """Get all installed local models"""
+    try:
+        models = await model_manager.list_installed_models()
+        return {
+            "status": "success",
+            "models": models,
+            "count": len(models)
+        }
+    except Exception as e:
+        logger.error(f"Error listing installed models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models/recommended", tags=["models"])
+async def get_recommended_models():
+    """Get recommended models based on system specifications"""
+    try:
+        models = model_manager.get_recommended_models_for_system()
+        specs = model_manager.get_system_specs()
+
+        return {
+            "status": "success",
+            "models": models,
+            "count": len(models),
+            "system_specs": specs
+        }
+    except Exception as e:
+        logger.error(f"Error getting recommended models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models/{model_id}", tags=["models"])
+async def get_model_info(model_id: str):
+    """Get detailed information about a specific model"""
+    try:
+        info = await model_manager.get_model_info(model_id)
+        return {
+            "status": "success",
+            "model": info
+        }
+    except Exception as e:
+        logger.error(f"Error getting model info: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/models/download", tags=["models"])
+async def download_model(model_id: str, background_tasks: BackgroundTasks):
+    """
+    Download a model
+
+    Args:
+        model_id: Model identifier (e.g., llama3.2:3b)
+    """
+    try:
+        # Start download in background
+        async def download_task():
+            result = await model_manager.download_model(model_id)
+            logger.info(f"Model download result: {result}")
+
+        background_tasks.add_task(download_task)
+
+        return {
+            "status": "success",
+            "message": f"Started downloading model {model_id}",
+            "model_id": model_id
+        }
+    except Exception as e:
+        logger.error(f"Error starting model download: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/models/{model_id}", tags=["models"])
+async def delete_model(model_id: str):
+    """Delete an installed model"""
+    try:
+        result = await model_manager.delete_model(model_id)
+        return result
+    except Exception as e:
+        logger.error(f"Error deleting model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models/download/{model_id}/status", tags=["models"])
+async def get_download_status(model_id: str):
+    """Get download status for a model"""
+    try:
+        status = model_manager.get_download_status(model_id)
+        if status:
+            return {
+                "status": "success",
+                "download": status
+            }
+        else:
+            return {
+                "status": "not_found",
+                "message": f"No active download for model {model_id}"
+            }
+    except Exception as e:
+        logger.error(f"Error getting download status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/system/specs", tags=["models"])
+async def get_system_specs():
+    """Get system specifications (RAM, CPU, GPU)"""
+    try:
+        specs = model_manager.get_system_specs()
+        return {
+            "status": "success",
+            "specs": specs
+        }
+    except Exception as e:
+        logger.error(f"Error getting system specs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =====================================================================
 # Folder Watcher Endpoints
@@ -1005,6 +1160,86 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
     finally:
         logger.info("WebSocket connection closed")
+
+@app.websocket("/ws/models/download")
+async def model_download_websocket(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time model download progress
+
+    Messages:
+    - Client sends: {"type": "download", "model_id": "llama3.2:3b"}
+    - Server sends: {"type": "progress", "model_id": "...", "percent": 25, "downloaded": 500MB, "total": 2GB}
+    - Server sends: {"type": "complete", "model_id": "...", "status": "success"}
+    """
+    await websocket.accept()
+    logger.info("Model download WebSocket connection established")
+
+    try:
+        while True:
+            # Receive message from client
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+
+            if message_data.get("type") == "download":
+                model_id = message_data.get("model_id")
+                if not model_id:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "model_id is required"
+                    })
+                    continue
+
+                # Start download with progress callback
+                async def progress_callback(percent, downloaded, total):
+                    await websocket.send_json({
+                        "type": "progress",
+                        "model_id": model_id,
+                        "percent": percent,
+                        "downloaded": downloaded,
+                        "total": total,
+                        "downloaded_mb": round(downloaded / (1024**2), 2),
+                        "total_mb": round(total / (1024**2), 2) if total > 0 else 0
+                    })
+
+                # Start download
+                result = await model_manager.download_model(
+                    model_id=model_id,
+                    progress_callback=progress_callback
+                )
+
+                # Send completion message
+                await websocket.send_json({
+                    "type": "complete" if result["status"] == "success" else "error",
+                    "model_id": model_id,
+                    "status": result["status"],
+                    "message": result.get("message", "Download completed")
+                })
+
+            elif message_data.get("type") == "status":
+                # Get download status
+                model_id = message_data.get("model_id")
+                status = model_manager.get_download_status(model_id) if model_id else None
+                await websocket.send_json({
+                    "type": "status",
+                    "model_id": model_id,
+                    "download": status
+                })
+
+            elif message_data.get("type") == "ping":
+                # Respond to ping
+                await websocket.send_json({"type": "pong"})
+
+    except Exception as e:
+        logger.error(f"Model download WebSocket error: {e}")
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "message": str(e)
+            })
+        except:
+            pass
+    finally:
+        logger.info("Model download WebSocket connection closed")
 
 # =====================================================================
 # Update Management Endpoints

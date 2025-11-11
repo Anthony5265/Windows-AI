@@ -8,11 +8,15 @@ Features:
 - Manage installed models
 - Model metadata and capabilities
 - Multi-source support (Ollama, Hugging Face)
+- System specs detection for model recommendations
 """
 
 import os
 import asyncio
 import logging
+import platform
+import psutil
+import subprocess
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 import httpx
@@ -43,108 +47,356 @@ class ModelManager:
         # Download progress tracking
         self.downloads: Dict[str, Dict[str, Any]] = {}
 
+        # System specs cache
+        self._system_specs: Optional[Dict[str, Any]] = None
+
+    # =========================================================================
+    # System Specs Detection
+    # =========================================================================
+
+    def get_system_specs(self) -> Dict[str, Any]:
+        """
+        Get system specifications for model recommendations
+
+        Returns:
+            Dictionary containing RAM, CPU, GPU info
+        """
+        if self._system_specs:
+            return self._system_specs
+
+        specs = {
+            "platform": platform.system(),
+            "platform_version": platform.version(),
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+        }
+
+        # RAM information
+        try:
+            mem = psutil.virtual_memory()
+            specs["ram_total_gb"] = round(mem.total / (1024**3), 2)
+            specs["ram_available_gb"] = round(mem.available / (1024**3), 2)
+            specs["ram_percent_used"] = mem.percent
+        except Exception as e:
+            logger.warning(f"Could not detect RAM: {e}")
+            specs["ram_total_gb"] = 0
+            specs["ram_available_gb"] = 0
+
+        # CPU information
+        try:
+            specs["cpu_count"] = psutil.cpu_count(logical=True)
+            specs["cpu_physical_cores"] = psutil.cpu_count(logical=False)
+            specs["cpu_freq_mhz"] = psutil.cpu_freq().max if psutil.cpu_freq() else 0
+        except Exception as e:
+            logger.warning(f"Could not detect CPU: {e}")
+            specs["cpu_count"] = 0
+
+        # GPU detection
+        specs["gpu"] = self._detect_gpu()
+
+        # Disk space for models directory
+        try:
+            disk = psutil.disk_usage(str(self.models_dir))
+            specs["disk_free_gb"] = round(disk.free / (1024**3), 2)
+            specs["disk_total_gb"] = round(disk.total / (1024**3), 2)
+        except Exception as e:
+            logger.warning(f"Could not detect disk space: {e}")
+            specs["disk_free_gb"] = 0
+
+        self._system_specs = specs
+        return specs
+
+    def _detect_gpu(self) -> Dict[str, Any]:
+        """
+        Detect GPU information (NVIDIA, AMD, Intel, Apple Silicon)
+
+        Returns:
+            Dictionary with GPU type, memory, and capabilities
+        """
+        gpu_info = {
+            "available": False,
+            "type": "none",
+            "name": "CPU Only",
+            "memory_gb": 0,
+            "cuda": False,
+            "metal": False,
+            "rocm": False
+        }
+
+        system = platform.system()
+
+        # Check for NVIDIA GPU (CUDA)
+        try:
+            if system in ["Linux", "Windows"]:
+                result = subprocess.run(
+                    ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3
+                )
+                if result.returncode == 0 and result.stdout:
+                    lines = result.stdout.strip().split("\n")
+                    if lines:
+                        parts = lines[0].split(",")
+                        gpu_info["available"] = True
+                        gpu_info["type"] = "nvidia"
+                        gpu_info["name"] = parts[0].strip()
+                        gpu_info["cuda"] = True
+                        if len(parts) > 1:
+                            mem_str = parts[1].strip().split()[0]
+                            gpu_info["memory_gb"] = round(int(mem_str) / 1024, 2)
+                        return gpu_info
+        except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+            logger.debug(f"NVIDIA GPU not detected: {e}")
+
+        # Check for Apple Silicon (Metal)
+        if system == "Darwin" and platform.machine() == "arm64":
+            gpu_info["available"] = True
+            gpu_info["type"] = "apple_silicon"
+            gpu_info["name"] = "Apple Silicon GPU"
+            gpu_info["metal"] = True
+            # Apple Silicon shares RAM with GPU
+            try:
+                mem = psutil.virtual_memory()
+                gpu_info["memory_gb"] = round(mem.total / (1024**3), 2)
+            except:
+                pass
+            return gpu_info
+
+        # Check for AMD GPU (ROCm)
+        try:
+            if system == "Linux":
+                result = subprocess.run(
+                    ["rocm-smi", "--showproductname"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3
+                )
+                if result.returncode == 0 and result.stdout:
+                    gpu_info["available"] = True
+                    gpu_info["type"] = "amd"
+                    gpu_info["name"] = "AMD GPU"
+                    gpu_info["rocm"] = True
+                    return gpu_info
+        except (FileNotFoundError, subprocess.TimeoutExpired, Exception) as e:
+            logger.debug(f"AMD GPU not detected: {e}")
+
+        # Fallback: Try to detect integrated GPU on Windows
+        if system == "Windows":
+            try:
+                import wmi
+                c = wmi.WMI()
+                for gpu in c.Win32_VideoController():
+                    if gpu.Name:
+                        gpu_info["available"] = True
+                        gpu_info["type"] = "integrated"
+                        gpu_info["name"] = gpu.Name
+                        if gpu.AdapterRAM:
+                            gpu_info["memory_gb"] = round(int(gpu.AdapterRAM) / (1024**3), 2)
+                        return gpu_info
+            except Exception as e:
+                logger.debug(f"Could not detect Windows GPU: {e}")
+
+        return gpu_info
+
+    def get_recommended_models_for_system(self) -> List[Dict[str, Any]]:
+        """
+        Get recommended models based on system specifications
+
+        Returns:
+            List of recommended model metadata
+        """
+        specs = self.get_system_specs()
+        ram_gb = specs.get("ram_total_gb", 0)
+        gpu_available = specs.get("gpu", {}).get("available", False)
+
+        # Filter models based on RAM requirements
+        suitable_models = []
+        for model in self.model_catalog:
+            ram_required_str = model.get("ram_required", "0 GB")
+            ram_required = float(ram_required_str.split()[0])
+
+            # Check if system has enough RAM (with 2GB buffer)
+            if ram_gb >= (ram_required + 2):
+                model_copy = model.copy()
+
+                # Add suitability score
+                if ram_gb >= ram_required * 2:
+                    model_copy["suitability"] = "excellent"
+                elif ram_gb >= ram_required * 1.5:
+                    model_copy["suitability"] = "good"
+                else:
+                    model_copy["suitability"] = "minimum"
+
+                # Boost score for GPU-accelerated systems
+                if gpu_available and model_copy.get("tier") in [2, 3]:
+                    model_copy["gpu_optimized"] = True
+
+                suitable_models.append(model_copy)
+
+        # Sort by tier (lower is better for recommendations) and recommended flag
+        suitable_models.sort(key=lambda m: (m.get("tier", 99), not m.get("recommended", False)))
+
+        return suitable_models
+
+    # =========================================================================
+    # Model Catalog
+    # =========================================================================
+
     def _load_model_catalog(self) -> List[Dict[str, Any]]:
-        """Load curated model catalog"""
+        """Load curated model catalog with latest models"""
         return [
+            # Tier 1: Essential (Auto-install on first run)
             {
-                "id": "llama2:7b",
-                "name": "Llama 2 7B",
+                "id": "llama3.2:1b",
+                "name": "Llama 3.2 1B",
                 "provider": "ollama",
-                "size": "3.8 GB",
-                "description": "Meta's Llama 2 model - excellent general-purpose assistant",
+                "size": "1.3 GB",
+                "ram_required": "2 GB",
+                "description": "Ultra-fast, minimal resource model - perfect for quick tasks",
                 "capabilities": ["chat", "generation"],
                 "recommended": True,
-                "category": "general"
+                "tier": 1,
+                "category": "lightweight",
+                "quantization": "Q4"
+            },
+            {
+                "id": "llama3.2:3b",
+                "name": "Llama 3.2 3B",
+                "provider": "ollama",
+                "size": "2.0 GB",
+                "ram_required": "4 GB",
+                "description": "Fast, general-purpose model with excellent quality - recommended default",
+                "capabilities": ["chat", "generation"],
+                "recommended": True,
+                "tier": 1,
+                "category": "general",
+                "quantization": "Q4"
+            },
+
+            # Tier 2: Performance (User-selected)
+            {
+                "id": "llama3.1:8b",
+                "name": "Llama 3.1 8B",
+                "provider": "ollama",
+                "size": "4.7 GB",
+                "ram_required": "8 GB",
+                "description": "High-quality chat model with excellent reasoning capabilities",
+                "capabilities": ["chat", "generation", "reasoning"],
+                "recommended": True,
+                "tier": 2,
+                "category": "general",
+                "quantization": "Q4"
             },
             {
                 "id": "mistral:7b",
                 "name": "Mistral 7B",
                 "provider": "ollama",
                 "size": "4.1 GB",
-                "description": "High-performance 7B model with excellent instruction following",
+                "ram_required": "8 GB",
+                "description": "Balanced performance with excellent instruction following",
                 "capabilities": ["chat", "generation"],
                 "recommended": True,
-                "category": "general"
+                "tier": 2,
+                "category": "general",
+                "quantization": "Q4"
+            },
+            {
+                "id": "deepseek-coder:6.7b",
+                "name": "DeepSeek Coder 6.7B",
+                "provider": "ollama",
+                "size": "3.8 GB",
+                "ram_required": "8 GB",
+                "description": "Code specialist with excellent programming capabilities",
+                "capabilities": ["code", "generation", "analysis"],
+                "recommended": True,
+                "tier": 2,
+                "category": "coding",
+                "quantization": "Q4"
+            },
+
+            # Tier 3: Advanced (Power users)
+            {
+                "id": "llama3.1:70b",
+                "name": "Llama 3.1 70B",
+                "provider": "ollama",
+                "size": "40 GB",
+                "ram_required": "64 GB",
+                "description": "Maximum quality responses - requires powerful hardware",
+                "capabilities": ["chat", "generation", "reasoning", "analysis"],
+                "recommended": False,
+                "tier": 3,
+                "category": "premium",
+                "quantization": "Q4"
+            },
+            {
+                "id": "codellama:34b",
+                "name": "Code Llama 34B",
+                "provider": "ollama",
+                "size": "19 GB",
+                "ram_required": "32 GB",
+                "description": "Advanced coding model for complex programming tasks",
+                "capabilities": ["code", "generation", "debugging", "analysis"],
+                "recommended": False,
+                "tier": 3,
+                "category": "coding",
+                "quantization": "Q4"
+            },
+
+            # Embeddings
+            {
+                "id": "nomic-embed-text",
+                "name": "Nomic Embed Text",
+                "provider": "ollama",
+                "size": "274 MB",
+                "ram_required": "1 GB",
+                "description": "High-quality text embeddings for RAG and semantic search",
+                "capabilities": ["embeddings", "rag"],
+                "recommended": True,
+                "tier": 1,
+                "category": "embeddings",
+                "quantization": "FP16"
+            },
+
+            # Legacy models (for compatibility)
+            {
+                "id": "llama2:7b",
+                "name": "Llama 2 7B",
+                "provider": "ollama",
+                "size": "3.8 GB",
+                "ram_required": "8 GB",
+                "description": "Legacy Llama 2 model - consider upgrading to Llama 3.2",
+                "capabilities": ["chat", "generation"],
+                "recommended": False,
+                "tier": 2,
+                "category": "general",
+                "quantization": "Q4"
             },
             {
                 "id": "codellama:7b",
                 "name": "Code Llama 7B",
                 "provider": "ollama",
                 "size": "3.8 GB",
-                "description": "Specialized for code generation and programming tasks",
+                "ram_required": "8 GB",
+                "description": "Legacy code model - consider DeepSeek Coder for better results",
                 "capabilities": ["code", "generation"],
-                "recommended": True,
-                "category": "coding"
+                "recommended": False,
+                "tier": 2,
+                "category": "coding",
+                "quantization": "Q4"
             },
             {
                 "id": "phi:2.7b",
                 "name": "Phi 2.7B",
                 "provider": "ollama",
                 "size": "1.6 GB",
-                "description": "Microsoft's compact but capable model - fast and efficient",
-                "capabilities": ["chat", "generation"],
-                "recommended": True,
-                "category": "lightweight"
-            },
-            {
-                "id": "llama2:13b",
-                "name": "Llama 2 13B",
-                "provider": "ollama",
-                "size": "7.3 GB",
-                "description": "Larger Llama 2 model with improved capabilities",
+                "ram_required": "4 GB",
+                "description": "Microsoft's compact model - fast and efficient",
                 "capabilities": ["chat", "generation"],
                 "recommended": False,
-                "category": "general"
-            },
-            {
-                "id": "codellama:13b",
-                "name": "Code Llama 13B",
-                "provider": "ollama",
-                "size": "7.3 GB",
-                "description": "Larger code model for complex programming tasks",
-                "capabilities": ["code", "generation"],
-                "recommended": False,
-                "category": "coding"
-            },
-            {
-                "id": "neural-chat:7b",
-                "name": "Neural Chat 7B",
-                "provider": "ollama",
-                "size": "4.1 GB",
-                "description": "Optimized for conversational AI",
-                "capabilities": ["chat"],
-                "recommended": False,
-                "category": "chat"
-            },
-            {
-                "id": "orca-mini:3b",
-                "name": "Orca Mini 3B",
-                "provider": "ollama",
-                "size": "1.9 GB",
-                "description": "Compact model fine-tuned from Llama 2",
-                "capabilities": ["chat", "generation"],
-                "recommended": False,
-                "category": "lightweight"
-            },
-            {
-                "id": "vicuna:7b",
-                "name": "Vicuna 7B",
-                "provider": "ollama",
-                "size": "3.8 GB",
-                "description": "Fine-tuned Llama model with strong instruction following",
-                "capabilities": ["chat", "generation"],
-                "recommended": False,
-                "category": "general"
-            },
-            {
-                "id": "llama2:70b",
-                "name": "Llama 2 70B",
-                "provider": "ollama",
-                "size": "39 GB",
-                "description": "Largest Llama 2 model - highest quality responses (requires powerful hardware)",
-                "capabilities": ["chat", "generation"],
-                "recommended": False,
-                "category": "premium"
+                "tier": 1,
+                "category": "lightweight",
+                "quantization": "Q4"
             }
         ]
 
