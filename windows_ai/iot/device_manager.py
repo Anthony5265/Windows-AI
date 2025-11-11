@@ -1,12 +1,14 @@
 """
 IoT Device Manager Module
-Device discovery, registration, and management
+Device discovery, registration, and management with persistent storage
 """
 from typing import Dict, Any, List, Optional
 import logging
 import json
 import time
 import socket
+import os
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +54,24 @@ class Device:
 
 
 class DeviceManager:
-    """Production IoT device management"""
+    """Production IoT device management with persistent storage"""
 
-    def __init__(self):
+    def __init__(self, storage_path: str = None):
         self.devices = {}
         self.device_groups = {}
+
+        # Set up persistent storage
+        if storage_path is None:
+            # Use default path in user's home directory
+            storage_dir = Path.home() / ".windows_ai" / "iot"
+            storage_dir.mkdir(parents=True, exist_ok=True)
+            self.storage_path = storage_dir / "devices.json"
+        else:
+            self.storage_path = Path(storage_path)
+            self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Load existing devices
+        self._load_devices()
 
     def register_device(self, device_id: str, device_type: str, **kwargs) -> Dict[str, Any]:
         """
@@ -85,6 +100,9 @@ class DeviceManager:
             device = Device(device_id, device_type, **kwargs)
             self.devices[device_id] = device
 
+            # Persist to storage
+            self._save_devices()
+
             logger.info(f"Registered device: {device_id} ({device_type})")
 
             return {
@@ -106,6 +124,9 @@ class DeviceManager:
             }
 
         del self.devices[device_id]
+
+        # Persist to storage
+        self._save_devices()
 
         return {
             "status": "success",
@@ -406,3 +427,43 @@ class DeviceManager:
         except Exception as e:
             logger.error(f"Import devices error: {e}")
             return {"status": "error", "message": str(e)}
+
+    def _save_devices(self):
+        """Save devices to persistent storage"""
+        try:
+            data = {
+                "devices": [device.to_dict() for device in self.devices.values()],
+                "groups": self.device_groups,
+                "updated_at": time.time()
+            }
+
+            with open(self.storage_path, 'w') as f:
+                json.dump(data, f, indent=2)
+
+            logger.debug(f"Saved {len(self.devices)} devices to storage")
+
+        except Exception as e:
+            logger.error(f"Error saving devices: {e}")
+
+    def _load_devices(self):
+        """Load devices from persistent storage"""
+        try:
+            if not os.path.exists(self.storage_path):
+                logger.info("No device storage found, starting fresh")
+                return
+
+            with open(self.storage_path, 'r') as f:
+                data = json.load(f)
+
+            # Load devices
+            for device_data in data.get("devices", []):
+                device = Device(**device_data)
+                self.devices[device.device_id] = device
+
+            # Load groups
+            self.device_groups = data.get("groups", {})
+
+            logger.info(f"Loaded {len(self.devices)} devices from storage")
+
+        except Exception as e:
+            logger.error(f"Error loading devices: {e}")
