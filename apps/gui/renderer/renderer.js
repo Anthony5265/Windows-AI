@@ -8,8 +8,14 @@
 // =====================================================================
 
 const BACKEND_URL = 'http://127.0.0.1:8010';
+const WS_URL = 'ws://127.0.0.1:8010/ws';
 let currentConversationId = null;
 let isStreaming = false;
+let websocket = null;
+let connectionStatus = 'disconnected'; // disconnected, connecting, connected, error
+let useWebSocket = false; // Toggle between WebSocket and SSE
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 // =====================================================================
 // Tab Switching
@@ -109,7 +115,90 @@ async function sendMessage() {
   // Show typing indicator
   const typingIndicator = showTypingIndicator();
 
-  // Send to backend
+  // Choose between WebSocket and SSE
+  if (useWebSocket && websocket && websocket.readyState === WebSocket.OPEN) {
+    await sendMessageViaWebSocket(message, typingIndicator);
+  } else {
+    await sendMessageViaSSE(message, typingIndicator);
+  }
+}
+
+/**
+ * Send message via WebSocket
+ */
+async function sendMessageViaWebSocket(message, typingIndicator) {
+  try {
+    isStreaming = true;
+    updateStatus('AI is thinking...');
+
+    const conversationId = currentConversationId || new Date().getTime().toString();
+
+    // Prepare message data
+    const messageData = {
+      type: 'chat',
+      data: {
+        message: message,
+        conversation_id: conversationId,
+        model: modelSelect.value,
+        stream: true,
+        temperature: 0.7
+      }
+    };
+
+    // Create assistant message element
+    const assistantMessageEl = createMessageElement('assistant', '');
+
+    // Set up one-time listener for this message
+    const messageHandler = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'chat_chunk') {
+        // Remove typing indicator if still present
+        if (typingIndicator.parentNode) {
+          typingIndicator.remove();
+        }
+
+        // Add message element if not added yet
+        if (!assistantMessageEl.parentNode) {
+          chatMessages.appendChild(assistantMessageEl);
+        }
+
+        // Update content
+        const currentContent = assistantMessageEl.querySelector('.message-content').textContent;
+        const timestamp = assistantMessageEl.querySelector('.message-timestamp');
+        const newContent = currentContent.replace(timestamp.textContent, '') + data.chunk;
+        updateMessageContent(assistantMessageEl, newContent);
+        scrollToBottom();
+
+      } else if (data.type === 'chat_done') {
+        currentConversationId = data.conversation_id;
+        loadConversations();
+        updateStatus('Ready');
+        isStreaming = false;
+
+        // Remove this handler
+        websocket.removeEventListener('message', messageHandler);
+      }
+    };
+
+    websocket.addEventListener('message', messageHandler);
+
+    // Send message
+    websocket.send(JSON.stringify(messageData));
+
+  } catch (error) {
+    console.error('Error sending message via WebSocket:', error);
+    if (typingIndicator.parentNode) typingIndicator.remove();
+    addMessage('assistant', `Error: ${error.message}`);
+    updateStatus('Error - WebSocket communication failed');
+    isStreaming = false;
+  }
+}
+
+/**
+ * Send message via Server-Sent Events (SSE)
+ */
+async function sendMessageViaSSE(message, typingIndicator) {
   try {
     isStreaming = true;
     updateStatus('AI is thinking...');
@@ -176,7 +265,7 @@ async function sendMessage() {
 
   } catch (error) {
     console.error('Error sending message:', error);
-    typingIndicator.remove();
+    if (typingIndicator.parentNode) typingIndicator.remove();
     addMessage('assistant', `Error: ${error.message}. Please make sure the backend is running at ${BACKEND_URL}`);
     updateStatus('Error - Backend not responding');
     isStreaming = false;
@@ -351,16 +440,61 @@ function displayConversations(conversations) {
     const firstMessage = messages[0];
     const preview = firstMessage.content.slice(0, 50) + (firstMessage.content.length > 50 ? '...' : '');
 
+    const item = document.createElement('div');
+    item.className = 'conversation-item-wrapper';
+    if (convId === currentConversationId) {
+      item.classList.add('active');
+    }
+
     const btn = document.createElement('button');
     btn.className = 'conversation-item';
-    if (convId === currentConversationId) {
-      btn.classList.add('active');
-    }
     btn.textContent = preview;
     btn.onclick = () => loadConversation(convId);
 
-    conversationList.appendChild(btn);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'conversation-delete-btn';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.title = 'Delete conversation';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteConversation(convId);
+    };
+
+    item.appendChild(btn);
+    item.appendChild(deleteBtn);
+    conversationList.appendChild(item);
   });
+}
+
+/**
+ * Delete a conversation
+ */
+async function deleteConversation(convId) {
+  if (!confirm('Are you sure you want to delete this conversation?')) return;
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/conversations/${convId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      // If deleting current conversation, start a new one
+      if (convId === currentConversationId) {
+        currentConversationId = null;
+        clearChatMessages();
+        showWelcomeMessage();
+      }
+
+      // Reload conversations list
+      await loadConversations();
+      updateStatus('Conversation deleted');
+    } else {
+      throw new Error('Failed to delete conversation');
+    }
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    updateStatus('Error deleting conversation');
+  }
 }
 
 /**
@@ -1790,6 +1924,75 @@ async function loadAvailableModels() {
 }
 
 // =====================================================================
+// WebSocket Connection Management
+// =====================================================================
+
+function connectWebSocket() {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    return; // Already connected
+  }
+
+  connectionStatus = 'connecting';
+  updateStatus('Connecting to WebSocket...');
+
+  try {
+    websocket = new WebSocket(WS_URL);
+
+    websocket.onopen = () => {
+      connectionStatus = 'connected';
+      reconnectAttempts = 0;
+      updateStatus('Connected - WebSocket ready');
+      console.log('WebSocket connected');
+
+      // Send ping every 30 seconds to keep connection alive
+      const pingInterval = setInterval(() => {
+        if (websocket.readyState === WebSocket.OPEN) {
+          websocket.send(JSON.stringify({ type: 'ping' }));
+        } else {
+          clearInterval(pingInterval);
+        }
+      }, 30000);
+    };
+
+    websocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      connectionStatus = 'error';
+      updateStatus('WebSocket error');
+    };
+
+    websocket.onclose = () => {
+      connectionStatus = 'disconnected';
+      updateStatus('WebSocket disconnected');
+
+      // Auto-reconnect with exponential backoff
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+        setTimeout(() => {
+          reconnectAttempts++;
+          connectWebSocket();
+        }, delay);
+      } else {
+        updateStatus('WebSocket reconnection failed - using SSE mode');
+        useWebSocket = false;
+      }
+    };
+
+  } catch (error) {
+    console.error('Error creating WebSocket:', error);
+    connectionStatus = 'error';
+    updateStatus('Failed to create WebSocket');
+  }
+}
+
+function disconnectWebSocket() {
+  if (websocket) {
+    websocket.close();
+    websocket = null;
+  }
+  connectionStatus = 'disconnected';
+}
+
+// =====================================================================
 // Real-time Health Monitoring
 // =====================================================================
 
@@ -1805,20 +2008,32 @@ async function checkBackendHealth() {
       const data = await response.json();
 
       if (data.status === 'healthy') {
-        updateStatus('Connected - Backend healthy');
+        updateConnectionStatus('connected');
         return true;
       } else {
-        updateStatus('Backend degraded');
+        updateConnectionStatus('degraded');
         return false;
       }
     } else {
-      updateStatus('Backend unreachable');
+      updateConnectionStatus('error');
       return false;
     }
   } catch (error) {
-    updateStatus('Backend offline');
+    updateConnectionStatus('offline');
     return false;
   }
+}
+
+function updateConnectionStatus(status) {
+  connectionStatus = status;
+  const statusMessages = {
+    'connected': '● Connected',
+    'degraded': '⚠ Backend degraded',
+    'error': '⚠ Backend error',
+    'offline': '○ Backend offline',
+    'connecting': '◐ Connecting...'
+  };
+  updateStatus(statusMessages[status] || 'Unknown status');
 }
 
 function startHealthMonitoring() {
@@ -1835,6 +2050,119 @@ function stopHealthMonitoring() {
     healthCheckInterval = null;
   }
 }
+
+// =====================================================================
+// Message Search and Export
+// =====================================================================
+
+function searchMessages(query) {
+  const messages = document.querySelectorAll('.message');
+  let found = 0;
+
+  messages.forEach(msg => {
+    const content = msg.querySelector('.message-content').textContent.toLowerCase();
+    if (content.includes(query.toLowerCase())) {
+      msg.style.display = '';
+      msg.classList.add('search-highlight');
+      found++;
+    } else {
+      msg.style.display = 'none';
+      msg.classList.remove('search-highlight');
+    }
+  });
+
+  return found;
+}
+
+function clearSearch() {
+  const messages = document.querySelectorAll('.message');
+  messages.forEach(msg => {
+    msg.style.display = '';
+    msg.classList.remove('search-highlight');
+  });
+}
+
+async function exportConversation(format = 'json') {
+  if (!currentConversationId) {
+    alert('No conversation to export');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/conversations/${currentConversationId}`);
+    const data = await response.json();
+
+    let content, filename, mimeType;
+
+    if (format === 'json') {
+      content = JSON.stringify(data, null, 2);
+      filename = `conversation_${currentConversationId}.json`;
+      mimeType = 'application/json';
+    } else if (format === 'txt') {
+      content = data.messages.map(msg =>
+        `[${msg.role.toUpperCase()}] ${msg.timestamp}\n${msg.content}\n`
+      ).join('\n---\n\n');
+      filename = `conversation_${currentConversationId}.txt`;
+      mimeType = 'text/plain';
+    } else if (format === 'markdown') {
+      content = `# Conversation ${currentConversationId}\n\n`;
+      content += data.messages.map(msg =>
+        `## ${msg.role === 'user' ? 'User' : 'Assistant'}\n*${msg.timestamp}*\n\n${msg.content}\n`
+      ).join('\n---\n\n');
+      filename = `conversation_${currentConversationId}.md`;
+      mimeType = 'text/markdown';
+    }
+
+    // Create download link
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    updateStatus(`Exported conversation as ${format.toUpperCase()}`);
+  } catch (error) {
+    console.error('Error exporting conversation:', error);
+    alert('Error exporting conversation');
+  }
+}
+
+// =====================================================================
+// UI Event Handlers for Search and Export
+// =====================================================================
+
+// Search functionality
+document.getElementById('searchBtn')?.addEventListener('click', () => {
+  const query = document.getElementById('searchInput').value.trim();
+  if (query) {
+    const found = searchMessages(query);
+    updateStatus(`Found ${found} message(s)`);
+  }
+});
+
+document.getElementById('searchInput')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const query = e.target.value.trim();
+    if (query) {
+      const found = searchMessages(query);
+      updateStatus(`Found ${found} message(s)`);
+    }
+  }
+});
+
+document.getElementById('clearSearchBtn')?.addEventListener('click', () => {
+  document.getElementById('searchInput').value = '';
+  clearSearch();
+  updateStatus('Search cleared');
+});
+
+// Export functionality
+document.getElementById('exportBtn')?.addEventListener('click', () => {
+  const format = document.getElementById('exportFormat').value;
+  exportConversation(format);
+});
 
 // =====================================================================
 // Enhanced Initialization
@@ -1877,6 +2205,12 @@ function stopHealthMonitoring() {
         loadConversations();
         loadAvailableModels();
         loadSettingsFromBackend();
+
+        // Optionally connect WebSocket (fallback to SSE if fails)
+        // WebSocket provides bidirectional communication but SSE works well for streaming
+        // Uncomment below to enable WebSocket mode
+        // connectWebSocket();
+        // useWebSocket = true;
 
         // Start health monitoring
         startHealthMonitoring();
