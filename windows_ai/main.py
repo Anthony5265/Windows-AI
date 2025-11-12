@@ -73,6 +73,9 @@ from windows_ai.performance_optimizer import (
 from windows_ai.plugin_validator import (
     get_plugin_validator, initialize_plugin_validator, PluginValidator
 )
+from windows_ai.state_manager import (
+    get_state_manager, initialize_state_system, StatePersistenceManager
+)
 from windows_ai.reinforcement_learning import (
     get_rl_system, initialize_rl_system, ReinforcementLearningSystem
 )
@@ -3213,6 +3216,10 @@ async def startup_event():
     # Phase 1 & 2: Advanced integrations
     logger.info("\n📦 PHASE 1 & 2: Core Integration")
     logger.info("-" * 70)
+
+    logger.info("✓ State Persistence System...")
+    state_manager = initialize_state_system(DATA_DIR / "state", start_auto_save=True)
+
     logger.info("✓ Initializing integrations (IoT, Mesh, Models, Cloud, Search, RAG)...")
     initialize_integrations()
 
