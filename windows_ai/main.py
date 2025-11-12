@@ -42,7 +42,7 @@ from windows_ai.model_manager import ModelManager
 # Import update system
 from windows_ai.updater.update_client import UpdateClient, UpdateStatus
 
-# Import new AI capabilities
+# Import all advanced AI capabilities
 from windows_ai.context_manager import (
     get_context_manager, initialize_context_system, ContextualAwarenessSystem
 )
@@ -52,6 +52,24 @@ from windows_ai.xai import (
 )
 from windows_ai.hotkeys import (
     get_hotkey_manager, initialize_hotkey_system, GlobalHotkeyManager
+)
+from windows_ai.proactive_assistant import (
+    get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant
+)
+from windows_ai.anomaly_detector import (
+    get_anomaly_detector, initialize_anomaly_detector, AnomalyDetector
+)
+from windows_ai.voice_activation import (
+    get_voice_system, initialize_voice_system, VoiceActivationSystem
+)
+from windows_ai.self_healing import (
+    get_healing_system, initialize_healing_system, SelfHealingSystem
+)
+from windows_ai.performance_optimizer import (
+    get_performance_optimizer, initialize_performance_optimizer, PerformanceOptimizer
+)
+from windows_ai.plugin_validator import (
+    get_plugin_validator, initialize_plugin_validator, PluginValidator
 )
 
 # Configure logging
@@ -144,6 +162,30 @@ This API provides comprehensive functionality for the Windows AI assistant inclu
         {
             "name": "hotkeys",
             "description": "Global hotkey configuration and management"
+        },
+        {
+            "name": "proactive",
+            "description": "Proactive task prediction and assistance"
+        },
+        {
+            "name": "anomaly",
+            "description": "Anomaly detection and system health monitoring"
+        },
+        {
+            "name": "voice",
+            "description": "Voice activation and speech processing"
+        },
+        {
+            "name": "healing",
+            "description": "Self-healing workflows and automatic recovery"
+        },
+        {
+            "name": "performance",
+            "description": "Performance optimization and monitoring"
+        },
+        {
+            "name": "validation",
+            "description": "Plugin validation and sandboxing"
         }
     ]
 )
@@ -172,10 +214,16 @@ AGENTHUB_URL = os.getenv("AGENTHUB_URL", "http://localhost:8000")
 # Windows AI Agent URL
 AGENT_URL = os.getenv("AGENT_URL", "http://localhost:3001")
 
-# Global instances for new AI capabilities
+# Global instances for all AI capabilities
 context_manager: Optional[ContextualAwarenessSystem] = None
 xai_system: Optional[ExplainableAI] = None
 hotkey_manager: Optional[GlobalHotkeyManager] = None
+proactive_assistant: Optional[ProactiveAssistant] = None
+anomaly_detector: Optional[AnomalyDetector] = None
+voice_system: Optional[VoiceActivationSystem] = None
+healing_system: Optional[SelfHealingSystem] = None
+performance_optimizer: Optional[PerformanceOptimizer] = None
+plugin_validator: Optional[PluginValidator] = None
 
 # =====================================================================
 # Data Models
@@ -1792,19 +1840,274 @@ async def toggle_hotkey(name: str, enabled: bool):
 
 
 # =====================================================================
+# API Endpoints for Phase 3-5 Advanced Features
+# =====================================================================
+
+# Proactive Assistant Endpoints
+
+@app.get("/proactive/predictions", tags=["proactive"])
+async def get_predictions():
+    """Get current proactive task predictions"""
+    if not proactive_assistant:
+        raise HTTPException(status_code=503, detail="Proactive assistant not initialized")
+
+    predictions = proactive_assistant.get_active_predictions()
+    return {"status": "success", "predictions": predictions}
+
+
+@app.post("/proactive/record_action", tags=["proactive"])
+async def record_action(action_type: str, action_data: Dict[str, Any], context: Optional[Dict[str, Any]] = None):
+    """Record user action for pattern learning"""
+    if not proactive_assistant:
+        raise HTTPException(status_code=503, detail="Proactive assistant not initialized")
+
+    proactive_assistant.record_action(action_type, action_data, context)
+    return {"status": "success", "message": "Action recorded"}
+
+
+@app.post("/proactive/feedback", tags=["proactive"])
+async def provide_feedback(prediction_id: str, accepted: bool, executed: bool = False):
+    """Provide feedback on a prediction"""
+    if not proactive_assistant:
+        raise HTTPException(status_code=503, detail="Proactive assistant not initialized")
+
+    proactive_assistant.provide_feedback(prediction_id, accepted, executed)
+    return {"status": "success", "message": "Feedback recorded"}
+
+
+@app.get("/proactive/patterns", tags=["proactive"])
+async def get_patterns():
+    """Get learned user patterns"""
+    if not proactive_assistant:
+        raise HTTPException(status_code=503, detail="Proactive assistant not initialized")
+
+    patterns = proactive_assistant.get_patterns()
+    return {"status": "success", "patterns": patterns}
+
+
+# Anomaly Detection Endpoints
+
+@app.get("/anomaly/recent", tags=["anomaly"])
+async def get_recent_anomalies(limit: int = 50, severity: Optional[str] = None):
+    """Get recent anomalies"""
+    if not anomaly_detector:
+        raise HTTPException(status_code=503, detail="Anomaly detector not initialized")
+
+    anomalies = anomaly_detector.get_recent_anomalies(limit, severity)
+    return {"status": "success", "anomalies": anomalies}
+
+
+@app.get("/anomaly/health", tags=["anomaly"])
+async def get_system_health():
+    """Get overall system health status"""
+    if not anomaly_detector:
+        raise HTTPException(status_code=503, detail="Anomaly detector not initialized")
+
+    health = anomaly_detector.get_health_status()
+    return {"status": "success", "health": health}
+
+
+@app.get("/anomaly/baselines", tags=["anomaly"])
+async def get_baselines():
+    """Get performance baselines"""
+    if not anomaly_detector:
+        raise HTTPException(status_code=503, detail="Anomaly detector not initialized")
+
+    baselines = anomaly_detector.get_baselines()
+    return {"status": "success", "baselines": baselines}
+
+
+# Voice Activation Endpoints
+
+@app.post("/voice/start", tags=["voice"])
+async def start_voice():
+    """Start voice activation listening"""
+    if not voice_system:
+        raise HTTPException(status_code=503, detail="Voice system not initialized")
+
+    voice_system.start_listening()
+    return {"status": "success", "message": "Voice activation started"}
+
+
+@app.post("/voice/stop", tags=["voice"])
+async def stop_voice():
+    """Stop voice activation"""
+    if not voice_system:
+        raise HTTPException(status_code=503, detail="Voice system not initialized")
+
+    voice_system.stop_listening()
+    return {"status": "success", "message": "Voice activation stopped"}
+
+
+@app.get("/voice/status", tags=["voice"])
+async def get_voice_status():
+    """Get voice activation status"""
+    if not voice_system:
+        raise HTTPException(status_code=503, detail="Voice system not initialized")
+
+    status = voice_system.get_status()
+    return {"status": "success", "voice_status": status}
+
+
+@app.get("/voice/history", tags=["voice"])
+async def get_voice_history(limit: int = 50):
+    """Get voice command history"""
+    if not voice_system:
+        raise HTTPException(status_code=503, detail="Voice system not initialized")
+
+    history = voice_system.get_command_history(limit)
+    return {"status": "success", "commands": history}
+
+
+@app.post("/voice/wake_words", tags=["voice"])
+async def set_wake_words(wake_words: List[str]):
+    """Set custom wake words"""
+    if not voice_system:
+        raise HTTPException(status_code=503, detail="Voice system not initialized")
+
+    voice_system.set_wake_words(wake_words)
+    return {"status": "success", "message": "Wake words updated"}
+
+
+# Self-Healing Endpoints
+
+@app.get("/healing/failures", tags=["healing"])
+async def get_failures(limit: int = 50):
+    """Get recent workflow failures"""
+    if not healing_system:
+        raise HTTPException(status_code=503, detail="Healing system not initialized")
+
+    failures = healing_system.get_failure_history(limit)
+    return {"status": "success", "failures": failures}
+
+
+@app.get("/healing/recoveries", tags=["healing"])
+async def get_recoveries(limit: int = 50):
+    """Get recent recovery actions"""
+    if not healing_system:
+        raise HTTPException(status_code=503, detail="Healing system not initialized")
+
+    recoveries = healing_system.get_recovery_history(limit)
+    return {"status": "success", "recoveries": recoveries}
+
+
+@app.get("/healing/stats", tags=["healing"])
+async def get_healing_stats():
+    """Get self-healing statistics"""
+    if not healing_system:
+        raise HTTPException(status_code=503, detail="Healing system not initialized")
+
+    stats = healing_system.get_statistics()
+    return {"status": "success", "statistics": stats}
+
+
+# Performance Optimization Endpoints
+
+@app.get("/performance/metrics", tags=["performance"])
+async def get_performance_metrics(minutes: int = 60):
+    """Get performance metrics summary"""
+    if not performance_optimizer:
+        raise HTTPException(status_code=503, detail="Performance optimizer not initialized")
+
+    summary = performance_optimizer.get_metrics_summary(minutes)
+    return {"status": "success", "metrics": summary}
+
+
+@app.post("/performance/optimize", tags=["performance"])
+async def optimize_performance():
+    """Trigger performance optimization"""
+    if not performance_optimizer:
+        raise HTTPException(status_code=503, detail="Performance optimizer not initialized")
+
+    action = performance_optimizer.optimize_memory()
+    return {"status": "success", "optimization": asdict(action)}
+
+
+@app.get("/performance/report", tags=["performance"])
+async def get_performance_report(hours: int = 24):
+    """Generate performance analysis report"""
+    if not performance_optimizer:
+        raise HTTPException(status_code=503, detail="Performance optimizer not initialized")
+
+    report = performance_optimizer.generate_performance_report(hours)
+    if report:
+        return {"status": "success", "report": asdict(report)}
+    else:
+        return {"status": "error", "message": "No data available"}
+
+
+@app.get("/performance/cache/stats", tags=["performance"])
+async def get_cache_stats():
+    """Get cache performance statistics"""
+    if not performance_optimizer:
+        raise HTTPException(status_code=503, detail="Performance optimizer not initialized")
+
+    stats = performance_optimizer.get_cache_stats()
+    return {"status": "success", "cache_stats": stats}
+
+
+# Plugin Validation Endpoints
+
+@app.post("/validation/validate", tags=["validation"])
+async def validate_plugin(plugin_path: str):
+    """Validate a plugin for security"""
+    if not plugin_validator:
+        raise HTTPException(status_code=503, detail="Plugin validator not initialized")
+
+    try:
+        path = Path(plugin_path)
+        if not path.exists():
+            raise HTTPException(status_code=404, detail="Plugin file not found")
+
+        result = plugin_validator.validate_plugin(path)
+        return {"status": "success", "validation": asdict(result)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/validation/results", tags=["validation"])
+async def get_validation_results(plugin_id: Optional[str] = None):
+    """Get plugin validation results"""
+    if not plugin_validator:
+        raise HTTPException(status_code=503, detail="Plugin validator not initialized")
+
+    results = plugin_validator.get_validation_results(plugin_id)
+    return {"status": "success", "results": results}
+
+
+@app.post("/validation/trust", tags=["validation"])
+async def trust_plugin(plugin_id: str, plugin_hash: str):
+    """Mark a plugin as trusted"""
+    if not plugin_validator:
+        raise HTTPException(status_code=503, detail="Plugin validator not initialized")
+
+    plugin_validator.trust_plugin(plugin_id, plugin_hash)
+    return {"status": "success", "message": f"Plugin {plugin_id} marked as trusted"}
+
+
+# =====================================================================
 # Integration Layer - IoT, Mesh, Model Discovery, Cloud Sync, Search
 # =====================================================================
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize all subsystems on startup"""
-    global context_manager, xai_system, hotkey_manager
+    global context_manager, xai_system, hotkey_manager, proactive_assistant
+    global anomaly_detector, voice_system, healing_system, performance_optimizer, plugin_validator
 
     logger.info("Windows AI Backend starting up...")
+    logger.info("=" * 60)
+
+    # Phase 1 & 2: Existing integrations
     logger.info("Initializing integrations (IoT, Mesh, Models, Cloud, Search)...")
     initialize_integrations()
 
-    # Initialize new AI capabilities
+    # Phase 3: Advanced Intelligence & User Experience
+    logger.info("=" * 60)
+    logger.info("PHASE 3: Advanced Intelligence & User Experience")
+    logger.info("=" * 60)
+
     logger.info("Initializing Contextual Awareness System...")
     context_manager = initialize_context_system(DATA_DIR / "context", start_monitoring=True)
 
@@ -1814,10 +2117,40 @@ async def startup_event():
     logger.info("Initializing Global Hotkey System...")
     hotkey_manager = initialize_hotkey_system(DATA_DIR / "hotkeys", start_listening=True)
 
+    logger.info("Initializing Proactive Task Prediction...")
+    proactive_assistant = initialize_proactive_assistant(DATA_DIR / "proactive", start_monitoring=True)
+
+    logger.info("Initializing Anomaly Detection System...")
+    anomaly_detector = initialize_anomaly_detector(DATA_DIR / "anomaly", start_monitoring=True)
+
+    logger.info("Initializing Voice Activation System...")
+    voice_system = initialize_voice_system(DATA_DIR / "voice", start_listening=False)  # User must enable
+
+    logger.info("Initializing Self-Healing Workflow System...")
+    healing_system = initialize_healing_system(DATA_DIR / "healing")
+
+    # Phase 4: Robustness & Performance
+    logger.info("=" * 60)
+    logger.info("PHASE 4: Performance & Optimization")
+    logger.info("=" * 60)
+
+    logger.info("Initializing Performance Optimization Suite...")
+    performance_optimizer = initialize_performance_optimizer(DATA_DIR / "performance", start_monitoring=True)
+
+    # Phase 5: Plugin Ecosystem
+    logger.info("=" * 60)
+    logger.info("PHASE 5: Plugin Ecosystem & Security")
+    logger.info("=" * 60)
+
+    logger.info("Initializing Plugin Validation & Sandboxing...")
+    plugin_validator = initialize_plugin_validator(DATA_DIR / "plugin_validation")
+
     # Register hotkey actions
     _register_hotkey_actions()
 
-    logger.info("Backend is ready!")
+    logger.info("=" * 60)
+    logger.info("✅ ALL SYSTEMS OPERATIONAL - Windows AI is ready!")
+    logger.info("=" * 60)
 
 # =====================================================================
 
