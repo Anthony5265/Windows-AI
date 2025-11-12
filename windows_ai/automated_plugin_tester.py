@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Automated Plugin Testing Framework
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Comprehensive automated testing framework for plugins.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class AutomatedPluginTesterResult:
+    """Result from AutomatedPluginTester"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class AutomatedPluginTester:
     """
-    ProactiveAssistant
+    AutomatedPluginTester
 
-    Intelligent Task Prediction and Proactive Assistance
+    Automated Plugin Testing Framework
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[AutomatedPluginTesterResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("AutomatedPluginTester initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> AutomatedPluginTesterResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = AutomatedPluginTesterResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in AutomatedPluginTester")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[AutomatedPluginTesterResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "automated_plugin_tester_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "automated_plugin_tester_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_automated_plugin_tester: Optional[AutomatedPluginTester] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_automated_plugin_tester() -> Optional[AutomatedPluginTester]:
     """Get global instance"""
-    return _proactive_assistant
+    return _automated_plugin_tester
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_automated_plugin_tester(data_dir: Path) -> AutomatedPluginTester:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _automated_plugin_tester
+    _automated_plugin_tester = AutomatedPluginTester(data_dir)
+    return _automated_plugin_tester

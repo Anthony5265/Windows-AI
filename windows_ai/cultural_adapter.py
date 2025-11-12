@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Culturally Sensitive AI Adapter
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Adapts AI responses to user's cultural background.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class CulturalAdapterResult:
+    """Result from CulturalAdapter"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class CulturalAdapter:
     """
-    ProactiveAssistant
+    CulturalAdapter
 
-    Intelligent Task Prediction and Proactive Assistance
+    Culturally Sensitive AI Adapter
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[CulturalAdapterResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("CulturalAdapter initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> CulturalAdapterResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = CulturalAdapterResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in CulturalAdapter")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[CulturalAdapterResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "cultural_adapter_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "cultural_adapter_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_cultural_adapter: Optional[CulturalAdapter] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_cultural_adapter() -> Optional[CulturalAdapter]:
     """Get global instance"""
-    return _proactive_assistant
+    return _cultural_adapter
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_cultural_adapter(data_dir: Path) -> CulturalAdapter:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _cultural_adapter
+    _cultural_adapter = CulturalAdapter(data_dir)
+    return _cultural_adapter

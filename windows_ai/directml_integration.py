@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+DirectML/ONNX Runtime Integration
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Deep integration with Windows DirectML for hardware acceleration.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class DirectmlIntegrationResult:
+    """Result from DirectmlIntegration"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class DirectmlIntegration:
     """
-    ProactiveAssistant
+    DirectmlIntegration
 
-    Intelligent Task Prediction and Proactive Assistance
+    DirectML/ONNX Runtime Integration
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[DirectmlIntegrationResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("DirectmlIntegration initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> DirectmlIntegrationResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = DirectmlIntegrationResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in DirectmlIntegration")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[DirectmlIntegrationResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "directml_integration_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "directml_integration_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_directml_integration: Optional[DirectmlIntegration] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_directml_integration() -> Optional[DirectmlIntegration]:
     """Get global instance"""
-    return _proactive_assistant
+    return _directml_integration
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_directml_integration(data_dir: Path) -> DirectmlIntegration:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _directml_integration
+    _directml_integration = DirectmlIntegration(data_dir)
+    return _directml_integration

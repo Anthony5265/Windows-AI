@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Differential Privacy for Local Data
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Applies differential privacy techniques to local user data analysis.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class DifferentialPrivacyResult:
+    """Result from DifferentialPrivacy"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class DifferentialPrivacy:
     """
-    ProactiveAssistant
+    DifferentialPrivacy
 
-    Intelligent Task Prediction and Proactive Assistance
+    Differential Privacy for Local Data
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[DifferentialPrivacyResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("DifferentialPrivacy initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> DifferentialPrivacyResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = DifferentialPrivacyResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in DifferentialPrivacy")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[DifferentialPrivacyResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "differential_privacy_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "differential_privacy_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_differential_privacy: Optional[DifferentialPrivacy] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_differential_privacy() -> Optional[DifferentialPrivacy]:
     """Get global instance"""
-    return _proactive_assistant
+    return _differential_privacy
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_differential_privacy(data_dir: Path) -> DifferentialPrivacy:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _differential_privacy
+    _differential_privacy = DifferentialPrivacy(data_dir)
+    return _differential_privacy

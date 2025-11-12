@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Universal IoT Protocol Adapter
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Universal adapter for different IoT protocols.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class ProtocolAdapterResult:
+    """Result from ProtocolAdapter"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class ProtocolAdapter:
     """
-    ProactiveAssistant
+    ProtocolAdapter
 
-    Intelligent Task Prediction and Proactive Assistance
+    Universal IoT Protocol Adapter
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[ProtocolAdapterResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("ProtocolAdapter initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> ProtocolAdapterResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = ProtocolAdapterResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in ProtocolAdapter")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[ProtocolAdapterResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "protocol_adapter_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "protocol_adapter_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_protocol_adapter: Optional[ProtocolAdapter] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_protocol_adapter() -> Optional[ProtocolAdapter]:
     """Get global instance"""
-    return _proactive_assistant
+    return _protocol_adapter
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_protocol_adapter(data_dir: Path) -> ProtocolAdapter:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _protocol_adapter
+    _protocol_adapter = ProtocolAdapter(data_dir)
+    return _protocol_adapter

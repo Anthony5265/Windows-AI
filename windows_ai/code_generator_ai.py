@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+AI-Assisted Code Generation
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+AI-assisted code generation for common patterns.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class CodeGeneratorAiResult:
+    """Result from CodeGeneratorAi"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class CodeGeneratorAi:
     """
-    ProactiveAssistant
+    CodeGeneratorAi
 
-    Intelligent Task Prediction and Proactive Assistance
+    AI-Assisted Code Generation
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[CodeGeneratorAiResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("CodeGeneratorAi initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> CodeGeneratorAiResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = CodeGeneratorAiResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in CodeGeneratorAi")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[CodeGeneratorAiResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "code_generator_ai_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "code_generator_ai_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_code_generator_ai: Optional[CodeGeneratorAi] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_code_generator_ai() -> Optional[CodeGeneratorAi]:
     """Get global instance"""
-    return _proactive_assistant
+    return _code_generator_ai
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_code_generator_ai(data_dir: Path) -> CodeGeneratorAi:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _code_generator_ai
+    _code_generator_ai = CodeGeneratorAi(data_dir)
+    return _code_generator_ai

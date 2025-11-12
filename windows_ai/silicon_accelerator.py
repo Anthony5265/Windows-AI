@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Direct Silicon Access for AI Acceleration
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Direct access to specialized AI accelerators (NPU/TPU).
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class SiliconAcceleratorResult:
+    """Result from SiliconAccelerator"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class SiliconAccelerator:
     """
-    ProactiveAssistant
+    SiliconAccelerator
 
-    Intelligent Task Prediction and Proactive Assistance
+    Direct Silicon Access for AI Acceleration
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[SiliconAcceleratorResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("SiliconAccelerator initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> SiliconAcceleratorResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = SiliconAcceleratorResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in SiliconAccelerator")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[SiliconAcceleratorResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "silicon_accelerator_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "silicon_accelerator_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_silicon_accelerator: Optional[SiliconAccelerator] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_silicon_accelerator() -> Optional[SiliconAccelerator]:
     """Get global instance"""
-    return _proactive_assistant
+    return _silicon_accelerator
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_silicon_accelerator(data_dir: Path) -> SiliconAccelerator:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _silicon_accelerator
+    _silicon_accelerator = SiliconAccelerator(data_dir)
+    return _silicon_accelerator
