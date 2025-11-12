@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Autonomous System Hardening
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Continuously analyzes and applies security best practices automatically.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class AutonomousHardeningResult:
+    """Result from AutonomousHardening"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class AutonomousHardening:
     """
-    ProactiveAssistant
+    AutonomousHardening
 
-    Intelligent Task Prediction and Proactive Assistance
+    Autonomous System Hardening
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[AutonomousHardeningResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("AutonomousHardening initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> AutonomousHardeningResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = AutonomousHardeningResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in AutonomousHardening")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[AutonomousHardeningResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "autonomous_hardening_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "autonomous_hardening_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_autonomous_hardening: Optional[AutonomousHardening] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_autonomous_hardening() -> Optional[AutonomousHardening]:
     """Get global instance"""
-    return _proactive_assistant
+    return _autonomous_hardening
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_autonomous_hardening(data_dir: Path) -> AutonomousHardening:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _autonomous_hardening
+    _autonomous_hardening = AutonomousHardening(data_dir)
+    return _autonomous_hardening

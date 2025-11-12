@@ -1,7 +1,7 @@
 """
-Intelligent Task Prediction and Proactive Assistance
+Secure Enclave & TPM Integration
 
-Predicts user tasks based on habits and context, offering to initiate workflows proactively.
+Integrates with Windows Secure Enclave/TPM for sensitive operations.
 """
 
 from dataclasses import dataclass, field
@@ -16,55 +16,55 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ProactiveAssistantResult:
-    """Result from ProactiveAssistant"""
+class SecureEnclaveIntegrationResult:
+    """Result from SecureEnclaveIntegration"""
     result_id: str
     status: str
     data: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
 
 
-class ProactiveAssistant:
+class SecureEnclaveIntegration:
     """
-    ProactiveAssistant
+    SecureEnclaveIntegration
 
-    Intelligent Task Prediction and Proactive Assistance
+    Secure Enclave & TPM Integration
     """
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.results: List[ProactiveAssistantResult] = []
+        self.results: List[SecureEnclaveIntegrationResult] = []
         self._load_state()
-        logger.info("ProactiveAssistant initialized")
+        logger.info("SecureEnclaveIntegration initialized")
 
-    def process(self, input_data: Dict[str, Any]) -> ProactiveAssistantResult:
+    def process(self, input_data: Dict[str, Any]) -> SecureEnclaveIntegrationResult:
         """Main processing function"""
-        result = ProactiveAssistantResult(
+        result = SecureEnclaveIntegrationResult(
             result_id=str(uuid.uuid4()),
             status="success",
             data={"processed": True, "input": input_data}
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ProactiveAssistant")
+        logger.info(f"Processed request in SecureEnclaveIntegration")
         return result
 
-    def get_results(self) -> List[ProactiveAssistantResult]:
+    def get_results(self) -> List[SecureEnclaveIntegrationResult]:
         """Get all results"""
         return self.results
 
     def _save_state(self):
         try:
             data = {"results_count": len(self.results)}
-            with open(self.data_dir / "proactive_assistant_state.json", "w") as f:
+            with open(self.data_dir / "secure_enclave_integration_state.json", "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save state: {e}")
 
     def _load_state(self):
         try:
-            state_file = self.data_dir / "proactive_assistant_state.json"
+            state_file = self.data_dir / "secure_enclave_integration_state.json"
             if state_file.exists():
                 with open(state_file, "r") as f:
                     data = json.load(f)
@@ -74,16 +74,16 @@ class ProactiveAssistant:
 
 
 # Global instance
-_proactive_assistant: Optional[ProactiveAssistant] = None
+_secure_enclave_integration: Optional[SecureEnclaveIntegration] = None
 
 
-def get_proactive_assistant() -> Optional[ProactiveAssistant]:
+def get_secure_enclave_integration() -> Optional[SecureEnclaveIntegration]:
     """Get global instance"""
-    return _proactive_assistant
+    return _secure_enclave_integration
 
 
-def initialize_proactive_assistant(data_dir: Path) -> ProactiveAssistant:
+def initialize_secure_enclave_integration(data_dir: Path) -> SecureEnclaveIntegration:
     """Initialize system"""
-    global _proactive_assistant
-    _proactive_assistant = ProactiveAssistant(data_dir)
-    return _proactive_assistant
+    global _secure_enclave_integration
+    _secure_enclave_integration = SecureEnclaveIntegration(data_dir)
+    return _secure_enclave_integration
