@@ -14,9 +14,11 @@ It provides:
 import os
 import json
 import asyncio
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from pathlib import Path
+from dataclasses import asdict
 import logging
 
 from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks
@@ -70,6 +72,21 @@ from windows_ai.performance_optimizer import (
 )
 from windows_ai.plugin_validator import (
     get_plugin_validator, initialize_plugin_validator, PluginValidator
+)
+from windows_ai.reinforcement_learning import (
+    get_rl_system, initialize_rl_system, ReinforcementLearningSystem
+)
+from windows_ai.advanced_nlp import (
+    get_nlp_engine, initialize_nlp_engine, AdvancedNLPEngine
+)
+from windows_ai.multi_agent_system import (
+    get_multi_agent_system, initialize_multi_agent_system, MultiAgentSystem
+)
+from windows_ai.code_generator import (
+    get_code_generator, initialize_code_generator, AICodeGenerator
+)
+from windows_ai.testing_framework import (
+    get_testing_framework, initialize_testing_framework, ComprehensiveTestingFramework
 )
 
 # Configure logging
@@ -186,6 +203,26 @@ This API provides comprehensive functionality for the Windows AI assistant inclu
         {
             "name": "validation",
             "description": "Plugin validation and sandboxing"
+        },
+        {
+            "name": "reinforcement",
+            "description": "Reinforcement learning from human feedback (RLHF)"
+        },
+        {
+            "name": "nlp",
+            "description": "Advanced natural language understanding"
+        },
+        {
+            "name": "agents",
+            "description": "Multi-agent coordination and task distribution"
+        },
+        {
+            "name": "codegen",
+            "description": "AI-powered code generation"
+        },
+        {
+            "name": "testing",
+            "description": "Comprehensive automated testing framework"
         }
     ]
 )
@@ -224,6 +261,11 @@ voice_system: Optional[VoiceActivationSystem] = None
 healing_system: Optional[SelfHealingSystem] = None
 performance_optimizer: Optional[PerformanceOptimizer] = None
 plugin_validator: Optional[PluginValidator] = None
+rl_system: Optional[ReinforcementLearningSystem] = None
+nlp_engine: Optional[AdvancedNLPEngine] = None
+multi_agent_system: Optional[MultiAgentSystem] = None
+code_generator: Optional[AICodeGenerator] = None
+testing_framework: Optional[ComprehensiveTestingFramework] = None
 
 # =====================================================================
 # Data Models
@@ -1545,63 +1587,6 @@ async def set_update_preferences(preferences: Dict[str, Any]):
 # Startup/Shutdown Events
 # =====================================================================
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
-    logger.info("Windows AI Backend starting up...")
-    logger.info(f"Data directory: {DATA_DIR}")
-    logger.info(f"Chat history loaded: {len(chat_history.conversations)} conversations")
-
-    # Start automation systems
-    logger.info("Starting automation systems...")
-    await folder_watcher_manager.start_all()
-    logger.info(f"Folder watchers started: {len(folder_watcher_manager.observers)} active")
-
-    await task_scheduler.start()
-    logger.info(f"Task scheduler started: {len(task_scheduler.tasks)} tasks configured")
-
-    # Load and initialize plugins
-    logger.info("Loading plugins...")
-    await plugin_registry.load_plugins()
-    await plugin_registry.initialize_plugins()
-    logger.info(f"Plugins loaded: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
-
-    # Initialize update client
-    logger.info("Initializing update system...")
-    global update_client
-    try:
-        config = config_manager.get_config()
-        update_prefs = config.get("update_preferences", {
-            "auto_check": True,
-            "auto_download": True,
-            "channel": "stable",
-            "check_interval_hours": 6
-        })
-
-        # Get current version from package
-        current_version = app.version  # Or read from VERSION file
-
-        update_client = UpdateClient(
-            current_version=current_version,
-            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
-            channel=update_prefs.get("channel", "stable"),
-            auto_download=update_prefs.get("auto_download", True),
-            check_interval_hours=update_prefs.get("check_interval_hours", 6)
-        )
-
-        # Start background update checker if auto-check enabled
-        if update_prefs.get("auto_check", True):
-            asyncio.create_task(update_client.run_background_checker())
-            logger.info("Update background checker started")
-        else:
-            logger.info("Automatic update checking disabled")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize update system: {e}")
-        logger.warning("Continuing without update system")
-
-    logger.info("Backend is ready!")
-
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up on shutdown"""
@@ -2087,6 +2072,348 @@ async def trust_plugin(plugin_id: str, plugin_hash: str):
 
 
 # =====================================================================
+# Reinforcement Learning (RLHF) Endpoints
+# =====================================================================
+
+@app.get("/rl/policy", tags=["reinforcement"])
+async def get_policy():
+    """Get current RL policy (Q-table)"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    policy = rl_system.get_policy()
+    return {"status": "success", "policy": asdict(policy)}
+
+
+@app.post("/rl/action", tags=["reinforcement"])
+async def select_action(state: str):
+    """Select action based on current state using learned policy"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    action = rl_system.select_action(state)
+    if action:
+        return {"status": "success", "action": asdict(action)}
+    else:
+        return {"status": "error", "message": "No action available for this state"}
+
+
+@app.post("/rl/feedback", tags=["reinforcement"])
+async def provide_rl_feedback(action_id: str, rating: int, comment: Optional[str] = None):
+    """Provide human feedback on an action (RLHF)"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    if rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+
+    rl_system.record_feedback(action_id, rating, comment or "")
+    return {"status": "success", "message": "Feedback recorded"}
+
+
+@app.get("/rl/history", tags=["reinforcement"])
+async def get_rl_history(limit: int = 50):
+    """Get action history"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    history = rl_system.get_action_history(limit)
+    return {"status": "success", "actions": history}
+
+
+@app.get("/rl/stats", tags=["reinforcement"])
+async def get_rl_stats():
+    """Get RL statistics"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    stats = rl_system.get_statistics()
+    return {"status": "success", "statistics": stats}
+
+
+# =====================================================================
+# Advanced NLP Endpoints
+# =====================================================================
+
+@app.post("/nlp/understand", tags=["nlp"])
+async def understand_text(text: str, context: Optional[Dict[str, Any]] = None):
+    """Comprehensive NLP understanding of text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    understanding = nlp_engine.understand(text, context)
+    return {"status": "success", "understanding": understanding}
+
+
+@app.post("/nlp/intent", tags=["nlp"])
+async def recognize_intent(text: str):
+    """Recognize intent from text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    intent = nlp_engine.recognize_intent(text)
+    if intent:
+        return {"status": "success", "intent": asdict(intent)}
+    else:
+        return {"status": "no_match", "intent": None}
+
+
+@app.post("/nlp/entities", tags=["nlp"])
+async def extract_entities(text: str):
+    """Extract named entities from text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    entities = nlp_engine.extract_entities(text)
+    return {"status": "success", "entities": [asdict(e) for e in entities]}
+
+
+@app.post("/nlp/sentiment", tags=["nlp"])
+async def analyze_sentiment(text: str):
+    """Analyze sentiment of text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    sentiment = nlp_engine.analyze_sentiment(text)
+    return {"status": "success", "sentiment": asdict(sentiment)}
+
+
+@app.post("/nlp/similarity", tags=["nlp"])
+async def calculate_similarity(text1: str, text2: str):
+    """Calculate semantic similarity between two texts"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    similarity = nlp_engine.calculate_similarity(text1, text2)
+    return {"status": "success", "similarity": similarity}
+
+
+# =====================================================================
+# Multi-Agent System Endpoints
+# =====================================================================
+
+@app.get("/agents/list", tags=["agents"])
+async def list_agents():
+    """List all active agents"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    agents_list = [asdict(agent) for agent in multi_agent_system.agents.values()]
+    return {"status": "success", "agents": agents_list}
+
+
+@app.post("/agents/spawn", tags=["agents"])
+async def spawn_agent(name: str, role: str, capabilities: List[str]):
+    """Spawn a new agent"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    try:
+        from windows_ai.multi_agent_system import AgentRole
+        agent_role = AgentRole(role)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid agent role: {role}")
+
+    agent = multi_agent_system.spawn_agent(name, agent_role, capabilities)
+    return {"status": "success", "agent": asdict(agent)}
+
+
+@app.post("/agents/tasks/submit", tags=["agents"])
+async def submit_task(description: str, priority: int, required_capabilities: List[str]):
+    """Submit a task to the multi-agent system"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    task = multi_agent_system.submit_task(description, priority, required_capabilities)
+    return {"status": "success", "task": asdict(task)}
+
+
+@app.post("/agents/tasks/coordinate", tags=["agents"])
+async def coordinate_task(task_description: str):
+    """Coordinate complex task across multiple agents"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    tasks = multi_agent_system.coordinate_task(task_description)
+    return {"status": "success", "subtasks": [asdict(t) for t in tasks]}
+
+
+@app.get("/agents/status", tags=["agents"])
+async def get_system_status():
+    """Get overall multi-agent system status"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    status = multi_agent_system.get_system_status()
+    return {"status": "success", "system": status}
+
+
+@app.delete("/agents/{agent_id}", tags=["agents"])
+async def retire_agent(agent_id: str):
+    """Retire an agent"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    multi_agent_system.retire_agent(agent_id)
+    return {"status": "success", "message": f"Agent {agent_id} retired"}
+
+
+# =====================================================================
+# AI Code Generator Endpoints
+# =====================================================================
+
+@app.post("/codegen/generate", tags=["codegen"])
+async def generate_code(
+    description: str,
+    language: str = "python",
+    template_id: Optional[str] = None,
+    context: Optional[Dict[str, Any]] = None
+):
+    """Generate code from natural language description"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    result = code_generator.generate_code(description, language, template_id, context)
+    return {"status": "success", "generated": asdict(result)}
+
+
+@app.post("/codegen/tests", tags=["codegen"])
+async def generate_tests(code: str, language: str = "python"):
+    """Generate test cases for code"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    test_code = code_generator.generate_tests(code, language)
+    return {"status": "success", "tests": test_code}
+
+
+@app.post("/codegen/refactor", tags=["codegen"])
+async def refactor_code(code: str, language: str = "python"):
+    """Suggest code refactoring"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    refactored = code_generator.refactor_code(code, language)
+    return {"status": "success", "refactored_code": refactored}
+
+
+@app.get("/codegen/templates", tags=["codegen"])
+async def list_templates(language: Optional[str] = None):
+    """List available code templates"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    templates = code_generator.templates
+    if language:
+        templates = {k: v for k, v in templates.items() if v.language == language}
+
+    return {"status": "success", "templates": [asdict(t) for t in templates.values()]}
+
+
+@app.get("/codegen/history", tags=["codegen"])
+async def get_generation_history(limit: int = 50):
+    """Get code generation history"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    history = code_generator.history[-limit:]
+    return {"status": "success", "history": [asdict(h) for h in history]}
+
+
+# =====================================================================
+# Testing Framework Endpoints
+# =====================================================================
+
+@app.post("/testing/suite/create", tags=["testing"])
+async def create_test_suite(name: str, tests: List[Dict[str, Any]]):
+    """Create a new test suite"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    # Convert test dicts to TestCase objects
+    from windows_ai.testing_framework import TestCase
+    test_cases = []
+    for test_data in tests:
+        test_case = TestCase(
+            test_id=test_data.get("test_id", str(uuid.uuid4())),
+            name=test_data["name"],
+            category=test_data.get("category", "unit"),
+            description=test_data.get("description", ""),
+            test_function=None,  # Would need to be set programmatically
+            expected_result=test_data.get("expected_result")
+        )
+        test_cases.append(test_case)
+
+    suite = testing_framework.create_test_suite(name, test_cases)
+    return {"status": "success", "suite_id": suite.suite_id, "name": suite.name}
+
+
+@app.post("/testing/suite/{suite_id}/run", tags=["testing"])
+async def run_test_suite(suite_id: str):
+    """Run a test suite"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    suite = testing_framework.test_suites.get(suite_id)
+    if not suite:
+        raise HTTPException(status_code=404, detail="Test suite not found")
+
+    report = testing_framework.run_suite(suite)
+    return {"status": "success", "report": asdict(report)}
+
+
+@app.post("/testing/run_all", tags=["testing"])
+async def run_all_tests():
+    """Run all test suites"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    reports = testing_framework.run_all_suites()
+    return {"status": "success", "reports": [asdict(r) for r in reports]}
+
+
+@app.get("/testing/results", tags=["testing"])
+async def get_test_results(suite_name: Optional[str] = None):
+    """Get test results"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    results = testing_framework.get_test_results(suite_name)
+    return {"status": "success", "results": [asdict(r) for r in results]}
+
+
+@app.get("/testing/coverage", tags=["testing"])
+async def get_coverage_report():
+    """Get code coverage report"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    coverage = testing_framework.get_coverage_report()
+    return {"status": "success", "coverage": coverage}
+
+
+@app.post("/testing/detect_flaky", tags=["testing"])
+async def detect_flaky_tests(runs: int = 5):
+    """Detect flaky tests by running multiple times"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    flaky_tests = testing_framework.detect_flaky_tests(runs)
+    return {"status": "success", "flaky_tests": flaky_tests}
+
+
+@app.get("/testing/suites", tags=["testing"])
+async def list_test_suites():
+    """List all test suites"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    suites = [{"suite_id": sid, "name": s.name, "test_count": len(s.tests)}
+              for sid, s in testing_framework.test_suites.items()]
+    return {"status": "success", "suites": suites}
+
+
+# =====================================================================
 # Integration Layer - IoT, Mesh, Model Discovery, Cloud Sync, Search
 # =====================================================================
 
@@ -2095,62 +2422,129 @@ async def startup_event():
     """Initialize all subsystems on startup"""
     global context_manager, xai_system, hotkey_manager, proactive_assistant
     global anomaly_detector, voice_system, healing_system, performance_optimizer, plugin_validator
+    global rl_system, nlp_engine, multi_agent_system, code_generator, testing_framework
+    global update_client
 
-    logger.info("Windows AI Backend starting up...")
-    logger.info("=" * 60)
+    logger.info("=" * 70)
+    logger.info("🚀 WINDOWS AI - ULTIMATE EDITION - STARTING UP")
+    logger.info("=" * 70)
+    logger.info(f"📁 Data directory: {DATA_DIR}")
+    logger.info(f"💬 Chat history: {len(chat_history.conversations)} conversations loaded")
 
-    # Phase 1 & 2: Existing integrations
-    logger.info("Initializing integrations (IoT, Mesh, Models, Cloud, Search)...")
+    # Start core automation systems first
+    logger.info("\n⚙️  Starting Core Automation Systems")
+    logger.info("-" * 70)
+    await folder_watcher_manager.start_all()
+    logger.info(f"✓ Folder watchers: {len(folder_watcher_manager.observers)} active")
+
+    await task_scheduler.start()
+    logger.info(f"✓ Task scheduler: {len(task_scheduler.tasks)} tasks configured")
+
+    await plugin_registry.load_plugins()
+    await plugin_registry.initialize_plugins()
+    logger.info(f"✓ Plugins: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
+
+    # Phase 1 & 2: Advanced integrations
+    logger.info("\n📦 PHASE 1 & 2: Core Integration")
+    logger.info("-" * 70)
+    logger.info("✓ Initializing integrations (IoT, Mesh, Models, Cloud, Search, RAG)...")
     initialize_integrations()
 
     # Phase 3: Advanced Intelligence & User Experience
-    logger.info("=" * 60)
-    logger.info("PHASE 3: Advanced Intelligence & User Experience")
-    logger.info("=" * 60)
+    logger.info("\n🧠 PHASE 3: Advanced Intelligence & User Experience")
+    logger.info("-" * 70)
 
-    logger.info("Initializing Contextual Awareness System...")
+    logger.info("✓ Contextual Awareness System...")
     context_manager = initialize_context_system(DATA_DIR / "context", start_monitoring=True)
 
-    logger.info("Initializing Explainable AI (XAI) System...")
+    logger.info("✓ Explainable AI (XAI) System...")
     xai_system = initialize_xai_system(DATA_DIR / "xai")
 
-    logger.info("Initializing Global Hotkey System...")
+    logger.info("✓ Global Hotkey System...")
     hotkey_manager = initialize_hotkey_system(DATA_DIR / "hotkeys", start_listening=True)
 
-    logger.info("Initializing Proactive Task Prediction...")
+    logger.info("✓ Proactive Task Prediction...")
     proactive_assistant = initialize_proactive_assistant(DATA_DIR / "proactive", start_monitoring=True)
 
-    logger.info("Initializing Anomaly Detection System...")
+    logger.info("✓ Anomaly Detection System...")
     anomaly_detector = initialize_anomaly_detector(DATA_DIR / "anomaly", start_monitoring=True)
 
-    logger.info("Initializing Voice Activation System...")
-    voice_system = initialize_voice_system(DATA_DIR / "voice", start_listening=False)  # User must enable
+    logger.info("✓ Voice Activation System...")
+    voice_system = initialize_voice_system(DATA_DIR / "voice", start_listening=False)
 
-    logger.info("Initializing Self-Healing Workflow System...")
+    logger.info("✓ Self-Healing Workflow System...")
     healing_system = initialize_healing_system(DATA_DIR / "healing")
 
     # Phase 4: Robustness & Performance
-    logger.info("=" * 60)
-    logger.info("PHASE 4: Performance & Optimization")
-    logger.info("=" * 60)
+    logger.info("\n⚡ PHASE 4: Performance & Optimization")
+    logger.info("-" * 70)
 
-    logger.info("Initializing Performance Optimization Suite...")
+    logger.info("✓ Performance Optimization Suite...")
     performance_optimizer = initialize_performance_optimizer(DATA_DIR / "performance", start_monitoring=True)
 
     # Phase 5: Plugin Ecosystem
-    logger.info("=" * 60)
-    logger.info("PHASE 5: Plugin Ecosystem & Security")
-    logger.info("=" * 60)
+    logger.info("\n🔒 PHASE 5: Plugin Ecosystem & Security")
+    logger.info("-" * 70)
 
-    logger.info("Initializing Plugin Validation & Sandboxing...")
+    logger.info("✓ Plugin Validation & Sandboxing...")
     plugin_validator = initialize_plugin_validator(DATA_DIR / "plugin_validation")
+
+    # MEGA FEATURES: Advanced AI Systems
+    logger.info("\n🎯 MEGA FEATURES: Next-Gen AI Systems")
+    logger.info("-" * 70)
+
+    logger.info("✓ Reinforcement Learning (RLHF)...")
+    rl_system = initialize_rl_system(DATA_DIR / "rl")
+
+    logger.info("✓ Advanced NLP Engine...")
+    nlp_engine = initialize_nlp_engine(DATA_DIR / "nlp")
+
+    logger.info("✓ Multi-Agent Coordination...")
+    multi_agent_system = initialize_multi_agent_system(DATA_DIR / "multi_agent")
+
+    logger.info("✓ AI Code Generator...")
+    code_generator = initialize_code_generator(DATA_DIR / "codegen")
+
+    logger.info("✓ Comprehensive Testing Framework...")
+    testing_framework = initialize_testing_framework(DATA_DIR / "testing")
 
     # Register hotkey actions
     _register_hotkey_actions()
 
-    logger.info("=" * 60)
-    logger.info("✅ ALL SYSTEMS OPERATIONAL - Windows AI is ready!")
-    logger.info("=" * 60)
+    # Initialize update client
+    logger.info("\n🔄 Initializing Update System")
+    logger.info("-" * 70)
+    try:
+        config = config_manager.get_config()
+        update_prefs = config.get("update_preferences", {
+            "auto_check": True,
+            "auto_download": True,
+            "channel": "stable",
+            "check_interval_hours": 6
+        })
+
+        update_client = UpdateClient(
+            current_version=app.version,
+            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
+            channel=update_prefs.get("channel", "stable"),
+            auto_download=update_prefs.get("auto_download", True),
+            check_interval_hours=update_prefs.get("check_interval_hours", 6)
+        )
+
+        if update_prefs.get("auto_check", True):
+            asyncio.create_task(update_client.run_background_checker())
+            logger.info("✓ Update system: Background checker active")
+        else:
+            logger.info("✓ Update system: Manual check only")
+
+    except Exception as e:
+        logger.error(f"❌ Update system failed: {e}")
+        logger.warning("⚠️  Continuing without auto-updates")
+
+    logger.info("\n" + "=" * 70)
+    logger.info("✅ ALL 15 AI SYSTEMS OPERATIONAL!")
+    logger.info("🎉 Windows AI Ultimate Edition is ready!")
+    logger.info("=" * 70 + "\n")
 
 # =====================================================================
 
