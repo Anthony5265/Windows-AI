@@ -14,6 +14,7 @@ It provides:
 import os
 import json
 import asyncio
+import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from pathlib import Path
@@ -2124,6 +2125,348 @@ async def trust_plugin(plugin_id: str, plugin_hash: str):
 
     plugin_validator.trust_plugin(plugin_id, plugin_hash)
     return {"status": "success", "message": f"Plugin {plugin_id} marked as trusted"}
+
+
+# =====================================================================
+# Reinforcement Learning (RLHF) Endpoints
+# =====================================================================
+
+@app.get("/rl/policy", tags=["reinforcement"])
+async def get_policy():
+    """Get current RL policy (Q-table)"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    policy = rl_system.get_policy()
+    return {"status": "success", "policy": asdict(policy)}
+
+
+@app.post("/rl/action", tags=["reinforcement"])
+async def select_action(state: str):
+    """Select action based on current state using learned policy"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    action = rl_system.select_action(state)
+    if action:
+        return {"status": "success", "action": asdict(action)}
+    else:
+        return {"status": "error", "message": "No action available for this state"}
+
+
+@app.post("/rl/feedback", tags=["reinforcement"])
+async def provide_rl_feedback(action_id: str, rating: int, comment: Optional[str] = None):
+    """Provide human feedback on an action (RLHF)"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    if rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+
+    rl_system.record_feedback(action_id, rating, comment or "")
+    return {"status": "success", "message": "Feedback recorded"}
+
+
+@app.get("/rl/history", tags=["reinforcement"])
+async def get_rl_history(limit: int = 50):
+    """Get action history"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    history = rl_system.get_action_history(limit)
+    return {"status": "success", "actions": history}
+
+
+@app.get("/rl/stats", tags=["reinforcement"])
+async def get_rl_stats():
+    """Get RL statistics"""
+    if not rl_system:
+        raise HTTPException(status_code=503, detail="RL system not initialized")
+
+    stats = rl_system.get_statistics()
+    return {"status": "success", "statistics": stats}
+
+
+# =====================================================================
+# Advanced NLP Endpoints
+# =====================================================================
+
+@app.post("/nlp/understand", tags=["nlp"])
+async def understand_text(text: str, context: Optional[Dict[str, Any]] = None):
+    """Comprehensive NLP understanding of text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    understanding = nlp_engine.understand(text, context)
+    return {"status": "success", "understanding": understanding}
+
+
+@app.post("/nlp/intent", tags=["nlp"])
+async def recognize_intent(text: str):
+    """Recognize intent from text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    intent = nlp_engine.recognize_intent(text)
+    if intent:
+        return {"status": "success", "intent": asdict(intent)}
+    else:
+        return {"status": "no_match", "intent": None}
+
+
+@app.post("/nlp/entities", tags=["nlp"])
+async def extract_entities(text: str):
+    """Extract named entities from text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    entities = nlp_engine.extract_entities(text)
+    return {"status": "success", "entities": [asdict(e) for e in entities]}
+
+
+@app.post("/nlp/sentiment", tags=["nlp"])
+async def analyze_sentiment(text: str):
+    """Analyze sentiment of text"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    sentiment = nlp_engine.analyze_sentiment(text)
+    return {"status": "success", "sentiment": asdict(sentiment)}
+
+
+@app.post("/nlp/similarity", tags=["nlp"])
+async def calculate_similarity(text1: str, text2: str):
+    """Calculate semantic similarity between two texts"""
+    if not nlp_engine:
+        raise HTTPException(status_code=503, detail="NLP engine not initialized")
+
+    similarity = nlp_engine.calculate_similarity(text1, text2)
+    return {"status": "success", "similarity": similarity}
+
+
+# =====================================================================
+# Multi-Agent System Endpoints
+# =====================================================================
+
+@app.get("/agents/list", tags=["agents"])
+async def list_agents():
+    """List all active agents"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    agents_list = [asdict(agent) for agent in multi_agent_system.agents.values()]
+    return {"status": "success", "agents": agents_list}
+
+
+@app.post("/agents/spawn", tags=["agents"])
+async def spawn_agent(name: str, role: str, capabilities: List[str]):
+    """Spawn a new agent"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    try:
+        from windows_ai.multi_agent_system import AgentRole
+        agent_role = AgentRole(role)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid agent role: {role}")
+
+    agent = multi_agent_system.spawn_agent(name, agent_role, capabilities)
+    return {"status": "success", "agent": asdict(agent)}
+
+
+@app.post("/agents/tasks/submit", tags=["agents"])
+async def submit_task(description: str, priority: int, required_capabilities: List[str]):
+    """Submit a task to the multi-agent system"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    task = multi_agent_system.submit_task(description, priority, required_capabilities)
+    return {"status": "success", "task": asdict(task)}
+
+
+@app.post("/agents/tasks/coordinate", tags=["agents"])
+async def coordinate_task(task_description: str):
+    """Coordinate complex task across multiple agents"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    tasks = multi_agent_system.coordinate_task(task_description)
+    return {"status": "success", "subtasks": [asdict(t) for t in tasks]}
+
+
+@app.get("/agents/status", tags=["agents"])
+async def get_system_status():
+    """Get overall multi-agent system status"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    status = multi_agent_system.get_system_status()
+    return {"status": "success", "system": status}
+
+
+@app.delete("/agents/{agent_id}", tags=["agents"])
+async def retire_agent(agent_id: str):
+    """Retire an agent"""
+    if not multi_agent_system:
+        raise HTTPException(status_code=503, detail="Multi-agent system not initialized")
+
+    multi_agent_system.retire_agent(agent_id)
+    return {"status": "success", "message": f"Agent {agent_id} retired"}
+
+
+# =====================================================================
+# AI Code Generator Endpoints
+# =====================================================================
+
+@app.post("/codegen/generate", tags=["codegen"])
+async def generate_code(
+    description: str,
+    language: str = "python",
+    template_id: Optional[str] = None,
+    context: Optional[Dict[str, Any]] = None
+):
+    """Generate code from natural language description"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    result = code_generator.generate_code(description, language, template_id, context)
+    return {"status": "success", "generated": asdict(result)}
+
+
+@app.post("/codegen/tests", tags=["codegen"])
+async def generate_tests(code: str, language: str = "python"):
+    """Generate test cases for code"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    test_code = code_generator.generate_tests(code, language)
+    return {"status": "success", "tests": test_code}
+
+
+@app.post("/codegen/refactor", tags=["codegen"])
+async def refactor_code(code: str, language: str = "python"):
+    """Suggest code refactoring"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    refactored = code_generator.refactor_code(code, language)
+    return {"status": "success", "refactored_code": refactored}
+
+
+@app.get("/codegen/templates", tags=["codegen"])
+async def list_templates(language: Optional[str] = None):
+    """List available code templates"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    templates = code_generator.templates
+    if language:
+        templates = {k: v for k, v in templates.items() if v.language == language}
+
+    return {"status": "success", "templates": [asdict(t) for t in templates.values()]}
+
+
+@app.get("/codegen/history", tags=["codegen"])
+async def get_generation_history(limit: int = 50):
+    """Get code generation history"""
+    if not code_generator:
+        raise HTTPException(status_code=503, detail="Code generator not initialized")
+
+    history = code_generator.history[-limit:]
+    return {"status": "success", "history": [asdict(h) for h in history]}
+
+
+# =====================================================================
+# Testing Framework Endpoints
+# =====================================================================
+
+@app.post("/testing/suite/create", tags=["testing"])
+async def create_test_suite(name: str, tests: List[Dict[str, Any]]):
+    """Create a new test suite"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    # Convert test dicts to TestCase objects
+    from windows_ai.testing_framework import TestCase
+    test_cases = []
+    for test_data in tests:
+        test_case = TestCase(
+            test_id=test_data.get("test_id", str(uuid.uuid4())),
+            name=test_data["name"],
+            category=test_data.get("category", "unit"),
+            description=test_data.get("description", ""),
+            test_function=None,  # Would need to be set programmatically
+            expected_result=test_data.get("expected_result")
+        )
+        test_cases.append(test_case)
+
+    suite = testing_framework.create_test_suite(name, test_cases)
+    return {"status": "success", "suite_id": suite.suite_id, "name": suite.name}
+
+
+@app.post("/testing/suite/{suite_id}/run", tags=["testing"])
+async def run_test_suite(suite_id: str):
+    """Run a test suite"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    suite = testing_framework.test_suites.get(suite_id)
+    if not suite:
+        raise HTTPException(status_code=404, detail="Test suite not found")
+
+    report = testing_framework.run_suite(suite)
+    return {"status": "success", "report": asdict(report)}
+
+
+@app.post("/testing/run_all", tags=["testing"])
+async def run_all_tests():
+    """Run all test suites"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    reports = testing_framework.run_all_suites()
+    return {"status": "success", "reports": [asdict(r) for r in reports]}
+
+
+@app.get("/testing/results", tags=["testing"])
+async def get_test_results(suite_name: Optional[str] = None):
+    """Get test results"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    results = testing_framework.get_test_results(suite_name)
+    return {"status": "success", "results": [asdict(r) for r in results]}
+
+
+@app.get("/testing/coverage", tags=["testing"])
+async def get_coverage_report():
+    """Get code coverage report"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    coverage = testing_framework.get_coverage_report()
+    return {"status": "success", "coverage": coverage}
+
+
+@app.post("/testing/detect_flaky", tags=["testing"])
+async def detect_flaky_tests(runs: int = 5):
+    """Detect flaky tests by running multiple times"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    flaky_tests = testing_framework.detect_flaky_tests(runs)
+    return {"status": "success", "flaky_tests": flaky_tests}
+
+
+@app.get("/testing/suites", tags=["testing"])
+async def list_test_suites():
+    """List all test suites"""
+    if not testing_framework:
+        raise HTTPException(status_code=503, detail="Testing framework not initialized")
+
+    suites = [{"suite_id": sid, "name": s.name, "test_count": len(s.tests)}
+              for sid, s in testing_framework.test_suites.items()]
+    return {"status": "success", "suites": suites}
 
 
 # =====================================================================
