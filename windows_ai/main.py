@@ -15,9 +15,10 @@ import os
 import json
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from pathlib import Path
+from dataclasses import asdict
 import logging
 
 from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks
@@ -1586,63 +1587,6 @@ async def set_update_preferences(preferences: Dict[str, Any]):
 # Startup/Shutdown Events
 # =====================================================================
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup"""
-    logger.info("Windows AI Backend starting up...")
-    logger.info(f"Data directory: {DATA_DIR}")
-    logger.info(f"Chat history loaded: {len(chat_history.conversations)} conversations")
-
-    # Start automation systems
-    logger.info("Starting automation systems...")
-    await folder_watcher_manager.start_all()
-    logger.info(f"Folder watchers started: {len(folder_watcher_manager.observers)} active")
-
-    await task_scheduler.start()
-    logger.info(f"Task scheduler started: {len(task_scheduler.tasks)} tasks configured")
-
-    # Load and initialize plugins
-    logger.info("Loading plugins...")
-    await plugin_registry.load_plugins()
-    await plugin_registry.initialize_plugins()
-    logger.info(f"Plugins loaded: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
-
-    # Initialize update client
-    logger.info("Initializing update system...")
-    global update_client
-    try:
-        config = config_manager.get_config()
-        update_prefs = config.get("update_preferences", {
-            "auto_check": True,
-            "auto_download": True,
-            "channel": "stable",
-            "check_interval_hours": 6
-        })
-
-        # Get current version from package
-        current_version = app.version  # Or read from VERSION file
-
-        update_client = UpdateClient(
-            current_version=current_version,
-            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
-            channel=update_prefs.get("channel", "stable"),
-            auto_download=update_prefs.get("auto_download", True),
-            check_interval_hours=update_prefs.get("check_interval_hours", 6)
-        )
-
-        # Start background update checker if auto-check enabled
-        if update_prefs.get("auto_check", True):
-            asyncio.create_task(update_client.run_background_checker())
-            logger.info("Update background checker started")
-        else:
-            logger.info("Automatic update checking disabled")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize update system: {e}")
-        logger.warning("Continuing without update system")
-
-    logger.info("Backend is ready!")
-
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up on shutdown"""
@@ -2479,15 +2423,31 @@ async def startup_event():
     global context_manager, xai_system, hotkey_manager, proactive_assistant
     global anomaly_detector, voice_system, healing_system, performance_optimizer, plugin_validator
     global rl_system, nlp_engine, multi_agent_system, code_generator, testing_framework
+    global update_client
 
     logger.info("=" * 70)
     logger.info("🚀 WINDOWS AI - ULTIMATE EDITION - STARTING UP")
     logger.info("=" * 70)
+    logger.info(f"📁 Data directory: {DATA_DIR}")
+    logger.info(f"💬 Chat history: {len(chat_history.conversations)} conversations loaded")
 
-    # Phase 1 & 2: Existing integrations
+    # Start core automation systems first
+    logger.info("\n⚙️  Starting Core Automation Systems")
+    logger.info("-" * 70)
+    await folder_watcher_manager.start_all()
+    logger.info(f"✓ Folder watchers: {len(folder_watcher_manager.observers)} active")
+
+    await task_scheduler.start()
+    logger.info(f"✓ Task scheduler: {len(task_scheduler.tasks)} tasks configured")
+
+    await plugin_registry.load_plugins()
+    await plugin_registry.initialize_plugins()
+    logger.info(f"✓ Plugins: {len(plugin_registry.plugins)} total, {len(plugin_registry._initialized_plugins)} initialized")
+
+    # Phase 1 & 2: Advanced integrations
     logger.info("\n📦 PHASE 1 & 2: Core Integration")
     logger.info("-" * 70)
-    logger.info("Initializing integrations (IoT, Mesh, Models, Cloud, Search, RAG)...")
+    logger.info("✓ Initializing integrations (IoT, Mesh, Models, Cloud, Search, RAG)...")
     initialize_integrations()
 
     # Phase 3: Advanced Intelligence & User Experience
@@ -2550,6 +2510,36 @@ async def startup_event():
 
     # Register hotkey actions
     _register_hotkey_actions()
+
+    # Initialize update client
+    logger.info("\n🔄 Initializing Update System")
+    logger.info("-" * 70)
+    try:
+        config = config_manager.get_config()
+        update_prefs = config.get("update_preferences", {
+            "auto_check": True,
+            "auto_download": True,
+            "channel": "stable",
+            "check_interval_hours": 6
+        })
+
+        update_client = UpdateClient(
+            current_version=app.version,
+            update_server_url=os.getenv("UPDATE_SERVER_URL", "https://updates.windows-ai.example.com"),
+            channel=update_prefs.get("channel", "stable"),
+            auto_download=update_prefs.get("auto_download", True),
+            check_interval_hours=update_prefs.get("check_interval_hours", 6)
+        )
+
+        if update_prefs.get("auto_check", True):
+            asyncio.create_task(update_client.run_background_checker())
+            logger.info("✓ Update system: Background checker active")
+        else:
+            logger.info("✓ Update system: Manual check only")
+
+    except Exception as e:
+        logger.error(f"❌ Update system failed: {e}")
+        logger.warning("⚠️  Continuing without auto-updates")
 
     logger.info("\n" + "=" * 70)
     logger.info("✅ ALL 15 AI SYSTEMS OPERATIONAL!")
