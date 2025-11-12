@@ -34,6 +34,8 @@ from windows_ai.folder_watcher import (
 from windows_ai.scheduler import (
     TaskScheduler, ScheduledTask, EXAMPLE_TASKS
 )
+from windows_ai.phase_bootstrap import PhaseBootstrapper
+from windows_ai.phase_tracker import PhaseTracker
 
 # Import plugin system
 from windows_ai.plugins.registry import PluginRegistry
@@ -1913,11 +1915,52 @@ task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE)
 # Initialize plugin system
 plugin_registry = PluginRegistry(PLUGINS_DIR)
 
+# Bootstrap roadmap defaults for automation-heavy phases
+_phase_bootstrapper = PhaseBootstrapper(
+    folder_watcher_manager=folder_watcher_manager,
+    task_scheduler=task_scheduler,
+)
+_bootstrap_metrics = _phase_bootstrapper.ensure_defaults()
+if any(_bootstrap_metrics.values()):
+    logger.info("Phase bootstrapper seeded defaults: %s", _bootstrap_metrics)
+
+# Phase tracker exposes real-time completion telemetry
+phase_tracker = PhaseTracker(
+    repo_root=Path(__file__).resolve().parents[1],
+    data_dir=DATA_DIR,
+    folder_watcher_manager=folder_watcher_manager,
+    task_scheduler=task_scheduler,
+    plugin_dir=PLUGINS_DIR,
+)
+
 # Initialize model manager
 model_manager = ModelManager()
 
 # Initialize update client
 update_client = None  # Will be initialized on startup with config
+
+# Models for roadmap telemetry
+class PhaseGoalModel(BaseModel):
+    id: str
+    description: str
+    completed: bool
+    weight: float
+    evidence: Optional[str] = None
+
+
+class PhaseStatusModel(BaseModel):
+    phase: int
+    name: str
+    description: str
+    completion: float
+    goals: List[PhaseGoalModel]
+    metadata: Dict[str, Any]
+
+
+class PhaseSummaryModel(BaseModel):
+    overall_completion: float
+    phases: List[PhaseStatusModel]
+
 
 # =====================================================================
 # Automation Callbacks
@@ -2097,6 +2140,31 @@ async def health_check():
             "agent": "checking..."
         }
     }
+
+
+# =====================================================================
+# Phase Tracking Endpoints
+# =====================================================================
+
+
+@app.get("/phases/status", tags=["phases"], response_model=PhaseSummaryModel)
+async def get_phase_status_summary():
+    """Return overall roadmap completion metrics."""
+    summary = phase_tracker.get_summary()
+    return PhaseSummaryModel(
+        overall_completion=summary["overall_completion"],
+        phases=[PhaseStatusModel(**phase) for phase in summary["phases"]],
+    )
+
+
+@app.get("/phases/status/{phase_id}", tags=["phases"], response_model=PhaseStatusModel)
+async def get_phase_status_detail(phase_id: int):
+    """Return detailed status for a specific phase."""
+    status = phase_tracker.get_phase_status_by_id(phase_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Phase not found")
+    return PhaseStatusModel(**status.to_dict())
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
