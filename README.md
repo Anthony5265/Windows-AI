@@ -144,6 +144,14 @@ That's it! The backend, GUI, and tray will all start automatically.
 
 📖 **Full documentation:** See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed setup instructions, configuration, and troubleshooting.
 
+## 🗂 Repository Structure
+
+The entire monorepo is catalogued so you can instantly find any service, UI, or tool:
+
+- Browse the human-friendly [Repository Map](docs/structure/overview.md) to see how every top-level folder and file is grouped.
+- Pull the machine-readable [manifest](docs/structure/manifest.json) into scripts or dashboards for automated navigation.
+- Regenerate the manifest after reorganizing code with `python scripts/generate_repo_manifest.py --pretty`.
+
 ---
 
 ## 📸 Screenshots & Demos

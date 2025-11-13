@@ -6,6 +6,7 @@ Thanks for your interest in improving Windows AI!
 
 Before contributing, please familiarize yourself with our repository structure:
 
+- **Start with the [Repository Map](docs/structure/overview.md)** for a curated view of every top-level folder and file
 - **Read [docs/DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md)** for a comprehensive guide to all directories
 - **Follow organization principles** outlined in the directory structure guide
 - **Keep the root directory clean** - only essential documentation and launch scripts belong there
@@ -26,8 +27,9 @@ Before contributing, please familiarize yourself with our repository structure:
 | Plugin | `plugins/[category]/` |
 | Test | `tests/` (mirror source structure) |
 | User documentation | `docs/` |
-| API documentation | `docs/api_reference.md` or `openapi/` |
+| API documentation | `docs/reference/api/overview.md` or `openapi/` |
 | Build/utility script | `scripts/` (or root if essential) |
+| Repo catalog updates | `docs/structure/` (update YAML + regenerate manifest) |
 
 ## Pull Requests
 

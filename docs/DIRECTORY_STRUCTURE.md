@@ -2,6 +2,10 @@
 
 This document provides a comprehensive overview of the Windows AI repository structure, explaining the purpose and contents of each major directory.
 
+> Looking for the newest catalog? Start with the [Repository Map](structure/overview.md) and the generated
+> [manifest](structure/manifest.json) to see where every folder and file lives. The [`generate_repo_manifest.py`](../scripts/generate_repo_manifest.py)
+> helper keeps those resources in sync with the latest code layout.
+
 **Last Updated:** November 9, 2025
 
 ---
@@ -564,7 +568,7 @@ Contents:
 
 ### Adding Documentation
 - **User docs** → `docs/`
-- **API docs** → `docs/api_reference.md` or `openapi/`
+- **API docs** → `docs/reference/api/overview.md` or `openapi/`
 - **Session reports** → `docs/history/`
 - **Architecture** → `docs/architecture_overview.md`
 
