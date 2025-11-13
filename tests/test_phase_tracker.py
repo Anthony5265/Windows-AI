@@ -84,7 +84,7 @@ def test_phase_summary_contains_all_phases(phase_tracker: PhaseTracker):
     assert summary["phases"], "Expected at least one phase in the summary"
 
     phase_numbers = {phase["phase"] for phase in summary["phases"]}
-    assert {0, 1, 2, 3, 4}.issubset(phase_numbers)
+    assert set(range(0, 10)).issubset(phase_numbers)
 
 
 def test_phase_two_reports_automation_assets(phase_tracker: PhaseTracker):
@@ -105,3 +105,69 @@ def test_phase_tracker_serialization_models(phase_tracker: PhaseTracker):
     assert payload["completion"] >= 0
     assert isinstance(payload["goals"], list)
     assert all("id" in goal and "completed" in goal for goal in payload["goals"])
+
+
+def test_phase_five_ecosystem_metrics(phase_tracker: PhaseTracker):
+    phase_five = phase_tracker.get_phase_status_by_id(5)
+    assert phase_five is not None
+
+    metadata = phase_five.metadata
+
+    assert metadata["plugins"]["count"] >= 5
+    assert metadata["plugins"]["registry_ready"]
+    assert metadata["plugins"]["loader_ready"]
+
+    assert metadata["ecosystem"]["marketplace"]
+    assert metadata["ecosystem"]["marketplace_entry"]
+    assert metadata["ecosystem"]["model_discovery"]
+    assert metadata["ecosystem"]["discovery_modules"] >= 1
+
+    assert metadata["community"]["community_ready"]
+    assert metadata["community"]["docs"].get("CONTRIBUTING.md")
+
+
+def test_phase_six_capsules_and_policies(phase_tracker: PhaseTracker):
+    phase_six = phase_tracker.get_phase_status_by_id(6)
+    assert phase_six is not None
+
+    metadata = phase_six.metadata
+    assert metadata["capsules"]["workflow_templates"] >= 3
+    assert metadata["capsules"]["marketplace_ready"]
+    assert metadata["policies"]["documents"] >= 3
+    assert metadata["policies"]["engine_ready"]
+
+
+def test_phase_seven_operations_and_updates(phase_tracker: PhaseTracker):
+    phase_seven = phase_tracker.get_phase_status_by_id(7)
+    assert phase_seven is not None
+
+    metadata = phase_seven.metadata
+    assert metadata["operations"]["watchdog"]["script_ready"]
+    assert metadata["operations"]["watchdog"]["docs_ready"]
+    assert metadata["updates"]["server_ready"]
+    assert metadata["deployment"]["scripts"] >= 6
+    assert metadata["operations"]["rollback_ready"]
+
+
+def test_phase_eight_companion_experiences(phase_tracker: PhaseTracker):
+    phase_eight = phase_tracker.get_phase_status_by_id(8)
+    assert phase_eight is not None
+
+    metadata = phase_eight.metadata
+    assert metadata["experiences"]["mobile_ready"]
+    assert metadata["experiences"]["first_run_ready"]
+    assert metadata["experiences"]["desktop_wizard_ready"]
+    assert metadata["apps"]["portfolio_ready"]
+    assert metadata["docs"]["complete"]
+
+
+def test_phase_nine_developer_platform(phase_tracker: PhaseTracker):
+    phase_nine = phase_tracker.get_phase_status_by_id(9)
+    assert phase_nine is not None
+
+    metadata = phase_nine.metadata
+    assert metadata["sdk"]["language_count"] >= 3
+    assert metadata["api"]["exists"]
+    assert metadata["distribution"]["agent_ready"]
+    assert metadata["docs"]["complete"]
+    assert metadata["domains"]["samples_ready"]
