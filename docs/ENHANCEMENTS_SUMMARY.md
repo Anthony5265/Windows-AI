@@ -528,7 +528,7 @@ These enhancements were developed as part of the Phase 4+ development plan for W
 
 - [Development Plan](DEVELOPMENT_PLAN_PHASE4.md)
 - [Plugin Documentation](../windows_ai/plugins/README.md)
-- [API Reference](api_reference.md)
+- [API Reference](reference/api/overview.md)
 - [Contributing Guidelines](../CONTRIBUTING.md)
 
 ---
