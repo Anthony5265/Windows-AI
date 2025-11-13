@@ -24,6 +24,108 @@ This phase focuses on establishing a robust and scalable foundation, integrating
     *   **Stabilize `actions-api`:** Make the Node.js `actions-api` fully functional, secure, and well-documented. This is a critical bridge to the Windows environment.
     *   **Connect `agenthub` to `actions-api`:** Implement the necessary communication layer (e.g., HTTP requests) for the Python core agent to reliably call actions exposed by the Node.js API.
 
+### Upgrades:
+*   **Upgrade 001:** Add `scripts/dev/bootstrap_env.py` to create reproducible Python and Node environments in one command.
+*   **Upgrade 002:** Provide `docs/architecture/monorepo-map.md` to visualize the standardized directory structure for new contributors.
+*   **Upgrade 003:** Establish automated linting via `scripts/ci/run_linters.sh` that enforces formatting before merges.
+*   **Upgrade 004:** Introduce `config/project-metadata.json` to centralize naming, versioning, and support channels for the core platform.
+*   **Upgrade 005:** Create a Git commit template in `.gitmessage` to encode branching conventions and review checklists.
+*   **Upgrade 006:** Add `scripts/dev/verify_symlinks.py` ensuring cross-platform compatibility for shared assets.
+*   **Upgrade 007:** Build a dependency visualization dashboard in `docs/architecture/dependency-graph.md` to expose service relationships.
+*   **Upgrade 008:** Publish onboarding walkthrough videos referenced from `docs/getting-started/quick-tour.md` for new developers.
+*   **Upgrade 009:** Integrate a pre-flight check `scripts/dev/preflight.ps1` to confirm Windows prerequisites before installation.
+*   **Upgrade 010:** Automate changelog enforcement with `scripts/ci/check_changelog.py` for every release branch.
+*   **Upgrade 011:** Implement `.editorconfig` coverage for all languages to align whitespace and indentation defaults.
+*   **Upgrade 012:** Ship `docs/glossary.md` defining core terminology for consistent discussions across teams.
+*   **Upgrade 013:** Add `scripts/dev/create-service-links.sh` to register symlinks between `actions-api` and `agenthub` modules during setup.
+*   **Upgrade 014:** Provide infrastructure diagrams under `assets/diagrams/foundation-architecture.drawio` with export scripts.
+*   **Upgrade 015:** Introduce `scripts/dev/validate_env.py` to confirm Python, Node, and Docker versions match supported ranges.
+*   **Upgrade 016:** Publish `docs/testing/smoke-checklist.md` describing manual smoke tests for new integrations.
+*   **Upgrade 017:** Add `tools/schema/manifest.schema.json` to validate configuration manifests shared between services.
+*   **Upgrade 018:** Create `scripts/dev/sync-git-hooks.sh` for distributing shared Git hooks across the repo.
+*   **Upgrade 019:** Provide templated ADRs in `docs/adr/000-template.md` to formalize architectural decisions.
+*   **Upgrade 020:** Configure Renovate in `renovate.json` to schedule dependency updates for Python and JavaScript packages.
+*   **Upgrade 021:** Build `scripts/ci/enforce_labels.py` to require roadmap labels before merging foundational changes.
+*   **Upgrade 022:** Add `docs/architecture/component-registry.md` listing every service, module owner, and escalation contact.
+*   **Upgrade 023:** Establish `scripts/dev/provision-postgres.ps1` for local database provisioning with seeded datasets.
+*   **Upgrade 024:** Publish `docs/security/credential-storage.md` covering secrets handling practices for development environments.
+*   **Upgrade 025:** Create `assets/templates/service-readme.md` to standardize README expectations for new modules.
+*   **Upgrade 026:** Add `scripts/dev/cleanup-artifacts.sh` to purge build outputs and cached dependencies in one call.
+*   **Upgrade 027:** Automate VS Code workspace recommendations in `.vscode/extensions.json` for consistent tooling.
+*   **Upgrade 028:** Introduce `scripts/dev/generate-openapi.ps1` to regenerate API contracts whenever handlers change.
+*   **Upgrade 029:** Publish `docs/architecture/process-lifecycle.md` mapping runtime processes and their IPC boundaries.
+*   **Upgrade 030:** Create `config/environments/dev.env.example` documenting minimal environment variables for agents.
+*   **Upgrade 031:** Integrate `scripts/ci/audit-os-compatibility.py` verifying Windows build targets across actions.
+*   **Upgrade 032:** Provide `docs/guides/runbook-bootstrap.md` guiding operations teams through first deployments.
+*   **Upgrade 033:** Build `scripts/dev/seed-sample-data.py` to populate demonstration data for UI smoke tests.
+*   **Upgrade 034:** Add `docs/architecture/event-bus.md` explaining message routing between orchestration components.
+*   **Upgrade 035:** Introduce `scripts/dev/verify-node-modules.sh` ensuring Node modules stay deduplicated within the monorepo.
+*   **Upgrade 036:** Publish `docs/guides/cli-usage.md` demonstrating usage of the core CLI for development tasks.
+*   **Upgrade 037:** Create `scripts/dev/configure-git-lfs.sh` to automatically manage large assets and training data.
+*   **Upgrade 038:** Add `docs/operations/backup-strategy.md` describing data retention and restore procedures.
+*   **Upgrade 039:** Implement `scripts/dev/sync-submodules.py` to maintain consistent third-party submodule revisions.
+*   **Upgrade 040:** Provide `assets/templates/pull-request.md` with checklists tailored to foundational deliverables.
+*   **Upgrade 041:** Introduce `scripts/ci/check-license-headers.py` verifying legal compliance in new source files.
+*   **Upgrade 042:** Publish `docs/architecture/service-boundaries.md` clarifying microservice responsibilities and data flows.
+*   **Upgrade 043:** Add `scripts/dev/run-docker-compose.ps1` to orchestrate backend containers for Windows-based development.
+*   **Upgrade 044:** Create `docs/deployment/bootstrap-scenarios.md` covering typical environment bootstrap patterns.
+*   **Upgrade 045:** Implement `scripts/dev/generate-env-docs.py` to compile environment variable references into docs.
+*   **Upgrade 046:** Ship `docs/standards/code-review.md` enumerating review expectations for foundational modules.
+*   **Upgrade 047:** Add `scripts/dev/verify-licenses.sh` to ensure third-party components meet licensing policies.
+*   **Upgrade 048:** Provide `docs/architecture/configuration-hierarchy.md` explaining precedence across config files.
+*   **Upgrade 049:** Introduce `scripts/dev/rotate-service-keys.py` to automate rotating mock credentials for local testing.
+*   **Upgrade 050:** Publish `docs/testing/fixture-strategy.md` defining shared fixtures across Python and Node test suites.
+*   **Upgrade 051:** Add `scripts/dev/setup-precommit.sh` enabling optional pre-commit integration for all contributors.
+*   **Upgrade 052:** Create `docs/operations/logging-topology.md` detailing how logs are aggregated during local runs.
+*   **Upgrade 053:** Implement `scripts/dev/verify-readme-links.py` to catch broken references in service-level documentation.
+*   **Upgrade 054:** Provide `docs/architecture/shared-libraries.md` cataloging reusable libraries within the monorepo.
+*   **Upgrade 055:** Introduce `scripts/dev/generate-proto.sh` for any gRPC contracts the platform adopts later.
+*   **Upgrade 056:** Publish `docs/operations/release-calendar.md` showing planned foundational releases and owners.
+*   **Upgrade 057:** Add `scripts/dev/validate-json.py` to lint JSON-based configuration across the repository.
+*   **Upgrade 058:** Create `docs/architecture/versioning-strategy.md` outlining semantic versioning and compatibility promises.
+*   **Upgrade 059:** Implement `scripts/dev/watch-ts-rebuild.sh` to accelerate TypeScript rebuilds during local development.
+*   **Upgrade 060:** Provide `docs/guides/contributor-scenarios.md` describing typical developer workflows and commands.
+*   **Upgrade 061:** Introduce `scripts/dev/validate-path-lengths.ps1` to catch Windows path limitations early.
+*   **Upgrade 062:** Publish `docs/operations/incident-playbook.md` with first-response procedures for system outages.
+*   **Upgrade 063:** Add `scripts/dev/generate-mock-services.py` for quickly scaffolding service prototypes.
+*   **Upgrade 064:** Create `docs/architecture/secrets-flow.md` mapping how secrets travel across foundational components.
+*   **Upgrade 065:** Implement `scripts/dev/cleanup-node-lockfiles.sh` to keep lockfiles synchronized across packages.
+*   **Upgrade 066:** Provide `docs/testing/test-pyramid.md` aligning testing expectations between backend and frontend teams.
+*   **Upgrade 067:** Introduce `scripts/dev/sync-python-venv.ps1` to mirror dependencies across Windows and Unix environments.
+*   **Upgrade 068:** Publish `docs/operations/observability-stack.md` describing logging, metrics, and tracing options.
+*   **Upgrade 069:** Add `scripts/dev/check-yaml.py` to lint workflow and configuration YAML files.
+*   **Upgrade 070:** Create `docs/architecture/platform-roadmap.md` showing how foundational work unlocks later phases.
+*   **Upgrade 071:** Implement `scripts/dev/verify-crlf.sh` to ensure cross-platform line-ending consistency.
+*   **Upgrade 072:** Provide `docs/security/supply-chain.md` detailing mitigations for dependency supply-chain risks.
+*   **Upgrade 073:** Introduce `scripts/dev/compare-configs.py` to diff environment configurations across stages.
+*   **Upgrade 074:** Publish `docs/architecture/component-readiness.md` grading each foundational service's maturity.
+*   **Upgrade 075:** Add `scripts/dev/monitor-resource-usage.py` to profile CPU and memory consumption locally.
+*   **Upgrade 076:** Create `docs/testing/performance-baselines.md` capturing baseline metrics for core services.
+*   **Upgrade 077:** Implement `scripts/dev/build-status-dashboard.py` summarizing CI results for the foundational architecture.
+*   **Upgrade 078:** Provide `docs/operations/service-catalog.md` mapping ports, dependencies, and support teams.
+*   **Upgrade 079:** Introduce `scripts/dev/prep-offline-install.ps1` packaging dependencies for air-gapped installs.
+*   **Upgrade 080:** Publish `docs/architecture/file-conventions.md` clarifying naming, casing, and module layout expectations.
+*   **Upgrade 081:** Add `scripts/dev/rebuild-search-index.sh` to regenerate documentation search indexes after changes.
+*   **Upgrade 082:** Create `docs/operations/runbook-actions-api.md` detailing how to restart and monitor the API service.
+*   **Upgrade 083:** Implement `scripts/dev/check-unused-files.py` to flag orphaned assets in the foundational tree.
+*   **Upgrade 084:** Provide `docs/architecture/data-flow.md` describing how information travels between modules.
+*   **Upgrade 085:** Introduce `scripts/dev/manage-feature-flags.py` to toggle foundational features consistently.
+*   **Upgrade 086:** Publish `docs/security/permissions-matrix.md` mapping required privileges per service.
+*   **Upgrade 087:** Add `scripts/dev/verify-dockerfiles.sh` to lint container specifications for best practices.
+*   **Upgrade 088:** Create `docs/operations/windows-bootstrap.md` covering Windows-specific setup nuances.
+*   **Upgrade 089:** Implement `scripts/dev/refresh-subtrees.sh` to sync vendorized libraries used in foundations.
+*   **Upgrade 090:** Provide `docs/testing/sandbox-guidelines.md` for experiments within the foundational environment.
+*   **Upgrade 091:** Introduce `scripts/dev/lock-python-version.py` to maintain consistent Python runtime versions.
+*   **Upgrade 092:** Publish `docs/architecture/communication-protocols.md` enumerating protocols between services.
+*   **Upgrade 093:** Add `scripts/dev/check-dynamic-imports.py` ensuring lazy-loading patterns stay consistent.
+*   **Upgrade 094:** Create `docs/operations/maintenance-calendar.md` coordinating downtime for foundational systems.
+*   **Upgrade 095:** Implement `scripts/dev/export-env-report.py` summarizing local environment diagnostics for support.
+*   **Upgrade 096:** Provide `docs/testing/service-contracts.md` outlining API contracts validated during integration tests.
+*   **Upgrade 097:** Introduce `scripts/dev/check-naming-conventions.py` verifying modules follow naming rules.
+*   **Upgrade 098:** Publish `docs/security/threat-model-foundation.md` capturing threats relevant to the base architecture.
+*   **Upgrade 099:** Add `scripts/dev/track-experimental-features.py` to register experimental toggles and owners.
+*   **Upgrade 100:** Create `docs/architecture/foundation-maturity-model.md` to benchmark progress across foundational milestones.
+
 ## Phase 2: Core Intelligence & Feature Development
 
 This phase focuses on building out the core AI capabilities, enhancing system integration, and developing the primary user interfaces.
@@ -52,6 +154,108 @@ This phase focuses on building out the core AI capabilities, enhancing system in
     *   **Visual Workflow Builder:** Implement a drag-and-drop interface within the GUI for users to easily create, modify, and visualize their own automation workflows.
 5.  **Search and Knowledge Base:** Implement the `search` functionality, including indexing capabilities for local documents and a mechanism for the AI to retrieve relevant information.
     *   **Semantic Desktop Search:** Develop advanced search that understands the *content* of documents, emails, and web history, allowing users to find information based on meaning.
+
+### Upgrades:
+*   **Upgrade 101:** Deliver `domains/audio_processing/noise_profile_library.json` for curated ambient noise models that improve transcription accuracy.
+*   **Upgrade 102:** Add `domains/natural_language_processing/prompt-kits` with reusable prompt templates for conversation flows.
+*   **Upgrade 103:** Ship `domains/computer_vision/layout_analyzer.py` to understand window layouts during screen interpretation.
+*   **Upgrade 104:** Integrate `windows_ai/system_controls/clipboard_manager.py` enabling secure clipboard automation.
+*   **Upgrade 105:** Provide `iot/device_profiles.yaml` describing supported smart home devices and firmware requirements.
+*   **Upgrade 106:** Publish `mobile/sdks/android/README.md` detailing the Android companion app's messaging contracts.
+*   **Upgrade 107:** Add `gui/src/components/TaskTimeline.vue` to visualize AI-driven workflow progress chronologically.
+*   **Upgrade 108:** Implement `gui/src/store/memory.ts` to surface contextual history within the chat interface.
+*   **Upgrade 109:** Create `gui/src/components/AccessibilityPanel.vue` offering font scaling and contrast controls.
+*   **Upgrade 110:** Wire `agenthub/workflow_router.py` to dynamically select automation engines based on workflow metadata.
+*   **Upgrade 111:** Introduce `windows_ai/powershell/action_pack.psm1` bundling pre-approved automation scripts for system tasks.
+*   **Upgrade 112:** Add `mobile/notifications/push_gateway.py` to deliver device-specific alerts for triggered automations.
+*   **Upgrade 113:** Implement `search/semantic_index/schedule_rebuild.py` for scheduled background re-indexing.
+*   **Upgrade 114:** Provide `automation/builder/validation_rules.py` ensuring drag-and-drop workflows compile correctly.
+*   **Upgrade 115:** Build `domains/natural_language_processing/intent_catalog.json` enumerating supported intents and entity slots.
+*   **Upgrade 116:** Publish `docs/guides/multimodal-examples.md` demonstrating combined voice, text, and vision interactions.
+*   **Upgrade 117:** Add `gui/src/components/VoiceLevelMeter.vue` for real-time microphone feedback during dictation.
+*   **Upgrade 118:** Integrate `agenthub/plugins/executor_registry.py` to coordinate domain-specific execution strategies.
+*   **Upgrade 119:** Create `windows_ai/integrations/outlook_calendar.py` to orchestrate meeting scheduling automations.
+*   **Upgrade 120:** Ship `domains/computer_vision/screen_region_classifier.py` to categorize UI elements for automation.
+*   **Upgrade 121:** Add `search/connectors/sharepoint.py` enabling enterprise document indexing from SharePoint repositories.
+*   **Upgrade 122:** Provide `automation/workflow_templates/productivity.json` with starter automations for productivity tasks.
+*   **Upgrade 123:** Implement `gui/src/components/WorkflowDebugger.vue` to inspect node states during automation execution.
+*   **Upgrade 124:** Introduce `domains/audio_processing/voiceprint_manager.py` supporting personalized wake-word detection.
+*   **Upgrade 125:** Add `agenthub/memory/session_tagger.py` to tag interactions for quick retrieval.
+*   **Upgrade 126:** Publish `docs/guides/device-hand-off.md` outlining how tasks migrate between desktop and mobile experiences.
+*   **Upgrade 127:** Create `windows_ai/system_controls/window_layout_manager.py` to orchestrate window snapping automations.
+*   **Upgrade 128:** Build `gui/src/components/WorkflowLibrary.vue` showcasing reusable automation recipes.
+*   **Upgrade 129:** Implement `mobile/offline/cache_manager.ts` enabling offline command queues synced later.
+*   **Upgrade 130:** Provide `search/semantic_index/embedding_cache.py` to reuse embeddings across repeated queries.
+*   **Upgrade 131:** Add `automation/runtime/task_recovery.py` to resume workflows after unexpected interruptions.
+*   **Upgrade 132:** Publish `docs/guides/vision-automation-patterns.md` sharing common automation flows using screen context.
+*   **Upgrade 133:** Introduce `domains/natural_language_processing/conversation_state.py` to maintain dialogue continuity.
+*   **Upgrade 134:** Create `windows_ai/system_controls/notification_bridge.py` linking Windows to cross-device alerts.
+*   **Upgrade 135:** Build `gui/src/components/TaskApprovalModal.vue` for user confirmations on sensitive operations.
+*   **Upgrade 136:** Add `automation/workflow_editor/hotkeys.ts` giving power users keyboard shortcuts in the builder.
+*   **Upgrade 137:** Implement `domains/audio_processing/latency_profiler.py` to monitor microphone capture performance.
+*   **Upgrade 138:** Provide `search/semantic_index/vector_exporter.py` for exporting embeddings to external analytics tools.
+*   **Upgrade 139:** Add `iot/hubs/azure_iot_bridge.py` integrating Azure IoT Hub for remote device control.
+*   **Upgrade 140:** Publish `mobile/docs/push-notification-guide.md` documenting configuration for major platforms.
+*   **Upgrade 141:** Create `agenthub/dialogue/prompt_planner.py` to orchestrate multi-turn guidance sequences.
+*   **Upgrade 142:** Implement `gui/src/components/MultimodalComposer.vue` enabling attachments of screenshots and audio clips.
+*   **Upgrade 143:** Provide `automation/workflow_runner/metrics.py` capturing run duration and success ratios.
+*   **Upgrade 144:** Add `search/ui/semantic-search-widget.ts` embedding search into the main dashboard.
+*   **Upgrade 145:** Publish `docs/guides/iot-automation-examples.md` describing sample device orchestration flows.
+*   **Upgrade 146:** Introduce `domains/computer_vision/window_text_extractor.py` using OCR for on-screen text capture.
+*   **Upgrade 147:** Create `windows_ai/integrations/onedrive_sync.py` enabling automation across cloud file events.
+*   **Upgrade 148:** Build `mobile/qr_pairing/flow.ts` to streamline connecting mobile devices with the desktop agent.
+*   **Upgrade 149:** Implement `agenthub/workflow_router_rules.yaml` describing routing heuristics for workflow selection.
+*   **Upgrade 150:** Provide `gui/src/components/SkillMarketplace.vue` to discover and install AI skill packs.
+*   **Upgrade 151:** Add `automation/workflow_editor/validation_messages.json` to offer localized error feedback.
+*   **Upgrade 152:** Publish `docs/guides/automation-api.md` explaining how external tools trigger workflows via HTTP.
+*   **Upgrade 153:** Introduce `domains/natural_language_processing/entity_resolver.py` to normalize user entities across domains.
+*   **Upgrade 154:** Create `windows_ai/system_controls/virtual_desktop_manager.py` automating workspace switching.
+*   **Upgrade 155:** Build `mobile/voice/streaming_adapter.py` for low-latency speech capture from phones.
+*   **Upgrade 156:** Implement `search/indexers/email_indexer.py` to include Outlook emails in semantic search.
+*   **Upgrade 157:** Provide `automation/workflow_runtime/policy_guard.py` enforcing governance rules before execution.
+*   **Upgrade 158:** Add `gui/src/components/KnowledgePanel.vue` summarizing search insights alongside conversations.
+*   **Upgrade 159:** Publish `docs/guides/multidevice-session-handling.md` clarifying session continuity rules.
+*   **Upgrade 160:** Introduce `domains/computer_vision/ui_theme_detector.py` to adapt automation to light/dark themes.
+*   **Upgrade 161:** Create `windows_ai/integrations/teams_messaging.py` enabling Teams chat automations.
+*   **Upgrade 162:** Build `agenthub/dialogue/clarification_manager.py` to ask for missing details before workflow launches.
+*   **Upgrade 163:** Implement `automation/workflow_engine/fallback_executor.py` to retry tasks with alternative strategies.
+*   **Upgrade 164:** Provide `search/semantic_index/query_profiler.py` analyzing query performance metrics.
+*   **Upgrade 165:** Add `iot/device_health_monitor.py` to track firmware versions and status alerts.
+*   **Upgrade 166:** Publish `mobile/docs/offline-mode.md` describing cache policies for disconnected usage.
+*   **Upgrade 167:** Introduce `domains/audio_processing/speaker_diarization.py` to separate speakers in recorded meetings.
+*   **Upgrade 168:** Create `gui/src/components/AutomationInsights.vue` to highlight automation ROI to users.
+*   **Upgrade 169:** Build `automation/workflow_editor/version_history.ts` enabling rollback to previous workflow revisions.
+*   **Upgrade 170:** Implement `windows_ai/system_controls/security_context.py` verifying permissions before executing actions.
+*   **Upgrade 171:** Provide `search/plugins/web_results.py` to blend curated web data into responses.
+*   **Upgrade 172:** Add `agenthub/plugins/discovery_service.py` to auto-register new domain capabilities.
+*   **Upgrade 173:** Publish `docs/guides/speech-to-automation.md` linking voice commands to workflow templates.
+*   **Upgrade 174:** Introduce `domains/natural_language_processing/personalization_hooks.py` injecting user preferences into prompts.
+*   **Upgrade 175:** Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
+*   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
+*   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
+*   **Upgrade 178:** Provide `automation/workflow_runtime/audit_log.py` to track every automation decision.
+*   **Upgrade 179:** Add `gui/src/components/LiveWorkflowConsole.vue` streaming logs in real time.
+*   **Upgrade 180:** Publish `docs/guides/window-automation-patterns.md` covering best practices for window manipulation.
+*   **Upgrade 181:** Introduce `domains/computer_vision/pixel_heatmap.py` to debug what parts of the screen models observe.
+*   **Upgrade 182:** Create `windows_ai/integrations/edge_extension` enabling browser-level automation triggers.
+*   **Upgrade 183:** Build `agenthub/dialogue/contextual_prompt_cache.py` caching prompts aligned with conversation phases.
+*   **Upgrade 184:** Implement `automation/workflow_engine/priority_queue.py` for multi-user workflow scheduling.
+*   **Upgrade 185:** Provide `search/semantic_index/document_tags.py` to categorize indexed content by domain.
+*   **Upgrade 186:** Add `iot/device_actions/media_controls.py` exposing remote playback commands.
+*   **Upgrade 187:** Publish `mobile/docs/voice-quality-tuning.md` for optimizing microphone settings on phones.
+*   **Upgrade 188:** Introduce `domains/audio_processing/dynamic_noise_cancellation.py` adapting to ambient environments.
+*   **Upgrade 189:** Create `gui/src/components/AutomationDependencyGraph.vue` showing relationships between workflows.
+*   **Upgrade 190:** Build `automation/workflow_runtime/parallel_executor.py` to run independent branches concurrently.
+*   **Upgrade 191:** Implement `windows_ai/system_controls/credential_vault.py` for securely storing automation credentials.
+*   **Upgrade 192:** Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
+*   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
+*   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
+*   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
+*   **Upgrade 196:** Create `windows_ai/integrations/sharepoint_sync.py` to automate document approvals.
+*   **Upgrade 197:** Build `mobile/diagnostics/log_exporter.ts` allowing users to send diagnostics from the app.
+*   **Upgrade 198:** Implement `automation/workflow_engine/state_persistence.py` storing progress in case of restarts.
+*   **Upgrade 199:** Provide `search/ui/relevance_feedback.ts` to collect user feedback on search answers.
+*   **Upgrade 200:** Add `iot/voice_announcements.py` enabling the assistant to speak through connected speakers.
 
 ## Phase 3: Advanced Intelligence & User Experience
 
@@ -83,6 +287,108 @@ This phase deepens the AI's intelligence, focuses on proactive assistance, and r
     *   **Reinforcement Learning from Feedback:** Allow users to provide explicit feedback on AI suggestions or actions, which the system uses to refine its models.
     *   **Adaptive Workflows:** Workflows should dynamically adjust based on user behavior and system conditions.
 
+### Upgrades:
+*   **Upgrade 201:** Launch `agenthub/memory/temporal_index.py` to store chronological context for long-running sessions.
+*   **Upgrade 202:** Add `agenthub/memory/sentiment_tracker.py` to capture emotional tone for empathetic responses.
+*   **Upgrade 203:** Implement `agenthub/proactivity/habit_classifier.py` that learns recurring routines from usage data.
+*   **Upgrade 204:** Provide `agenthub/proactivity/next_best_action.py` ranking suggested automations.
+*   **Upgrade 205:** Create `agenthub/monitoring/application_watcher.py` observing active window states securely.
+*   **Upgrade 206:** Build `agenthub/memory/context_snapshot_service.py` to snapshot context before major actions.
+*   **Upgrade 207:** Introduce `agenthub/proactivity/microtask_generator.py` breaking large objectives into manageable tasks.
+*   **Upgrade 208:** Add `agenthub/explanations/rationale_builder.py` constructing human-readable explanations for actions.
+*   **Upgrade 209:** Publish `docs/guides/context-management.md` summarizing how memory layers interact.
+*   **Upgrade 210:** Ship `agenthub/proactivity/calendar_predictor.py` forecasting meeting preparation needs.
+*   **Upgrade 211:** Implement `agenthub/feedback/learning_pipeline.py` ingesting user thumbs-up/down into retraining jobs.
+*   **Upgrade 212:** Provide `agenthub/explanations/decision_tree_visualizer.py` to show the reasoning path behind suggestions.
+*   **Upgrade 213:** Add `agenthub/memory/privacy_filters.py` to redact sensitive information before storing context.
+*   **Upgrade 214:** Create `agenthub/proactivity/system_health_checker.py` recommending maintenance automations proactively.
+*   **Upgrade 215:** Build `agenthub/monitoring/workfocus_detector.py` to sense when not to disturb the user.
+*   **Upgrade 216:** Introduce `gui/src/components/MemoryTimeline.vue` illustrating how context evolves over time.
+*   **Upgrade 217:** Add `gui/src/components/ProactiveSuggestions.vue` showing predicted tasks inline.
+*   **Upgrade 218:** Implement `gui/src/components/TransparencyDrawer.vue` summarizing why the assistant made a decision.
+*   **Upgrade 219:** Provide `gui/src/components/FeedbackLoop.vue` enabling quick positive/negative feedback on actions.
+*   **Upgrade 220:** Publish `docs/guides/proactive-patterns.md` describing recommended strategies for helpful interventions.
+*   **Upgrade 221:** Create `agenthub/proactivity/user_routine_profiles.py` capturing daily/weekly patterns.
+*   **Upgrade 222:** Build `agenthub/memory/context_compaction.py` summarizing old conversations to control storage growth.
+*   **Upgrade 223:** Introduce `agenthub/explanations/source_citation.py` referencing origin data for decisions.
+*   **Upgrade 224:** Add `agenthub/monitoring/anomaly_rules.yaml` listing conditions that trigger proactive alerts.
+*   **Upgrade 225:** Implement `agenthub/proactivity/resource_forecaster.py` anticipating CPU or network bottlenecks.
+*   **Upgrade 226:** Provide `agenthub/feedback/training_dataset_export.py` to compile curated datasets for model fine-tuning.
+*   **Upgrade 227:** Create `agenthub/explanations/visual_builder.py` generating annotated screenshots for transparency.
+*   **Upgrade 228:** Build `agenthub/memory/multimodal_store.py` handling images, transcripts, and screen captures cohesively.
+*   **Upgrade 229:** Introduce `agenthub/proactivity/task_success_predictor.py` to forecast automation success chances.
+*   **Upgrade 230:** Add `gui/src/components/AutomationPreview.vue` showing step-by-step plan previews.
+*   **Upgrade 231:** Publish `docs/guides/explainable-ai.md` instructing developers on designing transparent automations.
+*   **Upgrade 232:** Implement `agenthub/monitoring/user_presence_detector.py` to adapt suggestions to availability.
+*   **Upgrade 233:** Provide `agenthub/proactivity/slack_signal_bridge.py` syncing awareness across workplace tools.
+*   **Upgrade 234:** Create `agenthub/feedback/reinforcement_reward_model.py` translating feedback into policy updates.
+*   **Upgrade 235:** Build `agenthub/memory/relationship_mapper.py` connecting contacts to contextual interactions.
+*   **Upgrade 236:** Introduce `agenthub/explanations/action_diff.py` comparing planned versus executed automation steps.
+*   **Upgrade 237:** Add `gui/src/components/TrustBadge.vue` indicating security posture of requested actions.
+*   **Upgrade 238:** Implement `agenthub/proactivity/downtime_scheduler.py` offering quiet hours.
+*   **Upgrade 239:** Provide `agenthub/monitoring/system_event_pipeline.py` to normalize telemetry from Windows sources.
+*   **Upgrade 240:** Publish `docs/guides/memory-governance.md` covering retention policies and user controls.
+*   **Upgrade 241:** Create `agenthub/memory/redaction_rules.yaml` customizing what data is never stored.
+*   **Upgrade 242:** Build `agenthub/proactivity/user_goal_manager.py` aligning suggestions with stated goals.
+*   **Upgrade 243:** Introduce `agenthub/explanations/comparison_report.py` to justify why one option was chosen over another.
+*   **Upgrade 244:** Add `gui/src/components/TimelineFilters.vue` letting users filter memory by category or timeframe.
+*   **Upgrade 245:** Implement `agenthub/feedback/live-learning-toggle.py` enabling or disabling real-time adaptation.
+*   **Upgrade 246:** Provide `agenthub/memory/knowledge_graph.py` linking people, files, and actions semantically.
+*   **Upgrade 247:** Create `agenthub/proactivity/session_warmstart.py` priming context when the assistant launches.
+*   **Upgrade 248:** Build `agenthub/explanations/what_if_analyzer.py` to illustrate alternate choices.
+*   **Upgrade 249:** Introduce `gui/src/components/ActionConfidenceMeter.vue` showing confidence levels per recommendation.
+*   **Upgrade 250:** Add `agenthub/monitoring/power_state_listener.py` to adjust actions based on battery conditions.
+*   **Upgrade 251:** Implement `agenthub/memory/workspace_partitions.py` isolating contexts for work and personal usage.
+*   **Upgrade 252:** Provide `agenthub/feedback/external-feedback-api.py` so other tools can submit ratings.
+*   **Upgrade 253:** Create `agenthub/proactivity/contextual_shortcuts.py` surfacing quick actions from routine triggers.
+*   **Upgrade 254:** Build `agenthub/explanations/learning_report.py` summarizing how the assistant improved recently.
+*   **Upgrade 255:** Introduce `gui/src/components/AnomalyAlertBanner.vue` for immediate anomaly visibility.
+*   **Upgrade 256:** Add `agenthub/monitoring/network_event_collector.py` capturing bandwidth usage for predictions.
+*   **Upgrade 257:** Implement `agenthub/proactivity/priority_balancer.py` balancing urgent vs. routine suggestions.
+*   **Upgrade 258:** Provide `agenthub/memory/meeting_digest.py` automatically summarizing meetings.
+*   **Upgrade 259:** Create `agenthub/explanations/counterfactual_generator.py` to show alternative automation paths.
+*   **Upgrade 260:** Build `agenthub/feedback/user_teaching_tips.py` offering prompts for users to teach better behaviors.
+*   **Upgrade 261:** Introduce `gui/src/components/MemoryPrivacyControls.vue` enabling selective deletion of stored context.
+*   **Upgrade 262:** Add `agenthub/monitoring/focus_mode_detector.py` linking to OS focus modes.
+*   **Upgrade 263:** Implement `agenthub/proactivity/handoff_planner.py` coordinating transitions between devices.
+*   **Upgrade 264:** Provide `agenthub/memory/contextual_embeddings.py` storing vector embeddings for personalized retrieval.
+*   **Upgrade 265:** Create `agenthub/explanations/provenance_log.py` detailing data sources behind insights.
+*   **Upgrade 266:** Build `agenthub/feedback/human_in_the_loop_review.py` for manual review of new automation skills.
+*   **Upgrade 267:** Introduce `gui/src/components/AutomationPredictionFeed.vue` showing upcoming recommended workflows.
+*   **Upgrade 268:** Add `agenthub/monitoring/app_usage_metrics.py` correlating usage patterns with recommendations.
+*   **Upgrade 269:** Implement `agenthub/proactivity/snooze_scheduler.py` letting users postpone suggestions gracefully.
+*   **Upgrade 270:** Provide `agenthub/memory/context_retention_dashboard.py` to inspect stored context volumes.
+*   **Upgrade 271:** Create `agenthub/explanations/risk_classifier.py` labeling actions as low, medium, or high risk.
+*   **Upgrade 272:** Build `agenthub/feedback/feedback_digest.py` summarizing user responses weekly.
+*   **Upgrade 273:** Introduce `gui/src/components/PersonalizationWizard.vue` customizing assistant behavior interactively.
+*   **Upgrade 274:** Add `agenthub/monitoring/system_integrity_checker.py` to verify critical services remain healthy.
+*   **Upgrade 275:** Implement `agenthub/proactivity/goal_conflict_resolver.py` mediating between competing objectives.
+*   **Upgrade 276:** Provide `agenthub/memory/context_lock.py` preventing modifications during sensitive tasks.
+*   **Upgrade 277:** Create `agenthub/explanations/summary_generator.py` giving short recaps after automations complete.
+*   **Upgrade 278:** Build `agenthub/feedback/trend_analyzer.py` detecting long-term satisfaction patterns.
+*   **Upgrade 279:** Introduce `gui/src/components/AutomationChecklist.vue` clarifying prerequisites before running tasks.
+*   **Upgrade 280:** Add `agenthub/monitoring/environment_adapter.py` tuning recommendations to location or network context.
+*   **Upgrade 281:** Implement `agenthub/proactivity/prediction_backtesting.py` evaluating accuracy of suggestions historically.
+*   **Upgrade 282:** Provide `agenthub/memory/cross_project_context.py` isolating contexts across projects.
+*   **Upgrade 283:** Create `agenthub/explanations/multi_channel_report.py` summarizing actions across devices.
+*   **Upgrade 284:** Build `agenthub/feedback/feedback_annotation_tool.py` for triaging qualitative feedback.
+*   **Upgrade 285:** Introduce `gui/src/components/ExplainabilitySandbox.vue` letting users explore reasoning interactively.
+*   **Upgrade 286:** Add `agenthub/monitoring/performance_snapshot.py` capturing metrics when anomalies occur.
+*   **Upgrade 287:** Implement `agenthub/proactivity/pattern_library.py` providing reusable behavior templates.
+*   **Upgrade 288:** Provide `agenthub/memory/consent_registry.py` tracking user consent for data collection scopes.
+*   **Upgrade 289:** Create `agenthub/explanations/action_history_timeline.py` linking explanations to prior runs.
+*   **Upgrade 290:** Build `agenthub/feedback/notification_preferences.py` customizing how feedback requests appear.
+*   **Upgrade 291:** Introduce `gui/src/components/ContextualReminderPanel.vue` surfacing reminders derived from patterns.
+*   **Upgrade 292:** Add `agenthub/monitoring/cloud_sync_status.py` observing synchronization health.
+*   **Upgrade 293:** Implement `agenthub/proactivity/workload_estimator.py` projecting time saved by automations.
+*   **Upgrade 294:** Provide `agenthub/memory/privacy_audit_log.py` for reviewing memory-related actions.
+*   **Upgrade 295:** Create `agenthub/explanations/causal_graph.py` linking influences across data points.
+*   **Upgrade 296:** Build `agenthub/feedback/user_education_prompts.py` teaching users how to give actionable guidance.
+*   **Upgrade 297:** Introduce `gui/src/components/ConfidenceBreakdown.vue` visualizing uncertainty contributions.
+*   **Upgrade 298:** Add `agenthub/monitoring/notification_rate_controller.py` throttling proactive prompts.
+*   **Upgrade 299:** Implement `agenthub/proactivity/sequential_planner.py` orchestrating multi-step journeys.
+*   **Upgrade 300:** Provide `agenthub/memory/context_sharing_controls.py` letting users export or share selected memory slices.
+
 ## Phase 4: Robustness, Security & Deployment
 
 This phase ensures the project is stable, secure, and easily deployable for end-users, focusing on quality assurance and accessibility.
@@ -111,6 +417,108 @@ This phase ensures the project is stable, secure, and easily deployable for end-
 5.  **Documentation (`docs/`):** Create comprehensive user documentation, API references, and developer guides.
 6.  **Performance Optimization (`optimization`):** Continuously profile and optimize the application for speed and resource usage.
 
+### Upgrades:
+*   **Upgrade 301:** Establish `tests/integration/full_stack_suite.py` to exercise end-to-end flows nightly.
+*   **Upgrade 302:** Add `tests/performance/gui_render_bench.py` capturing UI rendering benchmarks.
+*   **Upgrade 303:** Implement `tests/security/fuzz_actions_api.py` to fuzz HTTP endpoints for resilience.
+*   **Upgrade 304:** Provide `tests/load/workflow_burst_runner.py` simulating concurrent workflow execution.
+*   **Upgrade 305:** Create `security/threat_monitor_rules.yaml` enumerating monitored anomalies.
+*   **Upgrade 306:** Build `security/vulnerability_triage.md` outlining response procedures for reported issues.
+*   **Upgrade 307:** Introduce `security/static_analysis/pysa_config.json` enabling Python taint analysis.
+*   **Upgrade 308:** Add `security/static_analysis/eslint_security.config.cjs` for Node security linting.
+*   **Upgrade 309:** Publish `docs/security/code-signing-guide.md` detailing signing workflow for releases.
+*   **Upgrade 310:** Ship `tests/regression/compatibility_matrix.json` verifying OS and dependency support.
+*   **Upgrade 311:** Implement `tests/automation/workflow_snapshot_tests.py` capturing deterministic outputs.
+*   **Upgrade 312:** Provide `docs/deployment/self-healing.md` describing automated recovery scripts.
+*   **Upgrade 313:** Add `installer/scripts/verify_signature.ps1` to confirm digital signatures before install.
+*   **Upgrade 314:** Create `tests/integration/mobile_bridge_tests.py` verifying mobile notifications end-to-end.
+*   **Upgrade 315:** Build `security/logging/log_schema.json` enforcing consistent log fields.
+*   **Upgrade 316:** Introduce `tests/e2e/gui_automation.spec.ts` to validate core user journeys.
+*   **Upgrade 317:** Add `security/incident_response/playbook.md` guiding teams through incidents.
+*   **Upgrade 318:** Implement `tests/security/permissions_audit.py` ensuring least-privilege access definitions.
+*   **Upgrade 319:** Provide `docs/deployment/offline_installer.md` covering offline distribution packaging.
+*   **Upgrade 320:** Ship `tests/integration/iot_device_flow.py` to validate IoT automation reliability.
+*   **Upgrade 321:** Add `security/hardening/windows_firewall_rules.ps1` for recommended firewall settings.
+*   **Upgrade 322:** Create `docs/security/penetration-testing-checklist.md` to prep structured assessments.
+*   **Upgrade 323:** Build `installer/oneclick/bootstrapper_config.json` describing install flows.
+*   **Upgrade 324:** Introduce `tests/load/search_index_stress.py` verifying search scalability.
+*   **Upgrade 325:** Add `security/monitoring/sentinel_integration.md` instructing integration with Microsoft Sentinel.
+*   **Upgrade 326:** Implement `tests/reliability/chaos_runner.py` injecting failure scenarios during CI.
+*   **Upgrade 327:** Provide `docs/deployment/powershell-transcripts.md` for auditing installation commands.
+*   **Upgrade 328:** Create `security/credential_rotation_scheduler.py` rotating secrets automatically.
+*   **Upgrade 329:** Build `tests/performance/automation_latency_bench.py` measuring automation response times.
+*   **Upgrade 330:** Introduce `security/attack_surface_map.md` summarizing exposed interfaces.
+*   **Upgrade 331:** Add `installer/telemetry/opt_in_flow.md` documenting telemetry consent steps.
+*   **Upgrade 332:** Implement `tests/regression/windows_build_validation.ps1` verifying packaging output.
+*   **Upgrade 333:** Provide `docs/security/binary-hardening.md` describing compiler and linker protections.
+*   **Upgrade 334:** Create `tests/e2e/accessibility.spec.ts` enforcing accessibility requirements.
+*   **Upgrade 335:** Build `security/monitoring/log_retention_policy.md` defining retention durations.
+*   **Upgrade 336:** Introduce `tests/integration/search_privacy_tests.py` ensuring private data stays local.
+*   **Upgrade 337:** Add `installer/assets/user-agreement.html` to display license information.
+*   **Upgrade 338:** Implement `security/audit/trail_exporter.py` exporting audit logs to SIEM platforms.
+*   **Upgrade 339:** Provide `docs/deployment/windows-service-install.md` showing how to install as a service.
+*   **Upgrade 340:** Ship `tests/load/gui_concurrency_runner.ts` measuring UI concurrency resilience.
+*   **Upgrade 341:** Add `security/policies/data-classification.md` categorizing data handled by the assistant.
+*   **Upgrade 342:** Create `tests/performance/resource_leak_detector.py` to catch leaks during stress tests.
+*   **Upgrade 343:** Build `security/monitoring/alert_catalog.json` cataloging alert severities and owners.
+*   **Upgrade 344:** Introduce `tests/recovery/stateful_restart_tests.py` verifying workflow recovery after restarts.
+*   **Upgrade 345:** Add `installer/verification/hash_manifest.json` validating payload integrity.
+*   **Upgrade 346:** Implement `security/compliance/controls-mapping.xlsx` aligning with industry frameworks.
+*   **Upgrade 347:** Provide `docs/security/red-team-ready.md` prepping environment for red-team exercises.
+*   **Upgrade 348:** Create `tests/integration/cloud_sync_tests.py` verifying cross-device data consistency.
+*   **Upgrade 349:** Build `security/detection/use-case-library.md` enumerating detection scenarios.
+*   **Upgrade 350:** Introduce `tests/performance/startup_time_benchmark.py` measuring startup latency.
+*   **Upgrade 351:** Add `installer/scripts/create-restore-point.ps1` generating Windows restore points pre-installation.
+*   **Upgrade 352:** Implement `security/monitoring/siem_forwarder.py` streaming logs to SIEM solutions.
+*   **Upgrade 353:** Provide `docs/deployment/update-channel.md` describing update channels and policies.
+*   **Upgrade 354:** Create `tests/security/configuration_drift.py` detecting unauthorized config changes.
+*   **Upgrade 355:** Build `security/hardening/secure_defaults.yaml` capturing baseline secure settings.
+*   **Upgrade 356:** Introduce `tests/e2e/mobile_desktop_handoff.spec.ts` ensuring session continuity.
+*   **Upgrade 357:** Add `installer/automation/post_install_verifier.ps1` confirming services started correctly.
+*   **Upgrade 358:** Implement `security/monitoring/health_dashboard.py` presenting aggregated security posture.
+*   **Upgrade 359:** Provide `docs/security/key-management.md` covering encryption key lifecycle.
+*   **Upgrade 360:** Ship `tests/performance/cpu_profile_capture.py` recording CPU usage under load.
+*   **Upgrade 361:** Add `security/audit/privileged-actions_report.py` summarizing elevated operations.
+*   **Upgrade 362:** Create `tests/regression/plugin_compatibility.py` ensuring plugin ecosystem stability.
+*   **Upgrade 363:** Build `security/hardening/policy_templates` for group policy deployment.
+*   **Upgrade 364:** Introduce `tests/security/penetration_simulations.py` automating simulated attacks.
+*   **Upgrade 365:** Add `installer/ui/accessibility-audit.md` ensuring the installer meets accessibility standards.
+*   **Upgrade 366:** Implement `security/monitoring/certificate_expiry_watcher.py` warning before certificates expire.
+*   **Upgrade 367:** Provide `docs/deployment/downgrade-path.md` describing supported downgrade procedures.
+*   **Upgrade 368:** Create `tests/load/automation_scaling_runner.py` exploring horizontal scaling limits.
+*   **Upgrade 369:** Build `security/hardening/lockdown_script.ps1` applying hardened OS settings.
+*   **Upgrade 370:** Introduce `tests/performance/memory_footprint_tracker.py` capturing memory metrics over time.
+*   **Upgrade 371:** Add `installer/scripts/cleanup-leftovers.ps1` ensuring uninstall removes artifacts.
+*   **Upgrade 372:** Implement `security/monitoring/anomaly_dashboard.vue` visualizing security anomalies.
+*   **Upgrade 373:** Provide `docs/deployment/rollback-checklist.md` guiding safe rollback.
+*   **Upgrade 374:** Create `tests/security/encryption_policy_tests.py` verifying encryption at rest and transit.
+*   **Upgrade 375:** Build `security/audit/configuration_baseline.json` locking configuration baselines.
+*   **Upgrade 376:** Introduce `tests/reliability/power_event_tests.py` ensuring resilience to sleep and resume cycles.
+*   **Upgrade 377:** Add `installer/analytics/telemetry_schema.json` defining installer telemetry events.
+*   **Upgrade 378:** Implement `security/monitoring/suspect_process_scanner.py` watching for unauthorized processes.
+*   **Upgrade 379:** Provide `docs/security/password-policies.md` recommending password requirements for integrations.
+*   **Upgrade 380:** Ship `tests/performance/render_thread_monitor.ts` capturing UI thread responsiveness.
+*   **Upgrade 381:** Add `security/audit/retention_schedule.yaml` aligning audit retention with compliance needs.
+*   **Upgrade 382:** Create `tests/regression/workflow_fixture_loader.py` validating workflow fixture compatibility.
+*   **Upgrade 383:** Build `security/hardening/secure_boot_guidance.md` guiding BIOS/UEFI settings.
+*   **Upgrade 384:** Introduce `tests/e2e/accessibility-screenreader.spec.ts` validating screen reader support.
+*   **Upgrade 385:** Add `installer/scripts/verify-prerequisites.ps1` ensuring dependencies installed before running.
+*   **Upgrade 386:** Implement `security/monitoring/api_rate_guard.py` preventing abusive API usage.
+*   **Upgrade 387:** Provide `docs/security/incident-communication.md` standardizing messaging during incidents.
+*   **Upgrade 388:** Create `tests/performance/storage_throughput_bench.py` measuring disk throughput requirements.
+*   **Upgrade 389:** Build `security/audit/log_signer.py` cryptographically signing logs.
+*   **Upgrade 390:** Introduce `tests/security/session_hijack_tests.py` validating session handling hardening.
+*   **Upgrade 391:** Add `installer/automation/silent_install_validator.ps1` confirming silent install paths succeed.
+*   **Upgrade 392:** Implement `security/monitoring/policy_compliance_checker.py` cross-checking policies.
+*   **Upgrade 393:** Provide `docs/deployment/disaster-recovery.md` outlining disaster recovery procedures.
+*   **Upgrade 394:** Create `tests/reliability/network_flap_tests.py` simulating intermittent network failures.
+*   **Upgrade 395:** Build `security/hardening/credential_guard_setup.md` guiding Windows Credential Guard integration.
+*   **Upgrade 396:** Introduce `tests/security/permission_boundary_tests.py` validating sandbox boundaries.
+*   **Upgrade 397:** Add `installer/ui/localization_coverage.md` listing localized installer assets.
+*   **Upgrade 398:** Implement `security/monitoring/forensic_snapshot_tool.py` capturing state for investigations.
+*   **Upgrade 399:** Provide `docs/security/sdlc-checklist.md` embedding security into development lifecycle.
+*   **Upgrade 400:** Ship `tests/performance/update_install_duration.py` tracking update installation times.
+
 ## Phase 5: Expansion, Ecosystem & Future Growth
 
 This final phase looks towards the long-term growth of `Windows-AI`, focusing on extensibility, community building, and future-proofing.
@@ -128,6 +536,107 @@ This final phase looks towards the long-term growth of `Windows-AI`, focusing on
 4.  **Community Engagement:** Actively foster a community around the project through forums, contribution guidelines, and developer outreach.
 5.  **Continuous Improvement:** Establish processes for ongoing performance optimization, security updates, and feature enhancements based on user feedback and emerging AI trends.
 
+### Upgrades:
+*   **Upgrade 401:** Launch `plugins/sdk/extension_starter_kit` with scaffolding for new plugins.
+*   **Upgrade 402:** Add `plugins/docs/plugin-contract.md` describing lifecycle hooks and capability declarations.
+*   **Upgrade 403:** Implement `plugins/registry/index.json` cataloging official and community plugins.
+*   **Upgrade 404:** Provide `plugins/testing/plugin_sandbox.py` to isolate plugin execution.
+*   **Upgrade 405:** Create `model_discovery/providers/ollama_registry.py` discovering local Ollama models.
+*   **Upgrade 406:** Build `model_discovery/providers/huggingface_catalog.py` exposing curated remote models.
+*   **Upgrade 407:** Introduce `model_discovery/policies/model_validation.py` ensuring downloaded models meet criteria.
+*   **Upgrade 408:** Add `community/portal/roadmap_updates.md` summarizing upcoming community events.
+*   **Upgrade 409:** Publish `docs/community/contribution-playbook.md` guiding new contributors.
+*   **Upgrade 410:** Ship `plugins/examples/slack_notifier` demonstrating notification plugin development.
+*   **Upgrade 411:** Implement `model_discovery/cache/management_cli.py` to prune stale model downloads.
+*   **Upgrade 412:** Provide `plugins/marketplace/api_spec.yaml` for marketplace integration partners.
+*   **Upgrade 413:** Add `community/events/hackathon-kit.md` enabling local community hackathons.
+*   **Upgrade 414:** Create `plugins/security/sandbox_manifest.schema.json` enforcing plugin sandboxes.
+*   **Upgrade 415:** Build `model_discovery/resolvers/model_card_parser.py` interpreting model metadata.
+*   **Upgrade 416:** Introduce `community/portal/contributor-spotlight.md` celebrating community achievements.
+*   **Upgrade 417:** Add `plugins/sdk/typescript/client.ts` enabling TypeScript plugin development.
+*   **Upgrade 418:** Implement `model_discovery/providers/azure_openai_catalog.py` listing enterprise AI offerings.
+*   **Upgrade 419:** Provide `community/governance/charter.md` defining governance structure.
+*   **Upgrade 420:** Ship `plugins/examples/workflow_validator` showing workflow-extending plugins.
+*   **Upgrade 421:** Add `model_discovery/resolvers/compatibility_matrix.yaml` mapping model compatibility with tasks.
+*   **Upgrade 422:** Create `community/portal/forum_guidelines.md` setting discussion standards.
+*   **Upgrade 423:** Build `plugins/testing/compatibility_suite.py` to ensure plugins stay forward-compatible.
+*   **Upgrade 424:** Introduce `model_discovery/providers/local_gpu_scanner.py` identifying GPU-friendly models.
+*   **Upgrade 425:** Add `community/metrics/community-health-dashboard.py` tracking contributor metrics.
+*   **Upgrade 426:** Implement `plugins/marketplace/ui/featured_carousel.vue` highlighting new plugins.
+*   **Upgrade 427:** Provide `model_discovery/download_manager.py` with resumable downloads and hashing.
+*   **Upgrade 428:** Ship `community/portal/newsletter-template.md` streamlining monthly updates.
+*   **Upgrade 429:** Add `plugins/sdk/python/async_adapter.py` supporting async plugin APIs.
+*   **Upgrade 430:** Create `model_discovery/providers/open_source_curation.yaml` listing recommended OSS models.
+*   **Upgrade 431:** Build `community/contribution_badges.json` awarding badges for contributions.
+*   **Upgrade 432:** Introduce `plugins/docs/review-checklist.md` for plugin submission reviews.
+*   **Upgrade 433:** Add `model_discovery/policies/license_checker.py` verifying license compatibility.
+*   **Upgrade 434:** Implement `community/portal/showcase_gallery.vue` featuring user-built automations.
+*   **Upgrade 435:** Provide `plugins/marketplace/payments_integration.md` guiding monetization options.
+*   **Upgrade 436:** Ship `model_discovery/providers/local_quantized_loader.py` optimizing quantized model loading.
+*   **Upgrade 437:** Add `community/events/ambassador-program.md` enabling community ambassadors.
+*   **Upgrade 438:** Create `plugins/sdk/ci/plugin_ci_template.yaml` for plugin maintainers.
+*   **Upgrade 439:** Build `model_discovery/tools/model_benchmark_suite.py` benchmarking models automatically.
+*   **Upgrade 440:** Introduce `community/feedback/roadmap_vote_portal.vue` allowing voting on roadmap items.
+*   **Upgrade 441:** Add `plugins/docs/security-requirements.md` clarifying sandbox expectations.
+*   **Upgrade 442:** Implement `model_discovery/providers/private_registry_adapter.py` integrating private registries.
+*   **Upgrade 443:** Provide `community/governance/voting_process.md` describing decision-making steps.
+*   **Upgrade 444:** Ship `plugins/examples/document_parser` enabling new document understanding skills.
+*   **Upgrade 445:** Add `model_discovery/providers/cloud_cost_estimator.py` projecting inference costs.
+*   **Upgrade 446:** Create `community/portal/leaderboard.vue` showing top contributors.
+*   **Upgrade 447:** Build `plugins/testing/security_scan.py` scanning plugin dependencies for vulnerabilities.
+*   **Upgrade 448:** Introduce `model_discovery/policies/resource_quota.yaml` managing resource quotas per model.
+*   **Upgrade 449:** Add `community/events/monthly-townhall.md` documenting recurring meeting agendas.
+*   **Upgrade 450:** Implement `plugins/marketplace/publishing_cli.py` to publish plugins from the command line.
+*   **Upgrade 451:** Provide `model_discovery/providers/web_api_collector.py` enumerating REST-based AI services.
+*   **Upgrade 452:** Ship `community/tutorials/getting-started-with-plugins.md` onboarding plugin developers.
+*   **Upgrade 453:** Add `plugins/sdk/python/testing_harness.py` streamlining plugin tests.
+*   **Upgrade 454:** Create `model_discovery/providers/community_feed.py` ingesting community-submitted models.
+*   **Upgrade 455:** Build `community/portal/integration-directory.vue` mapping partner integrations.
+*   **Upgrade 456:** Introduce `plugins/docs/versioning-policy.md` ensuring compatibility commitments.
+*   **Upgrade 457:** Add `model_discovery/policies/ethics_review.md` requiring ethics checks before publishing models.
+*   **Upgrade 458:** Implement `community/feedback/sentiment_dashboard.py` summarizing community sentiment trends.
+*   **Upgrade 459:** Provide `plugins/examples/voice_avatar` demonstrating persona customization.
+*   **Upgrade 460:** Ship `model_discovery/providers/fine_tune_manager.py` orchestrating fine-tuning workflows.
+*   **Upgrade 461:** Add `community/events/workshop-series.md` documenting educational workshops.
+*   **Upgrade 462:** Create `plugins/marketplace/ui/search_filters.vue` letting users filter by category.
+*   **Upgrade 463:** Build `model_discovery/providers/compliance_registry.py` listing models with compliance attestations.
+*   **Upgrade 464:** Introduce `community/governance/budget_report.md` detailing funding allocations.
+*   **Upgrade 465:** Add `plugins/docs/testing-matrix.md` showing supported OS and Windows versions.
+*   **Upgrade 466:** Implement `model_discovery/resolvers/model_version_tracker.py` managing version upgrades.
+*   **Upgrade 467:** Provide `community/portal/community-map.vue` showing geographic distribution of contributors.
+*   **Upgrade 468:** Ship `plugins/examples/calendar_connector` enabling calendar integrations.
+*   **Upgrade 469:** Add `model_discovery/providers/edge_device_catalog.py` curating edge-friendly models.
+*   **Upgrade 470:** Create `community/feedback/feature_request_triage.md` standardizing triage for feature requests.
+*   **Upgrade 471:** Build `plugins/testing/long_running_stress.py` validating plugin performance over time.
+*   **Upgrade 472:** Introduce `model_discovery/policies/dataset_disclosure.md` requiring dataset transparency.
+*   **Upgrade 473:** Add `community/governance/code_of_conduct.md` updating behavior expectations.
+*   **Upgrade 474:** Implement `plugins/marketplace/ui/review_center.vue` displaying plugin reviews.
+*   **Upgrade 475:** Provide `model_discovery/providers/local_model_packager.py` bundling models for offline use.
+*   **Upgrade 476:** Ship `community/tutorials/publishing-your-first-plugin.md` guiding first-time publishers.
+*   **Upgrade 477:** Add `plugins/sdk/python/telemetry_adapter.py` enabling opt-in plugin telemetry.
+*   **Upgrade 478:** Create `model_discovery/providers/multi_model_router.py` routing requests between multiple models.
+*   **Upgrade 479:** Build `community/portal/api_status_dashboard.py` exposing service status to the community.
+*   **Upgrade 480:** Introduce `plugins/docs/lifecycle-stages.md` defining experimental, beta, and stable phases.
+*   **Upgrade 481:** Add `model_discovery/policies/security_assessment.md` requiring security reviews.
+*   **Upgrade 482:** Implement `community/events/community-day.md` documenting annual celebration plans.
+*   **Upgrade 483:** Provide `plugins/examples/rpa_connector` bridging robotic process automation systems.
+*   **Upgrade 484:** Ship `model_discovery/providers/ai_hub_adapter.py` integrating Microsoft AI Hub listings.
+*   **Upgrade 485:** Add `community/portal/partner-directory.md` listing strategic partners.
+*   **Upgrade 486:** Create `plugins/marketplace/ui/curation_rules.json` for editorial curation logic.
+*   **Upgrade 487:** Build `model_discovery/providers/benchmark_scores.json` storing evaluation metrics.
+*   **Upgrade 488:** Introduce `community/feedback/idea_incubator.md` capturing early-stage ideas.
+*   **Upgrade 489:** Add `plugins/sdk/python/plugin_manifest_validator.py` validating plugin manifests.
+*   **Upgrade 490:** Implement `model_discovery/providers/opensource_sync.py` syncing with OSS ecosystems.
+*   **Upgrade 491:** Provide `community/governance/meeting-minutes-template.md` standardizing meeting notes.
+*   **Upgrade 492:** Ship `plugins/examples/voice_effects` enabling real-time voice transformations.
+*   **Upgrade 493:** Add `model_discovery/providers/container_registry_adapter.py` supporting containerized models.
+*   **Upgrade 494:** Create `community/portal/contributor-map-data.json` powering community visualizations.
+*   **Upgrade 495:** Build `plugins/testing/rollback_verifier.py` ensuring plugins can roll back cleanly.
+*   **Upgrade 496:** Introduce `model_discovery/policies/privacy_review.md` ensuring privacy safeguards.
+*   **Upgrade 497:** Add `community/feedback/community-survey.md` standardizing surveys.
+*   **Upgrade 498:** Implement `plugins/marketplace/ui/contributor_profile.vue` showcasing plugin authors.
+*   **Upgrade 499:** Provide `model_discovery/providers/model_signature_verifier.py` validating signatures on downloaded artifacts.
+*   **Upgrade 500:** Ship `community/portal/roadmap-milestones.md` highlighting long-term expansion milestones.
 ---
 
 ## New Suggestions for the Roadmap
