@@ -151,6 +151,9 @@ The entire monorepo is catalogued so you can instantly find any service, UI, or 
 - Browse the human-friendly [Repository Map](docs/structure/overview.md) to see how every top-level folder and file is grouped.
 - Pull the machine-readable [manifest](docs/structure/manifest.json) into scripts or dashboards for automated navigation.
 - Regenerate the manifest after reorganizing code with `python scripts/generate_repo_manifest.py --pretty`.
+- Explore the comprehensive [Repository Organization Guide](docs/REPO_STRUCTURE.md)
+  for a directory-by-directory explanation of responsibilities, tooling, and
+  cross-service relationships.
 
 ---
 
