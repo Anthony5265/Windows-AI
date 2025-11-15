@@ -1,0 +1,5 @@
+{
+  "name": "Wav2Vec 2.0",
+  "type": "audio_model",
+  "model_type": "speech-to-text"
+}
