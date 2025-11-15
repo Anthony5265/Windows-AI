@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -77,6 +78,10 @@ class PhaseTracker:
         self.repo_root = Path(repo_root)
         self.docs_root = self.repo_root / "docs"
         self.data_dir = Path(data_dir) if data_dir else Path.home() / ".windows-ai"
+        if not self.data_dir.exists():
+            fallback_data_dir = self.repo_root / ".windows-ai"
+            if fallback_data_dir.exists():
+                self.data_dir = fallback_data_dir
         self.folder_watcher_manager = folder_watcher_manager
         self.task_scheduler = task_scheduler
         self.plugin_dir = Path(plugin_dir) if plugin_dir else self.repo_root / "windows_ai" / "plugins" / "builtin"
@@ -773,6 +778,20 @@ class PhaseTracker:
                 logger.debug("Unable to read folder watchers: %s", exc)
 
         config_path = self.data_dir / "watchers.json"
+        if configured == 0 and config_path.exists():
+            try:
+                with config_path.open("r", encoding="utf-8") as handle:
+                    payload = json.load(handle)
+                if isinstance(payload, dict):
+                    configured = len(payload)
+                    running = sum(
+                        1
+                        for item in payload.values()
+                        if isinstance(item, dict) and item.get("enabled")
+                    )
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("Unable to parse watcher configuration: %s", exc)
+
         return {
             "configured": configured,
             "active": running,
@@ -791,6 +810,15 @@ class PhaseTracker:
                 logger.debug("Unable to read scheduled tasks: %s", exc)
 
         config_path = self.data_dir / "scheduler.json"
+        if configured == 0 and config_path.exists():
+            try:
+                with config_path.open("r", encoding="utf-8") as handle:
+                    payload = json.load(handle)
+                if isinstance(payload, dict):
+                    configured = len(payload)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("Unable to parse scheduler configuration: %s", exc)
+
         return {
             "configured": configured,
             "config_exists": config_path.exists(),
