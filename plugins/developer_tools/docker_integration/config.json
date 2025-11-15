@@ -1,0 +1,10 @@
+{
+  "name": "Docker Integration",
+  "type": "developer_tool",
+  "commands": [
+    "build",
+    "run",
+    "compose",
+    "push"
+  ]
+}

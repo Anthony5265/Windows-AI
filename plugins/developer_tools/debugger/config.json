@@ -1,0 +1,11 @@
+{
+  "name": "Debugger",
+  "type": "developer_tool",
+  "languages": [
+    "python",
+    "javascript",
+    "c++",
+    "java",
+    "go"
+  ]
+}

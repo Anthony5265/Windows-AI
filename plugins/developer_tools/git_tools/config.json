@@ -1,0 +1,11 @@
+{
+  "name": "Git Tools",
+  "type": "developer_tool",
+  "operations": [
+    "commit",
+    "branch",
+    "merge",
+    "push",
+    "pull"
+  ]
+}

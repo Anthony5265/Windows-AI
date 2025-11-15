@@ -1,0 +1,7 @@
+{
+  "name": "Alpaca.cpp",
+  "type": "local_model_platform",
+  "executable": "alpaca",
+  "default_port": 8080,
+  "models_dir": "~/alpaca.cpp/models"
+}
