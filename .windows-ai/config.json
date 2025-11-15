@@ -1,0 +1,17 @@
+{
+  "profile": "reference",
+  "description": "Baseline configuration seeded for roadmap validation and developer onboarding.",
+  "created_at": "2024-01-01T00:00:00Z",
+  "telemetry_opt_in": false,
+  "default_watchers": [
+    "downloads-organizer",
+    "documents-summarizer",
+    "source-control-analyzer"
+  ],
+  "default_tasks": [
+    "daily-summary",
+    "hourly-check",
+    "weekly-cleanup"
+  ],
+  "notes": "These defaults are safe to copy into ~/.windows-ai for local bootstrapping."
+}
