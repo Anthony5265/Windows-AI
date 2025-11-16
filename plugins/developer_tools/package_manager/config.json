@@ -1,0 +1,11 @@
+{
+  "name": "Package Manager",
+  "type": "developer_tool",
+  "manages": [
+    "pip",
+    "npm",
+    "nuget",
+    "cargo",
+    "go-mod"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "GPT-4 Vision",
+  "type": "vision_model",
+  "capabilities": [
+    "image-understanding",
+    "ocr",
+    "visual-qa"
+  ]
+}

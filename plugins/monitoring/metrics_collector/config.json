@@ -1,0 +1,15 @@
+{
+  "name": "Metrics Collector",
+  "type": "monitoring",
+  "category": "performance",
+  "collects": [
+    "app-metrics",
+    "system-metrics",
+    "custom-metrics"
+  ],
+  "exports": [
+    "prometheus",
+    "influx",
+    "json"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Dalai",
+  "type": "local_model_platform",
+  "executable": "dalai",
+  "default_port": 4000,
+  "models_dir": "~/dalai"
+}

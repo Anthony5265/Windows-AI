@@ -1,0 +1,7 @@
+{
+  "name": "Llamafile",
+  "type": "local_model_platform",
+  "executable": "llamafile",
+  "default_port": 8080,
+  "models_dir": "~/llamafile/models"
+}

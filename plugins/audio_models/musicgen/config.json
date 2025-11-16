@@ -1,0 +1,5 @@
+{
+  "name": "MusicGen",
+  "type": "audio_model",
+  "model_type": "music-generation"
+}

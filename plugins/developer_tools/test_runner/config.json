@@ -1,0 +1,11 @@
+{
+  "name": "Test Runner",
+  "type": "developer_tool",
+  "frameworks": [
+    "pytest",
+    "jest",
+    "junit",
+    "mocha",
+    "rspec"
+  ]
+}

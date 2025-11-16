@@ -1,0 +1,10 @@
+{
+  "name": "Formatter",
+  "type": "developer_tool",
+  "tools": [
+    "black",
+    "prettier",
+    "clang-format",
+    "gofmt"
+  ]
+}
