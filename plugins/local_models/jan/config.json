@@ -1,0 +1,9 @@
+{
+  "name": "Jan",
+  "type": "local_model_platform",
+  "executable": "jan",
+  "default_port": 1337,
+  "models_dir": "~/jan/models",
+  "requires_internet": false,
+  "supports_gpu": true
+}

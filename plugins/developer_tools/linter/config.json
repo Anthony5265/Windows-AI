@@ -1,0 +1,11 @@
+{
+  "name": "Linter",
+  "type": "developer_tool",
+  "tools": [
+    "pylint",
+    "eslint",
+    "flake8",
+    "rubocop",
+    "golint"
+  ]
+}

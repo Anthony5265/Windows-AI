@@ -1,0 +1,118 @@
+[
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\ROADMAP_IMPLEMENTATION.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\ROADMAP_TODO.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\ROADMAP_COMPLETION_FINAL.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\WindowsAI_Consolidated_Roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\ULTIMATE_EXTENSION_ROADMAP.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\ROADMAP_COMPLETION_REPORT.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\ROADMAP_STATUS.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\REMAINING_ROADMAP.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\FILTERED_EXTENSION_ROADMAP.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\EXTENSION_ROADMAP.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\ACTUAL_ROADMAP_REALITY.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\roadmap-archive\\OLD_UPGRADE_ROADMAP.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\architecture\\platform-roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\operations\\operations_roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\security\\security_roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\testing\\testing_roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\standards\\communication_roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\observability\\observability_roadmap.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\community\\portal\\roadmap_updates.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\community\\portal\\roadmap-milestones.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\PLAN.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\DEVELOPMENT_PLAN_PHASE4.md does not exist"
+  },
+  {
+    "action": "SKIP",
+    "details": "C:\\Users\\antho\\Windows-AI\\docs\\Repo_Organization_Plan.md does not exist"
+  },
+  {
+    "action": "INFO",
+    "details": "Consider creating symlink to shared icon instead of deleting C:\\Users\\antho\\Windows-AI\\windows-ai-tray\\assets\\icon.png"
+  },
+  {
+    "action": "INFO",
+    "details": "Consider creating symlink to shared icon instead of deleting C:\\Users\\antho\\Windows-AI\\wizard\\assets\\icon.png"
+  },
+  {
+    "action": "WOULD CREATE",
+    "details": "C:\\Users\\antho\\Windows-AI\\plugins\\PLUGIN_CLASSIFICATION.md"
+  },
+  {
+    "action": "TODO",
+    "details": "Main README.md should be updated to reference NEW_MASTER_ROADMAP.md"
+  },
+  {
+    "action": "TODO",
+    "details": "Remove or correct misleading progress claims"
+  },
+  {
+    "action": "TODO",
+    "details": "Add link to HONEST_REPO_ASSESSMENT.md"
+  }
+]

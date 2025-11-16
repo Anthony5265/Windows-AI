@@ -1,0 +1,39 @@
+# Git Commit Message Template for Windows-AI
+
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# Type: feat, fix, docs, style, refactor, perf, test, chore
+# Scope: component or file affected
+# Subject: imperative, lowercase, no period
+#
+# Body: explain what and why vs. how
+#
+# Footer: reference issues, breaking changes
+#
+# Example:
+# feat(agenthub): add proactive task prediction
+#
+# Implements ML-based prediction of user tasks based on behavioral patterns.
+# Uses temporal analysis and context awareness for accurate suggestions.
+#
+# Closes #123
+# BREAKING CHANGE: New API endpoint for predictions
+
+# Branching Convention:
+# - main: production-ready code
+# - develop: integration branch
+# - feature/*: new features
+# - bugfix/*: bug fixes
+# - hotfix/*: urgent production fixes
+# - release/*: release preparation
+
+# Review Checklist:
+# [ ] Tests added/updated
+# [ ] Documentation updated
+# [ ] No breaking changes (or documented)
+# [ ] Code follows style guide
+# [ ] Security implications considered

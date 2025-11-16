@@ -1,0 +1,17 @@
+{
+  "name": "Task Scheduler",
+  "type": "windows_integration",
+  "platform": "win32",
+  "requires_admin": false,
+  "creates": [
+    "daily",
+    "weekly",
+    "monthly",
+    "on-event"
+  ],
+  "features": [
+    "manage",
+    "monitor",
+    "trigger"
+  ]
+}

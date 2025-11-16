@@ -1,0 +1,7 @@
+{
+  "name": "Oobabooga",
+  "type": "local_model_platform",
+  "executable": "python",
+  "default_port": 7860,
+  "models_dir": "~/text-generation-webui"
+}

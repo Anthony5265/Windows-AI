@@ -1,0 +1,9 @@
+{
+  "name": "Access Logger",
+  "type": "logging",
+  "features": [
+    "authorization-decisions",
+    "anomaly-detection",
+    "rate-limiting-alerts"
+  ]
+}

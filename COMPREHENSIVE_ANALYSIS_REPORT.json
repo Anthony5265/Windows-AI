@@ -1,0 +1,228 @@
+{
+  "roadmap_files": [
+    {
+      "path": "docs\\roadmap-archive\\OLD_UPGRADE_ROADMAP.md",
+      "size": 228405,
+      "modified": "2025-11-15T14:46:22.552705"
+    },
+    {
+      "path": "docs\\roadmap-archive\\ULTIMATE_EXTENSION_ROADMAP.md",
+      "size": 85521,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "docs\\roadmap-archive\\FILTERED_EXTENSION_ROADMAP.md",
+      "size": 80637,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "docs\\roadmap-archive\\COMPLETE_ROADMAP_TO_100.md",
+      "size": 77377,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "community\\portal\\roadmap_updates.md",
+      "size": 48568,
+      "modified": "2025-11-15T14:26:37.984795"
+    },
+    {
+      "path": "community\\feedback\\roadmap_vote_portal.vue",
+      "size": 42140,
+      "modified": "2025-11-15T14:26:38.126563"
+    },
+    {
+      "path": "docs\\architecture\\platform-roadmap.md",
+      "size": 37494,
+      "modified": "2025-11-15T14:26:26.145071"
+    },
+    {
+      "path": "community\\portal\\roadmap-milestones.md",
+      "size": 28874,
+      "modified": "2025-11-15T14:26:38.363463"
+    },
+    {
+      "path": "scripts\\ci\\dependency_roadmap.py",
+      "size": 26011,
+      "modified": "2025-11-15T14:26:44.068798"
+    },
+    {
+      "path": "docs\\architecture\\architecture_roadmap.md",
+      "size": 21924,
+      "modified": "2025-11-15T14:26:44.082697"
+    },
+    {
+      "path": "docs\\operations\\operations_roadmap.md",
+      "size": 19060,
+      "modified": "2025-11-15T14:26:44.117760"
+    },
+    {
+      "path": "docs\\roadmap-archive\\EXTENSION_ROADMAP.md",
+      "size": 18190,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "scripts\\implement_roadmap.py",
+      "size": 18072,
+      "modified": "2025-11-15T14:26:21.337871"
+    },
+    {
+      "path": "docs\\security\\security_roadmap.md",
+      "size": 16120,
+      "modified": "2025-11-15T14:26:44.133420"
+    },
+    {
+      "path": "docs\\ROADMAP_IMPLEMENTATION.md",
+      "size": 14874,
+      "modified": "2025-11-15T14:23:41.678375"
+    },
+    {
+      "path": "docs\\ROADMAP_COMPLETION_FINAL.md",
+      "size": 14836,
+      "modified": "2025-11-15T14:28:08.289359"
+    },
+    {
+      "path": "scripts\\comprehensive_roadmap_implementation.py",
+      "size": 14422,
+      "modified": "2025-11-15T17:07:29.261446"
+    },
+    {
+      "path": "docs\\testing\\testing_roadmap.md",
+      "size": 13244,
+      "modified": "2025-11-15T14:26:44.161578"
+    },
+    {
+      "path": "docs\\roadmap-archive\\REMAINING_ROADMAP.md",
+      "size": 9073,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "scripts\\roadmap_tracker.py",
+      "size": 7589,
+      "modified": "2025-11-15T14:25:15.552391"
+    },
+    {
+      "path": "docs\\roadmap-archive\\ACTUAL_ROADMAP_REALITY.md",
+      "size": 7588,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "docs\\roadmap-archive\\ROADMAP_STATUS.md",
+      "size": 7561,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "scripts\\dev\\environment_roadmap.py",
+      "size": 7502,
+      "modified": "2025-11-15T14:23:42.024693"
+    },
+    {
+      "path": "docs\\roadmap-archive\\ROADMAP_COMPLETION_REPORT.md",
+      "size": 7010,
+      "modified": "2025-11-15T14:23:41.741349"
+    },
+    {
+      "path": "assets\\workflows\\workflows_roadmap.yaml",
+      "size": 6715,
+      "modified": "2025-11-15T14:26:44.193076"
+    },
+    {
+      "path": "tools\\foundation\\tooling_roadmap.json",
+      "size": 5212,
+      "modified": "2025-11-15T14:26:44.180814"
+    },
+    {
+      "path": "scripts\\complete_roadmap.py",
+      "size": 4428,
+      "modified": "2025-11-15T14:23:42.008965"
+    },
+    {
+      "path": "docs\\standards\\communication_roadmap.md",
+      "size": 4312,
+      "modified": "2025-11-15T14:26:44.224692"
+    },
+    {
+      "path": "docs\\WindowsAI_Consolidated_Roadmap.md",
+      "size": 1366,
+      "modified": "2025-11-15T14:23:41.678375"
+    },
+    {
+      "path": "docs\\observability\\observability_roadmap.md",
+      "size": 1234,
+      "modified": "2025-11-15T14:26:44.256423"
+    },
+    {
+      "path": "docs\\ROADMAP.md",
+      "size": 1189,
+      "modified": "2025-11-15T14:46:22.554444"
+    },
+    {
+      "path": "docs\\ROADMAP_TODO.md",
+      "size": 61,
+      "modified": "2025-11-15T14:33:08.862743"
+    }
+  ],
+  "duplicates": [
+    "docs\\roadmap-archive\\ULTIMATE_EXTENSION_ROADMAP.md",
+    "docs\\roadmap-archive\\FILTERED_EXTENSION_ROADMAP.md",
+    "docs\\roadmap-archive\\COMPLETE_ROADMAP_TO_100.md",
+    "docs\\roadmap-archive\\EXTENSION_ROADMAP.md",
+    "docs\\roadmap-archive\\REMAINING_ROADMAP.md",
+    "docs\\roadmap-archive\\ACTUAL_ROADMAP_REALITY.md",
+    "docs\\roadmap-archive\\ROADMAP_STATUS.md",
+    "docs\\roadmap-archive\\ROADMAP_COMPLETION_REPORT.md",
+    "scripts\\complete_roadmap.py"
+  ],
+  "upgrades": 1000,
+  "status": {
+    "implemented": 1000,
+    "total": 1000,
+    "percentage": 100.0,
+    "by_phase": {
+      "1": {
+        "implemented": 100,
+        "total": 100
+      },
+      "5": {
+        "implemented": 600,
+        "total": 600
+      },
+      "2": {
+        "implemented": 100,
+        "total": 100
+      },
+      "3": {
+        "implemented": 100,
+        "total": 100
+      },
+      "4": {
+        "implemented": 100,
+        "total": 100
+      }
+    }
+  },
+  "issues": [
+    {
+      "type": "scattered_structure",
+      "affected_dirs": [
+        "scripts",
+        "agenthub",
+        "docs",
+        "tools",
+        "plugins"
+      ],
+      "severity": "high",
+      "description": "Implementation files scattered across many directories"
+    },
+    {
+      "type": "missing_documentation",
+      "files": [
+        "docs/ARCHITECTURE.md",
+        "docs/API.md",
+        "docs/DEPLOYMENT.md"
+      ],
+      "severity": "medium",
+      "description": "Critical documentation files missing"
+    }
+  ],
+  "timestamp": "2025-11-15T17:07:39.332849"
+}

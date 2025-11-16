@@ -1,0 +1,9 @@
+{
+  "name": "Gemini Pro Vision",
+  "type": "vision_model",
+  "capabilities": [
+    "image-understanding",
+    "video-understanding",
+    "spatial-reasoning"
+  ]
+}

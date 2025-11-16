@@ -1,0 +1,7 @@
+{
+    "name": "AlertManager",
+    "description": "Evaluates log records against alert rules and dispatches notifications.",
+    "author": "Windows-AI",
+    "version": "0.1.0",
+    "entrypoint": "plugins.logging.alert_manager.alert_manager:AlertManager"
+}

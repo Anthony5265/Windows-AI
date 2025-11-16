@@ -1,1 +1,0 @@
-I need your approval to create the VSCode extension directory structure. Should I proceed with creating the Schedule Manager extension in `C:\Users\antho\Windows-AI\vscode-schedule-manager`?

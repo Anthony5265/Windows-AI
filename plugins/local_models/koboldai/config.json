@@ -1,0 +1,9 @@
+{
+  "name": "KoboldAI",
+  "type": "local_model_platform",
+  "executable": "koboldcpp",
+  "default_port": 5001,
+  "models_dir": "~/KoboldAI/models",
+  "requires_internet": false,
+  "supports_gpu": true
+}

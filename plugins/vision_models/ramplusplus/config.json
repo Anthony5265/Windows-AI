@@ -1,0 +1,9 @@
+{
+  "name": "RAM++",
+  "type": "vision_model",
+  "capabilities": [
+    "image-understanding",
+    "object-detection",
+    "segmentation"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Security Logger",
+  "type": "logging",
+  "features": [
+    "hash-chain",
+    "alerting",
+    "tamper-evident"
+  ],
+  "tracks": [
+    "auth",
+    "access",
+    "secrets"
+  ]
+}

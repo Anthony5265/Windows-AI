@@ -1,0 +1,20 @@
+{
+  "name": "Together",
+  "version": "1.0.0",
+  "api_base": "https://api.together.xyz/v1",
+  "requires_key": true,
+  "models": [
+    "togethercomputer/RedPajama-INCITE-7B",
+    "togethercomputer/falcon-40b",
+    "togethercomputer/mpt-30b"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "togethercomputer/RedPajama-INCITE-7B",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

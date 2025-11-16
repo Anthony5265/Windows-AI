@@ -1,0 +1,13 @@
+{
+  "name": "Tabnine",
+  "type": "code_model",
+  "provider": "tabnine",
+  "languages": [
+    "all"
+  ],
+  "features": [
+    "autocomplete",
+    "whole-line",
+    "full-function"
+  ]
+}
