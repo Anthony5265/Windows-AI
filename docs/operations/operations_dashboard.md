@@ -1,203 +1,108 @@
-# Operations Dashboard
+# Operations Readiness Dashboard
 
-Introduce `docs/operations/operations_dashboard.md` providing live dashboards that surface operations readiness status in real time.
-*   **Upgrade 533:** Implement `docs/operations/operations_playbook.md` capturing step-by-step playbooks to reinforce operations readiness.
-*   **Upgrade 534:** Create `docs/operations/operations_scorecard.md` summarizing operations readiness progress against roadmap targets.
-*   **Upgrade 535:** Publish `docs/operations/operations_matrix.md` mapping operations readiness coverage across foundational modules.
-*   **Upgrade 536:** Provide `docs/operations/operations_handbook.md` offering a handbook so contributors internalize operations readiness.
-*   **Upgrade 537:** Ship `docs/operations/operations_inspector.md` automating inspections that verify operations readiness before merges.
-*   **Upgrade 538:** Build `docs/operations/operations_notebook.md` curating exploratory notebooks that showcase operations readiness best practices.
-*   **Upgrade 539:** Document `docs/operations/operations_registry.md` maintaining a registry of owners responsible for operations readiness.
-*   **Upgrade 540:** Establish `docs/operations/operations_roadmap.md` aligning the foundational roadmap milestones with operations readiness.
-*   **Upgrade 541:** Add `docs/security/security_audit.md` delivering recurring audits for foundational security posture across services.
-*   **Upgrade 542:** Introduce `docs/security/security_dashboard.md` providing live dashboards that surface foundational security posture status in real time.
-*   **Upgrade 543:** Implement `docs/security/security_playbook.md` capturing step-by-step playbooks to reinforce foundational security posture.
-*   **Upgrade 544:** Create `docs/security/security_scorecard.md` summarizing foundational security posture progress against roadmap targets.
-*   **Upgrade 545:** Publish `docs/security/security_matrix.md` mapping foundational security posture coverage across foundational modules.
-*   **Upgrade 546:** Provide `docs/security/security_handbook.md` offering a handbook so contributors internalize foundational security posture.
-*   **Upgrade 547:** Ship `docs/security/security_inspector.md` automating inspections that verify foundational security posture before merges.
-*   **Upgrade 548:** Build `docs/security/security_notebook.md` curating exploratory notebooks that showcase foundational security posture best practices.
-*   **Upgrade 549:** Document `docs/security/security_registry.md` maintaining a registry of owners responsible for foundational security posture.
-*   **Upgrade 550:** Establish `docs/security/security_roadmap.md` aligning the foundational roadmap milestones with foundational security posture.
-*   **Upgrade 551:** Add `docs/testing/testing_audit.md` delivering recurring audits for baseline testing discipline across services.
-*   **Upgrade 552:** Introduce `docs/testing/testing_dashboard.md` providing live dashboards that surface baseline testing discipline status in real time.
-*   **Upgrade 553:** Implement `docs/testing/testing_playbook.md` capturing step-by-step playbooks to reinforce baseline testing discipline.
-*   **Upgrade 554:** Create `docs/testing/testing_scorecard.md` summarizing baseline testing discipline progress against roadmap targets.
-*   **Upgrade 555:** Publish `docs/testing/testing_matrix.md` mapping baseline testing discipline coverage across foundational modules.
-*   **Upgrade 556:** Provide `docs/testing/testing_handbook.md` offering a handbook so contributors internalize baseline testing discipline.
-*   **Upgrade 557:** Ship `docs/testing/testing_inspector.md` automating inspections that verify baseline testing discipline before merges.
-*   **Upgrade 558:** Build `docs/testing/testing_notebook.md` curating exploratory notebooks that showcase baseline testing discipline best practices.
-*   **Upgrade 559:** Document `docs/testing/testing_registry.md` maintaining a registry of owners responsible for baseline testing discipline.
-*   **Upgrade 560:** Establish `docs/testing/testing_roadmap.md` aligning the foundational roadmap milestones with baseline testing discipline.
-*   **Upgrade 561:** Add `tools/foundation/tooling_audit.json` delivering recurring audits for shared tooling catalogs across services.
-*   **Upgrade 562:** Introduce `tools/foundation/tooling_dashboard.json` providing live dashboards that surface shared tooling catalogs status in real time.
-*   **Upgrade 563:** Implement `tools/foundation/tooling_playbook.json` capturing step-by-step playbooks to reinforce shared tooling catalogs.
-*   **Upgrade 564:** Create `tools/foundation/tooling_scorecard.json` summarizing shared tooling catalogs progress against roadmap targets.
-*   **Upgrade 565:** Publish `tools/foundation/tooling_matrix.json` mapping shared tooling catalogs coverage across foundational modules.
-*   **Upgrade 566:** Provide `tools/foundation/tooling_handbook.json` offering a handbook so contributors internalize shared tooling catalogs.
-*   **Upgrade 567:** Ship `tools/foundation/tooling_inspector.json` automating inspections that verify shared tooling catalogs before merges.
-*   **Upgrade 568:** Build `tools/foundation/tooling_notebook.json` curating exploratory notebooks that showcase shared tooling catalogs best practices.
-*   **Upgrade 569:** Document `tools/foundation/tooling_registry.json` maintaining a registry of owners responsible for shared tooling catalogs.
-*   **Upgrade 570:** Establish `tools/foundation/tooling_roadmap.json` aligning the foundational roadmap milestones with shared tooling catalogs.
-*   **Upgrade 571:** Add `assets/workflows/workflows_audit.yaml` delivering recurring audits for bootstrap workflow templates across services.
-*   **Upgrade 572:** Introduce `assets/workflows/workflows_dashboard.yaml` providing live dashboards that surface bootstrap workflow templates status in real time.
-*   **Upgrade 573:** Implement `assets/workflows/workflows_playbook.yaml` capturing step-by-step playbooks to reinforce bootstrap workflow templates.
-*   **Upgrade 574:** Create `assets/workflows/workflows_scorecard.yaml` summarizing bootstrap workflow templates progress against roadmap targets.
-*   **Upgrade 575:** Publish `assets/workflows/workflows_matrix.yaml` mapping bootstrap workflow templates coverage across foundational modules.
-*   **Upgrade 576:** Provide `assets/workflows/workflows_handbook.yaml` offering a handbook so contributors internalize bootstrap workflow templates.
-*   **Upgrade 577:** Ship `assets/workflows/workflows_inspector.yaml` automating inspections that verify bootstrap workflow templates before merges.
-*   **Upgrade 578:** Build `assets/workflows/workflows_notebook.yaml` curating exploratory notebooks that showcase bootstrap workflow templates best practices.
-*   **Upgrade 579:** Document `assets/workflows/workflows_registry.yaml` maintaining a registry of owners responsible for bootstrap workflow templates.
-*   **Upgrade 580:** Establish `assets/workflows/workflows_roadmap.yaml` aligning the foundational roadmap milestones with bootstrap workflow templates.
-*   **Upgrade 581:** Add `docs/standards/communication_audit.md` delivering recurring audits for team communication rituals across services.
-*   **Upgrade 582:** Introduce `docs/standards/communication_dashboard.md` providing live dashboards that surface team communication rituals status in real time.
-*   **Upgrade 583:** Implement `docs/standards/communication_playbook.md` capturing step-by-step playbooks to reinforce team communication rituals.
-*   **Upgrade 584:** Create `docs/standards/communication_scorecard.md` summarizing team communication rituals progress against roadmap targets.
-*   **Upgrade 585:** Publish `docs/standards/communication_matrix.md` mapping team communication rituals coverage across foundational modules.
-*   **Upgrade 586:** Provide `docs/standards/communication_handbook.md` offering a handbook so contributors internalize team communication rituals.
-*   **Upgrade 587:** Ship `docs/standards/communication_inspector.md` automating inspections that verify team communication rituals before merges.
-*   **Upgrade 588:** Build `docs/standards/communication_notebook.md` curating exploratory notebooks that showcase team communication rituals best practices.
-*   **Upgrade 589:** Document `docs/standards/communication_registry.md` maintaining a registry of owners responsible for team communication rituals.
-*   **Upgrade 590:** Establish `docs/standards/communication_roadmap.md` aligning the foundational roadmap milestones with team communication rituals.
-*   **Upgrade 591:** Add `docs/observability/observability_audit.md` delivering recurring audits for foundational observability across services.
-*   **Upgrade 592:** Introduce `docs/observability/observability_dashboard.md` providing live dashboards that surface foundational observability status in real time.
-*   **Upgrade 593:** Implement `docs/observability/observability_playbook.md` capturing step-by-step playbooks to reinforce foundational observability.
-*   **Upgrade 594:** Create `docs/observability/observability_scorecard.md` summarizing foundational observability progress against roadmap targets.
-*   **Upgrade 595:** Publish `docs/observability/observability_matrix.md` mapping foundational observability coverage across foundational modules.
-*   **Upgrade 596:** Provide `docs/observability/observability_handbook.md` offering a handbook so contributors internalize foundational observability.
-*   **Upgrade 597:** Ship `docs/observability/observability_inspector.md` automating inspections that verify foundational observability before merges.
-*   **Upgrade 598:** Build `docs/observability/observability_notebook.md` curating exploratory notebooks that showcase foundational observability best practices.
-*   **Upgrade 599:** Document `docs/observability/observability_registry.md` maintaining a registry of owners responsible for foundational observability.
-*   **Upgrade 600:** Establish `docs/observability/observability_roadmap.md` aligning the foundational roadmap milestones with foundational observability.
+**Version:** 2025-11-15  
+**Owner:** Operations & Reliability Working Group  
+**Cadence:** Updated continuously; formal review before every audit + release candidate
 
-## Overview
-
-This document provides comprehensive information about operations dashboard.
-
-## Purpose
-
-Introduce `docs/operations/operations_dashboard.md` providing live dashboards that surface operations readiness status in real time.
-*   **Upgrade 533:** Implement `docs/operations/operations_playbook.md` capturing step-by-step playbooks to reinforce operations readiness.
-*   **Upgrade 534:** Create `docs/operations/operations_scorecard.md` summarizing operations readiness progress against roadmap targets.
-*   **Upgrade 535:** Publish `docs/operations/operations_matrix.md` mapping operations readiness coverage across foundational modules.
-*   **Upgrade 536:** Provide `docs/operations/operations_handbook.md` offering a handbook so contributors internalize operations readiness.
-*   **Upgrade 537:** Ship `docs/operations/operations_inspector.md` automating inspections that verify operations readiness before merges.
-*   **Upgrade 538:** Build `docs/operations/operations_notebook.md` curating exploratory notebooks that showcase operations readiness best practices.
-*   **Upgrade 539:** Document `docs/operations/operations_registry.md` maintaining a registry of owners responsible for operations readiness.
-*   **Upgrade 540:** Establish `docs/operations/operations_roadmap.md` aligning the foundational roadmap milestones with operations readiness.
-*   **Upgrade 541:** Add `docs/security/security_audit.md` delivering recurring audits for foundational security posture across services.
-*   **Upgrade 542:** Introduce `docs/security/security_dashboard.md` providing live dashboards that surface foundational security posture status in real time.
-*   **Upgrade 543:** Implement `docs/security/security_playbook.md` capturing step-by-step playbooks to reinforce foundational security posture.
-*   **Upgrade 544:** Create `docs/security/security_scorecard.md` summarizing foundational security posture progress against roadmap targets.
-*   **Upgrade 545:** Publish `docs/security/security_matrix.md` mapping foundational security posture coverage across foundational modules.
-*   **Upgrade 546:** Provide `docs/security/security_handbook.md` offering a handbook so contributors internalize foundational security posture.
-*   **Upgrade 547:** Ship `docs/security/security_inspector.md` automating inspections that verify foundational security posture before merges.
-*   **Upgrade 548:** Build `docs/security/security_notebook.md` curating exploratory notebooks that showcase foundational security posture best practices.
-*   **Upgrade 549:** Document `docs/security/security_registry.md` maintaining a registry of owners responsible for foundational security posture.
-*   **Upgrade 550:** Establish `docs/security/security_roadmap.md` aligning the foundational roadmap milestones with foundational security posture.
-*   **Upgrade 551:** Add `docs/testing/testing_audit.md` delivering recurring audits for baseline testing discipline across services.
-*   **Upgrade 552:** Introduce `docs/testing/testing_dashboard.md` providing live dashboards that surface baseline testing discipline status in real time.
-*   **Upgrade 553:** Implement `docs/testing/testing_playbook.md` capturing step-by-step playbooks to reinforce baseline testing discipline.
-*   **Upgrade 554:** Create `docs/testing/testing_scorecard.md` summarizing baseline testing discipline progress against roadmap targets.
-*   **Upgrade 555:** Publish `docs/testing/testing_matrix.md` mapping baseline testing discipline coverage across foundational modules.
-*   **Upgrade 556:** Provide `docs/testing/testing_handbook.md` offering a handbook so contributors internalize baseline testing discipline.
-*   **Upgrade 557:** Ship `docs/testing/testing_inspector.md` automating inspections that verify baseline testing discipline before merges.
-*   **Upgrade 558:** Build `docs/testing/testing_notebook.md` curating exploratory notebooks that showcase baseline testing discipline best practices.
-*   **Upgrade 559:** Document `docs/testing/testing_registry.md` maintaining a registry of owners responsible for baseline testing discipline.
-*   **Upgrade 560:** Establish `docs/testing/testing_roadmap.md` aligning the foundational roadmap milestones with baseline testing discipline.
-*   **Upgrade 561:** Add `tools/foundation/tooling_audit.json` delivering recurring audits for shared tooling catalogs across services.
-*   **Upgrade 562:** Introduce `tools/foundation/tooling_dashboard.json` providing live dashboards that surface shared tooling catalogs status in real time.
-*   **Upgrade 563:** Implement `tools/foundation/tooling_playbook.json` capturing step-by-step playbooks to reinforce shared tooling catalogs.
-*   **Upgrade 564:** Create `tools/foundation/tooling_scorecard.json` summarizing shared tooling catalogs progress against roadmap targets.
-*   **Upgrade 565:** Publish `tools/foundation/tooling_matrix.json` mapping shared tooling catalogs coverage across foundational modules.
-*   **Upgrade 566:** Provide `tools/foundation/tooling_handbook.json` offering a handbook so contributors internalize shared tooling catalogs.
-*   **Upgrade 567:** Ship `tools/foundation/tooling_inspector.json` automating inspections that verify shared tooling catalogs before merges.
-*   **Upgrade 568:** Build `tools/foundation/tooling_notebook.json` curating exploratory notebooks that showcase shared tooling catalogs best practices.
-*   **Upgrade 569:** Document `tools/foundation/tooling_registry.json` maintaining a registry of owners responsible for shared tooling catalogs.
-*   **Upgrade 570:** Establish `tools/foundation/tooling_roadmap.json` aligning the foundational roadmap milestones with shared tooling catalogs.
-*   **Upgrade 571:** Add `assets/workflows/workflows_audit.yaml` delivering recurring audits for bootstrap workflow templates across services.
-*   **Upgrade 572:** Introduce `assets/workflows/workflows_dashboard.yaml` providing live dashboards that surface bootstrap workflow templates status in real time.
-*   **Upgrade 573:** Implement `assets/workflows/workflows_playbook.yaml` capturing step-by-step playbooks to reinforce bootstrap workflow templates.
-*   **Upgrade 574:** Create `assets/workflows/workflows_scorecard.yaml` summarizing bootstrap workflow templates progress against roadmap targets.
-*   **Upgrade 575:** Publish `assets/workflows/workflows_matrix.yaml` mapping bootstrap workflow templates coverage across foundational modules.
-*   **Upgrade 576:** Provide `assets/workflows/workflows_handbook.yaml` offering a handbook so contributors internalize bootstrap workflow templates.
-*   **Upgrade 577:** Ship `assets/workflows/workflows_inspector.yaml` automating inspections that verify bootstrap workflow templates before merges.
-*   **Upgrade 578:** Build `assets/workflows/workflows_notebook.yaml` curating exploratory notebooks that showcase bootstrap workflow templates best practices.
-*   **Upgrade 579:** Document `assets/workflows/workflows_registry.yaml` maintaining a registry of owners responsible for bootstrap workflow templates.
-*   **Upgrade 580:** Establish `assets/workflows/workflows_roadmap.yaml` aligning the foundational roadmap milestones with bootstrap workflow templates.
-*   **Upgrade 581:** Add `docs/standards/communication_audit.md` delivering recurring audits for team communication rituals across services.
-*   **Upgrade 582:** Introduce `docs/standards/communication_dashboard.md` providing live dashboards that surface team communication rituals status in real time.
-*   **Upgrade 583:** Implement `docs/standards/communication_playbook.md` capturing step-by-step playbooks to reinforce team communication rituals.
-*   **Upgrade 584:** Create `docs/standards/communication_scorecard.md` summarizing team communication rituals progress against roadmap targets.
-*   **Upgrade 585:** Publish `docs/standards/communication_matrix.md` mapping team communication rituals coverage across foundational modules.
-*   **Upgrade 586:** Provide `docs/standards/communication_handbook.md` offering a handbook so contributors internalize team communication rituals.
-*   **Upgrade 587:** Ship `docs/standards/communication_inspector.md` automating inspections that verify team communication rituals before merges.
-*   **Upgrade 588:** Build `docs/standards/communication_notebook.md` curating exploratory notebooks that showcase team communication rituals best practices.
-*   **Upgrade 589:** Document `docs/standards/communication_registry.md` maintaining a registry of owners responsible for team communication rituals.
-*   **Upgrade 590:** Establish `docs/standards/communication_roadmap.md` aligning the foundational roadmap milestones with team communication rituals.
-*   **Upgrade 591:** Add `docs/observability/observability_audit.md` delivering recurring audits for foundational observability across services.
-*   **Upgrade 592:** Introduce `docs/observability/observability_dashboard.md` providing live dashboards that surface foundational observability status in real time.
-*   **Upgrade 593:** Implement `docs/observability/observability_playbook.md` capturing step-by-step playbooks to reinforce foundational observability.
-*   **Upgrade 594:** Create `docs/observability/observability_scorecard.md` summarizing foundational observability progress against roadmap targets.
-*   **Upgrade 595:** Publish `docs/observability/observability_matrix.md` mapping foundational observability coverage across foundational modules.
-*   **Upgrade 596:** Provide `docs/observability/observability_handbook.md` offering a handbook so contributors internalize foundational observability.
-*   **Upgrade 597:** Ship `docs/observability/observability_inspector.md` automating inspections that verify foundational observability before merges.
-*   **Upgrade 598:** Build `docs/observability/observability_notebook.md` curating exploratory notebooks that showcase foundational observability best practices.
-*   **Upgrade 599:** Document `docs/observability/observability_registry.md` maintaining a registry of owners responsible for foundational observability.
-*   **Upgrade 600:** Establish `docs/observability/observability_roadmap.md` aligning the foundational roadmap milestones with foundational observability.
-
-## Key Features
-
-- Feature 1: Description
-- Feature 2: Description
-- Feature 3: Description
-
-## Usage
-
-### Basic Usage
-
-```
-Example usage here
-```
-
-### Advanced Usage
-
-```
-Advanced example here
-```
-
-## Configuration
-
-Configuration options and parameters:
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| param1 | string | "default" | Description |
-
-## Best Practices
-
-1. Best practice 1
-2. Best practice 2
-3. Best practice 3
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue 1**: Description
-- **Solution**: Resolution steps
-
-## Related Documentation
-
-- [Related Doc 1](link)
-- [Related Doc 2](link)
-
-## Changelog
-
-### 2025-11-15
-- Initial creation
-- Implemented as part of Windows-AI roadmap
+This dashboard translates the audit checklist into live telemetry so the team can
+see deployment, monitoring, and recovery posture at a glance. It consumes the
+same data sources referenced in `operations_audit.md` and exposes drill-down
+links to the relevant runbooks.
 
 ---
 
-*Last updated: 2025-11-15*
+## 1. Objectives & Success Criteria
+- **Real-time awareness:** Surface health of core services (backend, GUI, tray, automation engine, watchdog) and key background jobs.
+- **Evidence for audits:** Provide screenshot/export that proves controls are working (deployability, observability, automation, security, incident readiness).
+- **Alert triage:** Route threshold breaches to on-call channels with links to runbooks and mitigation actions.
+- **Trend analysis:** Track SLOs (availability, restart counts, queue delays) across releases to detect regressions early.
+
+Success Criteria:
+1. All panels backed by automated metrics or log queries (no manual data entry).
+2. Exportable JSON/screenshot stored with monthly audit evidence.
+3. Every widget links to at least one playbook/runbook when remediation is required.
+
+---
+
+## 2. Data Sources & Collection
+
+| Source | Metric/Log | Collection Method | Notes |
+|--------|------------|-------------------|-------|
+| **Prometheus / node-exporter** | CPU, memory, disk for Windows-AI host | `prometheus.yml` scrape | Windows exporters installed via `scripts/ops/windows_exporter_setup.ps1` |
+| **FastAPI backend** | Request rate, error rate, latency | Instrumentation via `windows_ai/main.py` + `prometheus_client` middleware | Emits `/metrics` endpoint |
+| **Watchdog service** | Restart counts, health probes | `watchdog.py` log file + custom counter exported via StatsD | Alerts when restart loop > 3/hr |
+| **Automation engine** | Folder watcher status, scheduler queue depth | `automation/status.json` written every minute | Ship to Loki via `promtail` |
+| **Windows Event Log** | Service crashes, permission issues | Collected via nxlog -> Loki | Use saved queries for "Windows-AI" source |
+| **Deployment pipeline** | Last build hash, artifact checksum | `build-release.sh` writes to `artifacts/build-info.json` | Displayed in dashboard header |
+| **Backup jobs** | Success timestamp, duration | `scripts/ops/backup.ps1` posts to InfluxDB | Compare vs RPO target (24h) |
+| **Incident management** | Open incidents, MTTR | Lightweight Notion table exported as CSV daily | Used for historical trend panel |
+
+---
+
+## 3. Dashboard Layout
+
+| Row | Panel | Description | Thresholds / Alerts |
+|-----|-------|-------------|---------------------|
+| Header | Release Overview | Build hash, config profile, audit score, on-call rotation | Turns red if audit score < 0.85 or on-call unset |
+| 1 | Service Availability | Uptime % for backend/GUI/tray/watchdog (rolling 24h) | Alert < 99% or 3 consecutive restart events |
+| 1 | API Health | P99 latency + error rate per endpoint | Alert if P99 > 3s or error rate > 2% |
+| 2 | Resource Utilization | CPU, memory, disk usage stacked by component | Warn > 80% sustained for 10m |
+| 2 | Automation Jobs | Folder watcher heartbeat + scheduler backlog | Alert if heartbeat stale > 2m or backlog > 50 jobs |
+| 3 | Backup & Recovery | Last successful backup timestamp, restore test result | Alert if backup > 24h old or last restore > 60d |
+| 3 | Security & Access | Failed auth attempts, privilege escalations from Windows logs | Alert on >5 failed auth/min or new admin account |
+| 4 | Incident Timeline | Open incidents, MTTR trend, mitigation status | Highlight unresolved incidents > 24h |
+| 4 | Change Management | Upcoming releases, rollback readiness checklist | Alert if rollback artifacts missing or release overdue |
+
+Each panel links to the appropriate runbook:
+- `/docs/operations/incident-playbook.md`
+- `/docs/operations/maintenance-calendar.md`
+- `/docs/security/*`
+- `/docs/operations/operations_audit.md` (scorecard source)
+
+---
+
+## 4. Alerting & Notification Channels
+
+| Channel | Purpose | Trigger Source |
+|---------|---------|----------------|
+| **Teams: #ops-alerts** | High-priority service incidents | Grafana alert rules for availability, automation backlog, security anomalies |
+| **Email: ops@windows-ai.local** | Daily summary & audit evidence | Scheduled Grafana report (PDF + CSV) |
+| **PagerDuty** | Critical out-of-hours alerts | Prometheus Alertmanager forwarder |
+| **Notion Task Board** | Remediation tracking | Ops engineer copies alert ID + context to task card |
+
+Alert rules live in `infrastructure/monitoring/alertmanager.yml`. Each rule includes:
+- Owner tag (release-eng, platform, automation, security)
+- Runbook URL
+- Severity (info/warn/critical)
+
+---
+
+## 5. Implementation Steps
+1. **Provision monitoring stack** – Deploy Prometheus + Grafana (Docker compose under `infrastructure/monitoring/`).
+2. **Instrument services** – Enable metrics middleware in FastAPI, add StatsD counters for watchdog + automation, configure exporters.
+3. **Configure data pipelines** – Promtail/nxlog for Windows Event Logs, Notion CSV sync script (`scripts/ops/notion_export.py`), backup job webhooks.
+4. **Create dashboard JSON** – Grafana folder `operations/windows-ai.json`; versioned in `infrastructure/monitoring/grafana_dashboards/`.
+5. **Automate evidence export** – Grafana report scheduled daily to `docs/operations/dashboard-history/YYYY-MM-DD.pdf`.
+6. **Wire alerts** – Define rules in Alertmanager, integrate with Teams webhooks + PagerDuty integration key.
+7. **Document ownership** – Update `docs/operations/operations_registry.md` with on-call + dashboard maintainer.
+
+---
+
+## 6. Maintenance & Review Cadence
+- **Daily:** Check for red panels, ensure reports delivered.
+- **Weekly:** Rotate on-call, verify alert recipients, confirm backup freshness.
+- **Monthly:** Include dashboard screenshot + JSON export in the audit evidence bundle.
+- **After incidents:** Annotate Grafana (e.g., add markers for outages) to preserve learning context.
+- **After releases:** Update release overview widget with new build hash and config profile.
+
+Change requests (new panels, thresholds) go through the Ops Working Group and should be noted in the sprint ledger.
+
+---
+
+## 7. Open Work Items
+- Automate ingestion of Notion incident data (currently manual export).
+- Add synthetic transaction checks for GUI/tray to catch UX regressions.
+- Integrate future `operations_inspector.py` to set dashboard annotations when automated checks run.
+- Expand security panel once `docs/security/security_dashboard.md` is authored to avoid duplication.
+
+Once these items are addressed, update the Rolling Backlog in `WINDOWS_AI_UNIFIED_ROADMAP.md`.

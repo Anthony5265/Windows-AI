@@ -4,7 +4,27 @@
 
 Forget complicated software and endless clicks. **Windows AI** is designed to be the ultimate upgrade for your computer, turning it into a **beyond super-agentic, assistant, and chat AI machine.**
 
-> **🎉 NEW: Windows AI is now functional!** Complete chat interface, system tray with quick commands, and easy launcher scripts. [See what's new](#whats-new) | [Quick Start](#-quick-start)
+> ⚠️ **STATUS: EARLY DEVELOPMENT.** Only Tier 1 cloud integrations and the first twelve local model platforms are production-ready. Windows integration/monitoring plugins are partial skeletons and everything else in the roadmap is still a placeholder awaiting real implementation. Start here to understand the real status:
+>
+> - ✅ **Roadmap source of truth:** [WINDOWS_AI_UNIFIED_ROADMAP.md](WINDOWS_AI_UNIFIED_ROADMAP.md)
+> - ✅ **Execution cadence & backlog:** See Sections 2-8 inside the unified roadmap
+> - ✅ **Current assessment:** [HONEST_REPO_ASSESSMENT.md](HONEST_REPO_ASSESSMENT.md)
+>
+> See [Progress Snapshot](#-progress-snapshot) for the honest numbers instead of relying on legacy marketing copy.
+
+### 📊 Progress Snapshot
+
+_Last updated: 2025-11-15_
+
+| Category | Complete | Total | Notes |
+|----------|----------|-------|-------|
+| Cloud AI Providers | 20 | 20 | Production-ready integrations (Tier 1) |
+| Local Model Platforms | 12 | 21 | 9 remaining platforms still in backlog |
+| Windows Integration Plugins | 10 | 50 | Functional skeletons that need hardening |
+| Monitoring Plugins | 5 | 15 | Functional skeletons that need real telemetry |
+| Remaining Tier 1 Scope | 0 | 405 | Placeholder items (code, vision, audio, logging, infra) |
+
+**Overall progress:** ~47 / 3,307 items (~1.4%). Track detailed work in [WINDOWS_AI_UNIFIED_ROADMAP.md](WINDOWS_AI_UNIFIED_ROADMAP.md).
 
 ### 🚀 Simple Download, Limitless Power.
 
