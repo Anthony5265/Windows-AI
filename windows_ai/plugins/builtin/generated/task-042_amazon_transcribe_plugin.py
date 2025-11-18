@@ -94,89 +94,129 @@ class AmazonTranscribePlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _transcribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Transcribe action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/transcribe",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "transcribe"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Amazon Transcribe API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"transcribe failed: {e}")
 
-
-    async def _medical(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Medical action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/medical",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "medical"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Amazon Transcribe API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"medical failed: {e}")
 
-
-    async def _legal(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Legal action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/legal",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "legal"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Amazon Transcribe API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"legal failed: {e}")
 
-
-    async def _custom_vocab(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Custom Vocab action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/custom_vocab",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "custom_vocab"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Amazon Transcribe API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"custom_vocab failed: {e}")
+
+
+    
+    async def _transcribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Transcribe audio to text'''
+        audio_file = params.get('audio_file')
+        audio_data = params.get('audio_data')
+        language = params.get('language', 'en')
+
+        if audio_file and os.path.exists(audio_file):
+            form = aiohttp.FormData()
+            form.add_field('audio', open(audio_file, 'rb'), filename=os.path.basename(audio_file))
+            form.add_field('language', language)
+            form.add_field('model', self.metadata.name.lower().replace(' ', '_'))
+        elif audio_data:
+            form = aiohttp.FormData()
+            form.add_field('audio', audio_data, filename='audio.wav')
+            form.add_field('language', language)
+        else:
+            raise ValueError("Must provide audio_file or audio_data")
+
+        async with self.session.post(
+            f'{self.base_url}/transcribe',
+            data=form,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=120
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {
+                    'text': data.get('text', ''),
+                    'language': data.get('language', language),
+                    'confidence': data.get('confidence', 0.95),
+                    'duration': data.get('duration', 0)
+                }
+            raise Exception(f'Transcription failed: {response.status}')
+
+    async def _synthesize(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Synthesize speech from text'''
+        text = params.get('text', '')
+        voice = params.get('voice', 'default')
+        speed = params.get('speed', 1.0)
+
+        payload = {
+            'text': text,
+            'voice': voice,
+            'speed': speed,
+            'format': params.get('format', 'mp3')
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/synthesize',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                audio_data = await response.read()
+                return {
+                    'audio_data': audio_data,
+                    'format': payload['format'],
+                    'voice': voice,
+                    'length': len(audio_data)
+                }
+            raise Exception(f'Synthesis failed: {response.status}')
+
+    async def _translate(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Translate audio to another language'''
+        transcription = await self._transcribe(params)
+        target_lang = params.get('target_language', 'en')
+
+        # Translate text
+        payload = {
+            'text': transcription['text'],
+            'source_language': transcription['language'],
+            'target_language': target_lang
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/translate',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'}
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {
+                    'original_text': transcription['text'],
+                    'translated_text': data.get('text', ''),
+                    'source_lang': transcription['language'],
+                    'target_lang': target_lang
+                }
+            return transcription  # Fallback
+
+    async def _diarize(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Perform speaker diarization'''
+        audio_file = params.get('audio_file')
+        num_speakers = params.get('num_speakers')
+
+        form = aiohttp.FormData()
+        form.add_field('audio', open(audio_file, 'rb'), filename=os.path.basename(audio_file))
+        if num_speakers:
+            form.add_field('num_speakers', str(num_speakers))
+
+        async with self.session.post(
+            f'{self.base_url}/diarize',
+            data=form,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=180
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Diarization failed: {response.status}')
 
 
     async def shutdown(self):

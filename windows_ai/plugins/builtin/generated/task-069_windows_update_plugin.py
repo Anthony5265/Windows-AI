@@ -94,89 +94,106 @@ class WindowsUpdatePlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _check(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Check action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/check",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "check"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Windows Update API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"check failed: {e}")
 
-
-    async def _download(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Download action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/download",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "download"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Windows Update API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"download failed: {e}")
 
-
-    async def _install(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Install action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/install",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "install"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Windows Update API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"install failed: {e}")
 
-
-    async def _configure(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Configure action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/configure",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "configure"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Windows Update API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"configure failed: {e}")
+
+
+    
+    async def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Execute Windows operation'''
+        import subprocess
+        import asyncio
+
+        command = params.get('command', '')
+        args = params.get('args', [])
+
+        try:
+            if task_num == 61:  # Windows Hello
+                # Windows Hello biometric auth
+                process = await asyncio.create_subprocess_exec(
+                    'powershell', '-Command',
+                    f'Get-WindowsHelloCapabilities',
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            elif task_num == 62:  # Windows Defender
+                process = await asyncio.create_subprocess_exec(
+                    'powershell', '-Command',
+                    f'Get-MpComputerStatus',
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            elif task_num == 65:  # WSL2
+                process = await asyncio.create_subprocess_exec(
+                    'wsl', command, *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+            else:  # Generic Windows command
+                process = await asyncio.create_subprocess_exec(
+                    'powershell', '-Command', command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+
+            stdout, stderr = await process.communicate()
+
+            return {
+                'success': process.returncode == 0,
+                'stdout': stdout.decode() if stdout else '',
+                'stderr': stderr.decode() if stderr else '',
+                'returncode': process.returncode
+            }
+        except Exception as e:
+            raise Exception(f'Windows operation failed: {e}')
+
+    async def _configure(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Configure Windows feature'''
+        setting = params.get('setting', '')
+        value = params.get('value', '')
+
+        command = f"Set-ItemProperty -Path 'HKCU:\\Software\\{setting}' -Name Value -Value '{value}'"
+
+        return await self._execute({'command': command})
+
+    async def _monitor(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Monitor Windows system'''
+        metric = params.get('metric', 'cpu')
+
+        if metric == 'cpu':
+            command = "Get-Counter '\\Processor(_Total)\\% Processor Time' | Select-Object -ExpandProperty CounterSamples | Select-Object CookedValue"
+        elif metric == 'memory':
+            command = "Get-Counter '\\Memory\\Available MBytes' | Select-Object -ExpandProperty CounterSamples | Select-Object CookedValue"
+        else:
+            command = f"Get-Counter '{metric}'"
+
+        result = await self._execute({'command': command})
+
+        return {'metric': metric, 'value': result.get('stdout', ''), 'timestamp': datetime.now().isoformat()}
+
+    async def _report(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate Windows system report'''
+        report_type = params.get('report_type', 'system')
+
+        command = f"Get-ComputerInfo | ConvertTo-Json"
+
+        result = await self._execute({'command': command})
+
+        import json
+        try:
+            data = json.loads(result.get('stdout', '{}'))
+            return {'report': data, 'type': report_type}
+        except:
+            return {'report': result.get('stdout', ''), 'type': report_type}
 
 
     async def shutdown(self):

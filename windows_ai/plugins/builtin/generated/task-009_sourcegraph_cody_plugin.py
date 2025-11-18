@@ -94,89 +94,94 @@ class SourcegraphCodyPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _complete(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Complete action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/complete",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "complete"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Sourcegraph Cody API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"complete failed: {e}")
 
-
-    async def _search_codebase(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search Codebase action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/search_codebase",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "search_codebase"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Sourcegraph Cody API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"search_codebase failed: {e}")
 
-
-    async def _explain(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Explain action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/explain",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "explain"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Sourcegraph Cody API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"explain failed: {e}")
 
-
-    async def _fix(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Fix action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/fix",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "fix"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Sourcegraph Cody API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"fix failed: {e}")
+
+
+    
+    async def _complete(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Real code completion with context awareness'''
+        code_before = params.get('code_before', '')
+        code_after = params.get('code_after', '')
+        language = params.get('language', 'python')
+
+        payload = {
+            'model': self.metadata.name.lower().replace(' ', '-'),
+            'prompt': code_before,
+            'suffix': code_after,
+            'language': language,
+            'max_tokens': params.get('max_tokens', 200),
+            'temperature': params.get('temperature', 0.2),
+            'top_p': 0.95
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/completions',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'},
+            timeout=30
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {
+                    'completion': data['choices'][0]['text'],
+                    'language': language,
+                    'finish_reason': data['choices'][0].get('finish_reason', 'stop')
+                }
+            raise Exception(f'Completion failed: {response.status}')
+
+    async def _explain(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Explain code with detailed analysis'''
+        code = params.get('code', '')
+        language = params.get('language', 'python')
+
+        prompt = f"Explain this {language} code in detail:\n\n{code}\n\nExplanation:"
+
+        result = await self._complete({
+            'code_before': prompt,
+            'language': language,
+            'max_tokens': 500
+        })
+
+        return {'explanation': result['completion'], 'language': language}
+
+    async def _refactor(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Refactor code for better quality'''
+        code = params.get('code', '')
+        focus = params.get('focus', 'readability')
+
+        prompt = f"Refactor this code for {focus}:\n\n{code}\n\nRefactored code:"
+
+        result = await self._complete({
+            'code_before': prompt,
+            'max_tokens': len(code) * 2
+        })
+
+        return {'refactored_code': result['completion'], 'focus': focus}
+
+    async def _generate(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate code from description'''
+        description = params.get('description', '')
+        language = params.get('language', 'python')
+
+        prompt = f"Generate {language} code for: {description}\n\nCode:"
+
+        result = await self._complete({
+            'code_before': prompt,
+            'language': language,
+            'max_tokens': 1000
+        })
+
+        return {'generated_code': result['completion'], 'description': description}
 
 
     async def shutdown(self):

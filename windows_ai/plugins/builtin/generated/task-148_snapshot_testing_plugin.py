@@ -94,89 +94,91 @@ class SnapshotTestingPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _capture(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Capture action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/capture",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "capture"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Snapshot Testing API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"capture failed: {e}")
 
-
-    async def _compare(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Compare action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/compare",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "compare"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Snapshot Testing API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"compare failed: {e}")
 
-
-    async def _update(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Update action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/update",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "update"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Snapshot Testing API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"update failed: {e}")
 
-
-    async def _report(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Report action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/report",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "report"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Snapshot Testing API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"report failed: {e}")
+
+
+    
+    async def _test(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Run comprehensive tests'''
+        import asyncio
+
+        test_suite = params.get('test_suite', 'all')
+        coverage = params.get('coverage', True)
+
+        cmd = ['pytest', '-v']
+        if coverage:
+            cmd.extend(['--cov', '--cov-report=xml'])
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'passed': process.returncode == 0,
+            'output': stdout.decode(),
+            'coverage_enabled': coverage,
+            'suite': test_suite
+        }
+
+    async def _coverage(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate coverage report'''
+        format_type = params.get('format', 'html')
+
+        import asyncio
+        cmd = ['coverage', 'report', f'--format={format_type}']
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'coverage': stdout.decode(),
+            'format': format_type
+        }
+
+    async def _fixture(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Create test fixture'''
+        fixture_type = params.get('fixture_type', 'data')
+        data = params.get('data', {})
+
+        return {
+            'fixture_id': f'fixture_{task_num}_{fixture_type}',
+            'data': data,
+            'ready': True
+        }
+
+    async def _parametrize(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Create parametrized tests'''
+        test_cases = params.get('test_cases', [])
+
+        results = []
+        for case in test_cases:
+            result = await self._test(case)
+            results.append(result)
+
+        return {
+            'total_cases': len(test_cases),
+            'passed': sum(1 for r in results if r.get('passed')),
+            'results': results
+        }
 
 
     async def shutdown(self):

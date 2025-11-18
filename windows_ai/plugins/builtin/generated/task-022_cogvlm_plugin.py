@@ -94,89 +94,75 @@ class CogVLMPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _grounded_qa(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Grounded Qa action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/grounded_qa",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "grounded_qa"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CogVLM API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"grounded_qa failed: {e}")
 
-
-    async def _reason(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Reason action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/reason",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "reason"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CogVLM API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"reason failed: {e}")
 
-
-    async def _analyze(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/analyze",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "analyze"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CogVLM API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"analyze failed: {e}")
 
-
-    async def _caption(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Caption action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/caption",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "caption"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CogVLM API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"caption failed: {e}")
+
+
+    
+    async def _analyze(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Analyze image with AI vision model'''
+        image_url = params.get('image_url')
+        image_data = params.get('image_data')
+        prompt = params.get('prompt', 'Analyze this image')
+
+        if not image_url and not image_data:
+            raise ValueError("Must provide either image_url or image_data")
+
+        payload = {
+            'image': image_url or f'data:image/jpeg;base64,{image_data}',
+            'prompt': prompt,
+            'max_tokens': params.get('max_tokens', 1000)
+        }
+
+        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+
+        async with self.session.post(
+            f'{self.base_url}/analyze',
+            json=payload,
+            headers=headers,
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {'analysis': data.get('result', data), 'confidence': data.get('confidence', 0.95)}
+            error_text = await response.text()
+            raise Exception(f'Vision API error {response.status}: {error_text}')
+
+    async def _detect(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Detect objects in image'''
+        result = await self._analyze({**params, 'prompt': 'Detect and label all objects in this image'})
+        return {'detections': result.get('analysis', []), 'count': len(result.get('analysis', []))}
+
+    async def _segment(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Segment image into regions'''
+        payload = {
+            'image': params.get('image_url') or f"data:image/jpeg;base64,{params.get('image_data')}",
+            'mode': params.get('mode', 'semantic')
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/segment',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Segmentation failed: {response.status}')
+
+    async def _caption(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate image caption'''
+        result = await self._analyze({**params, 'prompt': 'Generate a descriptive caption for this image'})
+        return {'caption': result['analysis'], 'confidence': result.get('confidence', 0.9)}
 
 
     async def shutdown(self):

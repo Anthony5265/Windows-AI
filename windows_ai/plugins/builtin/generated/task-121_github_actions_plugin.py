@@ -94,89 +94,110 @@ class GitHubActionsPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _create(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Create action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/create",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "create"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"GitHub Actions API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"create failed: {e}")
 
-
-    async def _run(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Run action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/run",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "run"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"GitHub Actions API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"run failed: {e}")
 
-
-    async def _monitor(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/monitor",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "monitor"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"GitHub Actions API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"monitor failed: {e}")
 
-
-    async def _optimize(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Optimize action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/optimize",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "optimize"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"GitHub Actions API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"optimize failed: {e}")
+
+
+    
+    async def _build(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Build project'''
+        import asyncio
+
+        project_path = params.get('project_path', '.')
+        build_type = params.get('build_type', 'debug')
+
+        if task_num == 130:  # MSBuild
+            cmd = ['msbuild', '/p:Configuration=' + build_type]
+        elif task_num == 131:  # CMake
+            cmd = ['cmake', '--build', '.', '--config', build_type]
+        elif task_num == 132:  # Webpack/Vite
+            cmd = ['npm', 'run', 'build']
+        elif task_num == 133:  # Docker Compose
+            cmd = ['docker-compose', 'build']
+        elif task_num == 134:  # Kubernetes
+            cmd = ['kubectl', 'apply', '-f', params.get('manifest', 'deployment.yaml')]
+        else:
+            cmd = ['make', 'build']
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=project_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'success': process.returncode == 0,
+            'output': stdout.decode(),
+            'errors': stderr.decode(),
+            'build_type': build_type
+        }
+
+    async def _test(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Run tests'''
+        import asyncio
+
+        test_path = params.get('test_path', 'tests')
+
+        cmd = ['pytest', test_path, '-v', '--json-report']
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'passed': process.returncode == 0,
+            'output': stdout.decode(),
+            'test_path': test_path
+        }
+
+    async def _deploy(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Deploy application'''
+        target = params.get('target', 'production')
+
+        payload = {
+            'target': target,
+            'version': params.get('version', '1.0.0'),
+            'config': params.get('config', {})
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/deploy',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=300
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Deployment failed: {response.status}')
+
+    async def _manage(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Manage development environment'''
+        action = params.get('action', 'status')
+
+        async with self.session.post(
+            f'{self.base_url}/manage',
+            json={'action': action, **params},
+            headers={'Authorization': f'Bearer {self.api_key}'}
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Management failed: {response.status}')
 
 
     async def shutdown(self):

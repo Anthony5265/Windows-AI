@@ -94,89 +94,110 @@ class npmPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _install(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Install action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/install",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "install"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"npm API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"install failed: {e}")
 
-
-    async def _update(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Update action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/update",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "update"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"npm API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"update failed: {e}")
 
-
-    async def _audit(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Audit action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/audit",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "audit"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"npm API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"audit failed: {e}")
 
-
-    async def _publish(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Publish action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/publish",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "publish"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"npm API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"publish failed: {e}")
+
+
+    
+    async def _build(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Build project'''
+        import asyncio
+
+        project_path = params.get('project_path', '.')
+        build_type = params.get('build_type', 'debug')
+
+        if task_num == 130:  # MSBuild
+            cmd = ['msbuild', '/p:Configuration=' + build_type]
+        elif task_num == 131:  # CMake
+            cmd = ['cmake', '--build', '.', '--config', build_type]
+        elif task_num == 132:  # Webpack/Vite
+            cmd = ['npm', 'run', 'build']
+        elif task_num == 133:  # Docker Compose
+            cmd = ['docker-compose', 'build']
+        elif task_num == 134:  # Kubernetes
+            cmd = ['kubectl', 'apply', '-f', params.get('manifest', 'deployment.yaml')]
+        else:
+            cmd = ['make', 'build']
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=project_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'success': process.returncode == 0,
+            'output': stdout.decode(),
+            'errors': stderr.decode(),
+            'build_type': build_type
+        }
+
+    async def _test(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Run tests'''
+        import asyncio
+
+        test_path = params.get('test_path', 'tests')
+
+        cmd = ['pytest', test_path, '-v', '--json-report']
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        return {
+            'passed': process.returncode == 0,
+            'output': stdout.decode(),
+            'test_path': test_path
+        }
+
+    async def _deploy(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Deploy application'''
+        target = params.get('target', 'production')
+
+        payload = {
+            'target': target,
+            'version': params.get('version', '1.0.0'),
+            'config': params.get('config', {})
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/deploy',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=300
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Deployment failed: {response.status}')
+
+    async def _manage(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Manage development environment'''
+        action = params.get('action', 'status')
+
+        async with self.session.post(
+            f'{self.base_url}/manage',
+            json={'action': action, **params},
+            headers={'Authorization': f'Bearer {self.api_key}'}
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Management failed: {response.status}')
 
 
     async def shutdown(self):

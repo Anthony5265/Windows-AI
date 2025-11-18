@@ -94,89 +94,107 @@ class VectorDB14Plugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/execute",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "execute"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Vector DB 14 API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"execute failed: {e}")
 
-
-    async def _configure(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Configure action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/configure",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "configure"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Vector DB 14 API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"configure failed: {e}")
 
-
-    async def _monitor(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/monitor",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "monitor"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Vector DB 14 API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"monitor failed: {e}")
 
-
-    async def _report(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Report action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/report",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "report"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Vector DB 14 API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"report failed: {e}")
+
+
+    
+    async def _execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Execute primary action with real API call'''
+        action_type = params.get('type', 'default')
+        data = params.get('data', {})
+
+        payload = {
+            'task_id': f'TASK-{task_num:03d}',
+            'action': action_type,
+            'parameters': data,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        headers = {
+            'Authorization': f'Bearer {self.api_key}',
+            'Content-Type': 'application/json',
+            'User-Agent': f'WindowsAI/2.0 Task-{task_num:03d}'
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/execute',
+            json=payload,
+            headers=headers,
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                result = await response.json()
+                return {
+                    'success': True,
+                    'result': result,
+                    'task': f'TASK-{task_num:03d}',
+                    'timestamp': datetime.now().isoformat()
+                }
+            elif response.status == 401:
+                raise Exception('Authentication failed - check API key')
+            elif response.status == 429:
+                raise Exception('Rate limit exceeded - retry after delay')
+            else:
+                error_text = await response.text()
+                raise Exception(f'API error {response.status}: {error_text}')
+
+    async def _configure(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Configure service settings'''
+        settings = params.get('settings', {})
+
+        async with self.session.put(
+            f'{self.base_url}/config',
+            json=settings,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=30
+        ) as response:
+            if response.status == 200:
+                return {'configured': True, 'settings': settings}
+            raise Exception(f'Configuration failed: {response.status}')
+
+    async def _monitor(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Monitor service health and metrics'''
+        metrics = params.get('metrics', ['status', 'latency'])
+
+        async with self.session.get(
+            f'{self.base_url}/metrics',
+            params={'metrics': ','.join(metrics)},
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=10
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {
+                    'healthy': data.get('status') == 'healthy',
+                    'metrics': data,
+                    'timestamp': datetime.now().isoformat()
+                }
+            return {'healthy': False, 'error': f'Status {response.status}'}
+
+    async def _report(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate detailed report'''
+        report_type = params.get('report_type', 'summary')
+        period = params.get('period', '24h')
+
+        async with self.session.get(
+            f'{self.base_url}/reports/{report_type}',
+            params={'period': period},
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=30
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Report generation failed: {response.status}')
 
 
     async def shutdown(self):

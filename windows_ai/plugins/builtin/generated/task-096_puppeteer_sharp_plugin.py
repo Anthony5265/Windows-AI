@@ -94,89 +94,100 @@ class PuppeteerSharpPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _navigate(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Navigate action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/navigate",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "navigate"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Puppeteer Sharp API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"navigate failed: {e}")
 
-
-    async def _interact(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Interact action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/interact",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "interact"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Puppeteer Sharp API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"interact failed: {e}")
 
-
-    async def _scrape(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Scrape action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/scrape",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "scrape"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Puppeteer Sharp API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"scrape failed: {e}")
 
-
-    async def _pdf(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Pdf action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/pdf",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "pdf"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"Puppeteer Sharp API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"pdf failed: {e}")
+
+
+    
+    async def _navigate(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Navigate to URL'''
+        url = params.get('url', '')
+
+        async with self.session.get(url, allow_redirects=True, timeout=30) as response:
+            return {
+                'url': str(response.url),
+                'status': response.status,
+                'headers': dict(response.headers),
+                'redirected': response.history != []
+            }
+
+    async def _interact(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Interact with web element'''
+        url = params.get('url', '')
+        action = params.get('action', 'click')
+        selector = params.get('selector', '')
+
+        # Use real browser automation
+        payload = {
+            'url': url,
+            'action': action,
+            'selector': selector,
+            'value': params.get('value', '')
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/interact',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Interaction failed: {response.status}')
+
+    async def _scrape(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Scrape web content'''
+        url = params.get('url', '')
+        selector = params.get('selector', 'body')
+
+        async with self.session.get(url, timeout=30) as response:
+            if response.status == 200:
+                html = await response.text()
+
+                # Parse with BeautifulSoup-like logic
+                from html.parser import HTMLParser
+
+                class ContentExtractor(HTMLParser):
+                    def __init__(self):
+                        super().__init__()
+                        self.content = []
+
+                    def handle_data(self, data):
+                        self.content.append(data.strip())
+
+                parser = ContentExtractor()
+                parser.feed(html)
+
+                return {
+                    'url': url,
+                    'content': ' '.join(parser.content),
+                    'status': 'success'
+                }
+            raise Exception(f'Scraping failed: {response.status}')
+
+    async def _test(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Run automated test'''
+        test_spec = params.get('test_spec', {})
+
+        results = []
+        for step in test_spec.get('steps', []):
+            result = await self._interact(step)
+            results.append(result)
+
+        return {
+            'test_name': test_spec.get('name', 'test'),
+            'results': results,
+            'passed': all(r.get('success', False) for r in results)
+        }
 
 
     async def shutdown(self):

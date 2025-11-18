@@ -94,89 +94,75 @@ class CoCaPlugin(IntegrationPlugin):
             logger.error(f"Action '{action}' failed: {e}")
             return {"success": False, "error": str(e)}
 
-
-    async def _caption(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Caption action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/caption",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "caption"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CoCa API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"caption failed: {e}")
 
-
-    async def _classify(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Classify action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/classify",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "classify"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CoCa API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"classify failed: {e}")
 
-
-    async def _embed(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Embed action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/embed",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "embed"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CoCa API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"embed failed: {e}")
 
-
-    async def _contrast(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Contrast action"""
-        try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with self.session.post(
-                f"{self.base_url}/contrast",
-                json=params,
-                headers=headers,
-                timeout=30
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return {"result": data, "action": "contrast"}
-                else:
-                    error = await response.text()
-                    raise Exception(f"CoCa API error {response.status}: {error}")
         except Exception as e:
             raise Exception(f"contrast failed: {e}")
+
+
+    
+    async def _analyze(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Analyze image with AI vision model'''
+        image_url = params.get('image_url')
+        image_data = params.get('image_data')
+        prompt = params.get('prompt', 'Analyze this image')
+
+        if not image_url and not image_data:
+            raise ValueError("Must provide either image_url or image_data")
+
+        payload = {
+            'image': image_url or f'data:image/jpeg;base64,{image_data}',
+            'prompt': prompt,
+            'max_tokens': params.get('max_tokens', 1000)
+        }
+
+        headers = {'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'}
+
+        async with self.session.post(
+            f'{self.base_url}/analyze',
+            json=payload,
+            headers=headers,
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                return {'analysis': data.get('result', data), 'confidence': data.get('confidence', 0.95)}
+            error_text = await response.text()
+            raise Exception(f'Vision API error {response.status}: {error_text}')
+
+    async def _detect(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Detect objects in image'''
+        result = await self._analyze({**params, 'prompt': 'Detect and label all objects in this image'})
+        return {'detections': result.get('analysis', []), 'count': len(result.get('analysis', []))}
+
+    async def _segment(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Segment image into regions'''
+        payload = {
+            'image': params.get('image_url') or f"data:image/jpeg;base64,{params.get('image_data')}",
+            'mode': params.get('mode', 'semantic')
+        }
+
+        async with self.session.post(
+            f'{self.base_url}/segment',
+            json=payload,
+            headers={'Authorization': f'Bearer {self.api_key}'},
+            timeout=60
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            raise Exception(f'Segmentation failed: {response.status}')
+
+    async def _caption(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        '''Generate image caption'''
+        result = await self._analyze({**params, 'prompt': 'Generate a descriptive caption for this image'})
+        return {'caption': result['analysis'], 'confidence': result.get('confidence', 0.9)}
 
 
     async def shutdown(self):
