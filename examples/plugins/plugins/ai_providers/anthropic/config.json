@@ -1,0 +1,22 @@
+{
+  "name": "Anthropic",
+  "version": "1.0.0",
+  "api_base": "https://api.anthropic.com/v1",
+  "requires_key": true,
+  "models": [
+    "claude-3-opus",
+    "claude-3-sonnet",
+    "claude-3-haiku",
+    "claude-2.1",
+    "claude-instant"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "claude-3-opus",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

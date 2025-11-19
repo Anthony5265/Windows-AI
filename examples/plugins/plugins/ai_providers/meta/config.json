@@ -1,0 +1,22 @@
+{
+  "name": "Meta",
+  "version": "1.0.0",
+  "api_base": "https://api.together.xyz/v1",
+  "requires_key": true,
+  "models": [
+    "llama-2-7b",
+    "llama-2-13b",
+    "llama-2-70b",
+    "code-llama-7b",
+    "code-llama-34b"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "llama-2-7b",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Documentation Generator",
+  "type": "developer_tool",
+  "formats": [
+    "sphinx",
+    "jsdoc",
+    "doxygen",
+    "godoc"
+  ]
+}

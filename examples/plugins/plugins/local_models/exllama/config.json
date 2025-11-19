@@ -1,0 +1,9 @@
+{
+  "name": "ExLlama",
+  "type": "local_model_platform",
+  "executable": "exllama",
+  "default_port": 5000,
+  "models_dir": "~/exllama/models",
+  "requires_internet": false,
+  "supports_gpu": true
+}

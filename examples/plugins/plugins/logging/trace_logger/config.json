@@ -1,0 +1,9 @@
+{
+  "name": "Trace Logger",
+  "type": "logging",
+  "features": [
+    "distributed-tracing",
+    "span-tracking",
+    "context-manager"
+  ]
+}

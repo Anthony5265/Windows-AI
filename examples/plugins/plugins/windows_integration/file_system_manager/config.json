@@ -1,0 +1,18 @@
+{
+  "name": "File System Manager",
+  "type": "windows_integration",
+  "platform": "win32",
+  "requires_admin": false,
+  "apis": [
+    "CreateFile",
+    "ReadFile",
+    "WriteFile",
+    "FindFile"
+  ],
+  "features": [
+    "monitoring",
+    "indexing",
+    "search",
+    "operations"
+  ]
+}

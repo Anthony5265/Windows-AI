@@ -1,0 +1,5 @@
+{
+  "name": "Deepgram",
+  "type": "audio_model",
+  "model_type": "speech-to-text"
+}

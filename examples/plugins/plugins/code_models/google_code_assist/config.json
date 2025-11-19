@@ -1,0 +1,13 @@
+{
+  "name": "Google Code Assist",
+  "type": "code_model",
+  "languages": [
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "c++",
+    "go",
+    "rust"
+  ]
+}

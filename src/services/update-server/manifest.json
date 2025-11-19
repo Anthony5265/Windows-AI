@@ -1,0 +1,116 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-01-10T12:00:00Z",
+  "updateServer": {
+    "baseUrl": "https://updates.windows-ai.example.com",
+    "cdnUrl": "https://cdn.windows-ai.example.com"
+  },
+  "channels": {
+    "stable": {
+      "name": "Stable",
+      "description": "Production-ready releases, recommended for most users",
+      "latestVersion": "0.5.0",
+      "updateFrequency": "monthly",
+      "autoUpdate": true
+    },
+    "beta": {
+      "name": "Beta",
+      "description": "Pre-release versions for testing new features",
+      "latestVersion": "0.6.0-beta.1",
+      "updateFrequency": "weekly",
+      "autoUpdate": false
+    },
+    "alpha": {
+      "name": "Alpha",
+      "description": "Bleeding-edge development builds (unstable)",
+      "latestVersion": "0.7.0-alpha.1",
+      "updateFrequency": "daily",
+      "autoUpdate": false
+    }
+  },
+  "releases": [
+    {
+      "version": "0.5.0",
+      "releaseDate": "2025-01-10T00:00:00Z",
+      "channel": "stable",
+      "critical": false,
+      "requiresRestart": true,
+      "minimumVersion": "0.4.0",
+      "files": {
+        "installer": {
+          "url": "/downloads/WindowsAI-Setup-0.5.0.exe",
+          "size": 157286400,
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "md5": "00000000000000000000000000000000"
+        }
+      },
+      "changelog": {
+        "added": [
+          "Complete installer hardening with digital code signing",
+          "Auto-update system with version management",
+          "Rollback functionality with system snapshots",
+          "Automated testing infrastructure for installers",
+          "CI/CD pipeline with GitHub Actions"
+        ],
+        "changed": [
+          "Improved installer performance and reliability",
+          "Enhanced security with Authenticode signatures",
+          "Better error handling and user feedback"
+        ],
+        "fixed": [
+          "Fixed installer memory leak issues",
+          "Fixed service startup race conditions",
+          "Fixed configuration migration bugs"
+        ],
+        "security": [
+          "Added code signing for all installers",
+          "Implemented secure update verification"
+        ]
+      },
+      "releaseNotes": "## Windows AI v0.5.0\n\nThis release focuses on installer hardening and production readiness.\n\n### Highlights\n- **Code Signing**: All installers are now digitally signed\n- **Auto-Update**: Automatic update checking and installation\n- **Rollback**: One-click rollback to previous versions\n- **Testing**: Comprehensive automated testing infrastructure\n\n### Installation\nDownload and run the installer. Administrator privileges required.\n\n### Upgrade Notes\nUpgrade from 0.4.x is seamless with automatic configuration migration.",
+      "signatures": {
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "thumbprint": "0000000000000000000000000000000000000000"
+      },
+      "metadata": {
+        "author": "Windows AI Team",
+        "buildNumber": "445",
+        "commitHash": "00d5e17",
+        "tags": ["stable", "production", "installer-hardening"]
+      }
+    },
+    {
+      "version": "0.4.0",
+      "releaseDate": "2024-12-15T00:00:00Z",
+      "channel": "stable",
+      "critical": false,
+      "requiresRestart": true,
+      "files": {
+        "installer": {
+          "url": "/downloads/WindowsAI-Setup-0.4.0.exe",
+          "size": 150000000,
+          "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "md5": "11111111111111111111111111111111"
+        }
+      },
+      "changelog": {
+        "added": [
+          "Plugin marketplace UI",
+          "Health monitoring dashboard",
+          "Basic installer"
+        ],
+        "changed": [
+          "Improved GUI performance"
+        ],
+        "fixed": [
+          "Various bug fixes"
+        ]
+      },
+      "releaseNotes": "Previous stable release.",
+      "metadata": {
+        "author": "Windows AI Team",
+        "buildNumber": "400"
+      }
+    }
+  ]
+}

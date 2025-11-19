@@ -1,0 +1,20 @@
+{
+  "name": "Baidu",
+  "version": "1.0.0",
+  "api_base": "https://aip.baidubce.com/rpc/2.0",
+  "requires_key": true,
+  "models": [
+    "ernie-bot",
+    "ernie-bot-turbo",
+    "ernie-3.5"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "ernie-bot",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

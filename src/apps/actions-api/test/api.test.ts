@@ -1,0 +1,42 @@
+import { test } from 'node:test';
+import assert from 'node:assert';
+import { app } from '../src/index.js';
+
+async function startServer() {
+  const server = app.listen(0);
+  await new Promise<void>((resolve) => server.once('listening', () => resolve()));
+  const address = server.address();
+  if (typeof address === 'string' || !address) {
+    throw new Error('Failed to get server address');
+  }
+  return { server, port: address.port };
+}
+
+test('returns 400 for validation errors', async () => {
+  const { server, port } = await startServer();
+  const res = await fetch(`http://localhost:${port}/api/actions/execute`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'invalid' })
+  });
+  assert.strictEqual(res.status, 400);
+  const body = await res.json();
+  assert.strictEqual(body.ok, false);
+  assert.strictEqual(body.error.message, 'Invalid action');
+  await new Promise((resolve) => server.close(resolve));
+});
+
+test('returns 500 for unexpected errors', async () => {
+  const { server, port } = await startServer();
+  const res = await fetch(`http://localhost:${port}/api/actions/execute`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'read_file', params: { path: '/no/such/file' } })
+  });
+  assert.strictEqual(res.status, 500);
+  const body = await res.json();
+  assert.strictEqual(body.ok, false);
+  assert.strictEqual(body.error.message, 'Internal server error');
+  await new Promise((resolve) => server.close(resolve));
+});
+

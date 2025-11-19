@@ -1,0 +1,8 @@
+{
+  "name": "LLaVA",
+  "type": "vision_model",
+  "capabilities": [
+    "image-chat",
+    "visual-reasoning"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "GPU Monitor",
+  "type": "monitoring",
+  "category": "performance",
+  "tracks": [
+    "utilization",
+    "temperature",
+    "memory",
+    "power"
+  ],
+  "supports": [
+    "NVIDIA",
+    "AMD",
+    "Intel"
+  ]
+}
