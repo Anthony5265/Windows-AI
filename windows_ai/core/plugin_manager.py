@@ -13,7 +13,7 @@ import logging
 import time
 import asyncio
 
-from windows_ai.plugins.base import BasePlugin, IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import Plugin, IntegrationPlugin, PluginMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class PluginManager:
     """Manages all plugins in the Windows AI system"""
 
     def __init__(self):
-        self.plugins: Dict[str, BasePlugin] = {}
+        self.plugins: Dict[str, Plugin] = {}
         self.plugin_metadata: Dict[str, PluginMetadata] = {}
         self.initialized = False
         self.start_time = time.time()
@@ -86,7 +86,7 @@ class PluginManager:
                 # Get the plugin instance
                 if hasattr(module, 'plugin'):
                     plugin = module.plugin
-                    if isinstance(plugin, BasePlugin):
+                    if isinstance(plugin, Plugin):
                         # Initialize the plugin
                         try:
                             await plugin.initialize()
@@ -97,14 +97,14 @@ class PluginManager:
                         except Exception as e:
                             logger.error(f"Failed to initialize plugin {plugin_name}: {e}")
                     else:
-                        logger.warning(f"Plugin {plugin_name} 'plugin' object is not a BasePlugin")
+                        logger.warning(f"Plugin {plugin_name} 'plugin' object is not a Plugin")
                 else:
                     logger.warning(f"Plugin {plugin_name} has no 'plugin' attribute")
 
         except Exception as e:
             logger.error(f"Error loading plugin file {plugin_path}: {e}", exc_info=True)
 
-    def get_plugin(self, plugin_id: str) -> Optional[BasePlugin]:
+    def get_plugin(self, plugin_id: str) -> Optional[Plugin]:
         """Get a plugin by ID"""
         return self.plugins.get(plugin_id)
 
@@ -123,14 +123,14 @@ class PluginManager:
             for metadata in self.plugin_metadata.values()
         ]
 
-    def get_plugins_by_category(self, category: str) -> List[BasePlugin]:
+    def get_plugins_by_category(self, category: str) -> List[Plugin]:
         """Get all plugins in a category"""
         return [
             plugin for plugin in self.plugins.values()
             if category.lower() in [tag.lower() for tag in plugin.metadata.tags]
         ]
 
-    def get_plugins_by_type(self, plugin_type: str) -> List[BasePlugin]:
+    def get_plugins_by_type(self, plugin_type: str) -> List[Plugin]:
         """Get all plugins of a specific type"""
         return [
             plugin for plugin in self.plugins.values()
