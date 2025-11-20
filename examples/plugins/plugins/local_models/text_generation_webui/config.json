@@ -1,9 +1,0 @@
-{
-  "name": "Text Generation WebUI",
-  "type": "local_model_platform",
-  "executable": "python",
-  "default_port": 7860,
-  "models_dir": "~/text-generation-webui/models",
-  "requires_internet": false,
-  "supports_gpu": true
-}

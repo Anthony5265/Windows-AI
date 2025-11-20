@@ -1,7 +1,0 @@
-{
-    "name": "LogArchiver",
-    "description": "Moves older logs into an archive directory and compresses them for retention.",
-    "author": "Windows-AI",
-    "version": "0.1.0",
-    "entrypoint": "plugins.logging.log_archiver.archiver:LogArchiver"
-}

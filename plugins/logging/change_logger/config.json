@@ -1,9 +1,0 @@
-{
-  "name": "Change Logger",
-  "type": "logging",
-  "features": [
-    "config-diffs",
-    "audit-history",
-    "jsonl-output"
-  ]
-}

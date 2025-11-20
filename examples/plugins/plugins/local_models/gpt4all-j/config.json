@@ -1,7 +1,0 @@
-{
-  "name": "GPT4All-J",
-  "type": "local_model_platform",
-  "executable": "gpt4all-j",
-  "default_port": 4891,
-  "models_dir": "~/.local/share/nomic.ai"
-}

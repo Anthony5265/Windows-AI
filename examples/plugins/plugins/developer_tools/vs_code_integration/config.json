@@ -1,9 +1,0 @@
-{
-  "name": "VS Code Integration",
-  "type": "developer_tool",
-  "features": [
-    "extension-api",
-    "debugging",
-    "tasks"
-  ]
-}

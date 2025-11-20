@@ -1,9 +1,0 @@
-{
-  "name": "GPT4All",
-  "type": "local_model_platform",
-  "executable": "gpt4all",
-  "default_port": 4891,
-  "models_dir": "~/.local/share/nomic.ai/GPT4All",
-  "requires_internet": false,
-  "supports_gpu": true
-}

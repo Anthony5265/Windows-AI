@@ -1,9 +1,0 @@
-{
-  "name": "Performance Logger",
-  "type": "logging",
-  "features": [
-    "latency-tracking",
-    "cpu-memory-metrics",
-    "threshold-alerts"
-  ]
-}

@@ -1,5 +1,0 @@
-{
-  "name": "AudioLDM",
-  "type": "audio_model",
-  "model_type": "audio-generation"
-}

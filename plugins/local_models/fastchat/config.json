@@ -1,7 +1,0 @@
-{
-  "name": "FastChat",
-  "type": "local_model_platform",
-  "executable": "python",
-  "default_port": 8000,
-  "models_dir": "~/.cache/fastchat"
-}

@@ -1,5 +1,12 @@
 # Windows AI - Repository Architecture
 
+
+⚠️ **STATUS NOTE:** This document describes the target architecture.
+Current implementation status: ~40% complete. See [HONEST_STATUS.md](HONEST_STATUS.md)
+for current state.
+
+---
+
 **Version:** 2.0.0
 **Last Updated:** 2025-11-19
 **Status:** Production-Ready

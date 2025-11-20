@@ -1,9 +1,0 @@
-{
-  "name": "vLLM",
-  "type": "local_model_platform",
-  "executable": "vllm",
-  "default_port": 8000,
-  "models_dir": "~/.cache/huggingface",
-  "requires_internet": false,
-  "supports_gpu": true
-}

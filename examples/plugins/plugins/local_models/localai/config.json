@@ -1,9 +1,0 @@
-{
-  "name": "LocalAI",
-  "type": "local_model_platform",
-  "executable": "local-ai",
-  "default_port": 8080,
-  "models_dir": "~/.local/share/local-ai",
-  "requires_internet": false,
-  "supports_gpu": true
-}

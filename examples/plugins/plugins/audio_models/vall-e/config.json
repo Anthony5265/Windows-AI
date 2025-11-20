@@ -1,5 +1,0 @@
-{
-  "name": "VALL-E",
-  "type": "audio_model",
-  "model_type": "text-to-speech"
-}

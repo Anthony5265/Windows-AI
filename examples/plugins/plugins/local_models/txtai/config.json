@@ -1,7 +1,0 @@
-{
-  "name": "txtai",
-  "type": "local_model_platform",
-  "executable": "python",
-  "default_port": 8501,
-  "models_dir": "~/.cache/txtai"
-}

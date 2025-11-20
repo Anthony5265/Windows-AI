@@ -1,9 +1,0 @@
-{
-  "name": "MiniGPT-4",
-  "type": "vision_model",
-  "capabilities": [
-    "image-understanding",
-    "object-detection",
-    "segmentation"
-  ]
-}

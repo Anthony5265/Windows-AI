@@ -1,0 +1,477 @@
+{
+  "version": "2.0.0",
+  "total_plugins": 65,
+  "categories": {
+    "builtin": [
+      "salesforce_plugin.py",
+      "mailchimp_plugin.py",
+      "gitlab_plugin.py",
+      "kubernetes_plugin.py",
+      "elasticsearch_plugin.py",
+      "stripe_plugin.py",
+      "discord_plugin.py",
+      "github_plugin.py",
+      "hubspot_plugin.py",
+      "mysql_plugin.py",
+      "cohere_plugin.py",
+      "redis_plugin.py",
+      "azure_monitor_plugin.py",
+      "docker_plugin.py",
+      "twilio_plugin.py",
+      "square_plugin.py",
+      "zoom_plugin.py",
+      "mongodb_plugin.py",
+      "sendgrid_plugin.py",
+      "replicate_plugin.py",
+      "slack_plugin.py",
+      "paypal_plugin.py"
+    ],
+    "email": [
+      "mailchimp_plugin.py",
+      "sendgrid_plugin.py"
+    ],
+    "ecommerce": [
+      "stripe_plugin.py",
+      "square_plugin.py",
+      "paypal_plugin.py"
+    ],
+    "databases": [
+      "elasticsearch_plugin.py",
+      "neo4j_plugin.py",
+      "influxdb_plugin.py",
+      "cockroachdb_plugin.py",
+      "mysql_plugin.py",
+      "redis_plugin.py",
+      "mongodb_plugin.py",
+      "cassandra_plugin.py"
+    ],
+    "cloud": [
+      "azure_blob_plugin.py",
+      "azure_aks_plugin.py",
+      "azure_functions_plugin.py",
+      "aws_sns_plugin.py",
+      "gcp_gke_plugin.py",
+      "azure_cosmos_plugin.py",
+      "aws_lambda_plugin.py",
+      "aws_s3_plugin.py",
+      "aws_dynamodb_plugin.py",
+      "aws_sqs_plugin.py",
+      "azure_monitor_plugin.py",
+      "azure_redis_plugin.py",
+      "aws_ec2_plugin.py",
+      "aws_cloudfront_plugin.py",
+      "gcp_storage_plugin.py",
+      "aws_rds_plugin.py",
+      "azure_servicebus_plugin.py",
+      "azure_cdn_plugin.py",
+      "azure_vm_plugin.py",
+      "gcp_pubsub_plugin.py",
+      "gcp_sql_plugin.py",
+      "gcp_firestore_plugin.py",
+      "azure_sql_plugin.py",
+      "aws_cloudwatch_plugin.py",
+      "gcp_compute_plugin.py",
+      "aws_ecs_plugin.py",
+      "gcp_functions_plugin.py"
+    ],
+    "crm": [
+      "salesforce_plugin.py",
+      "hubspot_plugin.py"
+    ],
+    "communication": [
+      "zoom_plugin.py"
+    ]
+  },
+  "plugins": [
+    {
+      "name": "salesforce_plugin",
+      "file": "salesforce_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/salesforce_plugin.py"
+    },
+    {
+      "name": "mailchimp_plugin",
+      "file": "mailchimp_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/mailchimp_plugin.py"
+    },
+    {
+      "name": "gitlab_plugin",
+      "file": "gitlab_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/gitlab_plugin.py"
+    },
+    {
+      "name": "kubernetes_plugin",
+      "file": "kubernetes_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/kubernetes_plugin.py"
+    },
+    {
+      "name": "elasticsearch_plugin",
+      "file": "elasticsearch_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/elasticsearch_plugin.py"
+    },
+    {
+      "name": "stripe_plugin",
+      "file": "stripe_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/stripe_plugin.py"
+    },
+    {
+      "name": "discord_plugin",
+      "file": "discord_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/discord_plugin.py"
+    },
+    {
+      "name": "github_plugin",
+      "file": "github_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/github_plugin.py"
+    },
+    {
+      "name": "hubspot_plugin",
+      "file": "hubspot_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/hubspot_plugin.py"
+    },
+    {
+      "name": "mysql_plugin",
+      "file": "mysql_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/mysql_plugin.py"
+    },
+    {
+      "name": "cohere_plugin",
+      "file": "cohere_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/cohere_plugin.py"
+    },
+    {
+      "name": "redis_plugin",
+      "file": "redis_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/redis_plugin.py"
+    },
+    {
+      "name": "azure_monitor_plugin",
+      "file": "azure_monitor_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/azure_monitor_plugin.py"
+    },
+    {
+      "name": "docker_plugin",
+      "file": "docker_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/docker_plugin.py"
+    },
+    {
+      "name": "twilio_plugin",
+      "file": "twilio_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/twilio_plugin.py"
+    },
+    {
+      "name": "square_plugin",
+      "file": "square_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/square_plugin.py"
+    },
+    {
+      "name": "zoom_plugin",
+      "file": "zoom_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/zoom_plugin.py"
+    },
+    {
+      "name": "mongodb_plugin",
+      "file": "mongodb_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/mongodb_plugin.py"
+    },
+    {
+      "name": "sendgrid_plugin",
+      "file": "sendgrid_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/sendgrid_plugin.py"
+    },
+    {
+      "name": "replicate_plugin",
+      "file": "replicate_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/replicate_plugin.py"
+    },
+    {
+      "name": "slack_plugin",
+      "file": "slack_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/slack_plugin.py"
+    },
+    {
+      "name": "paypal_plugin",
+      "file": "paypal_plugin.py",
+      "category": "builtin",
+      "path": "windows_ai/plugins/builtin/paypal_plugin.py"
+    },
+    {
+      "name": "mailchimp_plugin",
+      "file": "mailchimp_plugin.py",
+      "category": "email",
+      "path": "windows_ai/plugins/builtin/email/mailchimp_plugin.py"
+    },
+    {
+      "name": "sendgrid_plugin",
+      "file": "sendgrid_plugin.py",
+      "category": "email",
+      "path": "windows_ai/plugins/builtin/email/sendgrid_plugin.py"
+    },
+    {
+      "name": "stripe_plugin",
+      "file": "stripe_plugin.py",
+      "category": "ecommerce",
+      "path": "windows_ai/plugins/builtin/ecommerce/stripe_plugin.py"
+    },
+    {
+      "name": "square_plugin",
+      "file": "square_plugin.py",
+      "category": "ecommerce",
+      "path": "windows_ai/plugins/builtin/ecommerce/square_plugin.py"
+    },
+    {
+      "name": "paypal_plugin",
+      "file": "paypal_plugin.py",
+      "category": "ecommerce",
+      "path": "windows_ai/plugins/builtin/ecommerce/paypal_plugin.py"
+    },
+    {
+      "name": "elasticsearch_plugin",
+      "file": "elasticsearch_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/elasticsearch_plugin.py"
+    },
+    {
+      "name": "neo4j_plugin",
+      "file": "neo4j_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/neo4j_plugin.py"
+    },
+    {
+      "name": "influxdb_plugin",
+      "file": "influxdb_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/influxdb_plugin.py"
+    },
+    {
+      "name": "cockroachdb_plugin",
+      "file": "cockroachdb_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/cockroachdb_plugin.py"
+    },
+    {
+      "name": "mysql_plugin",
+      "file": "mysql_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/mysql_plugin.py"
+    },
+    {
+      "name": "redis_plugin",
+      "file": "redis_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/redis_plugin.py"
+    },
+    {
+      "name": "mongodb_plugin",
+      "file": "mongodb_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/mongodb_plugin.py"
+    },
+    {
+      "name": "cassandra_plugin",
+      "file": "cassandra_plugin.py",
+      "category": "databases",
+      "path": "windows_ai/plugins/builtin/databases/cassandra_plugin.py"
+    },
+    {
+      "name": "azure_blob_plugin",
+      "file": "azure_blob_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_blob_plugin.py"
+    },
+    {
+      "name": "azure_aks_plugin",
+      "file": "azure_aks_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_aks_plugin.py"
+    },
+    {
+      "name": "azure_functions_plugin",
+      "file": "azure_functions_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_functions_plugin.py"
+    },
+    {
+      "name": "aws_sns_plugin",
+      "file": "aws_sns_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_sns_plugin.py"
+    },
+    {
+      "name": "gcp_gke_plugin",
+      "file": "gcp_gke_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_gke_plugin.py"
+    },
+    {
+      "name": "azure_cosmos_plugin",
+      "file": "azure_cosmos_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_cosmos_plugin.py"
+    },
+    {
+      "name": "aws_lambda_plugin",
+      "file": "aws_lambda_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_lambda_plugin.py"
+    },
+    {
+      "name": "aws_s3_plugin",
+      "file": "aws_s3_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_s3_plugin.py"
+    },
+    {
+      "name": "aws_dynamodb_plugin",
+      "file": "aws_dynamodb_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_dynamodb_plugin.py"
+    },
+    {
+      "name": "aws_sqs_plugin",
+      "file": "aws_sqs_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_sqs_plugin.py"
+    },
+    {
+      "name": "azure_monitor_plugin",
+      "file": "azure_monitor_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_monitor_plugin.py"
+    },
+    {
+      "name": "azure_redis_plugin",
+      "file": "azure_redis_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_redis_plugin.py"
+    },
+    {
+      "name": "aws_ec2_plugin",
+      "file": "aws_ec2_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_ec2_plugin.py"
+    },
+    {
+      "name": "aws_cloudfront_plugin",
+      "file": "aws_cloudfront_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_cloudfront_plugin.py"
+    },
+    {
+      "name": "gcp_storage_plugin",
+      "file": "gcp_storage_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_storage_plugin.py"
+    },
+    {
+      "name": "aws_rds_plugin",
+      "file": "aws_rds_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_rds_plugin.py"
+    },
+    {
+      "name": "azure_servicebus_plugin",
+      "file": "azure_servicebus_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_servicebus_plugin.py"
+    },
+    {
+      "name": "azure_cdn_plugin",
+      "file": "azure_cdn_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_cdn_plugin.py"
+    },
+    {
+      "name": "azure_vm_plugin",
+      "file": "azure_vm_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_vm_plugin.py"
+    },
+    {
+      "name": "gcp_pubsub_plugin",
+      "file": "gcp_pubsub_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_pubsub_plugin.py"
+    },
+    {
+      "name": "gcp_sql_plugin",
+      "file": "gcp_sql_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_sql_plugin.py"
+    },
+    {
+      "name": "gcp_firestore_plugin",
+      "file": "gcp_firestore_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_firestore_plugin.py"
+    },
+    {
+      "name": "azure_sql_plugin",
+      "file": "azure_sql_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/azure_sql_plugin.py"
+    },
+    {
+      "name": "aws_cloudwatch_plugin",
+      "file": "aws_cloudwatch_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_cloudwatch_plugin.py"
+    },
+    {
+      "name": "gcp_compute_plugin",
+      "file": "gcp_compute_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_compute_plugin.py"
+    },
+    {
+      "name": "aws_ecs_plugin",
+      "file": "aws_ecs_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/aws_ecs_plugin.py"
+    },
+    {
+      "name": "gcp_functions_plugin",
+      "file": "gcp_functions_plugin.py",
+      "category": "cloud",
+      "path": "windows_ai/plugins/builtin/cloud/gcp_functions_plugin.py"
+    },
+    {
+      "name": "salesforce_plugin",
+      "file": "salesforce_plugin.py",
+      "category": "crm",
+      "path": "windows_ai/plugins/builtin/crm/salesforce_plugin.py"
+    },
+    {
+      "name": "hubspot_plugin",
+      "file": "hubspot_plugin.py",
+      "category": "crm",
+      "path": "windows_ai/plugins/builtin/crm/hubspot_plugin.py"
+    },
+    {
+      "name": "zoom_plugin",
+      "file": "zoom_plugin.py",
+      "category": "communication",
+      "path": "windows_ai/plugins/builtin/communication/zoom_plugin.py"
+    }
+  ]
+}
