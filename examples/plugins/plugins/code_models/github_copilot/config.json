@@ -1,0 +1,20 @@
+{
+  "name": "GitHub Copilot",
+  "type": "code_model",
+  "provider": "github",
+  "languages": [
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "c++",
+    "go",
+    "rust"
+  ],
+  "features": [
+    "autocomplete",
+    "chat",
+    "explain",
+    "generate-tests"
+  ]
+}

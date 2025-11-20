@@ -1,0 +1,5 @@
+{
+  "name": "FastSpeech 2",
+  "type": "audio_model",
+  "model_type": "text-to-speech"
+}

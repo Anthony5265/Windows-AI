@@ -1,0 +1,9 @@
+{
+  "name": "Audit Logger",
+  "type": "logging",
+  "tracks": [
+    "user-actions",
+    "system-events",
+    "changes"
+  ]
+}

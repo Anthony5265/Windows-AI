@@ -1,0 +1,7 @@
+{
+    "name": "LogAggregator",
+    "description": "Discovers and aggregates JSONL log streams for downstream analysis.",
+    "author": "Windows-AI",
+    "version": "0.1.0",
+    "entrypoint": "plugins.logging.log_aggregator.aggregator:LogAggregator"
+}

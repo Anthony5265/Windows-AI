@@ -1,0 +1,11 @@
+{
+  "name": "Debug Logger",
+  "type": "logging",
+  "levels": [
+    "trace",
+    "debug",
+    "info",
+    "warn",
+    "error"
+  ]
+}

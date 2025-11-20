@@ -1,0 +1,39 @@
+{
+  "name": "actions-api",
+  "version": "1.0.0",
+  "description": "Secure Actions API for Windows AI - System Integration with Comprehensive Security",
+  "main": "dist/src/index-new.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/index-new.js",
+    "dev": "ts-node --esm src/index-new.ts",
+    "test": "node --loader ts-node/esm --test test/*.test.ts",
+    "test:security": "node --loader ts-node/esm --test test/security.test.ts",
+    "prepare": "husky install",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "husky": "^9.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "windows-ai",
+    "actions-api",
+    "system-integration",
+    "security",
+    "command-execution"
+  ],
+  "author": "Windows-AI Team",
+  "license": "MIT"
+}

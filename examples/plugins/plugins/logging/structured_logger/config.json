@@ -1,0 +1,9 @@
+{
+  "name": "Structured Logger",
+  "type": "logging",
+  "format": "json",
+  "features": [
+    "correlation-ids",
+    "context"
+  ]
+}

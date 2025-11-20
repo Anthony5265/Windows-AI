@@ -1,0 +1,8 @@
+{
+  "name": "CLIP",
+  "type": "vision_model",
+  "capabilities": [
+    "image-text-matching",
+    "zero-shot-classification"
+  ]
+}

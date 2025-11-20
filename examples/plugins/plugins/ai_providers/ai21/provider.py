@@ -1,0 +1,219 @@
+"""
+AI21 Provider Implementation
+"""
+
+import os
+from typing import Dict, List, Optional, Any
+import requests
+import json
+from pathlib import Path
+
+
+class AI21Provider:
+    """
+    AI21 AI Provider
+    
+    Supported models: j2-ultra, j2-mid, j2-light
+    """
+    
+    def __init__(self, api_key: Optional[str] = None, api_base: Optional[str] = None):
+        """
+        Initialize AI21 provider
+        
+        Args:
+            api_key: API key for AI21 (required)
+            api_base: Base URL for API (default: https://api.ai21.com/studio/v1)
+        """
+        self.api_key = api_key or os.getenv("AI21_API_KEY")
+        self.api_base = api_base or "https://api.ai21.com/studio/v1"
+        self.available_models = [
+            "j2-ultra",
+            "j2-mid",
+            "j2-light"
+]
+        
+        if true and not self.api_key:
+            raise ValueError("API key required for AI21")
+    
+    def list_models(self) -> List[str]:
+        """List available models"""
+        return self.available_models
+    
+    def generate(self, prompt: str, model: str, **kwargs) -> Dict[str, Any]:
+        """
+        Generate completion from AI21
+        
+        Args:
+            prompt: Input prompt
+            model: Model to use
+            **kwargs: Additional parameters (temperature, max_tokens, etc.)
+            
+        Returns:
+            Dict containing generated text and metadata
+        """
+        if model not in self.available_models:
+            raise ValueError(f"Model {model} not available. Choose from: {self.available_models}")
+        
+        # Prepare request
+        headers = {
+            "Content-Type": "application/json",
+        }
+        
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            **kwargs
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_base}/completions",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            return {
+                "text": result.get("text", result.get("choices", [{}])[0].get("text", "")),
+                "model": model,
+                "provider": "AI21",
+                "raw_response": result
+            }
+            
+        except requests.exceptions.RequestException as e:
+            return {
+                "error": str(e),
+                "provider": "AI21",
+                "model": model
+            }
+    
+    def chat(self, messages: List[Dict[str, str]], model: str, **kwargs) -> Dict[str, Any]:
+        """
+        Chat completion
+        
+        Args:
+            messages: List of message dicts with 'role' and 'content'
+            model: Model to use
+            **kwargs: Additional parameters
+            
+        Returns:
+            Dict containing response and metadata
+        """
+        if model not in self.available_models:
+            raise ValueError(f"Model {model} not available")
+        
+        headers = {
+            "Content-Type": "application/json",
+        }
+        
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            **kwargs
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_base}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            return {
+                "message": result.get("choices", [{}])[0].get("message", {}).get("content", ""),
+                "model": model,
+                "provider": "AI21",
+                "raw_response": result
+            }
+            
+        except requests.exceptions.RequestException as e:
+            return {
+                "error": str(e),
+                "provider": "AI21",
+                "model": model
+            }
+    
+    def embed(self, text: str, model: str = None) -> Dict[str, Any]:
+        """
+        Generate embeddings
+        
+        Args:
+            text: Text to embed
+            model: Embedding model to use
+            
+        Returns:
+            Dict containing embedding vector and metadata
+        """
+        # Use first available model if not specified
+        if not model:
+            model = self.available_models[0] if self.available_models else "default"
+        
+        headers = {
+            "Content-Type": "application/json",
+        }
+        
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        
+        payload = {
+            "model": model,
+            "input": text
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_base}/embeddings",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            
+            return {
+                "embedding": result.get("data", [{}])[0].get("embedding", []),
+                "model": model,
+                "provider": "AI21",
+                "raw_response": result
+            }
+            
+        except requests.exceptions.RequestException as e:
+            return {
+                "error": str(e),
+                "provider": "AI21",
+                "model": model
+            }
+
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize provider
+    provider = AI21Provider()
+    
+    # List models
+    print("Available models:")
+    for model in provider.list_models():
+        print(f"  - {model}")
+    
+    # Test generation (if API key available)
+    if provider.api_key:
+        result = provider.generate(
+            prompt="Hello, how are you?",
+            model=provider.available_models[0],
+            max_tokens=50
+        )
+        print(f"\nGeneration result: {result}")

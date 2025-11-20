@@ -1,0 +1,15 @@
+{
+  "name": "Performance Profiler",
+  "type": "monitoring",
+  "category": "performance",
+  "features": [
+    "cpu-profiling",
+    "memory-profiling",
+    "hotspot-detection"
+  ],
+  "outputs": [
+    "flamegraph",
+    "timeline",
+    "stats"
+  ]
+}

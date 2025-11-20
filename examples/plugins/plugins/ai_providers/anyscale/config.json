@@ -1,0 +1,20 @@
+{
+  "name": "Anyscale",
+  "version": "1.0.0",
+  "api_base": "https://api.endpoints.anyscale.com/v1",
+  "requires_key": true,
+  "models": [
+    "meta-llama/Llama-2-7b",
+    "meta-llama/Llama-2-70b",
+    "mistralai/Mistral-7B"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "meta-llama/Llama-2-7b",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

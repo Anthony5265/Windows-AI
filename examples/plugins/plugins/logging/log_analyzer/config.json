@@ -1,0 +1,7 @@
+{
+    "name": "LogAnalyzer",
+    "description": "Provides search, grouping, and anomaly detection for aggregated logs.",
+    "author": "Windows-AI",
+    "version": "0.1.0",
+    "entrypoint": "plugins.logging.log_analyzer.analyzer:LogAnalyzer"
+}

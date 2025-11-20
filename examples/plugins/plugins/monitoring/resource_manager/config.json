@@ -1,0 +1,14 @@
+{
+  "name": "Resource Manager",
+  "type": "monitoring",
+  "category": "performance",
+  "manages": [
+    "memory-limits",
+    "cpu-affinity",
+    "priority"
+  ],
+  "auto": [
+    "cleanup",
+    "optimization"
+  ]
+}

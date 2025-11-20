@@ -1,0 +1,7 @@
+{
+  "name": "Petals",
+  "type": "local_model_platform",
+  "executable": "petals",
+  "default_port": 8888,
+  "models_dir": "~/.cache/petals"
+}

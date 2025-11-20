@@ -1,0 +1,21 @@
+{
+  "name": "windows-ai-gui",
+  "version": "0.2.0",
+  "description": "Windows AI Desktop Application - Electron GUI",
+  "author": "Windows AI Contributors",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder -c electron-builder.yml",
+    "build:win": "electron-builder -c electron-builder.yml --win",
+    "build:win:x64": "electron-builder -c electron-builder.yml --win --x64",
+    "build:win:ia32": "electron-builder -c electron-builder.yml --win --ia32",
+    "test": "echo \"No tests\""
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
+}

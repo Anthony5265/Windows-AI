@@ -1,0 +1,19 @@
+{
+  "name": "Yandex",
+  "version": "1.0.0",
+  "api_base": "https://llm.api.cloud.yandex.net/foundationModels/v1",
+  "requires_key": true,
+  "models": [
+    "yandexgpt-lite",
+    "yandexgpt"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "yandexgpt-lite",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}

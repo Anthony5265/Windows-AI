@@ -1,0 +1,22 @@
+{
+  "name": "Cohere",
+  "version": "1.0.0",
+  "api_base": "https://api.cohere.ai/v1",
+  "requires_key": true,
+  "models": [
+    "command",
+    "command-light",
+    "command-nightly",
+    "embed-english",
+    "embed-multilingual"
+  ],
+  "capabilities": [
+    "text-generation",
+    "chat"
+  ],
+  "settings": {
+    "default_model": "command",
+    "timeout": 60,
+    "max_retries": 3
+  }
+}
