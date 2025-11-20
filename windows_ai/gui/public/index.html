@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">🪟 Windows AI</h1>
+            <div class="header-info">
+                <span class="version" id="version">v2.0.0-alpha</span>
+                <span class="status" id="status">
+                    <span class="status-indicator"></span>
+                    <span id="status-text">Connecting...</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="nav">
+                <button class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="plugins">
+                    <span class="nav-icon">🔌</span>
+                    <span class="nav-text">Plugins</span>
+                </button>
+                <button class="nav-item" data-view="agents">
+                    <span class="nav-icon">🤖</span>
+                    <span class="nav-text">Agents</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Plugins</span>
+                        <span class="stat-value" id="plugin-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active</span>
+                        <span class="stat-value" id="active-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div class="view active" id="view-dashboard">
+                <h2 class="view-title">Dashboard</h2>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3 class="card-title">Quick Stats</h3>
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="stat-box-value" id="total-plugins">0</div>
+                                <div class="stat-box-label">Total Plugins</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-box-value" id="categories-count">0</div>
+                                <div class="stat-box-label">Categories</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-box-value" id="uptime">0s</div>
+                                <div class="stat-box-label">Uptime</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">Quick Actions</h3>
+                        <div class="quick-actions">
+                            <button class="action-btn" onclick="switchView('plugins')">
+                                Browse Plugins
+                            </button>
+                            <button class="action-btn" onclick="refreshData()">
+                                Refresh Data
+                            </button>
+                            <button class="action-btn" onclick="openApiDocs()">
+                                API Documentation
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card full-width">
+                        <h3 class="card-title">Categories</h3>
+                        <div class="categories" id="categories-list">
+                            <p class="loading">Loading categories...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plugins View -->
+            <div class="view" id="view-plugins">
+                <div class="view-header">
+                    <h2 class="view-title">Plugins</h2>
+                    <div class="view-controls">
+                        <input type="search" class="search-input" id="plugin-search" placeholder="Search plugins...">
+                        <select class="filter-select" id="category-filter">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="plugins-grid" id="plugins-list">
+                    <p class="loading">Loading plugins...</p>
+                </div>
+            </div>
+
+            <!-- Agents View -->
+            <div class="view" id="view-agents">
+                <h2 class="view-title">AI Agents</h2>
+                <div class="card">
+                    <p class="placeholder">Agent orchestration coming soon...</p>
+                    <p>Create and manage AI agents that coordinate multiple plugins to complete complex tasks.</p>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div class="view" id="view-settings">
+                <h2 class="view-title">Settings</h2>
+
+                <div class="card">
+                    <h3 class="card-title">System Information</h3>
+                    <div class="info-grid" id="system-info">
+                        <p class="loading">Loading system info...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Environment</h3>
+                    <div class="info-grid" id="environment-info">
+                        <div class="info-item">
+                            <span class="info-label">Node.js</span>
+                            <span class="info-value" id="node-version">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Chrome</span>
+                            <span class="info-value" id="chrome-version">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Electron</span>
+                            <span class="info-value" id="electron-version">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Plugin Detail Modal -->
+    <div class="modal" id="plugin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-plugin-name">Plugin Name</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Plugin details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
