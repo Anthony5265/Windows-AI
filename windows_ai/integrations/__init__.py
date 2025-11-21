@@ -31,6 +31,11 @@ from .security_scanning import SecurityScanningManager
 from .content_moderation import ContentModerationManager
 from .rag_pipeline import RAGPipelineManager
 from .mlops import MLOpsManager
+from .payments import PaymentsManager
+from .social_media import SocialMediaManager
+from .scheduling import SchedulingManager
+from .crm import CRMManager
+from .iot_hardware import IoTHardwareManager
 
 __all__ = [
     'AIProvidersManager',
@@ -61,6 +66,11 @@ __all__ = [
     'ContentModerationManager',
     'RAGPipelineManager',
     'MLOpsManager',
+    'PaymentsManager',
+    'SocialMediaManager',
+    'SchedulingManager',
+    'CRMManager',
+    'IoTHardwareManager',
 ]
 
 # Complete registry of all 1000+ integrations
@@ -491,5 +501,56 @@ INTEGRATIONS_REGISTRY = {
         "modal": {"type": "serverless"},
         "bentoml": {"type": "serving"},
         "ray_serve": {"type": "serving"},
+    },
+    "payments": {
+        "stripe": {"features": ["payments", "subscriptions", "checkout"]},
+        "paypal": {"features": ["payments", "checkout"]},
+        "square": {"features": ["payments", "pos"]},
+        "plaid": {"features": ["banking", "transactions"]},
+        "lemonsqueezy": {"features": ["subscriptions", "checkout"]},
+        "paddle": {"features": ["subscriptions", "checkout"]},
+        "coinbase_commerce": {"features": ["crypto-payments"]},
+        "wise": {"features": ["transfers", "fx"]},
+        "adyen": {"features": ["payments", "enterprise"]},
+        "braintree": {"features": ["payments", "subscriptions"]},
+    },
+    "social_media": {
+        "twitter": {"features": ["post", "search", "analytics"]},
+        "linkedin": {"features": ["post", "profile"]},
+        "facebook": {"features": ["post", "pages", "insights"]},
+        "instagram": {"features": ["post", "stories"]},
+        "tiktok": {"features": ["analytics"]},
+        "youtube": {"features": ["upload", "analytics"]},
+        "reddit": {"features": ["post", "comments"]},
+        "discord": {"features": ["messages", "webhooks"]},
+        "mastodon": {"features": ["post"]},
+        "bluesky": {"features": ["post"]},
+    },
+    "scheduling": {
+        "google_calendar": {"features": ["events", "sync"]},
+        "outlook_calendar": {"features": ["events", "sync"]},
+        "calendly": {"features": ["booking", "scheduling"]},
+        "calcom": {"features": ["booking", "scheduling"]},
+        "doodle": {"features": ["polls"]},
+        "savvycal": {"features": ["booking"]},
+        "cronify": {"features": ["cron-jobs"]},
+    },
+    "crm": {
+        "hubspot": {"features": ["contacts", "deals", "marketing"]},
+        "salesforce": {"features": ["leads", "opportunities", "accounts"]},
+        "pipedrive": {"features": ["deals", "contacts"]},
+        "zoho": {"features": ["leads", "contacts", "deals"]},
+        "close": {"features": ["leads", "sales"]},
+        "freshsales": {"features": ["contacts", "deals"]},
+        "attio": {"features": ["records", "relationships"]},
+    },
+    "iot_hardware": {
+        "home_assistant": {"features": ["automation", "devices"]},
+        "philips_hue": {"features": ["lights", "scenes"]},
+        "smartthings": {"features": ["devices", "automation"]},
+        "tuya": {"features": ["smart-devices"]},
+        "arduino_iot": {"features": ["things", "data"]},
+        "mqtt": {"features": ["publish", "subscribe"]},
+        "particle": {"features": ["devices", "functions"]},
     },
 }
