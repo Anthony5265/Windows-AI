@@ -36,6 +36,15 @@ from .social_media import SocialMediaManager
 from .scheduling import SchedulingManager
 from .crm import CRMManager
 from .iot_hardware import IoTHardwareManager
+from .computer_vision import ComputerVisionManager
+from .healthcare_ai import HealthcareAIManager
+from .legal_ai import LegalAIManager
+from .education_ai import EducationAIManager
+from .finance_ai import FinanceAIManager
+from .scientific_ai import ScientificAIManager
+from .accessibility_ai import AccessibilityAIManager
+from .real_estate_ai import RealEstateAIManager
+from .gaming_ai import GamingAIManager
 
 __all__ = [
     'AIProvidersManager',
@@ -71,6 +80,15 @@ __all__ = [
     'SchedulingManager',
     'CRMManager',
     'IoTHardwareManager',
+    'ComputerVisionManager',
+    'HealthcareAIManager',
+    'LegalAIManager',
+    'EducationAIManager',
+    'FinanceAIManager',
+    'ScientificAIManager',
+    'AccessibilityAIManager',
+    'RealEstateAIManager',
+    'GamingAIManager',
 ]
 
 # Complete registry of all 1000+ integrations
@@ -552,5 +570,65 @@ INTEGRATIONS_REGISTRY = {
         "arduino_iot": {"features": ["things", "data"]},
         "mqtt": {"features": ["publish", "subscribe"]},
         "particle": {"features": ["devices", "functions"]},
+    },
+    "computer_vision": {
+        "yolo": {"features": ["object_detection", "tracking"]},
+        "azure_cv": {"features": ["detection", "ocr", "face"]},
+        "google_vision": {"features": ["labels", "ocr", "faces"]},
+        "aws_rekognition": {"features": ["labels", "faces", "moderation"]},
+        "deepface": {"features": ["face_recognition", "emotion"]},
+        "mediapipe": {"features": ["pose", "hands", "face_mesh"]},
+        "sam": {"features": ["segmentation"]},
+        "midas": {"features": ["depth_estimation"]},
+    },
+    "healthcare_ai": {
+        "medical_imaging": {"features": ["xray", "ct", "mri", "pathology"]},
+        "clinical_nlp": {"features": ["entity_extraction", "coding"]},
+        "drug_interaction": {"features": ["checking", "search"]},
+        "health_monitoring": {"features": ["vitals", "ecg", "activity"]},
+        "symptom_checker": {"features": ["analysis", "recommendations"]},
+    },
+    "legal_ai": {
+        "contract_analysis": {"features": ["review", "compare", "extract"]},
+        "legal_research": {"features": ["case_law", "statutes"]},
+        "compliance": {"features": ["gdpr", "hipaa", "sox"]},
+        "document_generation": {"features": ["nda", "contracts", "policies"]},
+    },
+    "education_ai": {
+        "tutoring": {"features": ["socratic", "explanations", "practice"]},
+        "content_generation": {"features": ["lessons", "quizzes", "flashcards"]},
+        "assessment": {"features": ["essay_grading", "code_grading"]},
+        "language_learning": {"features": ["conversation", "pronunciation"]},
+    },
+    "finance_ai": {
+        "market_data": {"features": ["stocks", "crypto", "forex"]},
+        "technical_analysis": {"features": ["indicators", "patterns"]},
+        "fundamental_analysis": {"features": ["financials", "ratios"]},
+        "portfolio": {"features": ["analysis", "optimization", "risk"]},
+        "fraud_detection": {"features": ["transaction_scoring", "alerts"]},
+    },
+    "scientific_ai": {
+        "literature_search": {"features": ["semantic_scholar", "arxiv", "pubmed"]},
+        "data_analysis": {"features": ["statistics", "hypothesis_testing"]},
+        "molecular": {"features": ["structure_analysis", "protein_prediction"]},
+        "research_assistant": {"features": ["hypothesis", "experiment_design"]},
+    },
+    "accessibility_ai": {
+        "visual": {"features": ["image_description", "screen_reader"]},
+        "auditory": {"features": ["captions", "audio_description"]},
+        "cognitive": {"features": ["simplification", "summarization"]},
+        "sign_language": {"features": ["text_to_sign", "recognition"]},
+    },
+    "real_estate_ai": {
+        "valuation": {"features": ["estimate", "comparables"]},
+        "market_analysis": {"features": ["trends", "neighborhood"]},
+        "investment": {"features": ["cash_flow", "roi", "cap_rate"]},
+        "listing": {"features": ["optimization", "virtual_staging"]},
+    },
+    "gaming_ai": {
+        "npc": {"features": ["dialogue", "behavior", "pathfinding"]},
+        "procedural": {"features": ["world_gen", "dungeon_gen", "items"]},
+        "analytics": {"features": ["player_behavior", "balancing"]},
+        "narrative": {"features": ["story_gen", "quest_gen"]},
     },
 }
