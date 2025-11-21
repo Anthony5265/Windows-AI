@@ -1,6 +1,6 @@
 """
 Windows AI - Main Application
-Orchestrates all components of the Windows AI platform
+Orchestrates all components of the Windows AI platform with zero-configuration setup
 """
 
 import asyncio
@@ -13,27 +13,69 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 class WindowsAIApp:
-    """Main Windows AI Application"""
+    """Main Windows AI Application with Zero-Config Setup"""
 
     def __init__(self):
         self.config: Dict[str, Any] = {}
         self.components: Dict[str, Any] = {}
         self._running = False
+        self.orchestrator = None
 
     async def initialize(self):
-        """Initialize all components"""
-        logger.info("Initializing Windows AI components...")
+        """Initialize all components with zero-configuration"""
+        logger.info("🚀 Starting Windows AI...")
 
-        # Load configuration
+        # Step 1: Run auto-setup if first time
+        await self._run_auto_setup()
+
+        # Step 2: Load configuration
         await self._load_config()
 
-        # Initialize core components
+        # Step 3: Initialize master orchestrator (ALL 2500+ AI capabilities)
+        await self._init_orchestrator()
+
+        # Step 4: Initialize legacy components (for backwards compatibility)
         await self._init_plugin_manager()
         await self._init_frameworks()
         await self._init_security()
         await self._init_api_server()
 
-        logger.info("Windows AI initialization complete")
+        logger.info("✅ Windows AI initialization complete - Ready to use!")
+
+    async def _run_auto_setup(self):
+        """Run automatic setup system"""
+        try:
+            from windows_ai.core.auto_setup import ensure_setup
+
+            logger.info("🔍 Checking system setup...")
+            setup_result = await ensure_setup()
+
+            if setup_result:
+                logger.info("✓ System setup verified")
+
+        except Exception as e:
+            logger.warning(f"Auto-setup encountered an issue: {e}")
+            logger.info("Continuing with default configuration...")
+
+    async def _init_orchestrator(self):
+        """Initialize the master orchestrator for all AI capabilities"""
+        try:
+            from windows_ai.core.orchestrator import WindowsAI
+
+            logger.info("🎯 Initializing master orchestrator (2500+ AI capabilities)...")
+
+            self.orchestrator = WindowsAI()
+            await self.orchestrator.initialize(self.config)
+
+            self.components["orchestrator"] = self.orchestrator
+
+            # Get status
+            status = self.orchestrator.status()
+            logger.info(f"✓ Orchestrator ready: {status['managers_loaded']} managers loaded")
+
+        except Exception as e:
+            logger.error(f"❌ Orchestrator initialization failed: {e}")
+            raise
 
     async def _load_config(self):
         """Load configuration"""

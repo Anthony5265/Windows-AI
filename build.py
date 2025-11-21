@@ -42,14 +42,103 @@ class Builder:
         """Build standalone executable"""
         print(f"\nBuilding {APP_NAME} executable...")
 
-        pyinstaller_args = [
+        # Build GUI version
+        print("Building GUI application...")
+        gui_args = [
             sys.executable, "-m", "PyInstaller",
-            "--name", APP_NAME,
+            "--name", f"{APP_NAME}-GUI",
             "--onedir",
+            "--noconfirm",
+            "--clean",
+            "--windowed",
+            "--add-data", f"windows_ai/plugins{os.pathsep}windows_ai/plugins",
+            "--add-data", f"windows_ai/config{os.pathsep}windows_ai/config",
+            "--add-data", f"windows_ai/integrations{os.pathsep}windows_ai/integrations",
+            "--add-data", f"windows_ai/frameworks{os.pathsep}windows_ai/frameworks",
+            "--add-data", f"windows_ai/security{os.pathsep}windows_ai/security",
+            "--add-data", f"windows_ai/core{os.pathsep}windows_ai/core",
+            "--hidden-import", "uvicorn",
+            "--hidden-import", "fastapi",
+            "--hidden-import", "pydantic",
+            "--hidden-import", "litellm",
+            "--hidden-import", "langchain",
+            "--hidden-import", "langchain_community",
+            "--hidden-import", "llama_index",
+            "--hidden-import", "chromadb",
+            "--hidden-import", "openai",
+            "--hidden-import", "anthropic",
+            "--hidden-import", "google.generativeai",
+            "--hidden-import", "tkinter",
+            "--hidden-import", "tkinter.ttk",
+            "--hidden-import", "tkinter.filedialog",
+            "--hidden-import", "tkinter.messagebox",
+            "--hidden-import", "tkinter.scrolledtext",
+            "--hidden-import", "PIL",
+            "--hidden-import", "PIL.Image",
+            "--hidden-import", "numpy",
+            "--hidden-import", "pandas",
+            "--hidden-import", "aiohttp",
+            "--hidden-import", "asyncio",
+            "--hidden-import", "psutil",
+            "--hidden-import", "dotenv",
+            "--collect-all", "windows_ai",
+            "--collect-all", "langchain",
+            "--collect-all", "langchain_community",
+            "--collect-submodules", "windows_ai",
+            "windows_ai/gui/main_window.py"
+        ]
+
+        result = subprocess.run(gui_args)
+        if result.returncode != 0:
+            print("GUI build failed!")
+            return False
+
+        # Build CLI version
+        print("\nBuilding CLI application...")
+        cli_args = [
+            sys.executable, "-m", "PyInstaller",
+            "--name", f"{APP_NAME}-CLI",
+            "--onefile",
             "--noconfirm",
             "--clean",
             "--add-data", f"windows_ai/plugins{os.pathsep}windows_ai/plugins",
             "--add-data", f"windows_ai/config{os.pathsep}windows_ai/config",
+            "--add-data", f"windows_ai/integrations{os.pathsep}windows_ai/integrations",
+            "--add-data", f"windows_ai/frameworks{os.pathsep}windows_ai/frameworks",
+            "--add-data", f"windows_ai/security{os.pathsep}windows_ai/security",
+            "--add-data", f"windows_ai/core{os.pathsep}windows_ai/core",
+            "--hidden-import", "uvicorn",
+            "--hidden-import", "fastapi",
+            "--hidden-import", "pydantic",
+            "--hidden-import", "litellm",
+            "--hidden-import", "langchain",
+            "--hidden-import", "chromadb",
+            "--hidden-import", "openai",
+            "--hidden-import", "anthropic",
+            "--collect-all", "windows_ai",
+            "--collect-submodules", "windows_ai",
+            "windows_ai/cli.py"
+        ]
+
+        result = subprocess.run(cli_args)
+        if result.returncode != 0:
+            print("CLI build failed!")
+            return False
+
+        # Build server version
+        print("\nBuilding server application...")
+        server_args = [
+            sys.executable, "-m", "PyInstaller",
+            "--name", f"{APP_NAME}-Server",
+            "--onefile",
+            "--noconfirm",
+            "--clean",
+            "--add-data", f"windows_ai/plugins{os.pathsep}windows_ai/plugins",
+            "--add-data", f"windows_ai/config{os.pathsep}windows_ai/config",
+            "--add-data", f"windows_ai/integrations{os.pathsep}windows_ai/integrations",
+            "--add-data", f"windows_ai/frameworks{os.pathsep}windows_ai/frameworks",
+            "--add-data", f"windows_ai/security{os.pathsep}windows_ai/security",
+            "--add-data", f"windows_ai/core{os.pathsep}windows_ai/core",
             "--hidden-import", "uvicorn",
             "--hidden-import", "fastapi",
             "--hidden-import", "pydantic",
@@ -57,18 +146,19 @@ class Builder:
             "--hidden-import", "langchain",
             "--hidden-import", "chromadb",
             "--collect-all", "windows_ai",
+            "--collect-submodules", "windows_ai",
             "windows_ai/__main__.py"
         ]
 
-        if self.is_windows:
-            pyinstaller_args.extend(["--windowed"])
-
-        result = subprocess.run(pyinstaller_args)
+        result = subprocess.run(server_args)
         if result.returncode != 0:
-            print("EXE build failed!")
+            print("Server build failed!")
             return False
 
-        print(f"EXE built successfully: dist/{APP_NAME}/")
+        print(f"\n✅ All executables built successfully!")
+        print(f"   - GUI: dist/{APP_NAME}-GUI/")
+        print(f"   - CLI: dist/{APP_NAME}-CLI.exe")
+        print(f"   - Server: dist/{APP_NAME}-Server.exe")
         return True
 
     def build_wheel(self):
