@@ -45,6 +45,9 @@ from .scientific_ai import ScientificAIManager
 from .accessibility_ai import AccessibilityAIManager
 from .real_estate_ai import RealEstateAIManager
 from .gaming_ai import GamingAIManager
+from .conversational_ai import ConversationalAIManager
+from .automation_robotics import AutomationRoboticsManager
+from .biometrics_identity import BiometricsIdentityManager
 
 __all__ = [
     'AIProvidersManager',
@@ -89,6 +92,9 @@ __all__ = [
     'AccessibilityAIManager',
     'RealEstateAIManager',
     'GamingAIManager',
+    'ConversationalAIManager',
+    'AutomationRoboticsManager',
+    'BiometricsIdentityManager',
 ]
 
 # Complete registry of all 1000+ integrations
