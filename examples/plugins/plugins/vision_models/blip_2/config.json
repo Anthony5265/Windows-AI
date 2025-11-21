@@ -1,9 +1,0 @@
-{
-  "name": "BLIP-2",
-  "type": "vision_model",
-  "capabilities": [
-    "image-understanding",
-    "object-detection",
-    "segmentation"
-  ]
-}

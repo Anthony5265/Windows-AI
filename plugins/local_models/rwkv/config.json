@@ -1,7 +1,0 @@
-{
-  "name": "RWKV",
-  "type": "local_model_platform",
-  "executable": "python",
-  "default_port": 8080,
-  "models_dir": "~/RWKV/models"
-}

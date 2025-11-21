@@ -1,7 +1,0 @@
-{
-  "name": "LangChain Local",
-  "type": "local_model_platform",
-  "executable": "python",
-  "default_port": 5000,
-  "models_dir": "~/langchain-local"
-}

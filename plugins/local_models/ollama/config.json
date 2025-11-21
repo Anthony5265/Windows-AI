@@ -1,9 +1,0 @@
-{
-  "name": "Ollama",
-  "type": "local_model_platform",
-  "executable": "ollama",
-  "default_port": 11434,
-  "models_dir": "~/.ollama/models",
-  "requires_internet": false,
-  "supports_gpu": true
-}

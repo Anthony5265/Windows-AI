@@ -1,8 +1,0 @@
-{
-    "name": "ComplianceLogger",
-    "description": "Records control checks, exceptions, and remediation plans for regulatory frameworks.",
-    "author": "Windows-AI",
-    "version": "0.1.0",
-    "entrypoint": "plugins.logging.compliance_logger.compliance_logger:ComplianceLogger",
-    "retention_days": 365
-}

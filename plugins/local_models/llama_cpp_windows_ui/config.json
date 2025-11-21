@@ -1,7 +1,0 @@
-{
-  "name": "LLaMA.cpp Windows UI",
-  "type": "local_model_platform",
-  "executable": "llama-cpp-ui",
-  "default_port": 8080,
-  "models_dir": "~/llama-cpp-ui/models"
-}

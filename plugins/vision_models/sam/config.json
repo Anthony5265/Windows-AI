@@ -1,9 +1,0 @@
-{
-  "name": "SAM",
-  "type": "vision_model",
-  "capabilities": [
-    "image-understanding",
-    "object-detection",
-    "segmentation"
-  ]
-}

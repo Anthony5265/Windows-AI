@@ -1,5 +1,0 @@
-{
-  "name": "Coqui TTS",
-  "type": "audio_model",
-  "model_type": "text-to-speech"
-}

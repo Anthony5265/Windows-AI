@@ -1,9 +1,0 @@
-{
-  "name": "Claude 3 Vision",
-  "type": "vision_model",
-  "capabilities": [
-    "image-understanding",
-    "chart-analysis",
-    "diagram-understanding"
-  ]
-}

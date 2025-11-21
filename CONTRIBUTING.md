@@ -1,95 +1,114 @@
-# Contributing
+# Contributing to Windows AI
 
-Thanks for your interest in improving Windows AI!
+Thank you for your interest in contributing to Windows AI!
 
-## Repository Organization
+## Current Development Status
 
-Before contributing, please familiarize yourself with our repository structure:
+Windows AI is in **active development (alpha)**. We are:
+- Building out comprehensive testing
+- Improving documentation
+- Expanding the plugin ecosystem
+- Preparing for beta release
 
-- **Start with the [Repository Map](docs/structure/overview.md)** for a curated view of every top-level folder and file
-- **Read [docs/DIRECTORY_STRUCTURE.md](docs/DIRECTORY_STRUCTURE.md)** for a comprehensive guide to all directories
-- **Follow organization principles** outlined in the directory structure guide
-- **Keep the root directory clean** - only essential documentation and launch scripts belong there
-- **Place code in appropriate directories**:
-  - Python backend code → `windows_ai/`
-  - Node.js services → `apps/` or appropriate named directory
-  - Tests → `tests/` (mirror source structure)
-  - Documentation → `docs/`
-  - Plugins → `plugins/[category]/`
-  - Scripts → `scripts/`
+## How to Contribute
 
-### File Placement Guidelines
+### 1. Setting Up Development Environment
 
-| What You're Adding | Where It Goes |
-|--------------------|---------------|
-| Python backend code | `windows_ai/` |
-| Node.js service | `apps/` or new named directory |
-| Plugin | `plugins/[category]/` |
-| Test | `tests/` (mirror source structure) |
-| User documentation | `docs/` |
-| API documentation | `docs/reference/api/overview.md` or `openapi/` |
-| Build/utility script | `scripts/` (or root if essential) |
-| Repo catalog updates | `docs/structure/` (update YAML + regenerate manifest) |
+```bash
+# Clone the repository
+git clone https://github.com/Anthony5265/Windows-AI.git
+cd Windows-AI
 
-## Pull Requests
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-- Keep your branch up to date with `main`. The `main` branch is protected and requires pull requests to be up to date before merging.
-- Pull requests are merged via the **merge queue**. Add the `ready-to-merge` label to enqueue your PR and let Mergify handle the merge once checks pass.
-- **Do not use the "Merge" button.** Every PR must be enqueued; manual merges to `main` are prohibited.
+# Install dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -r requirements-test.txt
 
-Please ensure tests pass locally before requesting a review.
-
-## Branching and rebasing
-
-This project uses [pre-commit](https://pre-commit.com/) to run linters and formatters.
-
-- Install pre-commit with `pip install pre-commit`.
-- Run `pre-commit install` to set up the git hook.
-- Before pushing, run `pre-commit run --all-files`.
-- Create feature branches from `main`.
-- Before pushing, run `git fetch origin && git rebase origin/main`.
-- Resolve conflicts locally before opening or refreshing a PR.
-
-## Commit Messages
-
-This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification.
-Each commit message should be structured as:
-
-```
-<type>(optional scope): <description>
+# Run tests
+pytest tests/
 ```
 
-Examples:
+### 2. Areas That Need Help
 
-- `feat: add OAuth support`
-- `fix(ui): correct button color`
-- `chore: update dependencies`
+#### High Priority
+- **Testing:** Increase test coverage from current to 60%+
+- **Documentation:** Document individual plugins
+- **Plugin Testing:** Verify plugins work with real APIs
+- **Security:** Security audit and fixes
 
-Commit messages are linted with Commitlint via a pre-commit `commit-msg` hook.
+#### Medium Priority
+- **Agent System:** Complete agent orchestration
+- **Performance:** Optimize plugin loading
+- **Examples:** Create usage examples
+- **Tutorials:** Write getting-started guides
 
-## Code Organization Best Practices
+#### Low Priority
+- **Mobile Apps:** Build iOS/Android apps
+- **IoT:** Implement IoT integrations
+- **XR:** Add VR/AR support
 
-### Don't Commit These Files
-- Temporary files (`tmp*.txt`, `*.tmp`)
-- Build artifacts (except reference releases)
-- Session logs (`*SESSION*.md`, `*WORK_SESSION*.md`)
-- Large binary files (document download locations instead)
-- Test data files (unless essential for tests)
+### 3. Plugin Development
 
-These are already in `.gitignore`, but be mindful when using `git add .`
+See our [Plugin Development Guide](docs/development/PLUGIN_DEVELOPMENT.md)
+for how to create new plugins.
 
-### Keep Things Organized
-- Remove temporary files before committing
-- Update documentation when changing structure
-- Add tests in the appropriate `tests/` subdirectory
-- Follow existing naming conventions
-- Use descriptive directory and file names
+**Plugin Quality Standards:**
+- Real API implementation (not template/placeholder)
+- Async/await patterns
+- Full error handling
+- Type hints throughout
+- Tests with 60%+ coverage
+- Documentation with examples
 
-## Releases
+### 4. Code Quality Standards
 
-- Label pull requests so Release Drafter can categorize them (e.g. `feature`, `enhancement`, `bug`, `documentation`, `docs`, `chore`, `refactor`).
-- Draft releases are updated automatically by Release Drafter whenever changes are merged to `main`.
-- To publish a new release:
-  1. Open the draft release on GitHub.
-  2. Review the generated notes and version, adjusting as needed.
-  3. Publish the release to create the tag.
+All contributions must:
+- ✅ Pass all tests (`pytest tests/`)
+- ✅ Pass linting (`ruff check .`)
+- ✅ Have type hints (`mypy windows_ai/`)
+- ✅ Include tests (60%+ coverage for new code)
+- ✅ Update documentation
+
+### 5. Submitting Changes
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Update documentation
+6. Submit a pull request
+
+#### Pull Request Guidelines
+
+- Clear description of changes
+- Reference any related issues
+- Include test results
+- Update CHANGELOG.md
+
+### 6. Code Review Process
+
+All PRs are reviewed for:
+- Code quality
+- Test coverage
+- Documentation
+- Security implications
+- Performance impact
+
+### 7. Community
+
+- **Issues:** Report bugs and request features on GitHub
+- **Discussions:** Ask questions in GitHub Discussions
+- **Security:** Report security issues via email (see SECURITY.md)
+
+## License
+
+By contributing, you agree that your contributions will be licensed
+under the MIT License.
+
+---
+
+Thank you for helping make Windows AI better!

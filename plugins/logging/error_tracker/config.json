@@ -1,9 +1,0 @@
-{
-  "name": "Error Tracker",
-  "type": "logging",
-  "captures": [
-    "exceptions",
-    "stack-traces",
-    "context"
-  ]
-}

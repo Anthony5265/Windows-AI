@@ -1,7 +1,0 @@
-{
-    "name": "LogShipper",
-    "description": "Buffers log records locally and forwards them to a remote HTTP endpoint.",
-    "author": "Windows-AI",
-    "version": "0.1.0",
-    "entrypoint": "plugins.logging.log_shipper.shipper:LogShipper"
-}

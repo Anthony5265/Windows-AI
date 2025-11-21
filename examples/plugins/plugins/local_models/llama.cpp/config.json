@@ -1,9 +1,0 @@
-{
-  "name": "llama.cpp",
-  "type": "local_model_platform",
-  "executable": "llama-server",
-  "default_port": 8080,
-  "models_dir": "~/llama.cpp/models",
-  "requires_internet": false,
-  "supports_gpu": true
-}

@@ -1,9 +1,0 @@
-{
-  "name": "LM Studio",
-  "type": "local_model_platform",
-  "executable": "lms",
-  "default_port": 1234,
-  "models_dir": "~/.cache/lm-studio",
-  "requires_internet": false,
-  "supports_gpu": true
-}
