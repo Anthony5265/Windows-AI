@@ -105,3 +105,42 @@ comtypes>=1.2.0;platform_system=="Windows"
 
 # Build & Packaging
 pyinstaller>=6.0,<7.0
+
+# Browser Automation
+playwright>=1.40.0,<2.0
+
+# OCR & Document Processing
+pytesseract>=0.3.10
+easyocr>=1.7.0
+pypdf>=4.0.0
+tabula-py>=2.9.0
+PyMuPDF>=1.24.0
+
+# Image Processing
+opencv-python>=4.9.0
+
+# Audio Processing
+soundfile>=0.12.0
+
+# Data Analysis
+pandas>=2.0.0
+numpy>=1.26.0
+matplotlib>=3.8.0
+plotly>=5.18.0
+
+# Knowledge Graphs
+neo4j>=5.0.0
+
+# Automation
+pyautogui>=0.9.54
+keyboard>=0.13.5
+pyperclip>=1.8.2
+
+# Search
+duckduckgo-search>=5.0.0
+
+# Additional APIs
+fal-client>=0.3.0
+
+# Desktop Notifications
+win10toast>=0.9;platform_system=="Windows"
