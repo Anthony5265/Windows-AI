@@ -1,0 +1,153 @@
+# Windows AI Default Configuration
+
+version: "2.0.0"
+
+# API Server Configuration
+api:
+  host: "127.0.0.1"
+  port: 8765
+  cors_origins:
+    - "*"
+  rate_limit: 100  # requests per minute
+
+# Security Settings
+security:
+  # Sandbox levels: none, minimal, standard, strict, maximum
+  sandbox_level: "standard"
+
+  # Enable content guardrails
+  guardrails: true
+  guardrails_level: "standard"  # off, minimal, standard, strict
+
+  # Authentication
+  require_auth: false
+  auth_token: ""
+
+  # Permissions
+  default_role: "user"
+
+# LLM Configuration
+llm:
+  # Default provider: openai, anthropic, google, ollama, groq, etc.
+  default_provider: "openai"
+
+  # Fallback chain when primary fails
+  fallback_providers:
+    - "ollama"
+    - "anthropic"
+
+  # Default model settings
+  default_temperature: 0.7
+  default_max_tokens: 4096
+
+  # Provider-specific settings
+  providers:
+    openai:
+      model: "gpt-4o-mini"
+
+    anthropic:
+      model: "claude-3-5-sonnet-20241022"
+
+    google:
+      model: "gemini-1.5-flash"
+
+    ollama:
+      host: "http://localhost:11434"
+      model: "llama3.2"
+
+    groq:
+      model: "llama-3.1-70b-versatile"
+
+# AI Frameworks
+frameworks:
+  langchain:
+    enabled: true
+
+  llamaindex:
+    enabled: true
+    chunk_size: 1024
+    chunk_overlap: 200
+
+  crewai:
+    enabled: true
+
+  autogen:
+    enabled: true
+    max_rounds: 12
+
+# MCP (Model Context Protocol)
+mcp:
+  enabled: true
+  servers:
+    filesystem:
+      enabled: true
+      allowed_paths:
+        - "~"
+    fetch:
+      enabled: true
+    memory:
+      enabled: true
+
+# Local AI (Ollama)
+local_ai:
+  enabled: true
+  auto_start: false
+  default_model: "llama3.2:3b"
+
+  # Models to ensure are available
+  ensure_models:
+    - "llama3.2:3b"
+    - "nomic-embed-text"
+
+# Vector Database
+vector_db:
+  provider: "chromadb"  # chromadb, faiss, qdrant, pinecone
+  persist_directory: "~/.windowsai/data/vectordb"
+
+  chromadb:
+    anonymized_telemetry: false
+
+# Storage
+storage:
+  data_dir: "~/.windowsai/data"
+  models_dir: "~/.windowsai/models"
+  cache_dir: "~/.windowsai/cache"
+  logs_dir: "~/.windowsai/logs"
+
+# Plugins
+plugins:
+  enabled: true
+  auto_discover: true
+  plugin_dirs:
+    - "~/.windowsai/plugins"
+
+  # Disabled plugins
+  disabled: []
+
+# Features
+features:
+  # Enable cloud sync
+  cloud_sync: false
+
+  # Enable auto-updates
+  auto_update: true
+
+  # Enable telemetry (anonymous usage stats)
+  telemetry: false
+
+  # Enable experimental features
+  experimental: false
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "~/.windowsai/logs/windowsai.log"
+  max_size_mb: 10
+  backup_count: 5
+
+# UI Settings (for GUI)
+ui:
+  theme: "dark"
+  language: "en"
+  show_system_tray: true
+  start_minimized: false

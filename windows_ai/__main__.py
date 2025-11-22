@@ -161,12 +161,17 @@ def start_api_server():
     """Start API server"""
     print("\n🚀 Starting API server...")
     try:
-        from windows_ai.api import app
-        print("API server would start here")
-        print("⚠️  API implementation in progress")
-    except ImportError:
-        print("⚠️  API module not found or not fully implemented")
-        print("See: windows_ai/api/ for current development status")
+        from windows_ai.app import WindowsAIApp
+        app = WindowsAIApp()
+        asyncio.run(app.run())
+    except ImportError as e:
+        logger.warning(f"Full app not available: {e}")
+        try:
+            from windows_ai.api.server import run_server
+            asyncio.run(run_server())
+        except ImportError:
+            print("⚠️  API module not found")
+            print("See: windows_ai/api/ for current development status")
 
 
 def run_plugin(plugin_name):
