@@ -1,0 +1,44 @@
+{
+  "daily-summary": {
+    "id": "daily-summary",
+    "name": "Daily Summary",
+    "description": "Generate a daily summary of tasks and events",
+    "schedule_type": "cron",
+    "schedule": "0 9 * * *",
+    "action": "summarize",
+    "prompt": "Generate a summary of today's tasks, calendar events, and important notifications",
+    "enabled": false,
+    "last_run": null,
+    "next_run": null,
+    "run_count": 0,
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  "hourly-check": {
+    "id": "hourly-check",
+    "name": "Hourly System Check",
+    "description": "Check system status every hour",
+    "schedule_type": "interval",
+    "schedule": "1h",
+    "action": "system_check",
+    "prompt": "Check system resources, running processes, and report any issues",
+    "enabled": false,
+    "last_run": null,
+    "next_run": null,
+    "run_count": 0,
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  "weekly-cleanup": {
+    "id": "weekly-cleanup",
+    "name": "Weekly Cleanup",
+    "description": "Clean up temporary files and organize downloads",
+    "schedule_type": "cron",
+    "schedule": "0 10 * * 0",
+    "action": "cleanup",
+    "prompt": "Clean up temporary files, organize downloads folder, and report what was cleaned",
+    "enabled": false,
+    "last_run": null,
+    "next_run": null,
+    "run_count": 0,
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}

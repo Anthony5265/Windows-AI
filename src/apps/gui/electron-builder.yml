@@ -1,0 +1,59 @@
+appId: com.windowsai.gui
+productName: WindowsAI
+copyright: "Copyright © 2025 Windows AI"
+directories:
+  output: dist
+  buildResources: .
+files:
+  - "**/*"
+  - "!dist/*"
+  - "!node_modules/*"
+  - "!.gitkeep"
+extraResources:
+  - from: "../../windows_ai"
+    to: "windows_ai"
+    filter:
+      - "**/*.py"
+  - from: "../../requirements.txt"
+    to: "."
+  - from: "../../config"
+    to: "config"
+    filter:
+      - "**/*"
+  - from: "../../dist/windows-ai-backend"
+    to: "backend"
+    filter:
+      - "**/*"
+  - from: "../../nssm-2.24/win64"
+    to: "service"
+    filter:
+      - "nssm.exe"
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+    - target: portable
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: "WindowsAI-${version}-${arch}.${ext}"
+
+  verifyUpdateCodeSignature: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Windows AI"
+  displayLanguageSelector: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  license: ../../LICENSE
+  warningsAsErrors: false
+  include: build/installer.nsh
+  runAfterFinish: true
+portable:
+  artifactName: "WindowsAI-Portable-${version}-${arch}.${ext}"

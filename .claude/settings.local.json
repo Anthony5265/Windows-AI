@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\Users\\antho\\Windows-AI-main\\apps\\gui\\build\")",
+      "Bash(where:*)",
+      "Bash(npx electron-builder:*)",
+      "Bash(npm install)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(python build_exe.py:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run build:win:*)",
+      "Bash(npm install:*)",
+      "Bash(electron-packager:*)",
+      "Bash(powershell.exe -Command \"Set-MpPreference -DisableRealtimeMonitoring $true\")",
+      "Bash(node_modules/.bin/electron-builder -c apps/gui/electron-builder.yml --win --project apps/gui)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

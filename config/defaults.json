@@ -1,0 +1,8 @@
+{
+  "logs": {
+    "level": "info"
+  },
+  "telemetry": {
+    "optIn": false
+  }
+}

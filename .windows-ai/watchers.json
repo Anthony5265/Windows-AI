@@ -1,0 +1,38 @@
+{
+  "downloads-organizer": {
+    "id": "downloads-organizer",
+    "name": "Downloads Organizer",
+    "path": "~/Downloads",
+    "patterns": ["*.pdf", "*.docx", "*.xlsx", "*.pptx"],
+    "events": ["created"],
+    "action": "organize",
+    "custom_prompt": "Organize this file into an appropriate folder based on its content and filename",
+    "enabled": false,
+    "recursive": false,
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  "documents-summarizer": {
+    "id": "documents-summarizer",
+    "name": "Document Summarizer",
+    "path": "~/Documents",
+    "patterns": ["*.pdf", "*.txt", "*.md"],
+    "events": ["created", "modified"],
+    "action": "summarize",
+    "custom_prompt": "Create a brief summary of this document",
+    "enabled": false,
+    "recursive": true,
+    "created_at": "2024-01-01T00:00:00Z"
+  },
+  "source-control-analyzer": {
+    "id": "source-control-analyzer",
+    "name": "Source Control Analyzer",
+    "path": "~/Projects",
+    "patterns": ["*.py", "*.ts", "*.rs"],
+    "events": ["modified"],
+    "action": "analyze",
+    "custom_prompt": "Review the code diff and highlight risky changes",
+    "enabled": false,
+    "recursive": true,
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}

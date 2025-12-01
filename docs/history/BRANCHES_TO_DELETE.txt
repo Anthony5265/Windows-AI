@@ -1,0 +1,27 @@
+# Duplicate Branches to Delete
+# Execute these commands manually with appropriate permissions
+
+# User Profile Fix duplicates (keep codex/add-new-feature-for-user-profiles)
+git push origin --delete codex/add-new-feature-for-user-profiles-iq7hsg
+git push origin --delete codex/add-new-feature-for-user-profiles-qm2xlk
+
+# User Authentication duplicate (keep codex/add-user-authentication-feature)
+git push origin --delete codex/add-user-authentication-feature-aum6u1
+
+# Zeroconf Adapter duplicate (keep codex/add-zeroconf-adapter-for-discovery)
+git push origin --delete codex/add-zeroconf-adapter-for-discovery-sgtcq5
+
+# REST Endpoints duplicate (keep codex/define-rest-endpoints-for-pairing-and-control)
+git push origin --delete codex/define-rest-endpoints-for-pairing-and-control-qo31jj
+
+# Explorer File Handling duplicate (keep codex/update-file-handling-in-explorer.py)
+git push origin --delete codex/update-file-handling-in-explorer.py-fa1tq7
+
+# No Task Prompt duplicate (keep codex/no-task-prompt-provided)
+git push origin --delete codex/no-task-prompt-provided-ydhqpl
+
+# OUTDATED large consolidation branches
+git push origin --delete codex/fix-all-pull-requests
+git push origin --delete codex/fix-all-pull-requests-o9vtql
+
+# Total: 9 branches to delete

@@ -1,0 +1,19 @@
+# Executables and build artifacts
+*.exe
+*.dll
+dist/
+dist-packaged/
+build/
+*.egg-info/
+
+# Node modules and dependencies  
+node_modules/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Large packaged applications
+apps/gui/dist-packaged/
+apps/gui/dist/
+nul

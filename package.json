@@ -1,0 +1,38 @@
+{
+  "name": "windows-ai",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "AI-powered desktop assistant for Windows with chat interface, automation, and plugin system",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Anthony5265/Windows-AI"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "lint": "node ./scripts/lint.js",
+    "test": "npm test -ws",
+    "test:python": "python3 -m pytest tests/ -v",
+    "build:agent": "node scripts/build-artifacts.js agent",
+    "build:tray": "node scripts/build-artifacts.js tray",
+    "build:gui": "cd apps/gui && npm run build",
+    "build:icons": "python3 scripts/create_icon.py",
+    "build:release": "./build-release.sh",
+    "start:actions": "node apps/actions/server.js",
+    "start:proxy": "node apps/proxy/proxy.js",
+    "start:all": "./start-all.sh",
+    "start:backend": "./start-backend.sh"
+  },
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "app-builder-bin": "^4.2.0",
+    "express": "5.1.0",
+    "node-fetch": "3.3.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1"
+  }
+}

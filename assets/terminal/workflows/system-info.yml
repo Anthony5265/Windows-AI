@@ -1,0 +1,1 @@
+id: system-infotitle: System Infotags: ["system"]description: Show basic system infoinputs: []run:  mode: action  action:    name: shell    params:      command: "powershell -NoProfile -Command \"Get-ComputerInfo | Select-Object CsName,OsName,OsVersion | Format-List\""

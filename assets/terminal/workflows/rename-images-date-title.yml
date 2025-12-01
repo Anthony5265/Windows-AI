@@ -1,0 +1,31 @@
+id: rename-images-date-title
+title: Rename images to yyyy-MM-title in a folder
+tags: ["files","images"]
+description: Renames *.jpg in a folder to yyyy-MM-title-n.jpg
+inputs:
+  - name: folder
+    type: path
+    default: "C:\\Users\\%USERNAME%\\Pictures"
+  - name: title
+    type: string
+    default: "album"
+run:
+  mode: script
+  script:
+    language: python
+    content: |
+      from datetime import datetime
+      from pathlib import Path
+
+      folder = Path(r"${{folder}}")
+      title = "${{title}}"
+      if not folder.exists():
+          print("0 files renamed")
+          raise SystemExit(0)
+
+      stamp = datetime.now().strftime("%Y-%m")
+      count = 0
+      for count, image in enumerate(sorted(folder.glob("*.jpg")), start=1):
+          target = folder / f"{stamp}-{title}-{count:02d}.jpg"
+          image.rename(target)
+      print(f"{count} files renamed")

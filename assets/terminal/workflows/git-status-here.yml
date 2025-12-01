@@ -1,0 +1,8 @@
+id: git-status-here
+title: Git status (current folder)
+tags: ["git"]
+description: Runs git status in the current working directory.
+inputs: []
+run:
+  mode: shell
+  command: "git status --short"

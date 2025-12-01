@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: Windows AI API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /api/actions/execute:
+    post:
+      summary: Execute a named action on the host.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                params:
+                  type: object
+      responses:
+        "200":
+          description: Command result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: string
+  /api/mobile/pair:
+    post:
+      summary: Create a pairing token for a mobile device.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+      responses:
+        "200":
+          description: Pairing token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  token:
+                    type: string
+  /api/mobile/command:
+    post:
+      summary: Execute an action on behalf of a paired device.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                action:
+                  type: string
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: string
+  /api/mesh/distribute:
+    post:
+      summary: Distribute a task to mesh nodes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task:
+                  type: string
+      responses:
+        "200":
+          description: Distribution result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: string
+  /api/iot/event:
+    post:
+      summary: Submit an IoT device event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+                event:
+                  type: string
+      responses:
+        "200":
+          description: Event acknowledgment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /api/search/query:
+    post:
+      summary: Query a set of documents and return matching ids.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                documents:
+                  type: object
+      responses:
+        "200":
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: array
+                    items:
+                      type: string
+components: {}

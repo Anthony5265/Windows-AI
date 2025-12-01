@@ -1,0 +1,275 @@
+global:
+  output: docs/structure/manifest.json
+  root: .
+  default_depth: 2
+  exclude:
+    - .git
+    - .pytest_cache
+    - __pycache__
+    - dist
+    - build
+    - temp
+
+categories:
+  - name: Documentation & Knowledge Base
+    description: "Guides, specifications, and onboarding context for the Windows AI project."
+    entries:
+      - path: docs
+        description: "Primary documentation hub with product guides, references, and operations manuals."
+      - path: specs
+        description: "Formal specifications, blueprints, and architectural briefs."
+      - path: codex
+        description: "Automated task inventories and AI coordination artifacts."
+      - path: assets
+        description: "Images, media, and other supporting assets referenced by docs and apps."
+      - path: openapi
+        description: "OpenAPI schemas describing publicly exposed endpoints."
+      - path: README.md
+        kind: file
+        description: "Top-level orientation for the repository."
+      - path: GETTING_STARTED.md
+        kind: file
+        description: "Quick-start checklist for new contributors."
+      - path: CHANGELOG.md
+        kind: file
+        description: "Chronological record of notable changes."
+      - path: GUI_BACKEND_INTEGRATION_SUMMARY.md
+        kind: file
+        description: "Overview of integration points between the GUI and backend services."
+
+  - name: Client Interfaces & UX
+    description: "User-facing applications, shells, and guided configuration flows."
+    entries:
+      - path: apps
+        description: "Primary desktop application bundles, including the GUI shell."
+      - path: control_center
+        description: "Control Center UI with monitoring and management panels."
+      - path: gui
+        description: "Shared GUI components and static assets."
+      - path: ui
+        description: "Web application interface layers and build outputs."
+      - path: terminal
+        description: "Terminal client and related assets."
+      - path: wizard
+        description: "Main installation and setup wizard."
+      - path: first-run-wizard
+        description: "Guided experience for first-time configuration."
+      - path: windows-ai-tray
+        description: "System tray integration for Windows AI."
+      - path: mobile
+        description: "Mobile companion application projects."
+      - path: iot
+        description: "IoT dashboards and control experiences."
+      - path: xr
+        description: "Extended reality clients and experimental UI surfaces."
+
+  - name: Core Runtime & Services
+    description: "Service implementations, agent logic, and reusable runtime libraries."
+    entries:
+      - path: windows-ai-agent
+        description: "Primary agent runtime orchestrating skills and workflows."
+      - path: windows_ai
+        description: "Shared Python packages consumed by the runtime."
+      - path: agents
+        description: "Agent definitions, behaviours, and orchestration helpers."
+      - path: backends
+        description: "Backend services providing inference, storage, and orchestration."
+      - path: cloud_sync
+        description: "Cloud synchronization services and tooling."
+      - path: mesh
+        description: "Mesh networking services enabling distributed compute."
+      - path: domains
+        description: "Domain-specific service packages."
+      - path: search
+        description: "Search indexing and retrieval services."
+      - path: sdk
+        description: "SDK packages for extending Windows AI functionality."
+      - path: model_discovery
+        description: "Model discovery pipelines and registries."
+      - path: optimization
+        description: "Optimization utilities and scripts."
+        max_depth: 1
+      - path: performance
+        description: "Performance test harnesses and measurement reports."
+        max_depth: 1
+      - path: workflows
+        description: "Reusable automation workflows consumed by the runtime."
+
+  - name: Automation, Integrations & Extensions
+    description: "Modules that connect Windows AI with external systems and extend capabilities."
+    entries:
+      - path: automation
+        description: "Automation templates, orchestrations, and supporting logic."
+      - path: plugins
+        description: "Plugin development kits and sample extensions."
+      - path: context_menu
+        description: "Windows shell context menu integrations."
+      - path: eco
+        description: "Sustainability and eco-mode integrations."
+      - path: marketplace
+        description: "Marketplace services for distributing extensions."
+      - path: install
+        description: "Installer runtime components and helper executables."
+      - path: installer
+        description: "Installer build definitions and packaging logic."
+      - path: update-server
+        description: "Update server configuration and deployment manifests."
+      - path: updater
+        description: "Client-side updater implementation."
+
+  - name: Operations, Tooling & Deployment
+    description: "Deployment scripts, operational tooling, and infrastructure helpers."
+    entries:
+      - path: scripts
+        description: "Utility scripts for development and operational workflows."
+      - path: .devcontainer
+        description: "Development container environment configuration."
+        max_depth: 1
+      - path: .github
+        description: "CI/CD workflows, issue templates, and repository automation."
+        max_depth: 2
+      - path: Dockerfile
+        kind: file
+        description: "Container build definition for the Windows AI stack."
+      - path: backend_bundle_simple.spec
+        kind: file
+        description: "PyInstaller spec for bundling backend services."
+      - path: BUILD_WINDOWS_INSTALLER.md
+        kind: file
+        description: "Checklist for assembling Windows installers."
+      - path: build-complete-installer.bat
+        kind: file
+        description: "Windows batch helper for packaging the installer."
+      - path: build-release.sh
+        kind: file
+        description: "Release automation for Unix-like environments."
+      - path: build_installer.ps1
+        kind: file
+        description: "PowerShell build entry point for installer packaging."
+      - path: start-all.sh
+        kind: file
+        description: "Launches the complete local stack on Unix-like systems."
+      - path: start-all.bat
+        kind: file
+        description: "Launches the complete local stack on Windows."
+      - path: start-backend.sh
+        kind: file
+        description: "Starts backend services for local development (Unix)."
+      - path: start-backend.bat
+        kind: file
+        description: "Starts backend services for local development (Windows)."
+      - path: start-gui.sh
+        kind: file
+        description: "Runs the GUI locally on Unix-like systems."
+      - path: start-gui.bat
+        kind: file
+        description: "Runs the GUI locally on Windows."
+      - path: start-tray.sh
+        kind: file
+        description: "Starts the tray application on Unix-like systems."
+      - path: start-tray.bat
+        kind: file
+        description: "Starts the tray application on Windows."
+      - path: start-watchdog.sh
+        kind: file
+        description: "Launches watchdog monitoring on Unix-like systems."
+      - path: start-watchdog.bat
+        kind: file
+        description: "Launches watchdog monitoring on Windows."
+      - path: watchdog.py
+        kind: file
+        description: "Python watchdog service entry point."
+
+  - name: Security, Compliance & Governance
+    description: "Policies, legal artefacts, and contribution guidance."
+    entries:
+      - path: security
+        description: "Security reviews, threat models, and compliance records."
+      - path: SECURITY.md
+        kind: file
+        description: "Security reporting policy and best practices."
+      - path: LICENSE
+        kind: file
+        description: "Open-source license for the project."
+      - path: CONTRIBUTING.md
+        kind: file
+        description: "Contribution guidelines and review expectations."
+
+  - name: Testing & Quality Assurance
+    description: "Automated tests, fixtures, and quality gates."
+    entries:
+      - path: tests
+        description: "Integration, unit, and end-to-end test suites."
+      - path: pytest.ini
+        kind: file
+        description: "Pytest configuration for Python-based tests."
+      - path: requirements-test.txt
+        kind: file
+        description: "Pinned dependencies for running the test suite."
+
+  - name: Configuration & Dependency Management
+    description: "Project-wide configuration and dependency manifests."
+    entries:
+      - path: config
+        description: "Configuration files consumed by services and tooling."
+      - path: requirements.txt
+        kind: file
+        description: "Primary Python dependency list."
+      - path: requirements-dev.txt
+        kind: file
+        description: "Additional dependencies required for development workflows."
+      - path: requirements.lock
+        kind: file
+        description: "Locked Python dependency versions for deterministic builds."
+      - path: package.json
+        kind: file
+        description: "Node.js package manifest."
+      - path: package-lock.json
+        kind: file
+        description: "Locked Node.js dependency graph."
+      - path: commitlint.config.js
+        kind: file
+        description: "Commit message linting rules."
+      - path: .coveragerc
+        kind: file
+        description: "Coverage configuration for Python tooling."
+      - path: .editorconfig
+        kind: file
+        description: "Shared editor formatting rules."
+      - path: .gitattributes
+        kind: file
+        description: "Git attribute definitions, including line-ending policies."
+      - path: .gitignore
+        kind: file
+        description: "Ignored paths for Git version control."
+      - path: .gitleaks.toml
+        kind: file
+        description: "Secret scanning configuration."
+      - path: .pre-commit-config.yaml
+        kind: file
+        description: "Pre-commit hook definitions."
+      - path: node_modules
+        description: "Installed Node.js dependencies (summarised)."
+        collapsed: true
+
+  - name: Archives & Releases
+    description: "Historical artefacts and published build outputs."
+    entries:
+      - path: archive
+        description: "Legacy reference material preserved for context."
+        max_depth: 1
+      - path: snapshot
+        description: "Frozen snapshots of important states."
+        max_depth: 1
+      - path: proposed-patches
+        description: "Work-in-progress patches and exemplar diffs."
+        max_depth: 1
+      - path: release-20251105-223624
+        description: "Captured release artefact directory."
+        collapsed: true
+      - path: nssm-2.24
+        description: "Bundled NSSM utility for Windows service management."
+        collapsed: true
+      - path: nssm-2.24.zip
+        kind: file
+        description: "Original archive for the NSSM utility."
