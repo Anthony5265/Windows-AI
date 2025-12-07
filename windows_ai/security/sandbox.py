@@ -1,6 +1,10 @@
 """
 Sandbox Manager for Windows AI
 Provides isolation and containment for AI operations
+
+NOTE: Sandboxing is OPTIONAL and OFF by default (SandboxLevel.NONE).
+      Full system access is provided by default for maximum freedom.
+      Users can enable sandboxing if they want additional security.
 """
 
 import asyncio
@@ -25,7 +29,7 @@ class SandboxLevel(Enum):
 
 @dataclass
 class SandboxConfig:
-    level: SandboxLevel = SandboxLevel.STANDARD
+    level: SandboxLevel = SandboxLevel.NONE  # Changed to NONE - OFF by default
     allowed_paths: List[str] = field(default_factory=list)
     blocked_paths: List[str] = field(default_factory=list)
     allowed_commands: List[str] = field(default_factory=list)
@@ -35,8 +39,8 @@ class SandboxConfig:
     max_cpu_percent: int = 80
     timeout_seconds: int = 300
     allow_file_write: bool = True
-    allow_file_delete: bool = False
-    allow_registry_access: bool = False
+    allow_file_delete: bool = True  # Changed to True - full access by default
+    allow_registry_access: bool = True  # Changed to True - full access by default
     allow_process_spawn: bool = True
 
 class SandboxManager:

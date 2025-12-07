@@ -1,6 +1,10 @@
 """
 Permission Manager for Windows AI
 Manages access control and user permissions
+
+NOTE: Permission system is OPTIONAL and OFF by default.
+      Permissions are NOT enforced unless explicitly enabled in config.
+      This provides maximum freedom - users can enable if desired.
 """
 
 import logging

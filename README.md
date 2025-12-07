@@ -32,9 +32,9 @@ Imagine having **ChatGPT, Stable Diffusion, GitHub Copilot, AWS automation, voic
 🔥 **Private by default.** Everything runs locally.  
 ⚡ **Connect to the cloud** when you want GPT-4, Claude, or Gemini.  
 🎨 **Beautiful desktop UI** that makes AI actually FUN to use.  
-🔌 **200+ plugins** for literally everything.  
-🤖 **AI agents** that work together to solve complex problems.  
-🌐 **Control it from anywhere** - desktop, tray, web, mobile, even VR/AR.
+🔌 **65 production-ready plugins** + 2,000+ plugin templates for extensibility  
+🤖 **AI agents** with orchestration framework (core functionality complete)  
+🌐 **Multiple interfaces** - desktop app foundation, system tray, CLI, Python API, REST API
 
 ---
 
@@ -44,9 +44,9 @@ Imagine having **ChatGPT, Stable Diffusion, GitHub Copilot, AWS automation, voic
 
 1. **[📥 Download WindowsAI-Setup.exe](https://github.com/Anthony5265/Windows-AI/releases/latest)** (~150MB)
 2. **Double-click it**
-3. **Start using AI**
+3. **Start using core AI features**
 
-That's it. Everything auto-installs: Python runtime, AI models, dependencies, shortcuts, system tray integration - EVERYTHING.
+Installer handles: Python runtime, core dependencies, backend services, shortcuts. Desktop GUI and advanced features are in active development.
 
 ### **METHOD 2: Portable "Run From Anywhere" Edition** 💼
 
@@ -63,6 +63,7 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 <td width="50%">
 
 ### 🧠 **CORE AI POWERS**
+
 ✅ **Chat** with ANY AI model (local or cloud)  
 ✅ **Generate stunning images** from text  
 ✅ **Transcribe** audio/video to text  
@@ -78,6 +79,7 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 <td width="50%">
 
 ### 🔌 **INTEGRATIONS & AUTOMATION**
+
 ✅ **GitHub** - Auto-review PRs, manage issues  
 ✅ **AWS/Azure/GCP** - Full cloud automation  
 ✅ **Databases** - PostgreSQL, MongoDB, Redis, MySQL  
@@ -93,11 +95,61 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 </tr>
 </table>
 
+## 🧩 Model Selection: Pick Any AI
+
+Windows AI can surface and let you choose from any AI model supported by the backend and installed providers — OpenAI (GPT), Anthropic (Claude), Google (Gemini), Mistral, Groq, Cohere, Ollama local models and many more. The model list shown in the UI and the Setup Wizard is dynamically generated from the installed providers and registered models.  
+
+How to add an additional AI model:
+
+1. If the model is cloud-based, install/enable the integration plugin (e.g., OpenAI, Anthropic). Plugins may register their models automatically to appear in the UI.  
+2. For local models, install the model via the Local Models tab or enable Ollama and install your Llama/Mistral/CodeLlama models.  
+3. To add a custom model, add a `LLMConfig` entry via the `UnifiedLLMProvider.register_config` API or add a plugin that registers models at startup.  
+
+When a new model is available it will appear in the Setup Wizard and Settings dropdowns. Preview models show a "Preview" badge with a short explanation.
+
+---
+
+## 🔓 "FREEDOM FIRST" PHILOSOPHY
+
+### ⚠️ Security is OFF by Default - Here's Why
+
+**Windows AI is YOUR tool on YOUR machine. You own it. You control it.**
+
+Unlike cloud AI services that restrict what you can do, Windows AI gives you **maximum freedom**:
+
+- ✅ **No sandboxing by default** - Plugins have full system access
+- ✅ **No authentication required** - Your machine, your rules
+- ✅ **No content filtering** - No restrictions on what you can create
+- ✅ **No permission checks** - Full admin access to all features
+- ✅ **No API keys needed** - Use everything locally without accounts
+
+### 🛡️ But Security is AVAILABLE When You Need It
+
+Running on a server? Sharing with team? Need compliance?
+
+**All security features are optional and can be enabled in Settings:**
+
+- 🔒 **Sandboxing** - Restrict plugin system access
+- 🔑 **Authentication** - Require API keys for access
+- 👥 **Permissions** - Role-based access control (RBAC)
+- 🚦 **Content Guardrails** - Filter harmful content
+- 📊 **Audit Logging** - Track all API access
+
+**See `docs/SECURITY_CONFIGURATION.md` for complete guide.**
+
+### Why This Design?
+
+**For local development:** Maximum freedom = maximum productivity
+**For production:** Enable security features as needed
+
+**You choose your security posture. Not the other way around.**
+
 ---
 
 ## 🎨 MIND-BLOWING FEATURES
 
 ### 🖥️ **GORGEOUS DESKTOP APP**
+
 - **Multiple tabs** - Chat, Images, Files, Plugins, Agents
 - **Dark/Light themes** with custom styling
 - **Drag & drop** everything
@@ -106,27 +158,28 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 - **Plugin marketplace** - 1-click install
 
 ### 🔔 **SYSTEM TRAY MAGIC**
+
 - **Always accessible** - Hotkey to launch instantly
 - **Quick actions** - Right-click for common tasks
 - **Status indicators** - See what AI is doing
 - **Notifications** - When AI finishes tasks
 
 ### 🌐 **WEB INTERFACE** (BONUS!)
+
 - **Access from any device** on your network
 - **Beautiful responsive design**
 - **Same features** as desktop app
 - **Secure authentication**
 
-### 📱 **MOBILE COMPANION** (In Development)
-- **Control Windows AI remotely**
-- **Voice commands** on the go
-- **Push notifications**
-- **Quick shortcuts**
+### 📱 **MOBILE COMPANION** (Planned)
 
-### 🥽 **XR/VR SUPPORT** (Experimental)
-- **AI in virtual/mixed reality**
-- **3D visualizations** of data
-- **Spatial computing integration**
+- Roadmap item for future development
+- REST API foundation complete for future mobile integration
+
+### 🥽 **XR/VR SUPPORT** (Future Exploration)
+
+- Under research for potential implementation
+- Not currently in active development
 
 ---
 
@@ -141,6 +194,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 **Normal AI:** "Here's some code, good luck!"
 
 **Windows AI Agents:**
+
 1. 🎨 **Designer Agent** → Creates mockups & design system
 2. 💻 **Coding Agent** → Writes HTML/CSS/JS
 3. ☁️ **Cloud Agent** → Provisions AWS infrastructure  
@@ -155,30 +209,35 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 ## 🔥 REAL-WORLD POWER MOVES
 
 ### 📊 **For Business & Data**
+
 ```
 "Analyze last quarter's sales data and create a presentation"
 → Reads Excel/CSV → Analyzes trends → Generates charts → Creates PowerPoint
 ```
 
 ### 🎨 **For Creators**
+
 ```
 "Generate 50 Instagram post ideas with images"
 → Brainstorms concepts → Creates images → Writes captions → Schedules posts
 ```
 
 ### 💻 **For Developers**
+
 ```
 "Review my last 10 GitHub PRs and identify security issues"
 → Fetches PRs → Analyzes code → Finds vulnerabilities → Opens issues
 ```
 
 ### 🏢 **For Teams**
+
 ```
 "Transcribe team meeting, extract action items, create Jira tickets"
 → Transcribes audio → Identifies tasks → Creates tickets → Assigns people
 ```
 
 ### 🏠 **For Smart Homes**
+
 ```
 "Turn on lights when I say 'work mode' and start focus music"
 → Connects IoT → Creates automation → Responds to voice commands
@@ -186,10 +245,12 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 
 ---
 
-## 🎯 200+ PLUGINS & COUNTING
+## 🎯 65 PRODUCTION PLUGINS + 2,000+ TEMPLATES
+
+**Production Status:** 65 fully functional plugins with comprehensive test coverage. An additional 2,000+ plugin templates and scaffolding are available for rapid development.
 
 <details open>
-<summary><b>☁️ CLOUD & INFRASTRUCTURE (22 plugins)</b></summary>
+<summary><b>☁️ CLOUD & INFRASTRUCTURE (15 production plugins)</b></summary>
 
 - **AWS** - EC2, S3, Lambda, RDS, DynamoDB, CloudWatch, IAM
 - **Azure** - VMs, Storage, Functions, Cosmos DB, Key Vault
@@ -321,6 +382,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 </details>
 
 ### 📦 **Plugin Marketplace**
+
 **Install any plugin with 1 click** from the built-in marketplace. No code, no config files.
 
 ---
@@ -336,6 +398,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 | 🌐 **Full Cloud** | Connect to GPT-4, Claude, etc. | Need maximum AI capabilities |
 
 ### 🔐 **Security Features**
+
 ✅ **Encrypted config** - API keys stored securely  
 ✅ **Plugin permissions** - Control what plugins can access  
 ✅ **Sandboxed execution** - Plugins can't harm your system  
@@ -348,7 +411,9 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 ## 🎮 WAYS TO USE WINDOWS AI
 
 ### 1️⃣ **Desktop GUI** (Main Experience)
+
 **Beautiful, powerful, intuitive.**
+
 - Full-featured tabs interface
 - Real-time AI responses
 - Drag & drop everything
@@ -356,14 +421,18 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - Agent orchestration panel
 
 ### 2️⃣ **System Tray** (Always There)
+
 **One click away, always.**
+
 - Right-click for quick actions
 - Status notifications
 - Hotkey launch
 - Mini chat window
 
 ### 3️⃣ **Context Menu** (AI Everywhere)
+
 **Right-click on ANY file:**
+
 - "Summarize this PDF"
 - "Transcribe this audio"
 - "Generate similar image"
@@ -371,14 +440,18 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - "Translate this document"
 
 ### 4️⃣ **Web Interface** (Remote Access)
+
 **Access from any device on your network.**
+
 - Same beautiful UI
 - Mobile-responsive
 - Secure authentication
 - Real-time sync
 
 ### 5️⃣ **Terminal/CLI** (Power Users)
+
 **Automate everything.**
+
 ```bash
 windows-ai chat "What's the weather?"
 windows-ai image "cyberpunk cat" --size 1024x1024
@@ -388,7 +461,9 @@ windows-ai aws launch-ec2 --type t3.medium --region us-east-1
 ```
 
 ### 6️⃣ **Python API** (Developers)
+
 **Integrate into your own apps.**
+
 ```python
 from windows_ai import WindowsAI
 
@@ -407,7 +482,9 @@ ai.schedule("Every Monday 9am", "Email me weekly summary")
 ```
 
 ### 7️⃣ **REST API** (Integrations)
+
 **Connect anything to Windows AI.**
+
 ```bash
 curl http://localhost:8765/api/chat \
   -H "Content-Type: application/json" \
@@ -419,35 +496,42 @@ curl http://localhost:8765/api/chat \
 ## 🌟 WHY WINDOWS AI DESTROYS THE COMPETITION
 
 ### 🆚 **VS. ChatGPT**
+
 ❌ ChatGPT: Web-only, no privacy, limited features  
-✅ Windows AI: Desktop app, runs locally, 200+ plugins, automation
+✅ Windows AI: Desktop platform, local execution option, 65 production plugins, extensible architecture
 
 ### 🆚 **VS. GitHub Copilot**
+
 ❌ Copilot: Code only, subscription required  
-✅ Windows AI: Code + images + audio + automation + FREE local mode
+✅ Windows AI: Multi-modal AI platform (code, images, audio) with plugin ecosystem + local execution option
 
 ### 🆚 **VS. Midjourney**
+
 ❌ Midjourney: Images only, Discord-based, expensive  
 ✅ Windows AI: Images + everything else, beautiful UI, runs on YOUR GPU
 
 ### 🆚 **VS. Custom Python Scripts**
+
 ❌ Scripts: Requires coding, maintenance nightmare, no UI  
 ✅ Windows AI: Beautiful GUI, no coding needed, auto-updates
 
 ### 🔥 **THE TRUTH**
-**Windows AI gives you ALL the AI superpowers in ONE beautiful app that respects your privacy and doesn't require a CS degree.**
+
+**Windows AI is a powerful, extensible AI platform that puts you in control. Core functionality works today, with advanced features under active development. Local execution preserves privacy, and the plugin architecture makes it endlessly customizable.**
 
 ---
 
 ## 💻 SYSTEM REQUIREMENTS
 
 ### ✅ **Minimum (Will Run)**
+
 - Windows 10/11 (64-bit)
 - 4 GB RAM
 - 2 GB free disk space
 - Any CPU (Intel/AMD)
 
 ### 🚀 **Recommended (Will FLY)**
+
 - Windows 11 (64-bit)
 - 16 GB+ RAM
 - 10 GB free disk space
@@ -455,6 +539,7 @@ curl http://localhost:8765/api/chat \
 - SSD storage
 
 ### 💎 **Dream Setup (ULTIMATE POWER)**
+
 - Windows 11 Pro
 - 32 GB+ RAM
 - NVIDIA RTX 4090
@@ -466,6 +551,7 @@ curl http://localhost:8765/api/chat \
 ## 📚 GETTING STARTED GUIDE
 
 ### **First Launch**
+
 1. **Welcome Wizard** appears
 2. **Choose privacy mode** (Local vs Cloud)
 3. **Download AI models** (optional, ~2GB)
@@ -475,18 +561,23 @@ curl http://localhost:8765/api/chat \
 ### **Common First Tasks**
 
 #### **Have a conversation**
+
 Just type in the chat box. It's that simple.
 
 #### **Generate an image**
+
 Switch to Images tab → Type what you want → Hit generate
 
 #### **Transcribe audio**
+
 Drag audio file into Files tab → Click "Transcribe"
 
 #### **Enable GitHub plugin**
+
 Plugins tab → Search "GitHub" → Toggle on → Add API key
 
 #### **Create an automation**
+
 Automation tab → "New workflow" → Describe what you want
 
 ---
@@ -494,6 +585,7 @@ Automation tab → "New workflow" → Describe what you want
 ## 🎓 LEARN MORE
 
 ### 📖 **Documentation**
+
 - **[Quick Start Guide](docs/QUICKSTART.md)** - Get running in 5 minutes
 - **[Plugin Guide](docs/PLUGINS.md)** - How to use all 200+ plugins
 - **[Agent System](docs/AGENTS.md)** - Multi-agent orchestration
@@ -502,12 +594,14 @@ Automation tab → "New workflow" → Describe what you want
 - **[FAQ](docs/FAQ.md)** - Common questions
 
 ### 🎬 **Video Tutorials** (Coming Soon)
+
 - Installation & setup
 - Creating your first automation
 - Using the agent system
 - Plugin marketplace tour
 
 ### 💬 **Community**
+
 - **[Discord Server](#)** - Chat with users & devs
 - **[Discussions](https://github.com/Anthony5265/Windows-AI/discussions)** - Ideas & help
 - **[Twitter/X](https://twitter.com/WindowsAI)** - Updates & tips
@@ -609,6 +703,7 @@ Windows AI is optimized for Windows, but we're exploring cross-platform support.
 Want to extend Windows AI or contribute?
 
 ### **Build From Source**
+
 ```bash
 git clone https://github.com/Anthony5265/Windows-AI.git
 cd Windows-AI
@@ -616,6 +711,7 @@ python build.py --all
 ```
 
 ### **Create a Plugin**
+
 ```python
 from windows_ai.plugin import Plugin
 
@@ -629,6 +725,7 @@ class MyPlugin(Plugin):
 ```
 
 ### **Contribute**
+
 We welcome PRs! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
@@ -644,6 +741,7 @@ See [LICENSE](LICENSE) for full details.
 ## 🙏 ACKNOWLEDGMENTS
 
 Built with ❤️ using:
+
 - Python, Electron, FastAPI
 - LangChain, LlamaIndex, LiteLLM
 - OpenAI, Anthropic, Stable Diffusion

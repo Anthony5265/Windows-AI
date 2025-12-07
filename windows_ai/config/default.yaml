@@ -10,21 +10,25 @@ api:
     - "*"
   rate_limit: 100  # requests per minute
 
-# Security Settings
+# Security Settings (ALL OFF BY DEFAULT - OPTIONAL/OPT-IN ONLY)
 security:
+  # Enable sandbox - OFF by default, maximum freedom
   # Sandbox levels: none, minimal, standard, strict, maximum
-  sandbox_level: "standard"
+  sandbox_enabled: false
+  sandbox_level: "none"
 
-  # Enable content guardrails
-  guardrails: true
-  guardrails_level: "standard"  # off, minimal, standard, strict
+  # Enable content guardrails - OFF by default
+  guardrails_enabled: false
+  guardrails_level: "off"  # off, minimal, standard, strict
 
-  # Authentication
+  # Authentication - OFF by default, no restrictions
   require_auth: false
+  auth_enabled: false
   auth_token: ""
 
-  # Permissions
-  default_role: "user"
+  # Permissions - OFF by default, no enforcement
+  permissions_enabled: false
+  default_role: "admin"  # Full access by default
 
 # LLM Configuration
 llm:

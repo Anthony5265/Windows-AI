@@ -1,4 +1,10 @@
-"""Authentication and authorization for API"""
+"""
+Authentication and authorization for API
+
+NOTE: Authentication is OPTIONAL and OFF by default.
+      If WINDOWS_AI_API_KEY is not set, ALL requests are allowed.
+      This provides maximum freedom - users can enable auth if desired.
+"""
 
 from fastapi import HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
