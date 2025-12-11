@@ -7,6 +7,12 @@ import asyncio
 import logging
 import os
 from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
+from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +20,33 @@ class MLOpsManager:
     """Unified MLOps across 15+ platforms"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
 
     # ==================== EXPERIMENT TRACKING ====================
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def log_experiment(self, provider: str, experiment_name: str, params: Dict, metrics: Dict, artifacts: List[str] = None) -> str:
         """Log ML experiment"""

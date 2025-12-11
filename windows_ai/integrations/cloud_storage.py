@@ -6,6 +6,12 @@ S3, Azure, GCS, R2, Backblaze, etc.
 import asyncio
 import logging
 import os
+from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
 from typing import Dict, List, Any, Optional, BinaryIO
 from pathlib import Path
 
@@ -15,12 +21,31 @@ class CloudStorageManager:
     """Unified cloud storage across 15+ providers"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def upload(self, provider: str, bucket: str, key: str, data: bytes, **kwargs) -> str:
         """Upload file to cloud storage"""

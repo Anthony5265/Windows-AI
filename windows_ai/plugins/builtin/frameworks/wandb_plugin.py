@@ -13,7 +13,7 @@ from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginTyp
 logger = logging.getLogger(__name__)
 
 
-class Weights&BiasesPlugin(IntegrationPlugin):
+class WeightsAndBiasesPlugin(IntegrationPlugin):
     """Weights & Biases framework integration"""
 
     def __init__(self):
@@ -167,4 +167,4 @@ class Weights&BiasesPlugin(IntegrationPlugin):
         }
 
 
-plugin = Weights&BiasesPlugin()
+plugin = WeightsAndBiasesPlugin()

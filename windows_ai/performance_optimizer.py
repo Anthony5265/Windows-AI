@@ -3,7 +3,7 @@ Performance Optimization Suite
 Monitors, analyzes, and optimizes system performance
 """
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 from pathlib import Path

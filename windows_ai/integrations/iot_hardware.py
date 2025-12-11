@@ -7,6 +7,12 @@ import asyncio
 import logging
 import os
 from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
+from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +20,33 @@ class IoTHardwareManager:
     """Unified IoT and hardware operations"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
 
     # ==================== HOME ASSISTANT ====================
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def homeassistant_get_states(self) -> List[Dict]:
         """Get Home Assistant entity states"""
@@ -89,8 +114,30 @@ class IoTHardwareManager:
         if brightness is not None:
             state["bri"] = brightness
         if color is not None:
-            # Convert hex to xy
-            pass
+            # Convert hex color to Philips Hue XY color space
+            if color.startswith('#'):
+                color = color[1:]
+            # Parse RGB values
+            try:
+                r, g, b = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
+                # Normalize to 0-1
+                r, g, b = r/255.0, g/255.0, b/255.0
+                # Apply gamma correction
+                r = pow((r + 0.055) / 1.055, 2.4) if r > 0.04045 else r / 12.92
+                g = pow((g + 0.055) / 1.055, 2.4) if g > 0.04045 else g / 12.92
+                b = pow((b + 0.055) / 1.055, 2.4) if b > 0.04045 else b / 12.92
+                # Convert to XY using CIE 1931 color space
+                X = r * 0.649926 + g * 0.103455 + b * 0.197109
+                Y = r * 0.234327 + g * 0.743075 + b * 0.022598
+                Z = r * 0.000000 + g * 0.053077 + b * 1.035763
+                # Calculate xy coordinates
+                total = X + Y + Z
+                if total > 0:
+                    x = X / total
+                    y = Y / total
+                    state["xy"] = [round(x, 4), round(y, 4)]
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Invalid color format: {color}, error: {e}")
 
         async with aiohttp.ClientSession() as session:
             async with session.put(

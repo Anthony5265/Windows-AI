@@ -10,6 +10,7 @@ import os
 from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
 from enum import Enum
+from windows_ai.config.unified_config import WindowsAIConfig
 
 logger = logging.getLogger(__name__)
 
@@ -43,14 +44,42 @@ class ImageGenerationManager:
     def __init__(self):
         self._initialized = False
         self.output_dir = Path.home() / ".windowsai" / "images"
+        self._config: Optional[WindowsAIConfig] = None
 
-    async def initialize(self, config: Optional[Dict] = None):
-        """Initialize image generation manager"""
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
+        """
+        Initialize image generation manager with unified config
+        
+        Args:
+            config: WindowsAIConfig instance (uses storage.data_dir for output)
+        """
         if self._initialized:
             return
+        
+        self._config = config
+        
+        # Use config storage directory if available
+        if config and hasattr(config, 'storage') and hasattr(config.storage, 'data_dir'):
+            self.output_dir = Path(config.storage.data_dir) / "images"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._initialized = True
         logger.info("Image Generation Manager initialized with 20+ providers")
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def generate(
         self,

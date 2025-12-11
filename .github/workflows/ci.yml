@@ -1,0 +1,330 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  COVERAGE_THRESHOLD: 60
+
+jobs:
+  # Stage 1: Unit Tests
+  unit-tests:
+    name: "Stage 1: Unit Tests"
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+        
+    - name: Run unit tests
+      run: |
+        pytest tests/ -v --tb=short `
+          --junit-xml=test-results/unit-tests.xml `
+          --cov=windows_ai `
+          --cov-report=xml:coverage-reports/unit-coverage.xml `
+          --cov-report=term `
+          -m "not integration and not e2e"
+      
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results
+        path: test-results/unit-tests.xml
+        
+    - name: Upload unit coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-coverage-report
+        path: coverage-reports/unit-coverage.xml
+
+  # Stage 2: Integration Tests
+  integration-tests:
+    name: "Stage 2: Integration Tests"
+    runs-on: windows-latest
+    needs: unit-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+        
+    - name: Run integration tests
+      run: |
+        pytest tests/ -v --tb=short `
+          --junit-xml=test-results/integration-tests.xml `
+          --cov=windows_ai `
+          --cov-report=xml:coverage-reports/integration-coverage.xml `
+          --cov-report=term `
+          -m integration
+      
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results
+        path: test-results/integration-tests.xml
+        
+    - name: Upload integration coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-coverage-report
+        path: coverage-reports/integration-coverage.xml
+
+  # Stage 3: Security Tests (BLOCKS MERGE)
+  security-tests:
+    name: "Stage 3: Security Tests (CRITICAL)"
+    runs-on: windows-latest
+    needs: integration-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+        
+    - name: Run critical security tests
+      id: security-tests
+      run: |
+        pytest tests/security/ -v --tb=short `
+          --junit-xml=test-results/security-tests.xml `
+          -m critical
+      
+    - name: Check security test results
+      run: |
+        $results = Select-String -Path test-results/security-tests.xml -Pattern 'failures="(\d+)"'
+        if ($results) {
+          $failures = [int]$results.Matches.Groups[1].Value
+          if ($failures -gt 0) {
+            Write-Host "::error::Security tests failed: $failures failures detected"
+            Write-Host "::warning::Security tests MUST pass before merge is allowed"
+            exit 1
+          }
+        }
+      
+    - name: Upload security test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-test-results
+        path: test-results/security-tests.xml
+        
+    - name: Comment security test status on PR
+      if: github.event_name == 'pull_request' && failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '⚠️ **Security tests FAILED** - This PR cannot be merged until all security tests pass.\n\nPlease review `tests/security/README.md` for guidance on implementing security features.'
+          })
+
+  # Stage 4: End-to-End Tests
+  e2e-tests:
+    name: "Stage 4: E2E Tests"
+    runs-on: windows-latest
+    needs: security-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+        
+    - name: Run e2e tests
+      run: |
+        pytest tests/ -v --tb=short `
+          --junit-xml=test-results/e2e-tests.xml `
+          --cov=windows_ai `
+          --cov-report=xml:coverage-reports/e2e-coverage.xml `
+          --cov-report=term `
+          -m e2e
+      
+    - name: Upload e2e test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-results
+        path: test-results/e2e-tests.xml
+        
+    - name: Upload e2e coverage report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-coverage-report
+        path: coverage-reports/e2e-coverage.xml
+
+  # Code Quality Checks
+  code-quality:
+    name: "Code Quality Checks"
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        
+    - name: Check code formatting (Black)
+      run: |
+        black --check . --line-length=120
+      
+    - name: Run linter (Flake8)
+      run: |
+        flake8 . --max-line-length=120 --ignore=E203,E266,E501,W503 `
+          --exclude=venv,node_modules,.git,__pycache__,.pytest_cache `
+          --output-file=flake8-report.txt
+      
+    - name: Upload Flake8 report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: flake8-report
+        path: flake8-report.txt
+        
+    - name: Type check (mypy)
+      run: |
+        mypy windows_ai/ --ignore-missing-imports `
+          --exclude=venv --exclude=node_modules
+
+  # Coverage Threshold Enforcement
+  coverage-check:
+    name: "Coverage Threshold Check"
+    runs-on: windows-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all coverage reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-coverage-report'
+        path: coverage-reports/
+        
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install coverage tools
+      run: |
+        pip install coverage
+        
+    - name: Combine coverage reports
+      run: |
+        coverage combine coverage-reports/**/*.xml
+        coverage report --fail-under=${{ env.COVERAGE_THRESHOLD }}
+      
+    - name: Generate coverage summary
+      run: |
+        coverage report > coverage-summary.txt || true
+        
+    - name: Upload coverage summary
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-summary
+        path: coverage-summary.txt
+        
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const coverage = fs.readFileSync('coverage-summary.txt', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## Coverage Report\n\n\`\`\`\n${coverage}\n\`\`\`\n\n**Threshold**: ${process.env.COVERAGE_THRESHOLD}%`
+          })
+
+  # Final Status Check
+  ci-status:
+    name: "CI Pipeline Status"
+    runs-on: windows-latest
+    needs: [unit-tests, integration-tests, security-tests, e2e-tests, code-quality, coverage-check]
+    if: always()
+    
+    steps:
+    - name: Check all job results
+      run: |
+        $securityStatus = "${{ needs.security-tests.result }}"
+        
+        if ($securityStatus -ne "success") {
+          Write-Host "::error::CI Pipeline FAILED - Security tests did not pass"
+          Write-Host "::warning::Security tests are MANDATORY and block merges"
+          exit 1
+        }
+        
+        Write-Host "✅ All critical checks passed"
+        Write-Host "Security tests: $securityStatus"
+        
+    - name: Update commit status
+      if: failure()
+      run: |
+        Write-Host "::error::CI Pipeline FAILED - Review test results and fix issues"

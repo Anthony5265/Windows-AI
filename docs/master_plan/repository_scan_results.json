@@ -1,0 +1,111 @@
+{
+  "scan_date": "2025-12-03T03:03:43.829825",
+  "total_files": 9680,
+  "total_directories": 452,
+  "total_size_bytes": 99800715,
+  "files_by_extension": {
+    "no_extension": 30,
+    ".toml": 1,
+    ".yaml": 51,
+    ".ps1": 91,
+    ".md": 675,
+    ".bat": 22,
+    ".py": 8208,
+    ".js": 78,
+    ".xml": 1,
+    ".ini": 2,
+    ".json": 120,
+    ".txt": 14,
+    ".lock": 1,
+    ".spec": 4,
+    ".log": 1,
+    ".yml": 15,
+    ".cmd": 10,
+    ".ts": 90,
+    ".lnk": 1,
+    ".css": 6,
+    ".ico": 4,
+    ".png": 9,
+    ".html": 14,
+    ".kt": 2,
+    ".swift": 2,
+    ".drawio": 1,
+    ".mp4": 2,
+    ".vue": 128,
+    ".example": 3,
+    ".reg": 2,
+    ".nsi": 2,
+    ".cpp": 24,
+    ".h": 26,
+    ".mc": 2,
+    ".rc": 2,
+    ".sln": 2,
+    ".vcproj": 2,
+    ".sh": 22,
+    ".ahk": 1,
+    ".xlsx": 2,
+    ".cjs": 2,
+    ".mjs": 2,
+    ".zip": 1,
+    ".ipynb": 1,
+    ".psm1": 1
+  },
+  "files_by_category": {
+    "other": 8621,
+    "config": 177,
+    "docs": 693,
+    "installer": 70,
+    "tests": 119
+  },
+  "completion_scores": {
+    "windows_ai/core": {
+      "category": "core_backend",
+      "score": 60,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "windows_ai/plugins": {
+      "category": "plugins",
+      "score": 75,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "windows_ai/agents": {
+      "category": "agents",
+      "score": 60,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "windows_ai/api": {
+      "category": "api",
+      "score": 60,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "windows_ai/gui": {
+      "category": "gui",
+      "score": 75,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "tests": {
+      "category": "tests",
+      "score": 60,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    },
+    "docs": {
+      "category": "docs",
+      "score": 40,
+      "status": "\ud83d\udfe0 Partial"
+    },
+    "install": {
+      "category": "installer",
+      "score": 75,
+      "status": "\ud83d\udfe1 Mostly Complete"
+    }
+  },
+  "summary": {
+    "total_python_files": 8208,
+    "total_test_files": 288,
+    "total_doc_files": 675,
+    "total_config_files": 177,
+    "total_size_mb": 95.18,
+    "production_ready_dirs": 0,
+    "needs_work_dirs": 1
+  }
+}

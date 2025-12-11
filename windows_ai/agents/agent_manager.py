@@ -1,16 +1,32 @@
 """Agent Manager for orchestrating multiple agents"""
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 import asyncio
 import logging
 from datetime import datetime
 import uuid
+import re
 
 from windows_ai.agents.agent import Agent, AgentStatus
 from windows_ai.agents.task import Task, TaskStatus, TaskPriority
 from windows_ai.core.plugin_manager import PluginManager
+from windows_ai.exceptions import SecurityError, ResourceError, ValidationError
 
 logger = logging.getLogger(__name__)
+
+# Constants for resource limits
+MAX_TASK_QUEUE_SIZE = 1000
+MAX_TASK_DESCRIPTION_LENGTH = 10000
+ALLOWED_TASK_TYPES = {
+    "test", "query", "analysis", "process", "transform", "execute_command"
+}
+DANGEROUS_COMMANDS = [
+    "rm", "del", "format", "shutdown", "reboot", "kill", "pkill",
+    "dd", "mkfs", "/", "\\", "*"
+]
+DANGEROUS_TASK_TYPES = {
+    "elevate_privileges", "sudo", "runas", "admin_access"
+}
 
 class AgentManager:
     """Manages multiple agents and task distribution"""
@@ -77,12 +93,52 @@ class AgentManager:
 
     async def create_task(
         self,
-        description: str,
+        task_or_dict: Union[str, Dict[str, Any]],
         parameters: Optional[Dict[str, Any]] = None,
         required_plugins: Optional[List[str]] = None,
         priority: TaskPriority = TaskPriority.NORMAL
     ) -> Task:
-        """Create a new task"""
+        """Create a new task with validation.
+        
+        Args:
+            task_or_dict: Either a task description string or a task dict
+            parameters: Task parameters (when task_or_dict is string)
+            required_plugins: Required plugins (when task_or_dict is string)
+            priority: Task priority
+            
+        Returns:
+            Created Task object
+            
+        Raises:
+            ValueError: Invalid task structure or parameters
+            TypeError: Invalid parameter types
+            KeyError: Missing required fields
+            SecurityError: Dangerous/malicious task detected
+            ResourceError: Resource limits exceeded
+        """
+        # Check task queue size limit
+        if len(self.task_queue) >= MAX_TASK_QUEUE_SIZE:
+            raise ResourceError(
+                f"Task queue limit exceeded: {len(self.task_queue)} >= {MAX_TASK_QUEUE_SIZE}"
+            )
+        
+        # Handle dict-based task creation (new security-aware format)
+        if isinstance(task_or_dict, dict):
+            return await self._create_task_from_dict(task_or_dict)
+        
+        # Handle string description (legacy format)
+        description = task_or_dict
+        
+        # Validate description
+        if not description or not isinstance(description, str):
+            raise ValueError("Task description must be a non-empty string")
+        
+        if len(description) > MAX_TASK_DESCRIPTION_LENGTH:
+            raise ValueError(
+                f"Task description too long: {len(description)} > {MAX_TASK_DESCRIPTION_LENGTH}"
+            )
+        
+        # Create task
         task = Task(
             description=description,
             parameters=parameters or {},
@@ -99,6 +155,118 @@ class AgentManager:
         logger.info(f"Created task: {task.description} ({task.id})")
 
         return task
+    
+    async def _create_task_from_dict(self, task_dict: Dict[str, Any]) -> Task:
+        """Create task from dictionary with security validation.
+        
+        Args:
+            task_dict: Task specification dictionary
+            
+        Returns:
+            Created Task object
+            
+        Raises:
+            ValueError: Invalid task structure
+            TypeError: Invalid parameter types
+            KeyError: Missing required 'type' field
+            SecurityError: Dangerous task type or command detected
+        """
+        # Validate task dict structure
+        if not isinstance(task_dict, dict):
+            raise TypeError(f"Task must be dict, got {type(task_dict).__name__}")
+        
+        # Require 'type' field
+        if "type" not in task_dict:
+            raise KeyError("Task dictionary must have 'type' field")
+        
+        task_type = task_dict["type"]
+        
+        # Validate task type
+        if not isinstance(task_type, str):
+            raise TypeError(f"Task type must be string, got {type(task_type).__name__}")
+        
+        # Check for privilege escalation attempts
+        if task_type in DANGEROUS_TASK_TYPES:
+            raise SecurityError(
+                f"Privilege escalation denied: task type '{task_type}' is not allowed"
+            )
+        
+        # Validate task type against whitelist
+        if task_type not in ALLOWED_TASK_TYPES:
+            raise ValueError(
+                f"Unknown task type: '{task_type}'. Allowed types: {sorted(ALLOWED_TASK_TYPES)}"
+            )
+        
+        # Validate command field if present
+        if "command" in task_dict:
+            command = task_dict["command"]
+            
+            # Command must not be None or empty
+            if command is None:
+                raise ValueError("Task command cannot be None")
+            
+            if not isinstance(command, str):
+                raise TypeError(f"Command must be string, got {type(command).__name__}")
+            
+            # Check for command injection attempts
+            self._validate_command_safety(command)
+        
+        # Create description from type and command
+        description = f"{task_type}"
+        if "command" in task_dict:
+            description += f": {task_dict['command'][:100]}"
+        
+        # Create task
+        task = Task(
+            description=description,
+            parameters=task_dict,
+            required_plugins=task_dict.get("required_plugins", []),
+            priority=TaskPriority.NORMAL
+        )
+        
+        self.tasks[task.id] = task
+        self.task_queue.append(task)
+        self.task_queue.sort(key=lambda t: t.priority.value, reverse=True)
+        
+        logger.info(f"Created task from dict: {description} ({task.id})")
+        
+        return task
+    
+    def _validate_command_safety(self, command: str):
+        """Validate command for security threats.
+        
+        Args:
+            command: Command string to validate
+            
+        Raises:
+            SecurityError: Command contains dangerous patterns
+        """
+        if not command or not isinstance(command, str):
+            return
+        
+        # Normalize command for checking
+        normalized = command.lower().strip()
+        
+        # Check for dangerous command patterns
+        for dangerous in DANGEROUS_COMMANDS:
+            if dangerous in normalized:
+                raise SecurityError(
+                    f"Command injection attempt detected: command contains '{dangerous}'"
+                )
+        
+        # Check for shell operators that enable chaining
+        shell_operators = ["&&", "||", "|", ";", "`", "$(", "${"]
+        for operator in shell_operators:
+            if operator in command:
+                raise SecurityError(
+                    f"Command injection attempt detected: command contains shell operator '{operator}'"
+                )
+        
+        # Check for path traversal in commands
+        if ".." in command or "~/" in command:
+            raise SecurityError(
+                "Path traversal attempt detected in command"
+            )
 
     async def execute_task(self, task_id: str) -> Dict[str, Any]:
         """Execute a specific task"""

@@ -32,6 +32,10 @@ class LLMConfig:
     max_tokens: int = 4096
     api_key: Optional[str] = None
     base_url: Optional[str] = None
+    display_name: Optional[str] = None
+    category: Optional[str] = "cloud"  # cloud/local
+    preview: bool = False
+    badge: Optional[str] = None
 
 @dataclass
 class Message:
@@ -71,7 +75,10 @@ class UnifiedLLMProvider:
         # OpenAI
         self.register_config("gpt-4-turbo", LLMConfig(
             provider=LLMProvider.OPENAI,
-            model="gpt-4-turbo-preview"
+            model="gpt-4-turbo-preview",
+            display_name="GPT-4 Turbo",
+            category="cloud",
+            badge="premium"
         ))
         self.register_config("gpt-4o", LLMConfig(
             provider=LLMProvider.OPENAI,
@@ -85,7 +92,10 @@ class UnifiedLLMProvider:
         # Anthropic
         self.register_config("claude-3-opus", LLMConfig(
             provider=LLMProvider.ANTHROPIC,
-            model="claude-3-opus-20240229"
+            model="claude-3-opus-20240229",
+            display_name="Claude 3 Opus",
+            category="cloud",
+            badge="premium"
         ))
         self.register_config("claude-3-sonnet", LLMConfig(
             provider=LLMProvider.ANTHROPIC,
@@ -93,7 +103,20 @@ class UnifiedLLMProvider:
         ))
         self.register_config("claude-3.5-sonnet", LLMConfig(
             provider=LLMProvider.ANTHROPIC,
-            model="claude-3-5-sonnet-20241022"
+            model="claude-3-5-sonnet-20241022",
+            display_name="Claude 3.5 Sonnet",
+            category="cloud",
+            badge="balanced"
+        ))
+
+        # Preview entry - add Opus 4.5 as a preview model entry (placeholder id)
+        self.register_config("claude-opus-4.5-preview", LLMConfig(
+            provider=LLMProvider.ANTHROPIC,
+            model="claude-opus-4.5-preview",
+            display_name="Claude Opus 4.5 (Preview)",
+            category="cloud",
+            preview=True,
+            badge="preview"
         ))
 
         # Google
@@ -110,6 +133,24 @@ class UnifiedLLMProvider:
         self.register_config("mistral-large", LLMConfig(
             provider=LLMProvider.MISTRAL,
             model="mistral-large-latest"
+        ))
+
+        # Cohere
+        self.register_config("cohere-command", LLMConfig(
+            provider=LLMProvider.COHERE,
+            model="cohere-command",
+            display_name="Cohere Command",
+            category="cloud",
+            badge="premium"
+        ))
+
+        # AI21 Labs
+        self.register_config("ai21-j1", LLMConfig(
+            provider=LLMProvider.TOGETHER,
+            model="ai21-j1",
+            display_name="AI21 J1",
+            category="cloud",
+            badge="premium"
         ))
 
         # Groq (fast inference)
@@ -135,11 +176,38 @@ class UnifiedLLMProvider:
         """Register a provider configuration"""
         self.configs[name] = config
 
+    def list_registered_models(self) -> list:
+        """Return list of registered model definitions for API consumers"""
+        models = []
+        for name, cfg in self.configs.items():
+            models.append({
+                "id": name,
+                "provider": cfg.provider.value,
+                "model": cfg.model,
+                "name": cfg.display_name or cfg.model,
+                "category": getattr(cfg, "category", "cloud"),
+                "preview": getattr(cfg, "preview", False),
+                "badge": getattr(cfg, "badge", None)
+            })
+        return models
+
     def set_default(self, name: str):
         """Set the default provider"""
         if name not in self.configs:
             raise ValueError(f"Config '{name}' not found")
         self.default_provider = name
+
+    def reset_client(self, provider: Union[str, LLMProvider]):
+        """Reset a cached client to force recreation (e.g. after key update)"""
+        if isinstance(provider, str):
+            try:
+                provider = LLMProvider(provider)
+            except ValueError:
+                return # Invalid provider
+        
+        if provider.value in self._clients:
+            del self._clients[provider.value]
+            logger.info(f"Reset client for {provider.value}")
 
     async def _get_client(self, provider: LLMProvider) -> Any:
         """Get or create a client for a provider"""

@@ -1,6 +1,6 @@
 """Frontend-specific API routes for plugins, models, and automation"""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import json
@@ -350,9 +350,22 @@ async def disable_plugin(plugin_id: str):
     return {"success": True, "message": f"Plugin {plugin_id} disabled"}
 
 @router.get("/models")
-async def list_models(category: Optional[str] = None):
+async def list_models(request: Request, category: Optional[str] = None):
     """List available AI models"""
-    models = SAMPLE_MODELS.copy()
+    # Try to surface models from the unified LLM provider if available
+    models = []
+    try:
+        components = getattr(request.app.state, "components", None)
+        if components and isinstance(components, dict) and "llm" in components:
+            llm = components.get("llm")
+            try:
+                models = llm.list_registered_models()
+            except Exception:
+                models = SAMPLE_MODELS.copy()
+        else:
+            models = SAMPLE_MODELS.copy()
+    except Exception:
+        models = SAMPLE_MODELS.copy()
     
     if category and category != "all":
         models = [m for m in models if m.get("category") == category]

@@ -7,6 +7,12 @@ import asyncio
 import logging
 import os
 from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
+from typing import Dict, List, Any, Optional
 from pathlib import Path
 from enum import Enum
 
@@ -21,20 +27,39 @@ class BrowserAutomationManager:
     """Manages browser automation with Playwright and AI capabilities"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
         self._browser = None
         self._context = None
         self._page = None
         self.screenshots_dir = Path.home() / ".windowsai" / "browser_screenshots"
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         """Initialize browser automation"""
         if self._initialized:
             return
+        
+        self._config = config
 
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
         self._initialized = True
         logger.info("Browser Automation Manager initialized")
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def launch_browser(
         self,

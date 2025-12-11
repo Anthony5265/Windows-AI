@@ -6,6 +6,12 @@ PandasAI, Text-to-SQL, and AI-powered data analysis
 import asyncio
 import logging
 import os
+from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
 from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
 import pandas as pd
@@ -16,14 +22,33 @@ class DataAnalysisManager:
     """AI-powered data analysis with natural language"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
         self._dataframes: Dict[str, pd.DataFrame] = {}
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
         logger.info("Data Analysis Manager initialized")
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     def load_csv(self, name: str, path: str) -> pd.DataFrame:
         """Load a CSV file"""

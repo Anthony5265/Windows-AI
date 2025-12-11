@@ -48,6 +48,28 @@ const modelSelect = document.getElementById('modelSelect');
 const newChatBtn = document.getElementById('newChatBtn');
 const conversationList = document.getElementById('conversationList');
 
+// Load model dropdown options dynamically from backend
+async function loadModelOptionsDropdown() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/models`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const models = json.models || json;
+    modelSelect.innerHTML = '';
+    for (const m of models) {
+      const opt = document.createElement('option');
+      opt.value = m.id || m.model || m.name;
+      opt.textContent = m.name || m.display_name || m.model || m.id;
+      modelSelect.appendChild(opt);
+    }
+  } catch (err) {
+    console.error('Failed to load models for dropdown:', err);
+  }
+}
+
+// Populate at startup
+loadModelOptionsDropdown();
+
 // Auto-resize textarea
 chatInput.addEventListener('input', () => {
   chatInput.style.height = 'auto';
@@ -273,6 +295,163 @@ async function sendMessageViaSSE(message, typingIndicator) {
 }
 
 /**
+ * Render markdown with syntax highlighting
+ */
+function renderMarkdown(content) {
+  if (typeof marked === 'undefined') {
+    // Fallback to basic HTML escaping
+    return content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+  }
+  
+  try {
+    // Configure marked with highlight.js
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+          try {
+            return hljs.highlight(code, { language: lang }).value;
+          } catch (err) {
+            console.error('Highlight error:', err);
+            return code;
+          }
+        }
+        return code;
+      },
+      breaks: true,
+      gfm: true,
+      smartypants: true
+    });
+    
+    // Render markdown
+    let html = marked.parse(content);
+    
+    // Add copy buttons to code blocks
+    html = html.replace(/<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g, 
+      (match, lang, code) => {
+        const copyId = 'copy-' + Math.random().toString(36).substr(2, 9);
+        // Decode HTML entities in code
+        const decodedCode = code
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        
+        return `
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-lang">${lang}</span>
+              <button class="copy-code-btn" data-code-target="${copyId}" title="Copy code">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <pre id="${copyId}"><code class="language-${lang}">${code}</code></pre>
+          </div>
+        `;
+      }
+    );
+    
+    return html;
+  } catch (err) {
+    console.error('Markdown rendering error:', err);
+    return content.replace(/\n/g, '<br>');
+  }
+}
+
+/**
+ * Copy code block to clipboard
+ */
+function copyCodeToClipboard(button) {
+  const codeId = button.dataset.codeTarget;
+  const codeBlock = document.getElementById(codeId);
+  if (!codeBlock) return;
+  
+  const code = codeBlock.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const originalHTML = button.innerHTML;
+    button.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Copied!
+    `;
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.classList.remove('copied');
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy code:', err);
+  });
+}
+
+/**
+ * Copy entire message to clipboard
+ */
+function copyMessage(button) {
+  const messageDiv = button.closest('.message');
+  const contentDiv = messageDiv.querySelector('.message-content');
+  const text = contentDiv.textContent || contentDiv.innerText;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const originalHTML = button.innerHTML;
+    button.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    `;
+    button.classList.add('copied');
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.classList.remove('copied');
+    }, 1500);
+  }).catch(err => {
+    console.error('Failed to copy message:', err);
+  });
+}
+
+/**
+ * Regenerate AI response (for user messages)
+ */
+function regenerateMessage(button) {
+  const messageDiv = button.closest('.message');
+  const contentDiv = messageDiv.querySelector('.message-content');
+  const text = contentDiv.textContent || contentDiv.innerText;
+  
+  // Set the input value and send
+  const messageInput = document.getElementById('chat-input');
+  if (messageInput) {
+    messageInput.value = text;
+    sendMessage();
+  }
+}
+
+/**
+ * Edit message (populate input for editing)
+ */
+function editMessage(button) {
+  const messageDiv = button.closest('.message');
+  const contentDiv = messageDiv.querySelector('.message-content');
+  const text = contentDiv.textContent || contentDiv.innerText;
+  
+  // Populate input for editing
+  const messageInput = document.getElementById('chat-input');
+  if (messageInput) {
+    messageInput.value = text;
+    messageInput.focus();
+    messageInput.setSelectionRange(text.length, text.length);
+  }
+}
+
+/**
  * Create a message element
  */
 function createMessageElement(role, content) {
@@ -285,15 +464,76 @@ function createMessageElement(role, content) {
 
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
-  contentDiv.textContent = content;
+  
+  // Render markdown for assistant messages, plain text for user
+  if (role === 'assistant') {
+    contentDiv.innerHTML = renderMarkdown(content);
+  } else {
+    contentDiv.textContent = content;
+  }
 
   const timestamp = document.createElement('div');
   timestamp.className = 'message-timestamp';
   timestamp.textContent = new Date().toLocaleTimeString();
+  
+  // Add message actions
+  const actions = document.createElement('div');
+  actions.className = 'message-actions';
+  
+  // Copy button for all messages
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'message-action-btn';
+  copyBtn.title = 'Copy message';
+  copyBtn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </svg>
+  `;
+  copyBtn.onclick = function() { copyMessage(this); };
+  actions.appendChild(copyBtn);
+  
+  // Additional buttons for user messages
+  if (role === 'user') {
+    // Regenerate button
+    const regenBtn = document.createElement('button');
+    regenBtn.className = 'message-action-btn';
+    regenBtn.title = 'Regenerate response';
+    regenBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    `;
+    regenBtn.onclick = function() { regenerateMessage(this); };
+    actions.appendChild(regenBtn);
+    
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'message-action-btn';
+    editBtn.title = 'Edit message';
+    editBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      </svg>
+    `;
+    editBtn.onclick = function() { editMessage(this); };
+    actions.appendChild(editBtn);
+  }
 
   messageDiv.appendChild(avatar);
   contentDiv.appendChild(timestamp);
   messageDiv.appendChild(contentDiv);
+  messageDiv.appendChild(actions);
+  
+  // Add click handlers for copy buttons in code blocks
+  setTimeout(() => {
+    const copyButtons = messageDiv.querySelectorAll('.copy-code-btn');
+    copyButtons.forEach(btn => {
+      btn.addEventListener('click', () => copyCodeToClipboard(btn));
+    });
+  }, 0);
 
   return messageDiv;
 }
@@ -568,7 +808,7 @@ document.getElementById('resetCfg').addEventListener('click', () => {
     themeSelect.value = 'system';
     document.getElementById('bind').value = '127.0.0.1';
     document.getElementById('port').value = '8010';
-    document.getElementById('defaultModel').value = 'gpt-3.5-turbo';
+    document.getElementById('defaultModel').value = 'auto';
     temperatureInput.value = '0.7';
     tempValue.textContent = '0.7';
     applyTheme('system');
@@ -2645,6 +2885,279 @@ if (modelsTab) {
   });
 }
 
+// =====================================================================
+// Settings Panel Tab Navigation
+// =====================================================================
+
+const settingsNavBtns = document.querySelectorAll('.settings-nav-btn');
+const settingsPanels = document.querySelectorAll('.settings-panel');
+
+settingsNavBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all
+    settingsNavBtns.forEach(b => b.classList.remove('active'));
+    settingsPanels.forEach(p => p.classList.remove('active'));
+    
+    // Add active to clicked
+    btn.classList.add('active');
+    const targetPanel = document.getElementById(`settings-${btn.dataset.settingsTab}`);
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+    }
+    
+    // Load data for specific tabs
+    if (btn.dataset.settingsTab === 'api-keys') {
+      loadApiKeyStatus();
+    } else if (btn.dataset.settingsTab === 'models') {
+      loadModelSettings();
+    } else if (btn.dataset.settingsTab === 'system') {
+      loadSystemHealth();
+    }
+  });
+});
+
+// Toggle API key visibility
+document.querySelectorAll('.toggle-visibility-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    const input = document.getElementById(targetId);
+    if (input) {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+    }
+  });
+});
+
+// Save API Keys
+document.getElementById('saveApiKeys')?.addEventListener('click', async () => {
+  const providers = ['OpenAI', 'Anthropic', 'Google', 'Azure'];
+  
+  for (const provider of providers) {
+    const input = document.getElementById(`apiKey${provider}`);
+    if (input && input.value.trim()) {
+      try {
+        await fetch(`${BACKEND_URL}/api/credentials`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: provider.toLowerCase(),
+            api_key: input.value.trim()
+          })
+        });
+        document.getElementById(`status${provider}`).textContent = '✓ Saved';
+        document.getElementById(`status${provider}`).className = 'api-key-status configured';
+      } catch (error) {
+        document.getElementById(`status${provider}`).textContent = '✗ Error saving';
+        document.getElementById(`status${provider}`).className = 'api-key-status error';
+      }
+    }
+  }
+  
+  // Handle Azure endpoint separately
+  const azureEndpoint = document.getElementById('azureEndpoint');
+  if (azureEndpoint && azureEndpoint.value.trim()) {
+    try {
+      await fetch(`${BACKEND_URL}/api/credentials/azure/endpoint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: azureEndpoint.value.trim() })
+      });
+    } catch (error) {
+      console.error('Failed to save Azure endpoint:', error);
+    }
+  }
+  
+  updateStatus('API keys saved');
+});
+
+// Test API Keys
+document.getElementById('testApiKeys')?.addEventListener('click', async () => {
+  updateStatus('Testing API connections...');
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/credentials/test`);
+    const results = await response.json();
+    
+    for (const [provider, result] of Object.entries(results)) {
+      const statusEl = document.getElementById(`status${provider.charAt(0).toUpperCase() + provider.slice(1)}`);
+      if (statusEl) {
+        if (result.valid) {
+          statusEl.textContent = '✓ Connected';
+          statusEl.className = 'api-key-status configured';
+        } else {
+          statusEl.textContent = `✗ ${result.error || 'Invalid'}`;
+          statusEl.className = 'api-key-status error';
+        }
+      }
+    }
+    
+    updateStatus('Connection tests complete');
+  } catch (error) {
+    updateStatus('Failed to test connections');
+  }
+});
+
+// Load API key status
+async function loadApiKeyStatus() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/credentials/status`);
+    if (response.ok) {
+      const status = await response.json();
+      
+      for (const [provider, configured] of Object.entries(status)) {
+        const statusEl = document.getElementById(`status${provider.charAt(0).toUpperCase() + provider.slice(1)}`);
+        if (statusEl) {
+          statusEl.textContent = configured ? '✓ Configured' : 'Not configured';
+          statusEl.className = configured ? 'api-key-status configured' : 'api-key-status';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load API key status:', error);
+  }
+}
+
+// Load model settings
+async function loadModelSettings() {
+  const grid = document.getElementById('modelSelectorGrid');
+  if (!grid) return;
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/models/available`);
+    if (response.ok) {
+      const data = await response.json();
+      const models = data.models || [];
+      
+      if (models.length === 0) {
+        grid.innerHTML = '<p class="no-data">No models available. Configure API keys first.</p>';
+        return;
+      }
+      
+      grid.innerHTML = models.map(model => `
+        <div class="model-card" data-model-id="${model.id}">
+          <div class="model-card-header">
+            <span class="model-name">${model.name}</span>
+            <span class="model-provider">${model.provider || 'Unknown'}</span>
+          </div>
+          <p class="model-description">${model.description || 'No description available'}</p>
+          <div class="model-stats">
+            <span>Context: ${model.context_length || 'N/A'}</span>
+            ${model.cost ? `<span>Cost: $${model.cost}/1K tokens</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      grid.querySelectorAll('.model-card').forEach(card => {
+        card.addEventListener('click', () => {
+          grid.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          
+          // Update default model select
+          const modelSelect = document.getElementById('modelSelect');
+          if (modelSelect) {
+            modelSelect.value = card.dataset.modelId;
+          }
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Failed to load model settings:', error);
+    grid.innerHTML = '<p class="error">Failed to load models</p>';
+  }
+}
+
+// Load system health
+async function loadSystemHealth() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/health`);
+    if (response.ok) {
+      const health = await response.json();
+      
+      // Update health cards
+      const cpuEl = document.getElementById('cpuUsage');
+      const memEl = document.getElementById('memoryUsage');
+      const storageEl = document.getElementById('storageUsage');
+      const backendEl = document.getElementById('backendStatus');
+      
+      if (health.cpu && cpuEl) {
+        cpuEl.textContent = `${health.cpu.toFixed(1)}%`;
+        cpuEl.className = `health-value ${health.cpu > 80 ? 'critical' : health.cpu > 50 ? 'warning' : 'good'}`;
+      }
+      
+      if (health.memory && memEl) {
+        memEl.textContent = `${health.memory.toFixed(1)}%`;
+        memEl.className = `health-value ${health.memory > 80 ? 'critical' : health.memory > 50 ? 'warning' : 'good'}`;
+      }
+      
+      if (health.disk && storageEl) {
+        storageEl.textContent = `${health.disk.toFixed(1)}%`;
+        storageEl.className = `health-value ${health.disk > 90 ? 'critical' : health.disk > 70 ? 'warning' : 'good'}`;
+      }
+      
+      if (backendEl) {
+        backendEl.textContent = 'Online';
+        backendEl.className = 'health-value good';
+      }
+    }
+  } catch (error) {
+    const backendEl = document.getElementById('backendStatus');
+    if (backendEl) {
+      backendEl.textContent = 'Offline';
+      backendEl.className = 'health-value critical';
+    }
+  }
+}
+
+// Clear conversations
+document.getElementById('clearConversations')?.addEventListener('click', async () => {
+  if (confirm('Are you sure you want to delete all conversations? This cannot be undone.')) {
+    try {
+      await fetch(`${BACKEND_URL}/conversations`, { method: 'DELETE' });
+      currentConversationId = null;
+      clearChatMessages();
+      showWelcomeMessage();
+      loadConversations();
+      updateStatus('Conversations cleared');
+    } catch (error) {
+      updateStatus('Failed to clear conversations');
+    }
+  }
+});
+
+// Clear cache
+document.getElementById('clearCache')?.addEventListener('click', async () => {
+  try {
+    await fetch(`${BACKEND_URL}/cache/clear`, { method: 'POST' });
+    document.getElementById('cacheSize').textContent = '0 MB';
+    updateStatus('Cache cleared');
+  } catch (error) {
+    updateStatus('Failed to clear cache');
+  }
+});
+
+// Export settings
+document.getElementById('exportSettings')?.addEventListener('click', async () => {
+  try {
+    const config = await window.winAI.readConfig();
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'windows-ai-settings.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    updateStatus('Settings exported');
+  } catch (error) {
+    updateStatus('Failed to export settings');
+  }
+});
+
+// Temperature slider
+document.getElementById('defaultTemperature')?.addEventListener('input', (e) => {
+  document.getElementById('defaultTempValue').textContent = e.target.value;
+});
+
 // Cleanup on window close
 window.addEventListener('beforeunload', () => {
   stopHealthMonitoring();
@@ -2652,5 +3165,70 @@ window.addEventListener('beforeunload', () => {
     downloadSocket.close();
   }
 });
+
+// =====================================================================
+// IPC Event Handlers from Main Process
+// =====================================================================
+
+// Listen for navigation commands from tray/shortcuts
+if (window.winAI && window.winAI.onNavigate) {
+  window.winAI.onNavigate((tabId) => {
+    const targetTab = document.querySelector(`[data-tab="${tabId}"]`);
+    if (targetTab) {
+      targetTab.click();
+    }
+  });
+}
+
+// Listen for focus chat input command
+if (window.winAI && window.winAI.onFocusChatInput) {
+  window.winAI.onFocusChatInput(() => {
+    chatInput?.focus();
+  });
+}
+
+// Listen for new conversation command
+if (window.winAI && window.winAI.onNewConversation) {
+  window.winAI.onNewConversation(() => {
+    currentConversationId = null;
+    clearChatMessages();
+    showWelcomeMessage();
+    updateStatus('Ready for new conversation');
+  });
+}
+
+// Listen for backend status updates
+if (window.winAI && window.winAI.onBackendStatus) {
+  window.winAI.onBackendStatus((status) => {
+    const statusText = status.ready ? 'Backend connected' : 
+                       status.running ? 'Backend starting...' : 'Backend offline';
+    updateStatus(statusText);
+  });
+}
+
+// Listen for update check command
+if (window.winAI && window.winAI.onCheckForUpdates) {
+  window.winAI.onCheckForUpdates(async () => {
+    updateStatus('Checking for updates...');
+    try {
+      const result = await window.winAI.checkForUpdates?.();
+      if (result?.available) {
+        updateStatus(`Update available: ${result.info?.version}`);
+      } else {
+        updateStatus('You are running the latest version');
+      }
+    } catch (err) {
+      updateStatus('Failed to check for updates');
+    }
+  });
+}
+
+// Listen for shortcut triggers
+if (window.winAI && window.winAI.onShortcut) {
+  window.winAI.onShortcut((shortcutId) => {
+    console.log('Shortcut triggered:', shortcutId);
+    // Handle custom shortcuts here
+  });
+}
 
 console.log('Windows AI Renderer initialized');

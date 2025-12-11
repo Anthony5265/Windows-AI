@@ -4,6 +4,13 @@
 <title>Windows AI — Your Intelligent Assistant</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* http://127.0.0.1:*">
 <link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./chat.css">
+<link rel="stylesheet" href="./settings.css">
+<link rel="stylesheet" href="./setup-wizard.css">
+<!-- Markdown rendering and syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
 <header>
@@ -417,6 +424,17 @@
   <section id="settings" class="tab">
     <div class="settings-container">
       <h2>Settings</h2>
+      
+      <!-- Settings Navigation Tabs -->
+      <div class="settings-nav-tabs">
+        <button class="settings-nav-btn active" data-settings-tab="general">General</button>
+        <button class="settings-nav-btn" data-settings-tab="api-keys">API Keys</button>
+        <button class="settings-nav-btn" data-settings-tab="models">Models</button>
+        <button class="settings-nav-btn" data-settings-tab="system">System</button>
+      </div>
+
+      <!-- General Settings Panel -->
+      <div id="settings-general" class="settings-panel active">
 
       <div class="settings-group">
         <h3>Appearance</h3>
@@ -500,6 +518,175 @@
         <button id="saveCfg" class="save-btn">Save Settings</button>
         <button id="resetCfg" class="reset-btn">Reset to Defaults</button>
       </div>
+      </div> <!-- End settings-general panel -->
+
+      <!-- API Keys Settings Panel -->
+      <div id="settings-api-keys" class="settings-panel">
+        <div class="settings-group">
+          <h3>🔑 API Key Management</h3>
+          <p class="settings-description">Configure your AI provider API keys. All keys are stored securely.</p>
+          
+          <div class="api-key-section">
+            <h4>OpenAI</h4>
+            <div class="setting-item api-key-item">
+              <label for="apiKeyOpenAI">API Key</label>
+              <div class="api-key-input-group">
+                <input id="apiKeyOpenAI" type="password" class="setting-input" placeholder="sk-..." autocomplete="off"/>
+                <button class="toggle-visibility-btn" data-target="apiKeyOpenAI" title="Show/Hide">👁️</button>
+              </div>
+            </div>
+            <div class="api-key-status" id="statusOpenAI">Not configured</div>
+          </div>
+          
+          <div class="api-key-section">
+            <h4>Anthropic (Claude)</h4>
+            <div class="setting-item api-key-item">
+              <label for="apiKeyAnthropic">API Key</label>
+              <div class="api-key-input-group">
+                <input id="apiKeyAnthropic" type="password" class="setting-input" placeholder="sk-ant-..." autocomplete="off"/>
+                <button class="toggle-visibility-btn" data-target="apiKeyAnthropic" title="Show/Hide">👁️</button>
+              </div>
+            </div>
+            <div class="api-key-status" id="statusAnthropic">Not configured</div>
+          </div>
+          
+          <div class="api-key-section">
+            <h4>Google AI (Gemini)</h4>
+            <div class="setting-item api-key-item">
+              <label for="apiKeyGoogle">API Key</label>
+              <div class="api-key-input-group">
+                <input id="apiKeyGoogle" type="password" class="setting-input" placeholder="AIza..." autocomplete="off"/>
+                <button class="toggle-visibility-btn" data-target="apiKeyGoogle" title="Show/Hide">👁️</button>
+              </div>
+            </div>
+            <div class="api-key-status" id="statusGoogle">Not configured</div>
+          </div>
+          
+          <div class="api-key-section">
+            <h4>Azure OpenAI</h4>
+            <div class="setting-item api-key-item">
+              <label for="apiKeyAzure">API Key</label>
+              <div class="api-key-input-group">
+                <input id="apiKeyAzure" type="password" class="setting-input" placeholder="Azure API Key" autocomplete="off"/>
+                <button class="toggle-visibility-btn" data-target="apiKeyAzure" title="Show/Hide">👁️</button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label for="azureEndpoint">Endpoint URL</label>
+              <input id="azureEndpoint" type="text" class="setting-input" placeholder="https://your-resource.openai.azure.com/"/>
+            </div>
+            <div class="api-key-status" id="statusAzure">Not configured</div>
+          </div>
+        </div>
+        
+        <div class="settings-actions">
+          <button id="saveApiKeys" class="save-btn">Save API Keys</button>
+          <button id="testApiKeys" class="btn-secondary">Test Connections</button>
+        </div>
+      </div>
+
+      <!-- Models Settings Panel -->
+      <div id="settings-models" class="settings-panel">
+        <div class="settings-group">
+          <h3>🤖 Model Configuration</h3>
+          <p class="settings-description">Select and configure your preferred AI models.</p>
+          
+          <div class="model-selector-grid" id="modelSelectorGrid">
+            <!-- Models will be loaded dynamically -->
+            <div class="loading-indicator">Loading available models...</div>
+          </div>
+          
+          <div class="settings-group">
+            <h4>Default Parameters</h4>
+            <div class="setting-item">
+              <label for="defaultTemperature">Default Temperature</label>
+              <div class="slider-container">
+                <input id="defaultTemperature" type="range" min="0" max="2" step="0.1" value="0.7" class="setting-input"/>
+                <span id="defaultTempValue">0.7</span>
+              </div>
+              <p class="setting-hint">Higher values make output more random, lower values more focused.</p>
+            </div>
+            <div class="setting-item">
+              <label for="defaultMaxTokens">Max Tokens</label>
+              <input id="defaultMaxTokens" type="number" class="setting-input" value="4096" min="1" max="128000"/>
+              <p class="setting-hint">Maximum number of tokens in the response.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="settings-actions">
+          <button id="saveModelSettings" class="save-btn">Save Model Settings</button>
+        </div>
+      </div>
+
+      <!-- System Settings Panel -->
+      <div id="settings-system" class="settings-panel">
+        <div class="settings-group">
+          <h3>🖥️ System Health</h3>
+          <div id="systemHealthDisplay" class="system-health-grid">
+            <div class="health-card">
+              <div class="health-icon">💻</div>
+              <div class="health-label">CPU Usage</div>
+              <div class="health-value" id="cpuUsage">--</div>
+            </div>
+            <div class="health-card">
+              <div class="health-icon">🧠</div>
+              <div class="health-label">Memory</div>
+              <div class="health-value" id="memoryUsage">--</div>
+            </div>
+            <div class="health-card">
+              <div class="health-icon">💾</div>
+              <div class="health-label">Storage</div>
+              <div class="health-value" id="storageUsage">--</div>
+            </div>
+            <div class="health-card">
+              <div class="health-icon">🔌</div>
+              <div class="health-label">Backend</div>
+              <div class="health-value" id="backendStatus">--</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3>📊 Data & Storage</h3>
+          <div class="setting-item">
+            <label>Conversation History</label>
+            <div class="storage-info">
+              <span id="conversationCount">0 conversations</span>
+              <button id="clearConversations" class="btn-danger btn-small">Clear All</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label>Cache Size</label>
+            <div class="storage-info">
+              <span id="cacheSize">0 MB</span>
+              <button id="clearCache" class="btn-secondary btn-small">Clear Cache</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="settings-group">
+          <h3>🔧 Advanced</h3>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="enableDebugMode"/>
+              Enable Debug Mode
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="enableTelemetry" checked/>
+              Send Anonymous Usage Data
+            </label>
+          </div>
+          <div class="setting-item">
+            <button id="resetAllSettings" class="btn-danger">Reset All Settings</button>
+            <button id="exportSettings" class="btn-secondary">Export Settings</button>
+            <button id="importSettings" class="btn-secondary">Import Settings</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -735,5 +922,8 @@
 
 <script src="./renderer.js"></script>
 <script src="./plugins-marketplace.js"></script>
+<script src="./settings-panel.js"></script>
+<script src="./chat-interface.js"></script>
+<script src="./setup-wizard.js"></script>
 <script src="./updater.js"></script>
 </body></html>

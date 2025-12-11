@@ -13,5 +13,10 @@
     "hourly-check",
     "weekly-cleanup"
   ],
-  "notes": "These defaults are safe to copy into ~/.windows-ai for local bootstrapping."
+  "notes": "These defaults are safe to copy into ~/.windows-ai for local bootstrapping.",
+  "model": {
+    "provider": "gemini",
+    "model_name": "gemini-pro",
+    "api_key": "YOUR_API_KEY_HERE"
+  }
 }

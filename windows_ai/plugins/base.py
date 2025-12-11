@@ -107,6 +107,14 @@ class Plugin(ABC):
             "required": []
         }
 
+    def get_supported_models(self) -> List[Dict[str, Any]]:
+        """
+        Return a list of supported model definitions provided by this plugin.
+
+        Each model entry should be a dict with keys: id, name, provider, model (provider specific), preview, badge
+        """
+        return []
+
 
 class ActionPlugin(Plugin):
     """

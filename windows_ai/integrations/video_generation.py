@@ -9,6 +9,7 @@ import os
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 from enum import Enum
+from windows_ai.config.unified_config import WindowsAIConfig
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +31,43 @@ class VideoGenerationManager:
     def __init__(self):
         self._initialized = False
         self.output_dir = Path.home() / ".windowsai" / "videos"
+        self._config: Optional[WindowsAIConfig] = None
 
-    async def initialize(self, config: Optional[Dict] = None):
-        """Initialize video generation"""
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
+        """
+        Initialize video generation with unified config
+        
+        Args:
+            config: WindowsAIConfig instance (uses storage.data_dir for output)
+        """
         if self._initialized:
             return
+        
+        self._config = config
+        
+        # Use config storage directory if available
+        if config and hasattr(config, 'storage') and hasattr(config.storage, 'data_dir'):
+            self.output_dir = Path(config.storage.data_dir) / "videos"
+        
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._initialized = True
         logger.info("Video Generation Manager initialized")
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def generate(
         self,
@@ -59,6 +89,10 @@ class VideoGenerationManager:
             return await self._replicate_generate(prompt, **kwargs)
         elif provider == VideoProvider.FAL:
             return await self._fal_generate(prompt, **kwargs)
+        elif provider == VideoProvider.PIKA:
+            return await self._pika_generate(prompt, duration, aspect_ratio, **kwargs)
+        elif provider == VideoProvider.KLING:
+            return await self._kling_generate(prompt, duration, aspect_ratio, **kwargs)
         else:
             raise ValueError(f"Unsupported video provider: {provider}")
 
@@ -210,6 +244,109 @@ class VideoGenerationManager:
             "provider": "fal",
             "model": model
         }
+
+    async def _pika_generate(self, prompt, duration, aspect_ratio, **kwargs):
+        """Pika 1.5 video generation"""
+        import aiohttp
+
+        api_key = os.environ.get("PIKA_API_KEY")
+
+        async with aiohttp.ClientSession() as session:
+            # Create generation task
+            async with session.post(
+                "https://api.pika.art/v1/generate",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": kwargs.get("model", "pika-1.5"),
+                    "prompt": prompt,
+                    "duration": duration,
+                    "aspectRatio": aspect_ratio,
+                    "fps": kwargs.get("fps", 24),
+                    "motion": kwargs.get("motion", 1),
+                    "seed": kwargs.get("seed")
+                }
+            ) as response:
+                data = await response.json()
+                job_id = data.get("job", {}).get("id")
+
+            # Poll for completion
+            while True:
+                async with session.get(
+                    f"https://api.pika.art/v1/jobs/{job_id}",
+                    headers={"Authorization": f"Bearer {api_key}"}
+                ) as response:
+                    result = await response.json()
+
+                    status = result.get("job", {}).get("status")
+                    if status == "finished":
+                        return {
+                            "url": result.get("job", {}).get("result", {}).get("videos", [{}])[0].get("url"),
+                            "provider": "pika",
+                            "model": kwargs.get("model", "pika-1.5"),
+                            "job_id": job_id
+                        }
+                    elif status == "failed":
+                        raise RuntimeError(f"Pika generation failed: {result.get('job', {}).get('error')}")
+
+                await asyncio.sleep(3)
+
+    async def _kling_generate(self, prompt, duration, aspect_ratio, **kwargs):
+        """Kling AI video generation (Kuaishou)"""
+        import aiohttp
+
+        api_key = os.environ.get("KLING_API_KEY")
+
+        # Map aspect ratio to Kling format
+        aspect_map = {
+            "16:9": "16:9",
+            "9:16": "9:16",
+            "1:1": "1:1"
+        }
+
+        async with aiohttp.ClientSession() as session:
+            # Create generation task
+            async with session.post(
+                "https://api.klingai.com/v1/videos/generations",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": kwargs.get("model", "kling-v1"),
+                    "prompt": prompt,
+                    "duration": str(duration),
+                    "aspect_ratio": aspect_map.get(aspect_ratio, "16:9"),
+                    "mode": kwargs.get("mode", "std"),  # std or pro
+                    "camera_control": kwargs.get("camera_control")
+                }
+            ) as response:
+                data = await response.json()
+                task_id = data.get("data", {}).get("task_id")
+
+            # Poll for completion
+            while True:
+                async with session.get(
+                    f"https://api.klingai.com/v1/videos/generations/{task_id}",
+                    headers={"Authorization": f"Bearer {api_key}"}
+                ) as response:
+                    result = await response.json()
+
+                    status = result.get("data", {}).get("task_status")
+                    if status == "succeed":
+                        videos = result.get("data", {}).get("task_result", {}).get("videos", [])
+                        return {
+                            "url": videos[0].get("url") if videos else None,
+                            "provider": "kling",
+                            "model": kwargs.get("model", "kling-v1"),
+                            "task_id": task_id
+                        }
+                    elif status == "failed":
+                        raise RuntimeError(f"Kling generation failed: {result.get('data', {}).get('task_status_msg')}")
+
+                await asyncio.sleep(3)
 
     # ==================== IMAGE TO VIDEO ====================
 

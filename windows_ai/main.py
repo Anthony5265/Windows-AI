@@ -509,13 +509,13 @@ from windows_ai.dao_governance import (
 )
 
 from windows_ai.cognitive_model_builder import (
-    get_cognitive_model_builder, initialize_cognitive_model_builder, CognitiveModelBuilder
+    get_cognitive_builder, initialize_cognitive_builder, CognitiveModelBuilder
 )
 from windows_ai.digital_twin_system import (
-    get_digital_twin_system, initialize_digital_twin_system, DigitalTwinSystem
+    get_digital_twin, initialize_digital_twin, DigitalTwinSystem
 )
 from windows_ai.context_persistence_manager import (
-    get_context_persistence_manager, initialize_context_persistence_manager, ContextPersistenceManager
+    get_context_manager, initialize_context_manager, ContextPersistenceManager
 )
 from windows_ai.proactive_assistant import (
     get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant
@@ -2332,14 +2332,47 @@ async def update_config(update: ConfigUpdate):
 @app.get("/models", tags=["models"])
 async def list_models():
     """List available AI models (cloud and local)"""
-    # Cloud models
-    cloud_models = [
-        {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "OpenAI", "type": "cloud"},
-        {"id": "gpt-4", "name": "GPT-4", "provider": "OpenAI", "type": "cloud"},
-        {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "type": "cloud"},
-        {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic", "type": "cloud"},
-        {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "Anthropic", "type": "cloud"},
-    ]
+    # Cloud models - pull registered model configs from unified LLM provider if available
+    try:
+        llm = getattr(app.state, "components", {}).get("llm") if hasattr(app.state, "components") else None
+        if llm:
+            cloud_models = [
+                {
+                    "id": m.get("id"),
+                    "name": m.get("name"),
+                    "provider": m.get("provider"),
+                    "type": m.get("category", "cloud"),
+                    "preview": m.get("preview", False),
+                    "badge": m.get("badge")
+                }
+                for m in llm.list_registered_models()
+            ]
+            # Add a system 'auto' option to let users request 'best available model'
+            cloud_models.insert(0, {
+                "id": "auto",
+                "name": "Auto - Best available model",
+                "provider": "system",
+                "type": "cloud",
+                "preview": False,
+                "badge": "auto"
+            })
+        else:
+            cloud_models = [
+                {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "OpenAI", "type": "cloud"},
+                {"id": "gpt-4", "name": "GPT-4", "provider": "OpenAI", "type": "cloud"},
+                {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "type": "cloud"},
+                {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic", "type": "cloud"},
+                {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "Anthropic", "type": "cloud"},
+            ]
+    except Exception as e:
+        logger.warning(f"Failed to list cloud models dynamically, falling back to default list: {e}")
+        cloud_models = [
+            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "OpenAI", "type": "cloud"},
+            {"id": "gpt-4", "name": "GPT-4", "provider": "OpenAI", "type": "cloud"},
+            {"id": "gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "OpenAI", "type": "cloud"},
+            {"id": "claude-3-opus", "name": "Claude 3 Opus", "provider": "Anthropic", "type": "cloud"},
+            {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet", "provider": "Anthropic", "type": "cloud"},
+        ]
 
     # Local models
     try:
@@ -2359,6 +2392,17 @@ async def list_models():
     except Exception as e:
         logger.warning(f"Could not list local models: {e}")
         all_models = cloud_models
+
+    # Ensure 'auto' option is always present
+    if not any(m.get('id') == 'auto' for m in all_models):
+        all_models.insert(0, {
+            "id": "auto",
+            "name": "Auto - Best available model",
+            "provider": "system",
+            "type": "cloud",
+            "preview": False,
+            "badge": "auto"
+        })
 
     return {"models": all_models}
 
@@ -3604,11 +3648,11 @@ async def analyze_concurrency_issues(code: str):
 # Integration Layer - IoT, Mesh, Model Discovery, Cloud Sync, Search
 # =====================================================================
 
-from windows_ai.integrations import router as integrations_router, initialize_integrations
+# Note: Integration managers are initialized via the WindowsAI orchestrator
+# Import RAG router for RAG endpoints
 from windows_ai.rag.api import router as rag_router
 
-# Include integration routes
-app.include_router(integrations_router)
+# Include RAG routes
 app.include_router(rag_router)
 
 

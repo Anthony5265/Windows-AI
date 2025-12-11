@@ -1,0 +1,269 @@
+<!-- Settings Panel HTML Structure -->
+<div class="settings-container">
+    <div class="settings-sidebar">
+        <button class="settings-category-btn active" data-category="api-keys">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+            API Keys
+        </button>
+        
+        <button class="settings-category-btn" data-category="models">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            Models
+        </button>
+        
+        <button class="settings-category-btn" data-category="preferences">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6M5 5l4 4m6 6l4 4M1 12h6m6 0h6M5 19l4-4m6-6l4-4"/>
+            </svg>
+            Preferences
+        </button>
+        
+        <button class="settings-category-btn" data-category="plugins">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6"/>
+                <path d="m15.4 17.4 3.2 3.2m-3.2-13.2 3.2-3.2M2.6 10.6 5.8 7.4m13.2 13.2-3.2-3.2M10.6 2.6 7.4 5.8m13.2 13.2-3.2-3.2M2.6 17.4l3.2-3.2"/>
+            </svg>
+            Plugins
+        </button>
+        
+        <button class="settings-category-btn" data-category="health">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Health
+        </button>
+        
+        <button class="settings-category-btn" data-category="about">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            About
+        </button>
+    </div>
+    
+    <div class="settings-main">
+        <!-- API Keys Section -->
+        <section id="api-keys-section" class="settings-section active">
+            <h2>API Keys</h2>
+            <p class="section-description">
+                Configure API keys for AI services. Keys are securely stored using Windows Credential Manager.
+            </p>
+            
+            <div id="apiKeysContainer" class="api-keys-container">
+                <!-- API key items will be rendered here -->
+            </div>
+            
+            <div class="settings-actions">
+                <button id="saveApiKeysBtn" class="btn-primary">
+                    Save API Keys
+                </button>
+                
+                <div class="test-connection-group">
+                    <select id="testApiKeyService" class="form-select">
+                        <option value="">Select service to test</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="google">Google AI</option>
+                        <option value="cohere">Cohere</option>
+                        <option value="azure_openai">Azure OpenAI</option>
+                    </select>
+                    <button id="testApiKeyBtn" class="btn-secondary">
+                        Test Connection
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Models Section -->
+        <section id="models-section" class="settings-section">
+            <h2>Model Configuration</h2>
+            <p class="section-description">
+                Configure AI models and generation parameters.
+            </p>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="defaultModelSelect">Default Model</label>
+                    <select id="defaultModelSelect" class="form-select">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <p class="form-help">
+                        Select the default AI model for conversations
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxTokens">Max Tokens</label>
+                    <input type="number" id="maxTokens" class="form-input" min="1" max="32000" value="2048" />
+                    <p class="form-help">
+                        Maximum number of tokens to generate (1-32000)
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="temperature">Temperature</label>
+                    <input type="range" id="temperature" class="form-range" min="0" max="2" step="0.1" value="0.7" />
+                    <output id="temperatureValue">0.7</output>
+                    <p class="form-help">
+                        Controls randomness: 0 = focused, 2 = creative
+                    </p>
+                </div>
+                
+                <button id="saveModelConfigBtn" class="btn-primary">
+                    Save Configuration
+                </button>
+            </div>
+        </section>
+        
+        <!-- Preferences Section -->
+        <section id="preferences-section" class="settings-section">
+            <h2>Preferences</h2>
+            <p class="section-description">
+                Customize Windows AI behavior and appearance.
+            </p>
+            
+            <div class="settings-form">
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="autoStartEnabled" />
+                        <span>Start Windows AI at login</span>
+                    </label>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="minimizeToTray" checked />
+                        <span>Minimize to system tray</span>
+                    </label>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="notificationsEnabled" checked />
+                        <span>Enable notifications</span>
+                    </label>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="telemetryEnabled" />
+                        <span>Send anonymous usage data</span>
+                    </label>
+                    <p class="form-help">
+                        Help improve Windows AI by sharing anonymous usage statistics
+                    </p>
+                </div>
+                
+                <button id="savePreferencesBtn" class="btn-primary">
+                    Save Preferences
+                </button>
+            </div>
+        </section>
+        
+        <!-- Plugins Section -->
+        <section id="plugins-section" class="settings-section">
+            <h2>Plugin Settings</h2>
+            <p class="section-description">
+                Manage installed plugins and their configurations.
+            </p>
+            
+            <div class="settings-actions">
+                <button onclick="window.location.hash = '#plugins'" class="btn-primary">
+                    Open Plugin Marketplace
+                </button>
+            </div>
+            
+            <div id="pluginSettingsContainer" class="plugin-settings-container">
+                <p class="empty-state">
+                    Plugin-specific settings will appear here when plugins are installed.
+                </p>
+            </div>
+        </section>
+        
+        <!-- Health Section -->
+        <section id="health-section" class="settings-section">
+            <h2>System Health</h2>
+            <p class="section-description">
+                Monitor system health and view diagnostic information.
+            </p>
+            
+            <div class="settings-actions">
+                <button id="refreshHealthBtn" class="btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                    Refresh
+                </button>
+                <button id="viewLogsBtn" class="btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    View Logs
+                </button>
+            </div>
+            
+            <div id="healthStatusContainer" class="health-status-container">
+                <div class="loading-spinner">Loading health status...</div>
+            </div>
+        </section>
+        
+        <!-- About Section -->
+        <section id="about-section" class="settings-section">
+            <h2>About Windows AI</h2>
+            
+            <div class="about-content">
+                <div class="about-logo">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                
+                <h3>Windows AI</h3>
+                <p class="version-info">Version 1.0.0</p>
+                
+                <p class="about-description">
+                    Your intelligent AI assistant for Windows, integrating with 200+ services
+                    to bring AI capabilities to your desktop.
+                </p>
+                
+                <div class="about-links">
+                    <a href="#" class="about-link">Documentation</a>
+                    <a href="#" class="about-link">GitHub Repository</a>
+                    <a href="#" class="about-link">Report an Issue</a>
+                    <a href="#" class="about-link">License</a>
+                </div>
+                
+                <div class="about-info">
+                    <h4>System Information</h4>
+                    <dl class="info-list">
+                        <dt>Platform:</dt>
+                        <dd id="platformInfo">Windows 10/11</dd>
+                        
+                        <dt>Installation Path:</dt>
+                        <dd id="installPathInfo">Loading...</dd>
+                        
+                        <dt>Data Directory:</dt>
+                        <dd id="dataPathInfo">Loading...</dd>
+                    </dl>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script src="./settings-panel.js"></script>

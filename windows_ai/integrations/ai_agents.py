@@ -6,6 +6,12 @@ Agent frameworks, tool use, planning, memory
 import asyncio
 import logging
 import os
+from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 
@@ -34,16 +40,35 @@ class AIAgentsManager:
     """Multi-agent orchestration and coordination"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
         self._agents: Dict[str, AgentConfig] = {}
         self._tools: Dict[str, Callable] = {}
         self._memory: Dict[str, List[Dict]] = {}
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._register_default_tools()
         self._initialized = True
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     def _register_default_tools(self):
         """Register built-in tools"""

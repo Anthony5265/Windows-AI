@@ -22,6 +22,22 @@ class KnowledgeGraphManager:
         self._initialized = True
         logger.info("Knowledge Graph Manager initialized")
 
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
+
     async def connect_neo4j(self, uri: str = None, user: str = None, password: str = None):
         """Connect to Neo4j"""
         from neo4j import AsyncGraphDatabase

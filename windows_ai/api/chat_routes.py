@@ -27,11 +27,18 @@ class ChatResponse(BaseModel):
     model: str
 
 @router.post("/chat")
-async def chat(request: ChatMessage):
+async def chat(body: ChatMessage, request: Request):
     """Non-streaming chat endpoint"""
     try:
+        # Get LLM provider
+        components = getattr(request.app.state, "components", {})
+        llm = components.get("llm")
+        
+        if not llm:
+            raise HTTPException(status_code=503, detail="LLM provider not initialized")
+
         # Generate conversation ID if not provided
-        conv_id = request.conversation_id or str(uuid.uuid4())
+        conv_id = body.conversation_id or str(uuid.uuid4())
         
         # Store user message
         if conv_id not in conversations:
@@ -39,12 +46,48 @@ async def chat(request: ChatMessage):
         
         conversations[conv_id].append({
             "role": "user",
-            "content": request.message,
+            "content": body.message,
             "timestamp": time.time()
         })
         
-        # Generate AI response (placeholder - integrate with actual LLM)
-        ai_response = f"This is a placeholder response to: '{request.message}'. The backend is working but not connected to an LLM yet. Please configure your API keys in Settings."
+        # Prepare messages for LLM
+        history = []
+        for msg in conversations[conv_id]:
+            if msg["role"] in ["user", "assistant", "system"]:
+                history.append({"role": msg["role"], "content": msg["content"]})
+        
+        # Handle 'auto' model
+        model_id = body.model
+        if model_id == "auto":
+            model_id = None
+            
+        # Generate AI response
+        try:
+            response = await llm.chat(
+                messages=history,
+                config_name=model_id,
+                temperature=body.temperature,
+                stream=False
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            # Fallback for demo purposes if no API keys configured
+            if "api_key" in str(e).lower() or "unauthorized" in str(e).lower():
+                ai_response = f"Error: {str(e)}. Please configure your API keys in Settings."
+                conversations[conv_id].append({
+                    "role": "assistant",
+                    "content": ai_response,
+                    "timestamp": time.time()
+                })
+                return ChatResponse(
+                    response=ai_response,
+                    conversation_id=conv_id,
+                    model=body.model or "unknown"
+                )
+            raise e
+        
+        ai_response = response.content
         
         # Store AI response
         conversations[conv_id].append({
@@ -56,18 +99,27 @@ async def chat(request: ChatMessage):
         return ChatResponse(
             response=ai_response,
             conversation_id=conv_id,
-            model=request.model
+            model=response.model
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatMessage):
+async def chat_stream(body: ChatMessage, request: Request):
     """Streaming chat endpoint using Server-Sent Events"""
     try:
+        # Get LLM provider
+        components = getattr(request.app.state, "components", {})
+        llm = components.get("llm")
+        
+        if not llm:
+            raise HTTPException(status_code=503, detail="LLM provider not initialized")
+
         # Generate conversation ID if not provided
-        conv_id = request.conversation_id or str(uuid.uuid4())
+        conv_id = body.conversation_id or str(uuid.uuid4())
         
         # Store user message
         if conv_id not in conversations:
@@ -75,33 +127,77 @@ async def chat_stream(request: ChatMessage):
         
         conversations[conv_id].append({
             "role": "user",
-            "content": request.message,
+            "content": body.message,
             "timestamp": time.time()
         })
         
+        # Prepare messages for LLM
+        history = []
+        for msg in conversations[conv_id]:
+            if msg["role"] in ["user", "assistant", "system"]:
+                history.append({"role": msg["role"], "content": msg["content"]})
+        
+        # Handle 'auto' model
+        model_id = body.model
+        if model_id == "auto":
+            model_id = None
+
         async def generate():
             """Generate streaming response"""
-            # Placeholder response - integrate with actual LLM streaming
-            full_response = f"Streaming response to: '{request.message}'. The Windows AI backend is running successfully! However, to get real AI responses, you need to:\n\n1. Configure API keys in Settings\n2. Choose an AI model (OpenAI, Anthropic, Google, etc.)\n3. Or run local models using Ollama\n\nThe system supports 2500+ AI capabilities once configured properly."
-            
-            # Simulate streaming by sending word by word
-            words = full_response.split()
-            for i, word in enumerate(words):
-                chunk = word + " "
+            full_response = ""
+            try:
+                generator = await llm.chat(
+                    messages=history,
+                    config_name=model_id,
+                    temperature=body.temperature,
+                    stream=True
+                )
+                
+                async for chunk in generator:
+                    full_response += chunk
+                    data = {
+                        "chunk": chunk,
+                        "conversation_id": conv_id,
+                        "done": False
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+                    # No sleep needed for real streaming
+                
+                # Send done message
                 data = {
-                    "chunk": chunk,
+                    "chunk": "",
                     "conversation_id": conv_id,
-                    "done": i == len(words) - 1
+                    "done": True
                 }
                 yield f"data: {json.dumps(data)}\n\n"
-                await asyncio.sleep(0.05)  # Simulate processing time
-            
-            # Store complete response
-            conversations[conv_id].append({
-                "role": "assistant",
-                "content": full_response,
-                "timestamp": time.time()
-            })
+                
+                # Store complete response
+                conversations[conv_id].append({
+                    "role": "assistant",
+                    "content": full_response,
+                    "timestamp": time.time()
+                })
+                
+            except Exception as e:
+                # Handle errors during streaming
+                error_msg = f"Error: {str(e)}"
+                if "api_key" in str(e).lower():
+                    error_msg += " Please configure your API keys in Settings."
+                
+                data = {
+                    "chunk": error_msg,
+                    "conversation_id": conv_id,
+                    "done": True,
+                    "error": True
+                }
+                yield f"data: {json.dumps(data)}\n\n"
+                
+                # Store error response
+                conversations[conv_id].append({
+                    "role": "assistant",
+                    "content": error_msg,
+                    "timestamp": time.time()
+                })
         
         return StreamingResponse(
             generate(),
@@ -113,6 +209,8 @@ async def chat_stream(request: ChatMessage):
             }
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

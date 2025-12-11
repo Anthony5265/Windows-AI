@@ -14,12 +14,12 @@ from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginTyp
 logger = logging.getLogger(__name__)
 
 
-class GitLabCI/CDPlugin(IntegrationPlugin):
+class GitLabCICDPlugin(IntegrationPlugin):
     """GitLabCICD integration plugin"""
 
     def __init__(self):
         metadata = PluginMetadata(
-            id="task-123_gitlab_ci/cd",
+            id="task-123_gitlab_ci_cd",
             name="GitLabCICD",
             description="Pipeline automation",
             version="1.0.0",

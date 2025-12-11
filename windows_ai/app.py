@@ -37,6 +37,8 @@ class WindowsAIApp:
         # Step 4: Initialize legacy components (for backwards compatibility)
         await self._init_plugin_manager()
         await self._init_frameworks()
+        # Register plugin models with the unified LLM provider
+        await self._register_plugin_models_with_llm()
         await self._init_security()
         await self._init_api_server()
 
@@ -155,6 +157,38 @@ class WindowsAIApp:
 
         except Exception as e:
             logger.warning(f"Framework init failed: {e}")
+
+    async def _register_plugin_models_with_llm(self):
+        """Register models exposed by plugins into the unified LLM provider"""
+        try:
+            pm = self.components.get("plugin_manager")
+            llm = self.components.get("llm")
+            if not pm or not llm:
+                logger.debug("Plugin manager or LLM provider not available; skipping plugin model registration")
+                return
+
+            for plugin_id, plugin in pm.plugins.items():
+                try:
+                    models = plugin.get_supported_models()
+                    for m in models:
+                        # Build a minimal LLMConfig if enough data exists
+                        from windows_ai.frameworks.unified_llm import LLMConfig, LLMProvider
+                        provider = LLMProvider[m.get('provider').upper()] if m.get('provider') else None
+                        display = m.get('name') or m.get('id')
+                        cfg = LLMConfig(
+                            provider=provider if provider else llm.configs.get(m.get('id'), {}).provider if hasattr(llm, 'configs') and m.get('id') in llm.configs else provider,
+                            model=m.get('model') or m.get('id'),
+                            display_name=display,
+                            category=m.get('type', 'cloud'),
+                            preview=m.get('preview', False),
+                            badge=m.get('badge')
+                        )
+                        llm.register_config(m.get('id'), cfg)
+                        logger.debug(f"Registered plugin model to LLM provider: {m.get('id')}")
+                except Exception as e:
+                    logger.warning(f"Failed to register models for plugin {plugin_id}: {e}")
+        except Exception as e:
+            logger.error(f"Error registering plugin models: {e}")
 
     async def _init_security(self):
         """Initialize security components"""

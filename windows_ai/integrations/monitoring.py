@@ -6,6 +6,12 @@ Logging, metrics, tracing, error tracking
 import asyncio
 import logging
 import os
+from typing import Dict, List, Any, Optional
+from windows_ai.config.unified_config import WindowsAIConfig
+
+import asyncio
+import logging
+import os
 import time
 from typing import Dict, List, Any, Optional
 from functools import wraps
@@ -16,14 +22,33 @@ class MonitoringManager:
     """Unified monitoring across 15+ platforms"""
 
     def __init__(self):
+        self._config: Optional[WindowsAIConfig] = None
         self._initialized = False
 
-    async def initialize(self, config: Optional[Dict] = None):
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
 
     # ==================== ERROR TRACKING ====================
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     async def capture_exception(self, provider: str, exception: Exception, context: Dict = None):
         """Capture exception to error tracking service"""
@@ -37,12 +62,18 @@ class MonitoringManager:
             return await self._raygun_capture(exception, context)
 
     def _sentry_capture(self, exception, context):
-        import sentry_sdk
-        sentry_sdk.init(dsn=os.environ.get("SENTRY_DSN"))
-        with sentry_sdk.push_scope() as scope:
-            for key, value in (context or {}).items():
-                scope.set_extra(key, value)
-            sentry_sdk.capture_exception(exception)
+        try:
+            import sentry_sdk
+            # Don't re-initialize if already initialized
+            # Sentry SDK handles global initialization
+            with sentry_sdk.push_scope() as scope:
+                for key, value in (context or {}).items():
+                    scope.set_extra(key, value)
+                sentry_sdk.capture_exception(exception)
+        except ImportError:
+            logger.warning("Sentry SDK not available - exception not captured")
+        except Exception as e:
+            logger.error(f"Failed to capture exception to Sentry: {e}")
 
     async def _rollbar_capture(self, exception, context):
         import rollbar

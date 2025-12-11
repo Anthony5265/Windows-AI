@@ -2,7 +2,7 @@
 GrangerCausality System
 """
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import logging
 logger = logging.getLogger(__name__)
 

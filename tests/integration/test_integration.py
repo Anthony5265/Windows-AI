@@ -15,9 +15,13 @@ class TestPluginLoading:
             with open(registry_path) as f:
                 registry = json.load(f)
 
-            assert "plugins" in registry
+            # Registry v3.0 has categories instead of plugins at top level
             assert "version" in registry
-            assert len(registry["plugins"]) > 0
+            assert "categories" in registry
+            # Check that categories have plugins
+            for category_name, category_data in registry["categories"].items():
+                if "plugins" in category_data:
+                    assert len(category_data["plugins"]) > 0
         else:
             pytest.skip("Plugin registry not found")
 

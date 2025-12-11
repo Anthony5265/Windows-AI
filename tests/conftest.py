@@ -1,6 +1,7 @@
 """Pytest configuration and fixtures"""
 import pytest
 import asyncio
+from httpx import AsyncClient, ASGITransport
 
 
 @pytest.fixture(scope="session")
@@ -25,6 +26,30 @@ def mock_credentials():
         "api_secret": "test_secret",
         "endpoint": "https://test.example.com"
     }
+
+
+@pytest.fixture
+def plugin_manager():
+    """Create plugin manager instance for testing."""
+    from windows_ai.core.plugin_manager import PluginManager
+    return PluginManager()
+
+
+@pytest.fixture
+async def async_client():
+    """Create an async HTTP client for testing FastAPI endpoints."""
+    from windows_ai.api.server import app
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+
+def assert_valid_response(response, expected_status=200):
+    """Helper to validate API responses"""
+    assert response.status_code == expected_status, f"Expected {expected_status}, got {response.status_code}: {response.text}"
+    if expected_status == 200:
+        assert response.json() is not None
+    return response
 
 
 def pytest_configure(config):

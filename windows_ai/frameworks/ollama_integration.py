@@ -49,9 +49,8 @@ class OllamaManager:
         endpoint: str,
         method: str = "GET",
         data: Optional[Dict] = None,
-        stream: bool = False
     ) -> Any:
-        """Make HTTP request to Ollama API"""
+        """Make HTTP request to Ollama API (non-streaming)"""
         import aiohttp
 
         url = f"{self.host}/api/{endpoint}"
@@ -61,17 +60,27 @@ class OllamaManager:
                 async with session.get(url) as response:
                     return await response.json()
             elif method == "POST":
-                if stream:
-                    async with session.post(url, json=data) as response:
-                        async for line in response.content:
-                            if line:
-                                yield json.loads(line.decode())
-                else:
-                    async with session.post(url, json=data) as response:
-                        return await response.json()
+                async with session.post(url, json=data) as response:
+                    return await response.json()
             elif method == "DELETE":
                 async with session.delete(url, json=data) as response:
                     return await response.json()
+
+    async def _request_stream(
+        self,
+        endpoint: str,
+        data: Optional[Dict] = None,
+    ):
+        """Make streaming HTTP request to Ollama API"""
+        import aiohttp
+
+        url = f"{self.host}/api/{endpoint}"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data) as response:
+                async for line in response.content:
+                    if line:
+                        yield json.loads(line.decode())
 
     async def list_models(self) -> List[OllamaModel]:
         """List available Ollama models"""
@@ -92,7 +101,7 @@ class OllamaManager:
 
     async def pull_model(self, model_name: str) -> AsyncGenerator[Dict, None]:
         """Pull/download a model"""
-        async for chunk in self._request("pull", "POST", {"name": model_name}, stream=True):
+        async for chunk in self._request_stream("pull", {"name": model_name}):
             yield chunk
 
     async def delete_model(self, model_name: str) -> bool:
@@ -113,9 +122,8 @@ class OllamaManager:
         system: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        stream: bool = False
-    ) -> Any:
-        """Generate text completion"""
+    ) -> str:
+        """Generate text completion (non-streaming)"""
         data = {
             "model": model,
             "prompt": prompt,
@@ -123,18 +131,39 @@ class OllamaManager:
                 "temperature": temperature,
                 "num_predict": max_tokens
             },
-            "stream": stream
+            "stream": False
         }
 
         if system:
             data["system"] = system
 
-        if stream:
-            async for chunk in self._request("generate", "POST", data, stream=True):
-                yield chunk
-        else:
-            response = await self._request("generate", "POST", data)
-            return response.get("response", "")
+        response = await self._request("generate", "POST", data)
+        return response.get("response", "")
+
+    async def generate_stream(
+        self,
+        model: str,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> AsyncGenerator[Dict, None]:
+        """Generate text completion (streaming)"""
+        data = {
+            "model": model,
+            "prompt": prompt,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens
+            },
+            "stream": True
+        }
+
+        if system:
+            data["system"] = system
+
+        async for chunk in self._request_stream("generate", data):
+            yield chunk
 
     async def chat(
         self,
@@ -142,9 +171,8 @@ class OllamaManager:
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        stream: bool = False
-    ) -> Any:
-        """Chat with a model"""
+    ) -> str:
+        """Chat with a model (non-streaming)"""
         data = {
             "model": model,
             "messages": messages,
@@ -152,15 +180,32 @@ class OllamaManager:
                 "temperature": temperature,
                 "num_predict": max_tokens
             },
-            "stream": stream
+            "stream": False
         }
 
-        if stream:
-            async for chunk in self._request("chat", "POST", data, stream=True):
-                yield chunk
-        else:
-            response = await self._request("chat", "POST", data)
-            return response.get("message", {}).get("content", "")
+        response = await self._request("chat", "POST", data)
+        return response.get("message", {}).get("content", "")
+
+    async def chat_stream(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> AsyncGenerator[Dict, None]:
+        """Chat with a model (streaming)"""
+        data = {
+            "model": model,
+            "messages": messages,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens
+            },
+            "stream": True
+        }
+
+        async for chunk in self._request_stream("chat", data):
+            yield chunk
 
     async def chat_with_history(
         self,

@@ -1,16 +1,16 @@
-"""
-Windows AI Security Module
-Sandbox, guardrails, and security controls
-"""
+"""Security utilities including permissions, audit logging, crypto and rollback."""
 
-from .sandbox import SandboxManager, SandboxLevel
-from .guardrails import GuardrailsManager, GuardrailPolicy
 from .permissions import PermissionManager
+from .audit import AuditLogger
+from .crypto import encrypt, decrypt
+from .threat_monitor import ThreatMonitor
+from .rollback import RollbackManager
 
 __all__ = [
-    'SandboxManager',
-    'SandboxLevel',
-    'GuardrailsManager',
-    'GuardrailPolicy',
-    'PermissionManager'
+    "PermissionManager",
+    "AuditLogger",
+    "encrypt",
+    "decrypt",
+    "ThreatMonitor",
+    "RollbackManager",
 ]

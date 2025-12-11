@@ -140,8 +140,15 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-class FileActivityMonitor:
+class FileActivityMonitorManager:
     """
+    File Activity Monitor Manager - Monitor and respond to file system events
+    
+    Features:
+    - Watch directories for file changes
+    - Trigger automations on file events
+    - Support multiple event types (create, modify, delete, move)
+    
     Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
 *   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
 *   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
@@ -271,42 +278,121 @@ class FileActivityMonitor:
     """
     
     def __init__(self):
-        """Initialize the file activity monitor system."""
-        self.initialized = False
-        logger.info("Initialized file_activity_monitor")
+        """Initialize the file activity monitor manager."""
+        self._initialized = False
+        self._watchers = {}
+        logger.info("FileActivityMonitorManager created")
     
-    def setup(self) -> bool:
+    async def initialize(self):
         """
-        Set up the system and prepare for operation.
+        Initialize the file activity monitor system.
         
         Returns:
-            bool: True if setup successful, False otherwise
+            bool: True if initialization successful
         """
+        if self._initialized:
+            return True
+        
         try:
-            # TODO: Implement setup logic
-            self.initialized = True
-            logger.info("file_activity_monitor setup completed")
+            # Initialize file system watchers
+            self._watchers = {}
+            self._initialized = True
+            logger.info("FileActivityMonitorManager initialized successfully")
             return True
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
+            logger.error(f"Initialization failed: {e}")
             return False
+    
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Stop all watchers
+            for watcher in self._watchers.values():
+                if hasattr(watcher, 'stop'):
+                    watcher.stop()
+            
+            self._watchers = {}
+            self._initialized = False
+            logger.info("FileActivityMonitorManager cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"FileActivityMonitorManager cleanup failed: {e}")
+    
+    async def watch_directory(self, path: str, events: List[str] = None, callback = None):
+        """
+        Watch a directory for file events
+        
+        Args:
+            path: Directory path to watch
+            events: List of events to watch for (create, modify, delete, move)
+            callback: Async function to call on events
+        
+        Returns:
+            str: Watcher ID
+        """
+        if not self._initialized:
+            raise RuntimeError("FileActivityMonitorManager not initialized")
+        
+        try:
+            import asyncio
+            import uuid
+            from watchdog.observers import Observer
+            from watchdog.events import FileSystemEventHandler
+            
+            watcher_id = str(uuid.uuid4())
+            events = events or ["create", "modify", "delete", "move"]
+            
+            class AsyncEventHandler(FileSystemEventHandler):
+                def __init__(self, callback):
+                    self.callback = callback
+                
+                def on_any_event(self, event):
+                    if self.callback:
+                        asyncio.create_task(self.callback(event))
+            
+            handler = AsyncEventHandler(callback)
+            observer = Observer()
+            observer.schedule(handler, path, recursive=True)
+            observer.start()
+            
+            self._watchers[watcher_id] = observer
+            logger.info(f"Started watching directory: {path}")
+            
+            return watcher_id
+            
+        except Exception as e:
+            logger.error(f"Failed to watch directory {path}: {e}")
+            raise
+    
+    async def stop_watcher(self, watcher_id: str):
+        """Stop a file watcher"""
+        if watcher_id in self._watchers:
+            self._watchers[watcher_id].stop()
+            del self._watchers[watcher_id]
+            logger.info(f"Stopped watcher: {watcher_id}")
+    
+    def setup(self) -> bool:
+        """Legacy sync setup method - use initialize() instead"""
+        import asyncio
+        return asyncio.run(self.initialize())
     
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
+        Legacy execute method for backward compatibility
         
         Returns:
             Dict containing execution results
         """
-        if not self.initialized:
-            raise RuntimeError("file_activity_monitor not initialized. Call setup() first.")
+        if not self._initialized:
+            raise RuntimeError("FileActivityMonitorManager not initialized. Call initialize() first.")
         
         try:
-            # TODO: Implement core functionality
             result = {
                 "status": "success",
-                "message": "file_activity_monitor executed successfully",
-                "data": {}
+                "message": "FileActivityMonitorManager ready",
+                "data": {
+                    "active_watchers": len(self._watchers)
+                }
             }
             return result
         except Exception as e:
@@ -320,13 +406,19 @@ class FileActivityMonitor:
 
 def main():
     """Main entry point for standalone execution."""
-    system = FileActivityMonitor()
+    import asyncio
     
-    if system.setup():
-        result = system.execute()
-        print(f"Result: {result}")
-    else:
-        print("Setup failed")
+    async def run():
+        manager = FileActivityMonitorManager()
+        
+        if await manager.initialize():
+            result = manager.execute()
+            print(f"Result: {result}")
+            await manager.cleanup()
+        else:
+            print("Setup failed")
+    
+    asyncio.run(run())
 
 
 if __name__ == "__main__":

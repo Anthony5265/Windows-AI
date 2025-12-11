@@ -8,27 +8,23 @@ api:
   port: 8765
   cors_origins:
     - "*"
-  rate_limit: 100  # requests per minute
+  rate_limit: 100 # requests per minute
 
-# Security Settings (ALL OFF BY DEFAULT - OPTIONAL/OPT-IN ONLY)
+# Security Settings
 security:
-  # Enable sandbox - OFF by default, maximum freedom
   # Sandbox levels: none, minimal, standard, strict, maximum
-  sandbox_enabled: false
-  sandbox_level: "none"
+  sandbox_level: "standard"
 
-  # Enable content guardrails - OFF by default
-  guardrails_enabled: false
-  guardrails_level: "off"  # off, minimal, standard, strict
+  # Enable content guardrails
+  guardrails: true
+  guardrails_level: "standard" # off, minimal, standard, strict
 
-  # Authentication - OFF by default, no restrictions
+  # Authentication
   require_auth: false
-  auth_enabled: false
   auth_token: ""
 
-  # Permissions - OFF by default, no enforcement
-  permissions_enabled: false
-  default_role: "admin"  # Full access by default
+  # Permissions
+  default_role: "user"
 
 # LLM Configuration
 llm:
@@ -105,7 +101,7 @@ local_ai:
 
 # Vector Database
 vector_db:
-  provider: "chromadb"  # chromadb, faiss, qdrant, pinecone
+  provider: "chromadb" # chromadb, faiss, qdrant, pinecone
   persist_directory: "~/.windowsai/data/vectordb"
 
   chromadb:
@@ -144,7 +140,7 @@ features:
 
 # Logging
 logging:
-  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  level: "INFO" # DEBUG, INFO, WARNING, ERROR
   file: "~/.windowsai/logs/windowsai.log"
   max_size_mb: 10
   backup_count: 5

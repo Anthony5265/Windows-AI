@@ -1,0 +1,183 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Backend Server",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "windows_ai.api.server:app",
+                "--reload",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8000"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "WINDOWS_AI_ENV": "development"
+            },
+            "jinja": true,
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: GUI Control Center",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/control_center/gui.py",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "WINDOWS_AI_ENV": "development"
+            },
+            "jinja": true,
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Mesh GUI",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/control_center/mesh_gui.py",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "WINDOWS_AI_ENV": "development"
+            },
+            "jinja": true,
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Debug Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "--tb=short",
+                "--log-cli-level=DEBUG"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Debug Specific Test",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}::${input:testName}",
+                "-v",
+                "-s",
+                "--tb=short",
+                "--log-cli-level=DEBUG"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Security Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/security/",
+                "-v",
+                "--tb=short",
+                "-m",
+                "critical"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=short",
+                "--maxfail=5"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Tests with Coverage",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "--cov=windows_ai",
+                "--cov-report=html",
+                "--cov-report=term",
+                "-v"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Plugin System",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/windows_ai/plugins/plugin_manager.py",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "WINDOWS_AI_ENV": "development"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Agent Orchestrator",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/windows_ai/agents/orchestrator.py",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "WINDOWS_AI_ENV": "development"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testName",
+            "type": "promptString",
+            "description": "Test function name (e.g., test_plugin_sandbox)",
+            "default": "test_"
+        }
+    ]
+}

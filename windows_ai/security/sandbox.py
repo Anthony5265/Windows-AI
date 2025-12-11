@@ -1,10 +1,6 @@
 """
 Sandbox Manager for Windows AI
 Provides isolation and containment for AI operations
-
-NOTE: Sandboxing is OPTIONAL and OFF by default (SandboxLevel.NONE).
-      Full system access is provided by default for maximum freedom.
-      Users can enable sandboxing if they want additional security.
 """
 
 import asyncio
@@ -29,7 +25,7 @@ class SandboxLevel(Enum):
 
 @dataclass
 class SandboxConfig:
-    level: SandboxLevel = SandboxLevel.NONE  # Changed to NONE - OFF by default
+    level: SandboxLevel = SandboxLevel.STANDARD
     allowed_paths: List[str] = field(default_factory=list)
     blocked_paths: List[str] = field(default_factory=list)
     allowed_commands: List[str] = field(default_factory=list)
@@ -39,8 +35,8 @@ class SandboxConfig:
     max_cpu_percent: int = 80
     timeout_seconds: int = 300
     allow_file_write: bool = True
-    allow_file_delete: bool = True  # Changed to True - full access by default
-    allow_registry_access: bool = True  # Changed to True - full access by default
+    allow_file_delete: bool = False
+    allow_registry_access: bool = False
     allow_process_spawn: bool = True
 
 class SandboxManager:
@@ -260,3 +256,65 @@ class SandboxManager:
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
         logger.info(f"Sandbox config updated: {kwargs}")
+
+    async def execute_file_operation(
+        self,
+        operation: str,
+        path: str,
+        data: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Execute a file operation within sandbox constraints
+        
+        Args:
+            operation: One of "read", "write", "delete", "exists"
+            path: File path to operate on
+            data: Data to write (for write operation)
+            
+        Returns:
+            Dictionary with result status and data
+            
+        Raises:
+            PermissionError: If operation is blocked by sandbox policy
+        """
+        # Check if path is allowed
+        if not self.is_path_allowed(path):
+            raise PermissionError(f"Path blocked by sandbox policy: {path}")
+        
+        # Check operation-specific permissions
+        if operation == "write":
+            if not self.config.allow_file_write:
+                raise PermissionError("File write operations blocked by sandbox policy")
+            
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, 'w') as f:
+                    f.write(data or "")
+                return {"success": True, "allowed": True, "operation": operation, "path": path}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+        
+        elif operation == "delete":
+            if not self.config.allow_file_delete:
+                raise PermissionError("File delete operations blocked by sandbox policy")
+            
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+                return {"success": True, "allowed": True, "operation": operation, "path": path}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+        
+        elif operation == "read":
+            try:
+                with open(path, 'r') as f:
+                    content = f.read()
+                return {"success": True, "allowed": True, "data": content}
+            except Exception as e:
+                return {"success": False, "error": str(e)}
+        
+        elif operation == "exists":
+            exists = os.path.exists(path)
+            return {"success": True, "allowed": True, "exists": exists}
+        
+        else:
+            return {"success": False, "error": f"Unknown operation: {operation}"}

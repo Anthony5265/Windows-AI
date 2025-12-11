@@ -9,6 +9,8 @@ import os
 from typing import Dict, List, Any, Optional, AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from windows_ai.config.unified_config import WindowsAIConfig
 
 logger = logging.getLogger(__name__)
 
@@ -130,19 +132,59 @@ class AIProvidersManager:
     def __init__(self):
         self._clients: Dict[str, Any] = {}
         self._initialized = False
+        self._config: Optional[WindowsAIConfig] = None
 
-    async def initialize(self, config: Optional[Dict] = None):
-        """Initialize the AI providers manager"""
+    async def initialize(self, config: Optional[WindowsAIConfig] = None):
+        """
+        Initialize the AI providers manager with unified config
+        
+        Args:
+            config: WindowsAIConfig instance (uses config.llm for provider settings)
+        """
         if self._initialized:
             return
+        
+        self._config = config
         self._initialized = True
-        logger.info("AI Providers Manager initialized with 50+ providers")
+        
+        # Log available provider from config
+        if config and hasattr(config, 'llm') and hasattr(config.llm, 'provider'):
+            logger.info(f"AI Providers Manager initialized - default provider: {config.llm.provider}")
+        else:
+            logger.info("AI Providers Manager initialized with 50+ providers")
+
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
 
     def _get_api_key(self, provider: Provider) -> Optional[str]:
-        """Get API key for a provider"""
+        """
+        Get API key for a provider from unified config or environment
+        
+        Priority: config.llm.api_key > environment variable
+        """
+        # Try unified config first
+        if self._config and hasattr(self._config, 'llm') and hasattr(self._config.llm, 'api_key'):
+            if self._config.llm.api_key:
+                return self._config.llm.api_key
+        
+        # Fallback to environment variable
         config = PROVIDER_CONFIGS.get(provider)
         if config and config.api_key_env:
             return os.environ.get(config.api_key_env)
+        
         return None
 
     async def chat(
@@ -179,6 +221,12 @@ class AIProvidersManager:
             # Use LiteLLM as fallback for other providers
             return await self._litellm_chat(provider, messages, model, temperature, max_tokens, stream, **kwargs)
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _openai_chat(self, messages, model, temperature, max_tokens, stream, **kwargs):
         """OpenAI chat implementation"""
         from openai import AsyncOpenAI
@@ -209,6 +257,12 @@ class AIProvidersManager:
             }
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _anthropic_chat(self, messages, model, temperature, max_tokens, stream, **kwargs):
         """Anthropic chat implementation"""
         from anthropic import AsyncAnthropic
@@ -249,6 +303,12 @@ class AIProvidersManager:
             }
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _google_chat(self, messages, model, temperature, max_tokens, stream, **kwargs):
         """Google Gemini chat implementation"""
         import google.generativeai as genai
@@ -277,6 +337,12 @@ class AIProvidersManager:
             "model": model
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _groq_chat(self, messages, model, temperature, max_tokens, stream, **kwargs):
         """Groq chat implementation (fast inference)"""
         from groq import AsyncGroq
@@ -307,6 +373,12 @@ class AIProvidersManager:
             }
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _mistral_chat(self, messages, model, temperature, max_tokens, stream, **kwargs):
         """Mistral chat implementation"""
         from mistralai import Mistral
@@ -356,6 +428,12 @@ class AIProvidersManager:
                     "model": model
                 }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError)),
+        reraise=True
+    )
     async def _litellm_chat(self, provider, messages, model, temperature, max_tokens, stream, **kwargs):
         """LiteLLM fallback for other providers"""
         import litellm

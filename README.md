@@ -109,43 +109,6 @@ When a new model is available it will appear in the Setup Wizard and Settings dr
 
 ---
 
-## 🔓 "FREEDOM FIRST" PHILOSOPHY
-
-### ⚠️ Security is OFF by Default - Here's Why
-
-**Windows AI is YOUR tool on YOUR machine. You own it. You control it.**
-
-Unlike cloud AI services that restrict what you can do, Windows AI gives you **maximum freedom**:
-
-- ✅ **No sandboxing by default** - Plugins have full system access
-- ✅ **No authentication required** - Your machine, your rules
-- ✅ **No content filtering** - No restrictions on what you can create
-- ✅ **No permission checks** - Full admin access to all features
-- ✅ **No API keys needed** - Use everything locally without accounts
-
-### 🛡️ But Security is AVAILABLE When You Need It
-
-Running on a server? Sharing with team? Need compliance?
-
-**All security features are optional and can be enabled in Settings:**
-
-- 🔒 **Sandboxing** - Restrict plugin system access
-- 🔑 **Authentication** - Require API keys for access
-- 👥 **Permissions** - Role-based access control (RBAC)
-- 🚦 **Content Guardrails** - Filter harmful content
-- 📊 **Audit Logging** - Track all API access
-
-**See `docs/SECURITY_CONFIGURATION.md` for complete guide.**
-
-### Why This Design?
-
-**For local development:** Maximum freedom = maximum productivity
-**For production:** Enable security features as needed
-
-**You choose your security posture. Not the other way around.**
-
----
-
 ## 🎨 MIND-BLOWING FEATURES
 
 ### 🖥️ **GORGEOUS DESKTOP APP**

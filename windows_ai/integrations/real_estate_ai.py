@@ -23,6 +23,22 @@ class RealEstateAIManager:
 
     # ==================== PROPERTY VALUATION ====================
 
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
+
     async def estimate_value(self, address: str, property_type: str = "residential") -> Dict:
         """Estimate property value"""
         import aiohttp

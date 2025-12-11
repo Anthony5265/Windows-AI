@@ -27,10 +27,14 @@ class PluginManager:
         self.start_time = time.time()
 
     async def initialize(self):
-        """Initialize the plugin manager and load all plugins"""
+        """Initialize the plugin manager and load all plugins
+        
+        Returns:
+            True if initialization successful
+        """
         if self.initialized:
             logger.warning("Plugin manager already initialized")
-            return
+            return True
 
         logger.info("Initializing plugin manager...")
 
@@ -38,7 +42,9 @@ class PluginManager:
         await self._discover_builtin_plugins()
 
         self.initialized = True
+        self._initialized = True  # Alias for compatibility
         logger.info(f"Plugin manager initialized with {len(self.plugins)} plugins")
+        return True
 
     async def _discover_builtin_plugins(self):
         """Discover and load all builtin plugins"""
@@ -50,18 +56,41 @@ class PluginManager:
 
         logger.info(f"Discovering plugins in {plugins_dir}")
 
-        # Scan all subdirectories
+        # First, scan plugins directly in builtin/ directory
+        logger.debug("Scanning root builtin directory for plugins")
+        for plugin_file in plugins_dir.glob("*_plugin.py"):
+            # Skip template plugins (files under 5KB are likely templates)
+            if plugin_file.stat().st_size < 5000:
+                logger.debug(f"Skipping template plugin: {plugin_file.name} ({plugin_file.stat().st_size} bytes)")
+                continue
+            
+            try:
+                await self._load_plugin_file(plugin_file, "general")
+            except Exception as e:
+                logger.error(f"Failed to load plugin {plugin_file.name}: {e}")
+
+        # Then, scan all subdirectories (categories)
         for category_dir in plugins_dir.iterdir():
             if not category_dir.is_dir():
                 continue
 
             if category_dir.name.startswith('_'):
                 continue
+            
+            # Skip 'generated' directory - contains AI-generated low-quality plugins
+            if category_dir.name == 'generated':
+                logger.debug("Skipping 'generated' directory (contains AI-generated plugins)")
+                continue
 
             logger.debug(f"Scanning category: {category_dir.name}")
 
             # Load all plugins in this category
             for plugin_file in category_dir.glob("*_plugin.py"):
+                # Skip template plugins (files under 5KB are likely templates)
+                if plugin_file.stat().st_size < 5000:
+                    logger.debug(f"Skipping template plugin: {plugin_file.name} ({plugin_file.stat().st_size} bytes)")
+                    continue
+                
                 try:
                     await self._load_plugin_file(plugin_file, category_dir.name)
                 except Exception as e:
@@ -137,6 +166,18 @@ class PluginManager:
             if plugin.metadata.plugin_type.value == plugin_type
         ]
 
+    def get_all_supported_models(self) -> List[Dict[str, Any]]:
+        """Get all supported models from all loaded plugins"""
+        models = []
+        for plugin in self.plugins.values():
+            try:
+                plugin_models = plugin.get_supported_models()
+                if plugin_models:
+                    models.extend(plugin_models)
+            except Exception as e:
+                logger.warning(f"Error getting models from plugin {plugin.metadata.id}: {e}")
+        return models
+
     async def execute_plugin(
         self,
         plugin_id: str,
@@ -194,3 +235,30 @@ class PluginManager:
             'plugin_types': plugin_types,
             'uptime': time.time() - self.start_time
         }
+    
+    async def list_plugins(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        List all plugins, optionally filtered by category
+        
+        Args:
+            category: Optional category filter
+        
+        Returns:
+            List of plugin metadata dictionaries
+        """
+        if category:
+            plugins = self.get_plugins_by_category(category)
+            return [p.metadata.to_dict() for p in plugins]
+        else:
+            return self.get_all_plugins()
+
+
+# Global singleton instance
+_plugin_manager_instance = None
+
+def get_plugin_manager() -> PluginManager:
+    """Get global plugin manager instance"""
+    global _plugin_manager_instance
+    if _plugin_manager_instance is None:
+        _plugin_manager_instance = PluginManager()
+    return _plugin_manager_instance

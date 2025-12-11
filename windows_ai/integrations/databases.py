@@ -16,6 +16,12 @@ class DatabaseManager:
     def __init__(self):
         self._initialized = False
         self._connections: Dict[str, Any] = {}
+        self._pools: Dict[str, Any] = {}  # Connection pools
+        self._pool_config = {
+            "min_size": 2,
+            "max_size": 10,
+            "timeout": 30
+        }
 
     async def initialize(self, config: Optional[Dict] = None):
         if self._initialized:
@@ -24,24 +30,67 @@ class DatabaseManager:
 
     # ==================== POSTGRESQL ====================
 
+    async def cleanup(self):
+        """Cleanup resources before shutdown"""
+        try:
+            # Close connection pools
+            for name, pool in self._pools.items():
+                try:
+                    if hasattr(pool, 'close'):
+                        await pool.close() if asyncio.iscoroutinefunction(pool.close) else pool.close()
+                    logger.info(f"Closed connection pool: {name}")
+                except Exception as e:
+                    logger.error(f"Error closing pool {name}: {e}")
+            
+            # Close any open connections
+            if hasattr(self, '_clients'):
+                for client in self._clients.values():
+                    if hasattr(client, 'close'):
+                        await client.close() if asyncio.iscoroutinefunction(client.close) else client.close()
+            
+            # Clear pools and connections
+            self._pools.clear()
+            self._connections.clear()
+            
+            # Reset initialization flag
+            self._initialized = False
+            logger.info(f"{self.__class__.__name__} cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"{self.__class__.__name__} cleanup failed: {e}")
+
     async def postgres_connect(self, dsn: str = None) -> Any:
         import asyncpg
         dsn = dsn or os.environ.get("DATABASE_URL")
-        conn = await asyncpg.connect(dsn)
-        self._connections["postgres"] = conn
-        return conn
+        
+        # Create connection pool if it doesn't exist
+        if "postgres" not in self._pools:
+            self._pools["postgres"] = await asyncpg.create_pool(
+                dsn,
+                min_size=self._pool_config["min_size"],
+                max_size=self._pool_config["max_size"],
+                command_timeout=self._pool_config["timeout"]
+            )
+            logger.info(f"Created PostgreSQL connection pool (min={self._pool_config['min_size']}, max={self._pool_config['max_size']})")
+        
+        return self._pools["postgres"]
 
     async def postgres_query(self, query: str, params: tuple = None) -> List[Dict]:
-        conn = self._connections.get("postgres")
-        if not conn:
-            await self.postgres_connect()
-            conn = self._connections["postgres"]
-        rows = await conn.fetch(query, *(params or ()))
-        return [dict(row) for row in rows]
+        pool = self._pools.get("postgres")
+        if not pool:
+            pool = await self.postgres_connect()
+        
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(query, *(params or ()))
+            return [dict(row) for row in rows]
 
     async def postgres_execute(self, query: str, params: tuple = None) -> str:
-        conn = self._connections.get("postgres")
-        return await conn.execute(query, *(params or ()))
+        pool = self._pools.get("postgres")
+        if not pool:
+            pool = await self.postgres_connect()
+        
+        async with pool.acquire() as conn:
+            return await conn.execute(query, *(params or ()))
 
     # ==================== MYSQL ====================
 
@@ -68,9 +117,19 @@ class DatabaseManager:
     async def mongo_connect(self, uri: str = None) -> Any:
         from motor.motor_asyncio import AsyncIOMotorClient
         uri = uri or os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
-        client = AsyncIOMotorClient(uri)
-        self._connections["mongo"] = client
-        return client
+        
+        # Motor automatically pools connections, configure pool size
+        if "mongo" not in self._connections:
+            client = AsyncIOMotorClient(
+                uri,
+                maxPoolSize=self._pool_config["max_size"],
+                minPoolSize=self._pool_config["min_size"],
+                serverSelectionTimeoutMS=self._pool_config["timeout"] * 1000
+            )
+            self._connections["mongo"] = client
+            logger.info(f"Created MongoDB connection pool (min={self._pool_config['min_size']}, max={self._pool_config['max_size']})")
+        
+        return self._connections["mongo"]
 
     async def mongo_find(self, database: str, collection: str, query: Dict = None, limit: int = 100) -> List[Dict]:
         client = self._connections.get("mongo")
@@ -95,7 +154,17 @@ class DatabaseManager:
     async def redis_connect(self, url: str = None) -> Any:
         import redis.asyncio as redis
         url = url or os.environ.get("REDIS_URL", "redis://localhost:6379")
-        client = redis.from_url(url)
+        
+        # Create connection pool if it doesn't exist
+        if "redis" not in self._pools:
+            self._pools["redis"] = redis.ConnectionPool.from_url(
+                url,
+                max_connections=self._pool_config["max_size"],
+                socket_connect_timeout=self._pool_config["timeout"]
+            )
+            logger.info(f"Created Redis connection pool (max={self._pool_config['max_size']})")
+        
+        client = redis.Redis(connection_pool=self._pools["redis"])
         self._connections["redis"] = client
         return client
 
