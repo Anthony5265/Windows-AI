@@ -21,5 +21,8 @@
   "required": [
     "version",
     "created"
+  ],
+  "recommendations": [
+    "stevenhansel.vscode-nvm"
   ]
 }

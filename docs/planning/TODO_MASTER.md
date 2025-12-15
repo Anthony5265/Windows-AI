@@ -44,13 +44,16 @@
 
 ⚠️ **Known Issue:** shell_automation_plugin.py line 687 - abstract class instantiation error (SendInput)
 
-### CRITICAL GAP - Needs Recreation:
+### CRITICAL GAP - Needs Recreation
+
 - ❌ **window_manager_plugin.py** - DELETED but NOT recreated! Must implement window manipulation, positioning, multi-monitor support
 
-### Remaining Template Plugins (24 files @ 72 lines each):
+### Remaining Template Plugins (24 files @ 72 lines each)
+
 winrm_plugin.py, windows_store_plugin.py, performance_recorder_plugin.py, wsa_android_plugin.py, search_indexing_plugin.py, multi-monitor_plugin.py, uwp_apps_plugin.py, volume_shadow_copy_plugin.py, wifi_direct_plugin.py, msix_packaging_plugin.py, windows_hello_plugin.py, diagnostic_data_plugin.py, group_policy_plugin.py, file_system_operations_plugin.py, appx_manifest_plugin.py, etw_plugin.py, bits_transfer_plugin.py, error_reporting_plugin.py, wmi_provider_plugin.py, direct3d_plugin.py, installer_hooks_plugin.py, cortana_plugin.py, com_automation_plugin.py
 
-### Other December 11 Changes:
+### Other December 11 Changes
+
 - ✅ All changes committed and pushed to GitHub (commit e5a44fc8)
 - ✅ Repository cleanup and organization improvements
 - ✅ Deleted duplicate TODO_MASTER.md from root (kept docs/planning/ version)
