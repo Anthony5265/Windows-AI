@@ -1,0 +1,8 @@
+"""
+Terminal Module Compatibility Shim
+Re-exports TerminalEngine from windows_ai.terminal for test compatibility.
+"""
+
+from windows_ai.terminal.engine import TerminalEngine
+
+__all__ = ["TerminalEngine"]

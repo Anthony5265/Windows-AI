@@ -40,7 +40,7 @@ class Plugin(IntegrationPlugin):
             author="Windows AI Team",
             plugin_type=PluginType.INTEGRATION,
             tags=["audio", "ai", "transcription", "speech-to-text", "whisper", "openai"]
-        ))
+        )
         super().__init__(metadata)
         
         self.session = None

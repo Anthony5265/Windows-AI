@@ -24,7 +24,13 @@ from .models import (
     ConflictResolution,
     DeviceInfo,
 )
-from .protocol import SyncProtocol
+# Note:
+# Import the protocol module (not the class directly) so tests can patch
+# windows_ai.cloud_sync.protocol.SyncProtocol and have it take effect here.
+from . import protocol
+# Backwards-compatible alias so tests can patch
+# windows_ai.cloud_sync.client.SyncProtocol as well.
+SyncProtocol = protocol.SyncProtocol
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +89,7 @@ class SyncClient:
         self.db.register_device(self.device_info)
 
         # Initialize protocol
-        self.protocol = SyncProtocol(
+        self.protocol = protocol.SyncProtocol(
             server_url=server_url,
             encryption=self.encryption,
             encryption_key=self.encryption_key,

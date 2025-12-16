@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Windows AI Chat</title>
+  <style>
+    :root {
+      --background: #ffffff;
+      --text: #111111;
+      --assistant-bg: #f3f4f6;
+      --user-bg: #dbeafe;
+      --border: #e5e7eb;
+    }
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #chat-container {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 380px; /* ensure it fits on a 400px viewport */
+      min-width: 280px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .message {
+      padding: 10px 12px;
+      border-radius: 10px;
+      line-height: 1.35;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    .message.assistant {
+      background: var(--assistant-bg);
+      align-self: flex-start;
+    }
+    .message.user {
+      background: var(--user-bg);
+      align-self: flex-end;
+    }
+    #theme-toggle {
+      align-self: flex-end;
+      border: 1px solid var(--border);
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    @media (max-width: 400px) {
+      #chat-container {
+        max-width: calc(100vw - 16px);
+        margin: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <button id="theme-toggle" aria-label="Toggle theme">Toggle Theme</button>
+    <div class="message assistant">Hello! How can I help you today?</div>
+    <div class="message user">Show me a sample of the chat layout.</div>
+  </div>
+
+  <script>
+    (function(){
+      const btn = document.getElementById('theme-toggle');
+      btn.addEventListener('click', () => {
+        const root = document.documentElement;
+        const current = getComputedStyle(root).getPropertyValue('--background').trim();
+        const next = (current.toLowerCase() === '#111111') ? '#ffffff' : '#111111';
+        root.style.setProperty('--background', next);
+        // maintain readable text color as background toggles
+        root.style.setProperty('--text', next === '#111111' ? '#f9fafb' : '#111111');
+      });
+    })();
+  </script>
+</body>
+</html>

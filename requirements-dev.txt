@@ -25,6 +25,7 @@ freezegun>=1.4.0,<2.0
 
 # Database Testing
 pytest-postgresql>=5.0.0,<6.0
+psycopg[binary]>=3.3.2,<4.0
 
 # ============ Security Testing ============
 safety>=2.3.0,<3.0

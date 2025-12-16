@@ -8,6 +8,7 @@ from typing import Dict, List, Protocol, Tuple
 
 __all__ = [
     "Backend",
+        "ChainBackend",
     "LocalBackend",
     "RemoteBackend",
     "Session",
@@ -37,6 +38,50 @@ class RemoteBackend:
 
     def generate(self, prompt: str) -> str:  # pragma: no cover - trivial
         return f"[remote] {prompt}"
+
+class ChainBackend:
+    """Chain multiple backends sequentially.
+    
+    The output of each backend becomes the input to the next backend,
+    allowing for multi-stage processing of prompts.
+    
+    Examples
+    --------
+    >>> local = LocalBackend()
+    >>> remote = RemoteBackend()
+    >>> chain = ChainBackend([local, remote])
+    >>> chain.generate("hi")
+    '[remote] [local] hi'
+    """
+    
+    def __init__(self, backends: List[Backend]):
+        """Initialize with a list of backends to chain.
+        
+        Parameters
+        ----------
+        backends : List[Backend]
+            Backends to chain in order. Each backend's output becomes
+            the next backend's input.
+        """
+        self.backends = backends
+    
+    def generate(self, prompt: str) -> str:
+        """Generate by passing through each backend sequentially.
+        
+        Parameters
+        ----------
+        prompt : str
+            Initial prompt to process.
+            
+        Returns
+        -------
+        str
+            Final output after passing through all backends in sequence.
+        """
+        result = prompt
+        for backend in self.backends:
+            result = backend.generate(result)
+        return result
 
 
 _context_menu_enabled = False

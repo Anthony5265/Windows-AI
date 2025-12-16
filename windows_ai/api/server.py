@@ -179,9 +179,9 @@ async def startup_event():
     # Load credentials first
     await load_credentials_to_env()
 
-    # Initialize plugin manager with config
+    # Initialize plugin manager
     try:
-        _plugin_manager = PluginManager(config=_config)
+        _plugin_manager = PluginManager()
         await _plugin_manager.initialize()
         _plugin_manager.start_time = time.time()
 
@@ -189,8 +189,8 @@ async def startup_event():
         set_plugin_manager(_plugin_manager)
 
         # Initialize Unified LLM Provider with config
-        llm_provider = UnifiedLLMProvider(config=_config)
-        await llm_provider.initialize()
+        llm_provider = UnifiedLLMProvider()
+        await llm_provider.initialize(config=_config)
         
         # Store in app state for routes to access
         if not hasattr(app.state, "components"):

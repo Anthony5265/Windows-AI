@@ -22,7 +22,7 @@ from . import get_plugins
 from mesh import MeshNode
 from iot import ADAPTERS, discover_devices, pair_device
 from secrets import token_urlsafe
-from plugins.manager import PluginManager
+from windows_ai.core.plugin_manager import PluginManager
 from security import AuditLogger, PermissionManager
 from optimization import tuning
 from eco.scheduler import EcoScheduler

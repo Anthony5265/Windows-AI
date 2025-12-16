@@ -1,0 +1,48 @@
+**********************
+PowerShell transcript start
+Start time: 20251215173513
+Username: DESKTOP-RSIDPEJ\antho
+RunAs User: DESKTOP-RSIDPEJ\antho
+Configuration Name: 
+Machine: DESKTOP-RSIDPEJ (Microsoft Windows NT 10.0.28000.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoLogo -NoProfile -Command 
+$ErrorActionPreference='Stop'
+$Log = 'C:\Users\antho\AppData\Local\Temp\pytest-of-antho\pytest-50\test_installer_downloads_prere0\log.txt'
+function Invoke-WebRequest { param($Uri,$OutFile) Add-Content -Path $Log -Value $Uri; New-Item -ItemType File -Path $OutFile -Force | Out-Null }
+function Expand-Archive { param($Path,$DestinationPath,[switch]$Force) Add-Content -Path $Log -Value "EXPAND:$Path"; New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null; New-Item -ItemType File -Path (Join-Path $DestinationPath 'nssm.exe') -Force | Out-Null }
+function Start-Process { param($FilePath,$ArgumentList,[switch]$Wait) Add-Content -Path $Log -Value "START:$FilePath" }
+function nssm { param($Action,$Name,$Exe,$Args) Add-Content -Path $Log -Value "NSSM:$Action" }
+function mkcert { param($Arg) Add-Content -Path $Log -Value "MKCERT:$Arg" }
+function node { param($A,$B,$C) Add-Content -Path $Log -Value "NODE:$A" }
+$env:PATH=''
+$env:ProgramData='C:\Users\antho\AppData\Local\Temp\pytest-of-antho\pytest-50\test_installer_downloads_prere0'
+$env:TEMP='C:\Users\antho\AppData\Local\Temp\pytest-of-antho\pytest-50\test_installer_downloads_prere0'
+. 'C:\Users\antho\Windows-AI\install\install.ps1'
+
+Process ID: 13084
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.28000
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Installing Windows AI services...
+WARNING: Required command 'python' not found; snapshot creation skipped.
+WARNING: nssm.exe not found; attempting download.
+WARNING: mkcert.exe not found; attempting download.
+WARNING: node.exe not found; attempting download.
+WARNING: Unable to locate node executable; continuing without Node.
+**********************
+Command start time: 20251215173516
+**********************
+PS>TerminatingError(New-NetFirewallRule): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Access is denied. "
+WARNING: Access is denied.
+Install complete.
+**********************
+PowerShell transcript end
+End time: 20251215173516
+**********************
