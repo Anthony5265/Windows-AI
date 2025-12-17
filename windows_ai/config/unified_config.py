@@ -43,6 +43,13 @@ class ServerConfig(BaseModel):
     cors_origins: List[str] = Field(default=["http://localhost:*"], description="Allowed CORS origins")
     api_key_required: bool = Field(default=False, description="Require API key authentication")
 
+    @field_validator('port')
+    @classmethod
+    def validate_port(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError(f"Port must be positive, got {v}")
+        return v
+
 
 class DatabaseConfig(BaseModel):
     """Database connection configuration"""
@@ -62,6 +69,8 @@ class LoggingConfig(BaseModel):
     file: Optional[Path] = Field(default=None, description="Log file path (None = console only)")
     max_bytes: int = Field(default=10_000_000, description="Max log file size before rotation")
     backup_count: int = Field(default=5, description="Number of backup log files")
+
+    model_config = SettingsConfigDict(validate_assignment=True)
 
     @field_validator('level')
     @classmethod

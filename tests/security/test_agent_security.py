@@ -13,6 +13,7 @@ try:
     from windows_ai.agents.agent import Agent, AgentStatus
     from windows_ai.agents.agent_manager import AgentManager
     from windows_ai.agents.task import Task, TaskStatus, TaskPriority
+    from windows_ai.exceptions import SecurityError
 except ImportError:
     pytest.skip("Agent system not available", allow_module_level=True)
 
@@ -34,7 +35,8 @@ async def test_agent(agent_manager):
     agent = await agent_manager.create_agent(
         name="test_agent",
         capabilities=["data_processing"],
-        available_plugins=["test_plugin"]
+        available_plugins=["test_plugin"],
+        auth_token="test-auth-token-1234567890"  # Provide auth token
     )
     return agent
 

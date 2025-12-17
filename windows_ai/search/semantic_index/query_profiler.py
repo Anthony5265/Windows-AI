@@ -1,355 +1,571 @@
 #!/usr/bin/env python3
 """
-Query Profiler
+Query Profiler - Analyze Query Performance Metrics
 
-Provide `search/semantic_index/query_profiler.py` analyzing query performance metrics.
-*   **Upgrade 165:** Add `iot/device_health_monitor.py` to track firmware versions and status alerts.
-*   **Upgrade 166:** Publish `mobile/docs/offline-mode.md` describing cache policies for disconnected usage.
-*   **Upgrade 167:** Introduce `domains/audio_processing/speaker_diarization.py` to separate speakers in recorded meetings.
-*   **Upgrade 168:** Create `gui/src/components/AutomationInsights.vue` to highlight automation ROI to users.
-*   **Upgrade 169:** Build `automation/workflow_editor/version_history.ts` enabling rollback to previous workflow revisions.
-*   **Upgrade 170:** Implement `windows_ai/system_controls/security_context.py` verifying permissions before executing actions.
-*   **Upgrade 171:** Provide `search/plugins/web_results.py` to blend curated web data into responses.
-*   **Upgrade 172:** Add `agenthub/plugins/discovery_service.py` to auto-register new domain capabilities.
-*   **Upgrade 173:** Publish `docs/guides/speech-to-automation.md` linking voice commands to workflow templates.
-*   **Upgrade 174:** Introduce `domains/natural_language_processing/personalization_hooks.py` injecting user preferences into prompts.
-*   **Upgrade 175:** Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
-*   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
-*   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
-*   **Upgrade 178:** Provide `automation/workflow_runtime/audit_log.py` to track every automation decision.
-*   **Upgrade 179:** Add `gui/src/components/LiveWorkflowConsole.vue` streaming logs in real time.
-*   **Upgrade 180:** Publish `docs/guides/window-automation-patterns.md` covering best practices for window manipulation.
-*   **Upgrade 181:** Introduce `domains/computer_vision/pixel_heatmap.py` to debug what parts of the screen models observe.
-*   **Upgrade 182:** Create `windows_ai/integrations/edge_extension` enabling browser-level automation triggers.
-*   **Upgrade 183:** Build `agenthub/dialogue/contextual_prompt_cache.py` caching prompts aligned with conversation phases.
-*   **Upgrade 184:** Implement `automation/workflow_engine/priority_queue.py` for multi-user workflow scheduling.
-*   **Upgrade 185:** Provide `search/semantic_index/document_tags.py` to categorize indexed content by domain.
-*   **Upgrade 186:** Add `iot/device_actions/media_controls.py` exposing remote playback commands.
-*   **Upgrade 187:** Publish `mobile/docs/voice-quality-tuning.md` for optimizing microphone settings on phones.
-*   **Upgrade 188:** Introduce `domains/audio_processing/dynamic_noise_cancellation.py` adapting to ambient environments.
-*   **Upgrade 189:** Create `gui/src/components/AutomationDependencyGraph.vue` showing relationships between workflows.
-*   **Upgrade 190:** Build `automation/workflow_runtime/parallel_executor.py` to run independent branches concurrently.
-*   **Upgrade 191:** Implement `windows_ai/system_controls/credential_vault.py` for securely storing automation credentials.
-*   **Upgrade 192:** Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
-*   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
-*   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
-*   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
-*   **Upgrade 196:** Create `windows_ai/integrations/sharepoint_sync.py` to automate document approvals.
-*   **Upgrade 197:** Build `mobile/diagnostics/log_exporter.ts` allowing users to send diagnostics from the app.
-*   **Upgrade 198:** Implement `automation/workflow_engine/state_persistence.py` storing progress in case of restarts.
-*   **Upgrade 199:** Provide `search/ui/relevance_feedback.ts` to collect user feedback on search answers.
-*   **Upgrade 200:** Add `iot/voice_announcements.py` enabling the assistant to speak through connected speakers.
-*   **Upgrade 601:** Add `domains/audio_processing/audio_coordinator.py` acting as a coordinator that deepens audio intelligence pipelines.
-*   **Upgrade 602:** Introduce `domains/audio_processing/audio_optimizer.py` optimizing pipelines to enhance audio intelligence pipelines.
-*   **Upgrade 603:** Implement `domains/audio_processing/audio_bridge.py` bridging supporting services to expand audio intelligence pipelines.
-*   **Upgrade 604:** Create `domains/audio_processing/audio_trainer.py` training datasets that accelerate audio intelligence pipelines.
-*   **Upgrade 605:** Publish `domains/audio_processing/audio_analyzer.py` analyzing telemetry streams to refine audio intelligence pipelines.
-*   **Upgrade 606:** Provide `domains/audio_processing/audio_adapter.py` adapting integrations so audio intelligence pipelines can scale.
-*   **Upgrade 607:** Ship `domains/audio_processing/audio_studio.py` delivering studio tooling for teams to shape audio intelligence pipelines.
-*   **Upgrade 608:** Build `domains/audio_processing/audio_monitor.py` monitoring execution quality to safeguard audio intelligence pipelines.
-*   **Upgrade 609:** Deliver `domains/audio_processing/audio_toolkit.py` packaging toolkit assets that boost audio intelligence pipelines.
-*   **Upgrade 610:** Launch `domains/audio_processing/audio_blueprint.py` documenting blueprints that future-proof audio intelligence pipelines.
-*   **Upgrade 611:** Add `domains/natural_language_processing/language_coordinator.py` acting as a coordinator that deepens natural language orchestration.
-*   **Upgrade 612:** Introduce `domains/natural_language_processing/language_optimizer.py` optimizing pipelines to enhance natural language orchestration.
-*   **Upgrade 613:** Implement `domains/natural_language_processing/language_bridge.py` bridging supporting services to expand natural language orchestration.
-*   **Upgrade 614:** Create `domains/natural_language_processing/language_trainer.py` training datasets that accelerate natural language orchestration.
-*   **Upgrade 615:** Publish `domains/natural_language_processing/language_analyzer.py` analyzing telemetry streams to refine natural language orchestration.
-*   **Upgrade 616:** Provide `domains/natural_language_processing/language_adapter.py` adapting integrations so natural language orchestration can scale.
-*   **Upgrade 617:** Ship `domains/natural_language_processing/language_studio.py` delivering studio tooling for teams to shape natural language orchestration.
-*   **Upgrade 618:** Build `domains/natural_language_processing/language_monitor.py` monitoring execution quality to safeguard natural language orchestration.
-*   **Upgrade 619:** Deliver `domains/natural_language_processing/language_toolkit.py` packaging toolkit assets that boost natural language orchestration.
-*   **Upgrade 620:** Launch `domains/natural_language_processing/language_blueprint.py` documenting blueprints that future-proof natural language orchestration.
-*   **Upgrade 621:** Add `domains/computer_vision/vision_coordinator.py` acting as a coordinator that deepens computer vision understanding.
-*   **Upgrade 622:** Introduce `domains/computer_vision/vision_optimizer.py` optimizing pipelines to enhance computer vision understanding.
-*   **Upgrade 623:** Implement `domains/computer_vision/vision_bridge.py` bridging supporting services to expand computer vision understanding.
-*   **Upgrade 624:** Create `domains/computer_vision/vision_trainer.py` training datasets that accelerate computer vision understanding.
-*   **Upgrade 625:** Publish `domains/computer_vision/vision_analyzer.py` analyzing telemetry streams to refine computer vision understanding.
-*   **Upgrade 626:** Provide `domains/computer_vision/vision_adapter.py` adapting integrations so computer vision understanding can scale.
-*   **Upgrade 627:** Ship `domains/computer_vision/vision_studio.py` delivering studio tooling for teams to shape computer vision understanding.
-*   **Upgrade 628:** Build `domains/computer_vision/vision_monitor.py` monitoring execution quality to safeguard computer vision understanding.
-*   **Upgrade 629:** Deliver `domains/computer_vision/vision_toolkit.py` packaging toolkit assets that boost computer vision understanding.
-*   **Upgrade 630:** Launch `domains/computer_vision/vision_blueprint.py` documenting blueprints that future-proof computer vision understanding.
-*   **Upgrade 631:** Add `windows_ai/system_controls/windows_coordinator.py` acting as a coordinator that deepens Windows system control integrations.
-*   **Upgrade 632:** Introduce `windows_ai/system_controls/windows_optimizer.py` optimizing pipelines to enhance Windows system control integrations.
-*   **Upgrade 633:** Implement `windows_ai/system_controls/windows_bridge.py` bridging supporting services to expand Windows system control integrations.
-*   **Upgrade 634:** Create `windows_ai/system_controls/windows_trainer.py` training datasets that accelerate Windows system control integrations.
-*   **Upgrade 635:** Publish `windows_ai/system_controls/windows_analyzer.py` analyzing telemetry streams to refine Windows system control integrations.
-*   **Upgrade 636:** Provide `windows_ai/system_controls/windows_adapter.py` adapting integrations so Windows system control integrations can scale.
-*   **Upgrade 637:** Ship `windows_ai/system_controls/windows_studio.py` delivering studio tooling for teams to shape Windows system control integrations.
-*   **Upgrade 638:** Build `windows_ai/system_controls/windows_monitor.py` monitoring execution quality to safeguard Windows system control integrations.
-*   **Upgrade 639:** Deliver `windows_ai/system_controls/windows_toolkit.py` packaging toolkit assets that boost Windows system control integrations.
-*   **Upgrade 640:** Launch `windows_ai/system_controls/windows_blueprint.py` documenting blueprints that future-proof Windows system control integrations.
-*   **Upgrade 641:** Add `agenthub/agenthub_coordinator.py` acting as a coordinator that deepens core orchestration intelligence.
-*   **Upgrade 642:** Introduce `agenthub/agenthub_optimizer.py` optimizing pipelines to enhance core orchestration intelligence.
-*   **Upgrade 643:** Implement `agenthub/agenthub_bridge.py` bridging supporting services to expand core orchestration intelligence.
-*   **Upgrade 644:** Create `agenthub/agenthub_trainer.py` training datasets that accelerate core orchestration intelligence.
-*   **Upgrade 645:** Publish `agenthub/agenthub_analyzer.py` analyzing telemetry streams to refine core orchestration intelligence.
-*   **Upgrade 646:** Provide `agenthub/agenthub_adapter.py` adapting integrations so core orchestration intelligence can scale.
-*   **Upgrade 647:** Ship `agenthub/agenthub_studio.py` delivering studio tooling for teams to shape core orchestration intelligence.
-*   **Upgrade 648:** Build `agenthub/agenthub_monitor.py` monitoring execution quality to safeguard core orchestration intelligence.
-*   **Upgrade 649:** Deliver `agenthub/agenthub_toolkit.py` packaging toolkit assets that boost core orchestration intelligence.
-*   **Upgrade 650:** Launch `agenthub/agenthub_blueprint.py` documenting blueprints that future-proof core orchestration intelligence.
-*   **Upgrade 651:** Add `automation/automation_coordinator.py` acting as a coordinator that deepens workflow execution depth.
-*   **Upgrade 652:** Introduce `automation/automation_optimizer.py` optimizing pipelines to enhance workflow execution depth.
-*   **Upgrade 653:** Implement `automation/automation_bridge.py` bridging supporting services to expand workflow execution depth.
-*   **Upgrade 654:** Create `automation/automation_trainer.py` training datasets that accelerate workflow execution depth.
-*   **Upgrade 655:** Publish `automation/automation_analyzer.py` analyzing telemetry streams to refine workflow execution depth.
-*   **Upgrade 656:** Provide `automation/automation_adapter.py` adapting integrations so workflow execution depth can scale.
-*   **Upgrade 657:** Ship `automation/automation_studio.py` delivering studio tooling for teams to shape workflow execution depth.
-*   **Upgrade 658:** Build `automation/automation_monitor.py` monitoring execution quality to safeguard workflow execution depth.
-*   **Upgrade 659:** Deliver `automation/automation_toolkit.py` packaging toolkit assets that boost workflow execution depth.
-*   **Upgrade 660:** Launch `automation/automation_blueprint.py` documenting blueprints that future-proof workflow execution depth.
-*   **Upgrade 661:** Add `search/search_coordinator.py` acting as a coordinator that deepens semantic retrieval capabilities.
-*   **Upgrade 662:** Introduce `search/search_optimizer.py` optimizing pipelines to enhance semantic retrieval capabilities.
-*   **Upgrade 663:** Implement `search/search_bridge.py` bridging supporting services to expand semantic retrieval capabilities.
-*   **Upgrade 664:** Create `search/search_trainer.py` training datasets that accelerate semantic retrieval capabilities.
-*   **Upgrade 665:** Publish `search/search_analyzer.py` analyzing telemetry streams to refine semantic retrieval capabilities.
-*   **Upgrade 666:** Provide `search/search_adapter.py` adapting integrations so semantic retrieval capabilities can scale.
-*   **Upgrade 667:** Ship `search/search_studio.py` delivering studio tooling for teams to shape semantic retrieval capabilities.
-*   **Upgrade 668:** Build `search/search_monitor.py` monitoring execution quality to safeguard semantic retrieval capabilities.
-*   **Upgrade 669:** Deliver `search/search_toolkit.py` packaging toolkit assets that boost semantic retrieval capabilities.
-*   **Upgrade 670:** Launch `search/search_blueprint.py` documenting blueprints that future-proof semantic retrieval capabilities.
-*   **Upgrade 671:** Add `gui/src/components/gui_coordinator.vue` acting as a coordinator that deepens immersive user interaction.
-*   **Upgrade 672:** Introduce `gui/src/components/gui_optimizer.vue` optimizing pipelines to enhance immersive user interaction.
-*   **Upgrade 673:** Implement `gui/src/components/gui_bridge.vue` bridging supporting services to expand immersive user interaction.
-*   **Upgrade 674:** Create `gui/src/components/gui_trainer.vue` training datasets that accelerate immersive user interaction.
-*   **Upgrade 675:** Publish `gui/src/components/gui_analyzer.vue` analyzing telemetry streams to refine immersive user interaction.
-*   **Upgrade 676:** Provide `gui/src/components/gui_adapter.vue` adapting integrations so immersive user interaction can scale.
-*   **Upgrade 677:** Ship `gui/src/components/gui_studio.vue` delivering studio tooling for teams to shape immersive user interaction.
-*   **Upgrade 678:** Build `gui/src/components/gui_monitor.vue` monitoring execution quality to safeguard immersive user interaction.
-*   **Upgrade 679:** Deliver `gui/src/components/gui_toolkit.vue` packaging toolkit assets that boost immersive user interaction.
-*   **Upgrade 680:** Launch `gui/src/components/gui_blueprint.vue` documenting blueprints that future-proof immersive user interaction.
-*   **Upgrade 681:** Add `mobile/mobile_coordinator.ts` acting as a coordinator that deepens cross-device experiences.
-*   **Upgrade 682:** Introduce `mobile/mobile_optimizer.ts` optimizing pipelines to enhance cross-device experiences.
-*   **Upgrade 683:** Implement `mobile/mobile_bridge.ts` bridging supporting services to expand cross-device experiences.
-*   **Upgrade 684:** Create `mobile/mobile_trainer.ts` training datasets that accelerate cross-device experiences.
-*   **Upgrade 685:** Publish `mobile/mobile_analyzer.ts` analyzing telemetry streams to refine cross-device experiences.
-*   **Upgrade 686:** Provide `mobile/mobile_adapter.ts` adapting integrations so cross-device experiences can scale.
-*   **Upgrade 687:** Ship `mobile/mobile_studio.ts` delivering studio tooling for teams to shape cross-device experiences.
-*   **Upgrade 688:** Build `mobile/mobile_monitor.ts` monitoring execution quality to safeguard cross-device experiences.
-*   **Upgrade 689:** Deliver `mobile/mobile_toolkit.ts` packaging toolkit assets that boost cross-device experiences.
-*   **Upgrade 690:** Launch `mobile/mobile_blueprint.ts` documenting blueprints that future-proof cross-device experiences.
-*   **Upgrade 691:** Add `iot/iot_coordinator.py` acting as a coordinator that deepens device orchestration reach.
-*   **Upgrade 692:** Introduce `iot/iot_optimizer.py` optimizing pipelines to enhance device orchestration reach.
-*   **Upgrade 693:** Implement `iot/iot_bridge.py` bridging supporting services to expand device orchestration reach.
-*   **Upgrade 694:** Create `iot/iot_trainer.py` training datasets that accelerate device orchestration reach.
-*   **Upgrade 695:** Publish `iot/iot_analyzer.py` analyzing telemetry streams to refine device orchestration reach.
-*   **Upgrade 696:** Provide `iot/iot_adapter.py` adapting integrations so device orchestration reach can scale.
-*   **Upgrade 697:** Ship `iot/iot_studio.py` delivering studio tooling for teams to shape device orchestration reach.
-*   **Upgrade 698:** Build `iot/iot_monitor.py` monitoring execution quality to safeguard device orchestration reach.
-*   **Upgrade 699:** Deliver `iot/iot_toolkit.py` packaging toolkit assets that boost device orchestration reach.
-*   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
+This module provides comprehensive query performance profiling for semantic search operations.
+Tracks execution time, embedding generation, vector similarity searches, and identifies bottlenecks.
 
-Created: 2025-11-15
-Part of: Windows-AI Roadmap Implementation
+Features:
+- Real-time query performance monitoring
+- Detailed execution breakdown by phase
+- Query complexity analysis
+- Performance trend tracking
+- Bottleneck identification
+- Cache hit/miss ratios
+- Query optimization recommendations
+
+Example:
+    profiler = QueryProfiler()
+    await profiler.initialize()
+    
+    # Profile a query
+    async with profiler.profile_query("my search query") as session:
+        results = await search_engine.search(session.query)
+    
+    # Get performance stats
+    stats = await profiler.get_statistics(time_range="1h")
 """
 
+import asyncio
+import json
 import logging
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+import statistics
+import time
+from collections import defaultdict, deque
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class QueryPhase:
+    """Represents a single phase of query execution"""
+    name: str
+    start_time: float
+    end_time: Optional[float] = None
+    duration: Optional[float] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def complete(self) -> float:
+        """Mark phase as complete and calculate duration"""
+        self.end_time = time.perf_counter()
+        self.duration = self.end_time - self.start_time
+        return self.duration
+
+
+@dataclass
+class QueryProfile:
+    """Complete profile of a single query execution"""
+    query_id: str
+    query_text: str
+    start_time: float
+    timestamp: datetime = field(default_factory=datetime.now)
+    end_time: Optional[float] = None
+    total_duration: Optional[float] = None
+    phases: List[QueryPhase] = field(default_factory=list)
+    cache_hit: bool = False
+    result_count: int = 0
+    error: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def add_phase(self, name: str, metadata: Optional[Dict[str, Any]] = None) -> QueryPhase:
+        """Add a new execution phase"""
+        phase = QueryPhase(
+            name=name,
+            start_time=time.perf_counter(),
+            metadata=metadata or {}
+        )
+        self.phases.append(phase)
+        return phase
+    
+    def complete(self, result_count: int = 0, error: Optional[str] = None):
+        """Mark query as complete"""
+        self.end_time = time.perf_counter()
+        self.total_duration = self.end_time - self.start_time
+        self.result_count = result_count
+        self.error = error
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return {
+            "query_id": self.query_id,
+            "query_text": self.query_text,
+            "timestamp": self.timestamp.isoformat(),
+            "total_duration": self.total_duration,
+            "cache_hit": self.cache_hit,
+            "result_count": self.result_count,
+            "error": self.error,
+            "phases": [
+                {
+                    "name": p.name,
+                    "duration": p.duration,
+                    "metadata": p.metadata
+                }
+                for p in self.phases
+            ],
+            "metadata": self.metadata
+        }
+
+
+@dataclass
+class PerformanceStatistics:
+    """Aggregated performance statistics"""
+    total_queries: int = 0
+    successful_queries: int = 0
+    failed_queries: int = 0
+    cache_hits: int = 0
+    cache_misses: int = 0
+    avg_duration: float = 0.0
+    median_duration: float = 0.0
+    p95_duration: float = 0.0
+    p99_duration: float = 0.0
+    min_duration: float = 0.0
+    max_duration: float = 0.0
+    phase_stats: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    error_types: Dict[str, int] = field(default_factory=dict)
+    queries_per_second: float = 0.0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return asdict(self)
+
+
 class QueryProfiler:
     """
-    Provide `search/semantic_index/query_profiler.py` analyzing query performance metrics.
-*   **Upgrade 165:** Add `iot/device_health_monitor.py` to track firmware versions and status alerts.
-*   **Upgrade 166:** Publish `mobile/docs/offline-mode.md` describing cache policies for disconnected usage.
-*   **Upgrade 167:** Introduce `domains/audio_processing/speaker_diarization.py` to separate speakers in recorded meetings.
-*   **Upgrade 168:** Create `gui/src/components/AutomationInsights.vue` to highlight automation ROI to users.
-*   **Upgrade 169:** Build `automation/workflow_editor/version_history.ts` enabling rollback to previous workflow revisions.
-*   **Upgrade 170:** Implement `windows_ai/system_controls/security_context.py` verifying permissions before executing actions.
-*   **Upgrade 171:** Provide `search/plugins/web_results.py` to blend curated web data into responses.
-*   **Upgrade 172:** Add `agenthub/plugins/discovery_service.py` to auto-register new domain capabilities.
-*   **Upgrade 173:** Publish `docs/guides/speech-to-automation.md` linking voice commands to workflow templates.
-*   **Upgrade 174:** Introduce `domains/natural_language_processing/personalization_hooks.py` injecting user preferences into prompts.
-*   **Upgrade 175:** Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
-*   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
-*   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
-*   **Upgrade 178:** Provide `automation/workflow_runtime/audit_log.py` to track every automation decision.
-*   **Upgrade 179:** Add `gui/src/components/LiveWorkflowConsole.vue` streaming logs in real time.
-*   **Upgrade 180:** Publish `docs/guides/window-automation-patterns.md` covering best practices for window manipulation.
-*   **Upgrade 181:** Introduce `domains/computer_vision/pixel_heatmap.py` to debug what parts of the screen models observe.
-*   **Upgrade 182:** Create `windows_ai/integrations/edge_extension` enabling browser-level automation triggers.
-*   **Upgrade 183:** Build `agenthub/dialogue/contextual_prompt_cache.py` caching prompts aligned with conversation phases.
-*   **Upgrade 184:** Implement `automation/workflow_engine/priority_queue.py` for multi-user workflow scheduling.
-*   **Upgrade 185:** Provide `search/semantic_index/document_tags.py` to categorize indexed content by domain.
-*   **Upgrade 186:** Add `iot/device_actions/media_controls.py` exposing remote playback commands.
-*   **Upgrade 187:** Publish `mobile/docs/voice-quality-tuning.md` for optimizing microphone settings on phones.
-*   **Upgrade 188:** Introduce `domains/audio_processing/dynamic_noise_cancellation.py` adapting to ambient environments.
-*   **Upgrade 189:** Create `gui/src/components/AutomationDependencyGraph.vue` showing relationships between workflows.
-*   **Upgrade 190:** Build `automation/workflow_runtime/parallel_executor.py` to run independent branches concurrently.
-*   **Upgrade 191:** Implement `windows_ai/system_controls/credential_vault.py` for securely storing automation credentials.
-*   **Upgrade 192:** Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
-*   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
-*   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
-*   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
-*   **Upgrade 196:** Create `windows_ai/integrations/sharepoint_sync.py` to automate document approvals.
-*   **Upgrade 197:** Build `mobile/diagnostics/log_exporter.ts` allowing users to send diagnostics from the app.
-*   **Upgrade 198:** Implement `automation/workflow_engine/state_persistence.py` storing progress in case of restarts.
-*   **Upgrade 199:** Provide `search/ui/relevance_feedback.ts` to collect user feedback on search answers.
-*   **Upgrade 200:** Add `iot/voice_announcements.py` enabling the assistant to speak through connected speakers.
-*   **Upgrade 601:** Add `domains/audio_processing/audio_coordinator.py` acting as a coordinator that deepens audio intelligence pipelines.
-*   **Upgrade 602:** Introduce `domains/audio_processing/audio_optimizer.py` optimizing pipelines to enhance audio intelligence pipelines.
-*   **Upgrade 603:** Implement `domains/audio_processing/audio_bridge.py` bridging supporting services to expand audio intelligence pipelines.
-*   **Upgrade 604:** Create `domains/audio_processing/audio_trainer.py` training datasets that accelerate audio intelligence pipelines.
-*   **Upgrade 605:** Publish `domains/audio_processing/audio_analyzer.py` analyzing telemetry streams to refine audio intelligence pipelines.
-*   **Upgrade 606:** Provide `domains/audio_processing/audio_adapter.py` adapting integrations so audio intelligence pipelines can scale.
-*   **Upgrade 607:** Ship `domains/audio_processing/audio_studio.py` delivering studio tooling for teams to shape audio intelligence pipelines.
-*   **Upgrade 608:** Build `domains/audio_processing/audio_monitor.py` monitoring execution quality to safeguard audio intelligence pipelines.
-*   **Upgrade 609:** Deliver `domains/audio_processing/audio_toolkit.py` packaging toolkit assets that boost audio intelligence pipelines.
-*   **Upgrade 610:** Launch `domains/audio_processing/audio_blueprint.py` documenting blueprints that future-proof audio intelligence pipelines.
-*   **Upgrade 611:** Add `domains/natural_language_processing/language_coordinator.py` acting as a coordinator that deepens natural language orchestration.
-*   **Upgrade 612:** Introduce `domains/natural_language_processing/language_optimizer.py` optimizing pipelines to enhance natural language orchestration.
-*   **Upgrade 613:** Implement `domains/natural_language_processing/language_bridge.py` bridging supporting services to expand natural language orchestration.
-*   **Upgrade 614:** Create `domains/natural_language_processing/language_trainer.py` training datasets that accelerate natural language orchestration.
-*   **Upgrade 615:** Publish `domains/natural_language_processing/language_analyzer.py` analyzing telemetry streams to refine natural language orchestration.
-*   **Upgrade 616:** Provide `domains/natural_language_processing/language_adapter.py` adapting integrations so natural language orchestration can scale.
-*   **Upgrade 617:** Ship `domains/natural_language_processing/language_studio.py` delivering studio tooling for teams to shape natural language orchestration.
-*   **Upgrade 618:** Build `domains/natural_language_processing/language_monitor.py` monitoring execution quality to safeguard natural language orchestration.
-*   **Upgrade 619:** Deliver `domains/natural_language_processing/language_toolkit.py` packaging toolkit assets that boost natural language orchestration.
-*   **Upgrade 620:** Launch `domains/natural_language_processing/language_blueprint.py` documenting blueprints that future-proof natural language orchestration.
-*   **Upgrade 621:** Add `domains/computer_vision/vision_coordinator.py` acting as a coordinator that deepens computer vision understanding.
-*   **Upgrade 622:** Introduce `domains/computer_vision/vision_optimizer.py` optimizing pipelines to enhance computer vision understanding.
-*   **Upgrade 623:** Implement `domains/computer_vision/vision_bridge.py` bridging supporting services to expand computer vision understanding.
-*   **Upgrade 624:** Create `domains/computer_vision/vision_trainer.py` training datasets that accelerate computer vision understanding.
-*   **Upgrade 625:** Publish `domains/computer_vision/vision_analyzer.py` analyzing telemetry streams to refine computer vision understanding.
-*   **Upgrade 626:** Provide `domains/computer_vision/vision_adapter.py` adapting integrations so computer vision understanding can scale.
-*   **Upgrade 627:** Ship `domains/computer_vision/vision_studio.py` delivering studio tooling for teams to shape computer vision understanding.
-*   **Upgrade 628:** Build `domains/computer_vision/vision_monitor.py` monitoring execution quality to safeguard computer vision understanding.
-*   **Upgrade 629:** Deliver `domains/computer_vision/vision_toolkit.py` packaging toolkit assets that boost computer vision understanding.
-*   **Upgrade 630:** Launch `domains/computer_vision/vision_blueprint.py` documenting blueprints that future-proof computer vision understanding.
-*   **Upgrade 631:** Add `windows_ai/system_controls/windows_coordinator.py` acting as a coordinator that deepens Windows system control integrations.
-*   **Upgrade 632:** Introduce `windows_ai/system_controls/windows_optimizer.py` optimizing pipelines to enhance Windows system control integrations.
-*   **Upgrade 633:** Implement `windows_ai/system_controls/windows_bridge.py` bridging supporting services to expand Windows system control integrations.
-*   **Upgrade 634:** Create `windows_ai/system_controls/windows_trainer.py` training datasets that accelerate Windows system control integrations.
-*   **Upgrade 635:** Publish `windows_ai/system_controls/windows_analyzer.py` analyzing telemetry streams to refine Windows system control integrations.
-*   **Upgrade 636:** Provide `windows_ai/system_controls/windows_adapter.py` adapting integrations so Windows system control integrations can scale.
-*   **Upgrade 637:** Ship `windows_ai/system_controls/windows_studio.py` delivering studio tooling for teams to shape Windows system control integrations.
-*   **Upgrade 638:** Build `windows_ai/system_controls/windows_monitor.py` monitoring execution quality to safeguard Windows system control integrations.
-*   **Upgrade 639:** Deliver `windows_ai/system_controls/windows_toolkit.py` packaging toolkit assets that boost Windows system control integrations.
-*   **Upgrade 640:** Launch `windows_ai/system_controls/windows_blueprint.py` documenting blueprints that future-proof Windows system control integrations.
-*   **Upgrade 641:** Add `agenthub/agenthub_coordinator.py` acting as a coordinator that deepens core orchestration intelligence.
-*   **Upgrade 642:** Introduce `agenthub/agenthub_optimizer.py` optimizing pipelines to enhance core orchestration intelligence.
-*   **Upgrade 643:** Implement `agenthub/agenthub_bridge.py` bridging supporting services to expand core orchestration intelligence.
-*   **Upgrade 644:** Create `agenthub/agenthub_trainer.py` training datasets that accelerate core orchestration intelligence.
-*   **Upgrade 645:** Publish `agenthub/agenthub_analyzer.py` analyzing telemetry streams to refine core orchestration intelligence.
-*   **Upgrade 646:** Provide `agenthub/agenthub_adapter.py` adapting integrations so core orchestration intelligence can scale.
-*   **Upgrade 647:** Ship `agenthub/agenthub_studio.py` delivering studio tooling for teams to shape core orchestration intelligence.
-*   **Upgrade 648:** Build `agenthub/agenthub_monitor.py` monitoring execution quality to safeguard core orchestration intelligence.
-*   **Upgrade 649:** Deliver `agenthub/agenthub_toolkit.py` packaging toolkit assets that boost core orchestration intelligence.
-*   **Upgrade 650:** Launch `agenthub/agenthub_blueprint.py` documenting blueprints that future-proof core orchestration intelligence.
-*   **Upgrade 651:** Add `automation/automation_coordinator.py` acting as a coordinator that deepens workflow execution depth.
-*   **Upgrade 652:** Introduce `automation/automation_optimizer.py` optimizing pipelines to enhance workflow execution depth.
-*   **Upgrade 653:** Implement `automation/automation_bridge.py` bridging supporting services to expand workflow execution depth.
-*   **Upgrade 654:** Create `automation/automation_trainer.py` training datasets that accelerate workflow execution depth.
-*   **Upgrade 655:** Publish `automation/automation_analyzer.py` analyzing telemetry streams to refine workflow execution depth.
-*   **Upgrade 656:** Provide `automation/automation_adapter.py` adapting integrations so workflow execution depth can scale.
-*   **Upgrade 657:** Ship `automation/automation_studio.py` delivering studio tooling for teams to shape workflow execution depth.
-*   **Upgrade 658:** Build `automation/automation_monitor.py` monitoring execution quality to safeguard workflow execution depth.
-*   **Upgrade 659:** Deliver `automation/automation_toolkit.py` packaging toolkit assets that boost workflow execution depth.
-*   **Upgrade 660:** Launch `automation/automation_blueprint.py` documenting blueprints that future-proof workflow execution depth.
-*   **Upgrade 661:** Add `search/search_coordinator.py` acting as a coordinator that deepens semantic retrieval capabilities.
-*   **Upgrade 662:** Introduce `search/search_optimizer.py` optimizing pipelines to enhance semantic retrieval capabilities.
-*   **Upgrade 663:** Implement `search/search_bridge.py` bridging supporting services to expand semantic retrieval capabilities.
-*   **Upgrade 664:** Create `search/search_trainer.py` training datasets that accelerate semantic retrieval capabilities.
-*   **Upgrade 665:** Publish `search/search_analyzer.py` analyzing telemetry streams to refine semantic retrieval capabilities.
-*   **Upgrade 666:** Provide `search/search_adapter.py` adapting integrations so semantic retrieval capabilities can scale.
-*   **Upgrade 667:** Ship `search/search_studio.py` delivering studio tooling for teams to shape semantic retrieval capabilities.
-*   **Upgrade 668:** Build `search/search_monitor.py` monitoring execution quality to safeguard semantic retrieval capabilities.
-*   **Upgrade 669:** Deliver `search/search_toolkit.py` packaging toolkit assets that boost semantic retrieval capabilities.
-*   **Upgrade 670:** Launch `search/search_blueprint.py` documenting blueprints that future-proof semantic retrieval capabilities.
-*   **Upgrade 671:** Add `gui/src/components/gui_coordinator.vue` acting as a coordinator that deepens immersive user interaction.
-*   **Upgrade 672:** Introduce `gui/src/components/gui_optimizer.vue` optimizing pipelines to enhance immersive user interaction.
-*   **Upgrade 673:** Implement `gui/src/components/gui_bridge.vue` bridging supporting services to expand immersive user interaction.
-*   **Upgrade 674:** Create `gui/src/components/gui_trainer.vue` training datasets that accelerate immersive user interaction.
-*   **Upgrade 675:** Publish `gui/src/components/gui_analyzer.vue` analyzing telemetry streams to refine immersive user interaction.
-*   **Upgrade 676:** Provide `gui/src/components/gui_adapter.vue` adapting integrations so immersive user interaction can scale.
-*   **Upgrade 677:** Ship `gui/src/components/gui_studio.vue` delivering studio tooling for teams to shape immersive user interaction.
-*   **Upgrade 678:** Build `gui/src/components/gui_monitor.vue` monitoring execution quality to safeguard immersive user interaction.
-*   **Upgrade 679:** Deliver `gui/src/components/gui_toolkit.vue` packaging toolkit assets that boost immersive user interaction.
-*   **Upgrade 680:** Launch `gui/src/components/gui_blueprint.vue` documenting blueprints that future-proof immersive user interaction.
-*   **Upgrade 681:** Add `mobile/mobile_coordinator.ts` acting as a coordinator that deepens cross-device experiences.
-*   **Upgrade 682:** Introduce `mobile/mobile_optimizer.ts` optimizing pipelines to enhance cross-device experiences.
-*   **Upgrade 683:** Implement `mobile/mobile_bridge.ts` bridging supporting services to expand cross-device experiences.
-*   **Upgrade 684:** Create `mobile/mobile_trainer.ts` training datasets that accelerate cross-device experiences.
-*   **Upgrade 685:** Publish `mobile/mobile_analyzer.ts` analyzing telemetry streams to refine cross-device experiences.
-*   **Upgrade 686:** Provide `mobile/mobile_adapter.ts` adapting integrations so cross-device experiences can scale.
-*   **Upgrade 687:** Ship `mobile/mobile_studio.ts` delivering studio tooling for teams to shape cross-device experiences.
-*   **Upgrade 688:** Build `mobile/mobile_monitor.ts` monitoring execution quality to safeguard cross-device experiences.
-*   **Upgrade 689:** Deliver `mobile/mobile_toolkit.ts` packaging toolkit assets that boost cross-device experiences.
-*   **Upgrade 690:** Launch `mobile/mobile_blueprint.ts` documenting blueprints that future-proof cross-device experiences.
-*   **Upgrade 691:** Add `iot/iot_coordinator.py` acting as a coordinator that deepens device orchestration reach.
-*   **Upgrade 692:** Introduce `iot/iot_optimizer.py` optimizing pipelines to enhance device orchestration reach.
-*   **Upgrade 693:** Implement `iot/iot_bridge.py` bridging supporting services to expand device orchestration reach.
-*   **Upgrade 694:** Create `iot/iot_trainer.py` training datasets that accelerate device orchestration reach.
-*   **Upgrade 695:** Publish `iot/iot_analyzer.py` analyzing telemetry streams to refine device orchestration reach.
-*   **Upgrade 696:** Provide `iot/iot_adapter.py` adapting integrations so device orchestration reach can scale.
-*   **Upgrade 697:** Ship `iot/iot_studio.py` delivering studio tooling for teams to shape device orchestration reach.
-*   **Upgrade 698:** Build `iot/iot_monitor.py` monitoring execution quality to safeguard device orchestration reach.
-*   **Upgrade 699:** Deliver `iot/iot_toolkit.py` packaging toolkit assets that boost device orchestration reach.
-*   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
+    Query performance profiler for semantic search operations
+    
+    Tracks and analyzes query execution metrics, identifying bottlenecks
+    and providing optimization recommendations.
     """
     
-    def __init__(self):
-        """Initialize the query profiler system."""
-        self.initialized = False
-        logger.info("Initialized query_profiler")
-    
-    def setup(self) -> bool:
+    def __init__(self, max_history: int = 10000):
         """
-        Set up the system and prepare for operation.
+        Initialize query profiler
+        
+        Args:
+            max_history: Maximum number of query profiles to keep in memory
+        """
+        self.max_history = max_history
+        self._initialized = False
+        self._profiles: deque = deque(maxlen=max_history)
+        self._active_profiles: Dict[str, QueryProfile] = {}
+        self._query_counter = 0
+        self._lock = asyncio.Lock()
+        
+        # Performance tracking
+        self._durations: deque = deque(maxlen=max_history)
+        self._phase_durations: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
+        self._error_counts: Dict[str, int] = defaultdict(int)
+        
+        logger.info("QueryProfiler created")
+    
+    async def initialize(self) -> bool:
+        """
+        Initialize profiler
         
         Returns:
-            bool: True if setup successful, False otherwise
+            True if initialization successful
         """
-        try:
-            # TODO: Implement setup logic
-            self.initialized = True
-            logger.info("query_profiler setup completed")
+        if self._initialized:
+            logger.warning("QueryProfiler already initialized")
             return True
+        
+        try:
+            # Initialize data structures
+            self._profiles.clear()
+            self._active_profiles.clear()
+            self._query_counter = 0
+            
+            self._initialized = True
+            logger.info("QueryProfiler initialized successfully")
+            return True
+            
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
+            logger.error(f"QueryProfiler initialization failed: {e}")
             return False
     
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    @asynccontextmanager
+    async def profile_query(self, query_text: str, metadata: Optional[Dict[str, Any]] = None):
         """
-        Execute the main functionality.
+        Context manager for profiling a query
         
-        Returns:
-            Dict containing execution results
+        Args:
+            query_text: The search query text
+            metadata: Additional metadata to track
+        
+        Yields:
+            QueryProfile instance for tracking phases
+        
+        Example:
+            async with profiler.profile_query("search term") as profile:
+                # Profile embedding generation
+                phase = profile.add_phase("embedding")
+                embedding = await generate_embedding(profile.query_text)
+                phase.complete()
+                
+                # Profile vector search
+                phase = profile.add_phase("vector_search")
+                results = await vector_search(embedding)
+                phase.complete()
+                
+                profile.complete(result_count=len(results))
         """
-        if not self.initialized:
-            raise RuntimeError("query_profiler not initialized. Call setup() first.")
+        async with self._lock:
+            self._query_counter += 1
+            query_id = f"q_{self._query_counter}_{int(time.time())}"
+        
+        profile = QueryProfile(
+            query_id=query_id,
+            query_text=query_text,
+            start_time=time.perf_counter(),
+            metadata=metadata or {}
+        )
+        
+        self._active_profiles[query_id] = profile
         
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "query_profiler executed successfully",
-                "data": {}
-            }
-            return result
+            yield profile
         except Exception as e:
-            logger.error(f"Execution failed: {e}")
-            return {
-                "status": "error",
-                "message": str(e),
-                "data": None
-            }
-
-
-def main():
-    """Main entry point for standalone execution."""
-    system = QueryProfiler()
+            profile.error = str(e)
+            logger.error(f"Query {query_id} failed: {e}")
+            raise
+        finally:
+            # Ensure profile is completed
+            if profile.end_time is None:
+                profile.complete()
+            
+            # Complete any unfinished phases
+            for phase in profile.phases:
+                if phase.end_time is None:
+                    phase.complete()
+            
+            # Store profile
+            await self._store_profile(profile)
+            
+            # Remove from active
+            self._active_profiles.pop(query_id, None)
     
-    if system.setup():
-        result = system.execute()
-        print(f"Result: {result}")
-    else:
-        print("Setup failed")
-
-
-if __name__ == "__main__":
-    main()
+    async def _store_profile(self, profile: QueryProfile):
+        """Store completed profile and update statistics"""
+        async with self._lock:
+            self._profiles.append(profile)
+            
+            # Update duration tracking
+            if profile.total_duration is not None:
+                self._durations.append(profile.total_duration)
+            
+            # Update phase duration tracking
+            for phase in profile.phases:
+                if phase.duration is not None:
+                    self._phase_durations[phase.name].append(phase.duration)
+            
+            # Update error tracking
+            if profile.error:
+                error_type = profile.error.split(":")[0] if ":" in profile.error else "Unknown"
+                self._error_counts[error_type] += 1
+    
+    async def get_profile(self, query_id: str) -> Optional[QueryProfile]:
+        """
+        Get specific query profile
+        
+        Args:
+            query_id: Query identifier
+        
+        Returns:
+            QueryProfile if found, None otherwise
+        """
+        async with self._lock:
+            # Check active profiles first
+            if query_id in self._active_profiles:
+                return self._active_profiles[query_id]
+            
+            # Search historical profiles
+            for profile in reversed(self._profiles):
+                if profile.query_id == query_id:
+                    return profile
+        
+        return None
+    
+    async def get_recent_profiles(self, count: int = 100) -> List[QueryProfile]:
+        """
+        Get most recent query profiles
+        
+        Args:
+            count: Number of profiles to return
+        
+        Returns:
+            List of recent QueryProfile instances
+        """
+        async with self._lock:
+            recent = list(self._profiles)[-count:]
+            return list(reversed(recent))
+    
+    async def get_statistics(
+        self,
+        time_range: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
+    ) -> PerformanceStatistics:
+        """
+        Get performance statistics
+        
+        Args:
+            time_range: Time range string (e.g., "1h", "24h", "7d")
+            start_time: Start of time range (alternative to time_range)
+            end_time: End of time range (defaults to now)
+        
+        Returns:
+            PerformanceStatistics instance
+        """
+        # Parse time range
+        if time_range:
+            end_time = datetime.now()
+            if time_range.endswith("h"):
+                hours = int(time_range[:-1])
+                start_time = end_time - timedelta(hours=hours)
+            elif time_range.endswith("d"):
+                days = int(time_range[:-1])
+                start_time = end_time - timedelta(days=days)
+            elif time_range.endswith("m"):
+                minutes = int(time_range[:-1])
+                start_time = end_time - timedelta(minutes=minutes)
+            else:
+                start_time = end_time - timedelta(hours=1)
+        
+        async with self._lock:
+            # Filter profiles by time range
+            if start_time or end_time:
+                profiles = [
+                    p for p in self._profiles
+                    if (not start_time or p.timestamp >= start_time) and
+                       (not end_time or p.timestamp <= end_time)
+                ]
+            else:
+                profiles = list(self._profiles)
+            
+            if not profiles:
+                return PerformanceStatistics()
+            
+            # Calculate statistics
+            stats = PerformanceStatistics()
+            stats.total_queries = len(profiles)
+            
+            successful = [p for p in profiles if not p.error]
+            failed = [p for p in profiles if p.error]
+            
+            stats.successful_queries = len(successful)
+            stats.failed_queries = len(failed)
+            
+            stats.cache_hits = sum(1 for p in profiles if p.cache_hit)
+            stats.cache_misses = stats.total_queries - stats.cache_hits
+            
+            # Duration statistics
+            durations = [p.total_duration for p in profiles if p.total_duration is not None]
+            if durations:
+                stats.avg_duration = statistics.mean(durations)
+                stats.median_duration = statistics.median(durations)
+                stats.min_duration = min(durations)
+                stats.max_duration = max(durations)
+                
+                # Percentiles
+                sorted_durations = sorted(durations)
+                stats.p95_duration = sorted_durations[int(len(sorted_durations) * 0.95)] if len(sorted_durations) > 0 else 0.0
+                stats.p99_duration = sorted_durations[int(len(sorted_durations) * 0.99)] if len(sorted_durations) > 0 else 0.0
+            
+            # Phase statistics
+            phase_names: Set[str] = set()
+            for p in profiles:
+                phase_names.update(phase.name for phase in p.phases)
+            
+            for phase_name in phase_names:
+                phase_durations = []
+                for p in profiles:
+                    for phase in p.phases:
+                        if phase.name == phase_name and phase.duration is not None:
+                            phase_durations.append(phase.duration)
+                
+                if phase_durations:
+                    stats.phase_stats[phase_name] = {
+                        "avg": statistics.mean(phase_durations),
+                        "median": statistics.median(phase_durations),
+                        "min": min(phase_durations),
+                        "max": max(phase_durations),
+                        "count": len(phase_durations)
+                    }
+            
+            # Error statistics
+            stats.error_types = dict(self._error_counts)
+            
+            # Queries per second
+            if start_time and end_time:
+                time_span = (end_time - start_time).total_seconds()
+                if time_span > 0:
+                    stats.queries_per_second = stats.total_queries / time_span
+            
+            return stats
+    
+    async def get_slow_queries(
+        self,
+        threshold: float = 1.0,
+        count: int = 10
+    ) -> List[QueryProfile]:
+        """
+        Get slowest queries
+        
+        Args:
+            threshold: Minimum duration in seconds
+            count: Maximum number of queries to return
+        
+        Returns:
+            List of slow QueryProfile instances
+        """
+        async with self._lock:
+            slow_queries = [
+                p for p in self._profiles
+                if p.total_duration is not None and p.total_duration >= threshold
+            ]
+            
+            # Sort by duration descending
+            slow_queries.sort(key=lambda p: p.total_duration or 0, reverse=True)
+            
+            return slow_queries[:count]
+    
+    async def get_bottlenecks(
+        self,
+        time_range: str = "1h"
+    ) -> Dict[str, Any]:
+        """
+        Identify performance bottlenecks
+        
+        Args:
+            time_range: Time range to analyze
+        
+        Returns:
+            Dictionary with bottleneck analysis
+        """
+        stats = await self.get_statistics(time_range=time_range)
+        
+        bottlenecks = {
+            "slow_phases": [],
+            "high_error_rate": False,
+            "low_cache_hit_rate": False,
+            "recommendations": []
+        }
+        
+        # Identify slow phases
+        if stats.phase_stats:
+            for phase_name, phase_stat in stats.phase_stats.items():
+                if phase_stat["avg"] > 0.5:  # More than 500ms average
+                    bottlenecks["slow_phases"].append({
+                        "phase": phase_name,
+                        "avg_duration": phase_stat["avg"],
+                        "max_duration": phase_stat["max"]
+                    })
+        
+        # Check error rate
+        if stats.total_queries > 0:
+            error_rate = stats.failed_queries / stats.total_queries
+            if error_rate > 0.05:  # More than 5% errors
+                bottlenecks["high_error_rate"] = True
+                bottlenecks["recommendations"].append(
+                    f"High error rate: {error_rate*100:.1f}%. Investigate error types: {stats.error_types}"
+                )
+        
+        # Check cache hit rate
+        if stats.total_queries > 0:
+            cache_hit_rate = stats.cache_hits / stats.total_queries
+            if cache_hit_rate < 0.3:  # Less than 30% cache hits
+                bottlenecks["low_cache_hit_rate"] = True
+                bottlenecks["recommendations"].append(
+                    f"Low cache hit rate: {cache_hit_rate*100:.1f}%. Consider increasing cache size or TTL."
+                )
+        
+        # Recommendations for slow phases
+        for slow_phase in bottlenecks["slow_phases"]:
+            phase_name = slow_phase["phase"]
+            if "embedding" in phase_name.lower():
+                bottlenecks["recommendations"].append(
+                    f"Phase '{phase_name}' is slow. Consider caching embeddings or using a faster model."
+                )
+            elif "vector" in phase_name.lower() or "search" in phase_name.lower():
+                bottlenecks["recommendations"].append(
+                    f"Phase '{phase_name}' is slow. Consider optimizing index or using approximate search."
+                )
+            else:
+                bottlenecks["recommendations"].append(
+                    f"Phase '{phase_name}' is slow. Profile this phase for optimization opportunities."
+                )
+        
+        return bottlenecks
+    
+    async def export_profiles(
+        self,
+        filepath: str,
+        time_range: Optional[str] = None,
+        format: str = "json"
+    ) -> bool:
+        """
+        Export query profiles to file
+        
+        Args:
+            filepath: Output file path
+            time_range: Optional time range filter
+            format: Output format ("json" or "csv")
+        
+        Returns:
+            True if export successful
+        """
+        try:
+            profiles = await self.get_recent_profiles(count=self.max_history)
+            
+            if format == "json":
+                data = {
+                    "exported_at": datetime.now().isoformat(),
+                    "total_profiles": len(profiles),
+                    "profiles": [p.to_dict() for p in profiles]
+                }
+                
+                with open(filepath, 'w') as f:
+                    json.dump(data, f, indent=2)
+            
+            elif format == "csv":
+                import csv
+                with open(filepath, 'w', newline='') as f:
+                    if profiles:
+                        writer = csv.DictWriter(f, fieldnames=[
+                            'query_id', 'query_text', 'timestamp', 'total_duration',
+                            'cache_hit', 'result_count', 'error'
+                        ])
+                        writer.writeheader()
+                        for p in profiles:
+                            writer.writerow({
+                                'query_id': p.query_id,
+                                'query_text': p.query_text,
+                                'timestamp': p.timestamp.isoformat(),
+                                'total_duration': p.total_duration,
+                                'cache_hit': p.cache_hit,
+                                'result_count': p.result_count,
+                                'error': p.error or ''
+                            })
+            
+            logger.info(f"Exported {len(profiles)} profiles to {filepath}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to export profiles: {e}")
+            return False
+    
+    async def cleanup(self):
+        """Cleanup profiler resources"""
+        async with self._lock:
+            self._profiles.clear()
+            self._active_profiles.clear()
+            self._durations.clear()
+            self._phase_durations.clear()
+            self._error_counts.clear()
+        
+        self._initialized = False
+        logger.info("QueryProfiler cleaned up")

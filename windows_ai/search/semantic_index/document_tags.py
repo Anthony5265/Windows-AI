@@ -124,8 +124,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -251,49 +251,274 @@ class DocumentTags:
     """
     
     def __init__(self):
-        """Initialize the document tags system."""
+        """
+        Initialize the document tags system.
+        
+        Sets up 12 domain categories with keyword mappings for automatic
+        document classification and hierarchical tagging.
+        """
         self.initialized = False
-        logger.info("Initialized document_tags")
+        
+        # Define domain hierarchy and keywords
+        self.domain_keywords: Dict[str, List[str]] = {
+            "email": ["from:", "to:", "subject:", "message-id", "mime", "smtp"],
+            "files": ["filename", "extension", "directory", "path", "file system"],
+            "web": ["http", "https", "url", "domain", "website", "html", "css"],
+            "system": ["registry", "windows", "process", "driver", "kernel"],
+            "productivity": ["document", "spreadsheet", "presentation", "calendar"],
+            "development": ["code", "function", "class", "method", "variable", "debug"],
+            "communication": ["chat", "meeting", "slack", "teams", "message"],
+            "media": ["image", "video", "audio", "picture", "multimedia"],
+            "security": ["password", "encryption", "firewall", "threat", "vulnerability"],
+            "configuration": ["config", "settings", "preferences", "environment"],
+            "logs": ["error", "warning", "debug", "trace", "log level"],
+            "analytics": ["metric", "statistic", "report", "data", "analysis"]
+        }
+        
+        self.category_mappings: Dict[str, str] = {}
+        self.tagged_documents: List[Dict[str, Any]] = []
+        self.tag_statistics: Dict[str, Dict[str, int]] = {}
+        
+        logger.info("Initialized document_tags with 12 domain categories")
     
     def setup(self) -> bool:
         """
         Set up the system and prepare for operation.
         
+        Validates domain configuration and keyword mappings.
+        
         Returns:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            for domain, keywords in self.domain_keywords.items():
+                if not keywords:
+                    logger.warning(f"Domain '{domain}' has no keywords")
+            
+            logger.debug(f"Loaded {len(self.domain_keywords)} domains")
+            
             self.initialized = True
-            logger.info("document_tags setup completed")
+            logger.info("document_tags setup completed successfully")
             return True
+            
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
+            logger.error(f"Setup failed: {e}", exc_info=True)
             return False
+    
+    def _detect_domain(self, content: str, metadata: Dict[str, Any]) -> str:
+        """
+        Detect document domain via keyword matching.
+        
+        Args:
+            content: Document content to analyze
+            metadata: Document metadata dictionary
+            
+        Returns:
+            str: Detected domain name or 'custom'
+        """
+        try:
+            if not content:
+                return "custom"
+            
+            content_lower = content.lower()
+            scores: Dict[str, int] = {}
+            
+            # Score each domain based on keyword matches
+            for domain, keywords in self.domain_keywords.items():
+                score = 0
+                for keyword in keywords:
+                    if keyword.lower() in content_lower:
+                        score += 1
+                if score > 0:
+                    scores[domain] = score
+            
+            if scores:
+                best_domain = max(scores.items(), key=lambda x: x[1])[0]
+                logger.debug(f"Detected domain '{best_domain}' with score {scores[best_domain]}")
+                return best_domain
+            
+            return "custom"
+            
+        except Exception as e:
+            logger.warning(f"Domain detection error: {e}")
+            return "custom"
+    
+    def _generate_tags(self, domain: str, metadata: Dict[str, Any]) -> List[str]:
+        """
+        Generate hierarchical tags for document.
+        
+        Args:
+            domain: Primary document domain
+            metadata: Document metadata
+            
+        Returns:
+            List of tag strings
+        """
+        try:
+            tags = [domain]
+            
+            # Add category tags based on domain
+            category_map = {
+                "email": ["communication", "business"],
+                "files": ["organization", "data"],
+                "web": ["internet", "content"],
+                "system": ["infrastructure", "operations"],
+                "productivity": ["work", "organization"],
+                "development": ["technical", "code"],
+                "communication": ["interaction", "business"],
+                "media": ["content", "multimedia"],
+                "security": ["infrastructure", "safety"],
+                "configuration": ["settings", "management"],
+                "logs": ["monitoring", "diagnostics"],
+                "analytics": ["data", "insights"]
+            }
+            
+            if domain in category_map:
+                tags.extend(category_map[domain])
+            
+            # Add metadata-based tags
+            if "category" in metadata:
+                tags.append(str(metadata["category"]))
+            if "type" in metadata:
+                tags.append(str(metadata["type"]))
+            
+            # Remove duplicates while preserving order
+            seen = set()
+            unique_tags = []
+            for tag in tags:
+                if tag and tag not in seen:
+                    unique_tags.append(tag)
+                    seen.add(tag)
+            
+            logger.debug(f"Generated {len(unique_tags)} tags for domain '{domain}'")
+            return unique_tags
+            
+        except Exception as e:
+            logger.warning(f"Tag generation error: {e}")
+            return [domain]
     
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
+        Execute document tagging operation.
         
+        Args:
+            documents: List[Dict] of documents with 'content' and optional 'metadata' keys
+            mode: str, tagging mode ('auto_detect', 'manual', or 'hybrid') - default: 'auto_detect'
+            custom_mappings: Dict[str, str] of document_id to domain mappings (for manual mode)
+            include_statistics: bool, whether to include detailed statistics - default: True
+            
         Returns:
-            Dict containing execution results
+            Dict with status, message, and data containing:
+                - tagged_count: Number of successfully tagged documents
+                - domains_found: List of unique domains detected
+                - tagged_documents: List of documents with assigned tags
+                - domain_statistics: Dict with count per domain
+                - most_common_domain: Most frequently detected domain
         """
         if not self.initialized:
-            raise RuntimeError("document_tags not initialized. Call setup() first.")
-        
-        try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "document_tags executed successfully",
-                "data": {}
-            }
-            return result
-        except Exception as e:
-            logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
-                "message": str(e),
+                "message": "document_tags not initialized",
+                "data": None
+            }
+        
+        try:
+            documents = kwargs.get("documents", [])
+            mode = kwargs.get("mode", "auto_detect")
+            custom_mappings = kwargs.get("custom_mappings", {})
+            include_statistics = kwargs.get("include_statistics", True)
+            
+            if not isinstance(documents, list):
+                raise ValueError("documents must be a list")
+            
+            if not documents:
+                raise ValueError("documents list cannot be empty")
+            
+            logger.info(f"Starting document tagging for {len(documents)} documents in '{mode}' mode")
+            
+            self.tagged_documents = []
+            domains_found = set()
+            domain_counts: Dict[str, int] = {}
+            tagged_count = 0
+            
+            for idx, doc in enumerate(documents):
+                try:
+                    if not isinstance(doc, dict):
+                        logger.warning(f"Document {idx} is not a dict, skipping")
+                        continue
+                    
+                    content = doc.get("content", "")
+                    metadata = doc.get("metadata", {})
+                    doc_id = doc.get("id", f"doc_{idx}")
+                    
+                    # Determine domain based on mode
+                    if mode == "manual" and doc_id in custom_mappings:
+                        domain = custom_mappings[doc_id]
+                    elif mode in ["auto_detect", "hybrid"]:
+                        domain = self._detect_domain(content, metadata)
+                    else:
+                        domain = "custom"
+                    
+                    # Generate tags
+                    tags = self._generate_tags(domain, metadata)
+                    
+                    # Build tagged document
+                    tagged_doc = {
+                        "id": doc_id,
+                        "domain": domain,
+                        "tags": tags,
+                        "content": content,
+                        "metadata": metadata
+                    }
+                    
+                    self.tagged_documents.append(tagged_doc)
+                    
+                    # Track statistics
+                    domains_found.add(domain)
+                    domain_counts[domain] = domain_counts.get(domain, 0) + 1
+                    tagged_count += 1
+                    
+                    if (idx + 1) % 100 == 0:
+                        logger.debug(f"Processed {idx + 1} documents")
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to tag document {idx}: {e}")
+                    continue
+            
+            # Determine most common domain
+            most_common_domain = max(domain_counts.items(), key=lambda x: x[1])[0] if domain_counts else "none"
+            
+            logger.info(f"Tagged {tagged_count} documents in {len(domains_found)} domains")
+            
+            result_data = {
+                "tagged_count": tagged_count,
+                "total_documents": len(documents),
+                "domains_found": sorted(list(domains_found)),
+                "tagged_documents": self.tagged_documents,
+                "most_common_domain": most_common_domain
+            }
+            
+            if include_statistics:
+                result_data["domain_statistics"] = domain_counts
+            
+            return {
+                "status": "success",
+                "message": f"Successfully tagged {tagged_count} of {len(documents)} documents",
+                "data": result_data
+            }
+            
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            return {
+                "status": "error",
+                "message": f"Invalid parameters: {str(e)}",
+                "data": None
+            }
+        except Exception as e:
+            logger.error(f"Document tagging failed: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Tagging operation failed: {str(e)}",
                 "data": None
             }
 

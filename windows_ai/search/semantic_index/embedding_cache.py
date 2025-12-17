@@ -179,8 +179,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -360,50 +360,401 @@ class EmbeddingCache:
 *   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
     """
     
-    def __init__(self):
-        """Initialize the embedding cache system."""
+    def __init__(self, max_size_mb: int = 512, ttl_seconds: int = 3600, 
+                 strategy: str = "hybrid", persist_path: Optional[str] = None):
+        """
+        Initialize the embedding cache system with configurable parameters.
+        
+        Args:
+            max_size_mb: Maximum cache size in MB (default: 512)
+            ttl_seconds: Time-to-live for entries in seconds (default: 3600 = 1 hour)
+            strategy: Cache strategy - 'ttl', 'lru', or 'hybrid' (default: 'hybrid')
+            persist_path: Optional path for persistence (default: ~/.windows_ai/embedding_cache)
+        """
         self.initialized = False
-        logger.info("Initialized embedding_cache")
+        self.max_size_mb = max_size_mb
+        self.max_size_bytes = max_size_mb * 1024 * 1024
+        self.ttl_seconds = ttl_seconds
+        self.strategy = strategy
+        
+        # Set persistence path
+        if persist_path:
+            self.persist_path = Path(persist_path)
+        else:
+            self.persist_path = Path.home() / ".windows_ai" / "embedding_cache"
+        
+        # Initialize cache storage
+        self.cache: Dict[str, Any] = {}
+        self.access_times: Dict[str, float] = {}
+        self.created_times: Dict[str, float] = {}
+        self.entry_sizes: Dict[str, int] = {}
+        self.current_size_bytes = 0
+        
+        # Initialize statistics
+        self.statistics = {
+            "hits": 0,
+            "misses": 0,
+            "evictions": 0,
+            "total_sets": 0,
+            "total_gets": 0,
+            "expired_removals": 0
+        }
+        
+        # Thread safety
+        self.lock = threading.RLock()
+        
+        logger.info(f"Initialized embedding_cache with {max_size_mb}MB, {ttl_seconds}s TTL, strategy='{strategy}'")
     
     def setup(self) -> bool:
         """
         Set up the system and prepare for operation.
         
+        Creates persistence directory and loads cached embeddings if available.
+        
         Returns:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
-            self.initialized = True
-            logger.info("embedding_cache setup completed")
-            return True
+            with self.lock:
+                # Create persistence directory
+                self.persist_path.mkdir(parents=True, exist_ok=True)
+                logger.debug(f"Created persistence directory: {self.persist_path}")
+                
+                # Load persisted cache if it exists
+                cache_file = self.persist_path / "cache.json"
+                if cache_file.exists():
+                    try:
+                        self._load_cache()
+                        logger.info(f"Loaded {len(self.cache)} entries from persistent cache")
+                    except Exception as e:
+                        logger.warning(f"Failed to load persistent cache: {e}")
+                
+                self.initialized = True
+                logger.info("embedding_cache setup completed successfully")
+                return True
+                
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
+            logger.error(f"Setup failed: {e}", exc_info=True)
             return False
+    
+    def _get_size_bytes(self, value: Any) -> int:
+        """
+        Estimate size of value in bytes using json serialization.
+        
+        Args:
+            value: Value to size
+            
+        Returns:
+            int: Estimated size in bytes
+        """
+        try:
+            import sys
+            if isinstance(value, (list, dict)):
+                return len(json.dumps(value).encode('utf-8'))
+            elif isinstance(value, str):
+                return len(value.encode('utf-8'))
+            else:
+                return sys.getsizeof(value)
+        except Exception:
+            return 1024  # Default estimate
+    
+    def _cleanup_expired(self):
+        """Remove expired entries based on TTL."""
+        try:
+            current_time = time.time()
+            expired_keys = []
+            
+            for key, created_time in self.created_times.items():
+                if current_time - created_time > self.ttl_seconds:
+                    expired_keys.append(key)
+            
+            for key in expired_keys:
+                if key in self.cache:
+                    size = self.entry_sizes.get(key, 0)
+                    del self.cache[key]
+                    del self.access_times[key]
+                    del self.created_times[key]
+                    del self.entry_sizes[key]
+                    self.current_size_bytes -= size
+                    self.statistics["expired_removals"] += 1
+            
+            if expired_keys:
+                logger.debug(f"Cleaned up {len(expired_keys)} expired entries")
+                
+        except Exception as e:
+            logger.warning(f"Cleanup error: {e}")
+    
+    def _evict_lru(self):
+        """Evict least recently used entry if using LRU strategy."""
+        try:
+            if not self.access_times:
+                return
+            
+            # Find least recently used key
+            lru_key = min(self.access_times.items(), key=lambda x: x[1])[0]
+            
+            if lru_key in self.cache:
+                size = self.entry_sizes.get(lru_key, 0)
+                del self.cache[lru_key]
+                del self.access_times[lru_key]
+                if lru_key in self.created_times:
+                    del self.created_times[lru_key]
+                del self.entry_sizes[lru_key]
+                self.current_size_bytes -= size
+                self.statistics["evictions"] += 1
+                logger.debug(f"Evicted LRU entry: {lru_key}")
+                
+        except Exception as e:
+            logger.warning(f"LRU eviction error: {e}")
+    
+    def _should_evict(self) -> bool:
+        """Check if eviction is needed based on cache size."""
+        return self.current_size_bytes > self.max_size_bytes
+    
+    def _set_entry(self, key: str, value: Any):
+        """Set cache entry with proper size tracking."""
+        try:
+            size = self._get_size_bytes(value)
+            
+            # If updating existing key, remove old size
+            if key in self.entry_sizes:
+                self.current_size_bytes -= self.entry_sizes[key]
+            
+            # Set entry and track size
+            self.cache[key] = value
+            self.entry_sizes[key] = size
+            self.current_size_bytes += size
+            
+            # Evict if necessary
+            while self._should_evict() and len(self.cache) > 1:
+                if self.strategy in ["lru", "hybrid"]:
+                    self._evict_lru()
+                else:
+                    # For TTL-only, remove any entry to make space
+                    first_key = next(iter(self.cache.keys()))
+                    size = self.entry_sizes.get(first_key, 0)
+                    del self.cache[first_key]
+                    del self.entry_sizes[first_key]
+                    if first_key in self.access_times:
+                        del self.access_times[first_key]
+                    if first_key in self.created_times:
+                        del self.created_times[first_key]
+                    self.current_size_bytes -= size
+                    self.statistics["evictions"] += 1
+            
+        except Exception as e:
+            logger.warning(f"Error setting cache entry: {e}")
+    
+    def _load_cache(self):
+        """Load persisted cache from disk (JSON format)."""
+        try:
+            cache_file = self.persist_path / "cache.json"
+            if cache_file.exists():
+                with open(cache_file, 'r') as f:
+                    data = json.load(f)
+                    self.cache = data.get("cache", {})
+                    self.created_times = data.get("created_times", {})
+                    
+                    # Recalculate sizes
+                    self.current_size_bytes = 0
+                    for key, value in self.cache.items():
+                        size = self._get_size_bytes(value)
+                        self.entry_sizes[key] = size
+                        self.current_size_bytes += size
+                        self.access_times[key] = time.time()
+                    
+                    logger.debug(f"Loaded cache with {len(self.cache)} entries")
+                    
+        except Exception as e:
+            logger.warning(f"Failed to load cache: {e}")
     
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
+        Execute cache operations with thread-safe access.
         
+        Args:
+            operation: str, cache operation ('set', 'get', 'delete', 'clear', 'stats')
+            key: str, cache key (required for set/get/delete)
+            value: Any, value to cache (required for set)
+            persist: bool, whether to persist after set (default: False)
+            
         Returns:
-            Dict containing execution results
+            Dict with status, message, and data containing operation result
         """
         if not self.initialized:
-            raise RuntimeError("embedding_cache not initialized. Call setup() first.")
-        
-        try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "embedding_cache executed successfully",
-                "data": {}
-            }
-            return result
-        except Exception as e:
-            logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
-                "message": str(e),
+                "message": "embedding_cache not initialized",
+                "data": None
+            }
+        
+        try:
+            with self.lock:
+                operation = kwargs.get("operation", "").lower()
+                key = kwargs.get("key")
+                value = kwargs.get("value")
+                persist = kwargs.get("persist", False)
+                
+                # Clean expired entries before operation
+                if self.strategy in ["ttl", "hybrid"]:
+                    self._cleanup_expired()
+                
+                # Handle different operations
+                if operation == "set":
+                    if not key:
+                        raise ValueError("'key' parameter required for 'set' operation")
+                    if value is None:
+                        raise ValueError("'value' parameter required for 'set' operation")
+                    
+                    self._set_entry(key, value)
+                    self.statistics["total_sets"] += 1
+                    
+                    # Persist if requested
+                    if persist:
+                        cache_file = self.persist_path / "cache.json"
+                        cache_data = {
+                            "cache": self.cache,
+                            "created_times": self.created_times
+                        }
+                        with open(cache_file, 'w') as f:
+                            json.dump(cache_data, f)
+                        logger.debug(f"Persisted cache to {cache_file}")
+                    
+                    logger.debug(f"Set cache entry: {key} ({self.entry_sizes.get(key, 0)} bytes)")
+                    return {
+                        "status": "success",
+                        "message": f"Entry cached: {key}",
+                        "data": {
+                            "key": key,
+                            "size_bytes": self.entry_sizes.get(key, 0),
+                            "cache_size_bytes": self.current_size_bytes,
+                            "entries_cached": len(self.cache)
+                        }
+                    }
+                
+                elif operation == "get":
+                    if not key:
+                        raise ValueError("'key' parameter required for 'get' operation")
+                    
+                    self.statistics["total_gets"] += 1
+                    
+                    if key in self.cache:
+                        # Update access time for LRU
+                        self.access_times[key] = time.time()
+                        self.statistics["hits"] += 1
+                        logger.debug(f"Cache hit: {key}")
+                        return {
+                            "status": "success",
+                            "message": f"Retrieved from cache: {key}",
+                            "data": {
+                                "key": key,
+                                "value": self.cache[key],
+                                "hit": True,
+                                "hit_rate": self.statistics["hits"] / self.statistics["total_gets"] if self.statistics["total_gets"] > 0 else 0
+                            }
+                        }
+                    else:
+                        self.statistics["misses"] += 1
+                        logger.debug(f"Cache miss: {key}")
+                        return {
+                            "status": "success",
+                            "message": f"Not in cache: {key}",
+                            "data": {
+                                "key": key,
+                                "value": None,
+                                "hit": False,
+                                "hit_rate": self.statistics["hits"] / self.statistics["total_gets"] if self.statistics["total_gets"] > 0 else 0
+                            }
+                        }
+                
+                elif operation == "delete":
+                    if not key:
+                        raise ValueError("'key' parameter required for 'delete' operation")
+                    
+                    if key in self.cache:
+                        size = self.entry_sizes.get(key, 0)
+                        del self.cache[key]
+                        del self.entry_sizes[key]
+                        if key in self.access_times:
+                            del self.access_times[key]
+                        if key in self.created_times:
+                            del self.created_times[key]
+                        self.current_size_bytes -= size
+                        logger.debug(f"Deleted cache entry: {key}")
+                        return {
+                            "status": "success",
+                            "message": f"Deleted from cache: {key}",
+                            "data": {
+                                "key": key,
+                                "deleted": True,
+                                "entries_remaining": len(self.cache)
+                            }
+                        }
+                    else:
+                        logger.debug(f"Delete failed - key not found: {key}")
+                        return {
+                            "status": "success",
+                            "message": f"Key not in cache: {key}",
+                            "data": {
+                                "key": key,
+                                "deleted": False,
+                                "entries_remaining": len(self.cache)
+                            }
+                        }
+                
+                elif operation == "clear":
+                    count = len(self.cache)
+                    self.cache.clear()
+                    self.entry_sizes.clear()
+                    self.access_times.clear()
+                    self.created_times.clear()
+                    self.current_size_bytes = 0
+                    logger.info(f"Cleared cache ({count} entries removed)")
+                    return {
+                        "status": "success",
+                        "message": f"Cache cleared ({count} entries removed)",
+                        "data": {
+                            "cleared": True,
+                            "entries_removed": count
+                        }
+                    }
+                
+                elif operation == "stats":
+                    hit_rate = self.statistics["hits"] / self.statistics["total_gets"] if self.statistics["total_gets"] > 0 else 0
+                    return {
+                        "status": "success",
+                        "message": "Cache statistics retrieved",
+                        "data": {
+                            "strategy": self.strategy,
+                            "max_size_mb": self.max_size_mb,
+                            "current_size_mb": self.current_size_bytes / (1024 * 1024),
+                            "entries_cached": len(self.cache),
+                            "hits": self.statistics["hits"],
+                            "misses": self.statistics["misses"],
+                            "hit_rate": hit_rate,
+                            "total_sets": self.statistics["total_sets"],
+                            "total_gets": self.statistics["total_gets"],
+                            "evictions": self.statistics["evictions"],
+                            "expired_removals": self.statistics["expired_removals"],
+                            "ttl_seconds": self.ttl_seconds
+                        }
+                    }
+                
+                else:
+                    raise ValueError(f"Unknown operation: {operation}. Must be 'set', 'get', 'delete', 'clear', or 'stats'")
+                    
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            return {
+                "status": "error",
+                "message": f"Invalid parameters: {str(e)}",
+                "data": None
+            }
+        except Exception as e:
+            logger.error(f"Cache operation failed: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Operation failed: {str(e)}",
                 "data": None
             }
 

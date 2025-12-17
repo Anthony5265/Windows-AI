@@ -1,15 +1,25 @@
 """Chat and conversation API routes for Windows AI GUI"""
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel
-from typing import Dict, List, Optional, Any
 import asyncio
 import json
+import logging
 import time
 import uuid
+from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
+
+# Import unrestricted configuration
+from windows_ai.config.unrestricted_config import \
+  get_unrestricted_system_prompt
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# System prompt for unrestricted AI behavior
+SYSTEM_PROMPT = get_unrestricted_system_prompt()
 
 # In-memory conversation storage (replace with database in production)
 conversations: Dict[str, List[Dict[str, Any]]] = {}
@@ -50,8 +60,10 @@ async def chat(body: ChatMessage, request: Request):
             "timestamp": time.time()
         })
         
-        # Prepare messages for LLM
-        history = []
+        # Prepare messages for LLM with system prompt
+        history = [
+            {"role": "system", "content": SYSTEM_PROMPT}  # Unrestricted system prompt first
+        ]
         for msg in conversations[conv_id]:
             if msg["role"] in ["user", "assistant", "system"]:
                 history.append({"role": msg["role"], "content": msg["content"]})
@@ -131,8 +143,10 @@ async def chat_stream(body: ChatMessage, request: Request):
             "timestamp": time.time()
         })
         
-        # Prepare messages for LLM
-        history = []
+        # Prepare messages for LLM with system prompt
+        history = [
+            {"role": "system", "content": SYSTEM_PROMPT}  # Unrestricted system prompt first
+        ]
         for msg in conversations[conv_id]:
             if msg["role"] in ["user", "assistant", "system"]:
                 history.append({"role": msg["role"], "content": msg["content"]})

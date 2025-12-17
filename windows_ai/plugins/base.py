@@ -34,6 +34,7 @@ class PluginMetadata:
     icon: Optional[str] = None
     tags: List[str] = None
     requirements: List[str] = None
+    capabilities: List[str] = None  # Plugin capabilities
     created_at: Optional[str] = None
 
     def __post_init__(self):
@@ -41,6 +42,8 @@ class PluginMetadata:
             self.tags = []
         if self.requirements is None:
             self.requirements = []
+        if self.capabilities is None:
+            self.capabilities = []
         if self.created_at is None:
             self.created_at = datetime.now().isoformat()
 

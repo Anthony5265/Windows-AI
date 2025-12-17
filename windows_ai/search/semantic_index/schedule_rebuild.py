@@ -1,436 +1,946 @@
-#!/usr/bin/env python3
 """
-Schedule Rebuild
+Schedule Rebuild System for Semantic Index
 
-Implement `search/semantic_index/schedule_rebuild.py` for scheduled background re-indexing.
-*   **Upgrade 114:** Provide `automation/builder/validation_rules.py` ensuring drag-and-drop workflows compile correctly.
-*   **Upgrade 115:** Build `domains/natural_language_processing/intent_catalog.json` enumerating supported intents and entity slots.
-*   **Upgrade 116:** Publish `docs/guides/multimodal-examples.md` demonstrating combined voice, text, and vision interactions.
-*   **Upgrade 117:** Add `gui/src/components/VoiceLevelMeter.vue` for real-time microphone feedback during dictation.
-*   **Upgrade 118:** Integrate `agenthub/plugins/executor_registry.py` to coordinate domain-specific execution strategies.
-*   **Upgrade 119:** Create `windows_ai/integrations/outlook_calendar.py` to orchestrate meeting scheduling automations.
-*   **Upgrade 120:** Ship `domains/computer_vision/screen_region_classifier.py` to categorize UI elements for automation.
-*   **Upgrade 121:** Add `search/connectors/sharepoint.py` enabling enterprise document indexing from SharePoint repositories.
-*   **Upgrade 122:** Provide `automation/workflow_templates/productivity.json` with starter automations for productivity tasks.
-*   **Upgrade 123:** Implement `gui/src/components/WorkflowDebugger.vue` to inspect node states during automation execution.
-*   **Upgrade 124:** Introduce `domains/audio_processing/voiceprint_manager.py` supporting personalized wake-word detection.
-*   **Upgrade 125:** Add `agenthub/memory/session_tagger.py` to tag interactions for quick retrieval.
-*   **Upgrade 126:** Publish `docs/guides/device-hand-off.md` outlining how tasks migrate between desktop and mobile experiences.
-*   **Upgrade 127:** Create `windows_ai/system_controls/window_layout_manager.py` to orchestrate window snapping automations.
-*   **Upgrade 128:** Build `gui/src/components/WorkflowLibrary.vue` showcasing reusable automation recipes.
-*   **Upgrade 129:** Implement `mobile/offline/cache_manager.ts` enabling offline command queues synced later.
-*   **Upgrade 130:** Provide `search/semantic_index/embedding_cache.py` to reuse embeddings across repeated queries.
-*   **Upgrade 131:** Add `automation/runtime/task_recovery.py` to resume workflows after unexpected interruptions.
-*   **Upgrade 132:** Publish `docs/guides/vision-automation-patterns.md` sharing common automation flows using screen context.
-*   **Upgrade 133:** Introduce `domains/natural_language_processing/conversation_state.py` to maintain dialogue continuity.
-*   **Upgrade 134:** Create `windows_ai/system_controls/notification_bridge.py` linking Windows to cross-device alerts.
-*   **Upgrade 135:** Build `gui/src/components/TaskApprovalModal.vue` for user confirmations on sensitive operations.
-*   **Upgrade 136:** Add `automation/workflow_editor/hotkeys.ts` giving power users keyboard shortcuts in the builder.
-*   **Upgrade 137:** Implement `domains/audio_processing/latency_profiler.py` to monitor microphone capture performance.
-*   **Upgrade 138:** Provide `search/semantic_index/vector_exporter.py` for exporting embeddings to external analytics tools.
-*   **Upgrade 139:** Add `iot/hubs/azure_iot_bridge.py` integrating Azure IoT Hub for remote device control.
-*   **Upgrade 140:** Publish `mobile/docs/push-notification-guide.md` documenting configuration for major platforms.
-*   **Upgrade 141:** Create `agenthub/dialogue/prompt_planner.py` to orchestrate multi-turn guidance sequences.
-*   **Upgrade 142:** Implement `gui/src/components/MultimodalComposer.vue` enabling attachments of screenshots and audio clips.
-*   **Upgrade 143:** Provide `automation/workflow_runner/metrics.py` capturing run duration and success ratios.
-*   **Upgrade 144:** Add `search/ui/semantic-search-widget.ts` embedding search into the main dashboard.
-*   **Upgrade 145:** Publish `docs/guides/iot-automation-examples.md` describing sample device orchestration flows.
-*   **Upgrade 146:** Introduce `domains/computer_vision/window_text_extractor.py` using OCR for on-screen text capture.
-*   **Upgrade 147:** Create `windows_ai/integrations/onedrive_sync.py` enabling automation across cloud file events.
-*   **Upgrade 148:** Build `mobile/qr_pairing/flow.ts` to streamline connecting mobile devices with the desktop agent.
-*   **Upgrade 149:** Implement `agenthub/workflow_router_rules.yaml` describing routing heuristics for workflow selection.
-*   **Upgrade 150:** Provide `gui/src/components/SkillMarketplace.vue` to discover and install AI skill packs.
-*   **Upgrade 151:** Add `automation/workflow_editor/validation_messages.json` to offer localized error feedback.
-*   **Upgrade 152:** Publish `docs/guides/automation-api.md` explaining how external tools trigger workflows via HTTP.
-*   **Upgrade 153:** Introduce `domains/natural_language_processing/entity_resolver.py` to normalize user entities across domains.
-*   **Upgrade 154:** Create `windows_ai/system_controls/virtual_desktop_manager.py` automating workspace switching.
-*   **Upgrade 155:** Build `mobile/voice/streaming_adapter.py` for low-latency speech capture from phones.
-*   **Upgrade 156:** Implement `search/indexers/email_indexer.py` to include Outlook emails in semantic search.
-*   **Upgrade 157:** Provide `automation/workflow_runtime/policy_guard.py` enforcing governance rules before execution.
-*   **Upgrade 158:** Add `gui/src/components/KnowledgePanel.vue` summarizing search insights alongside conversations.
-*   **Upgrade 159:** Publish `docs/guides/multidevice-session-handling.md` clarifying session continuity rules.
-*   **Upgrade 160:** Introduce `domains/computer_vision/ui_theme_detector.py` to adapt automation to light/dark themes.
-*   **Upgrade 161:** Create `windows_ai/integrations/teams_messaging.py` enabling Teams chat automations.
-*   **Upgrade 162:** Build `agenthub/dialogue/clarification_manager.py` to ask for missing details before workflow launches.
-*   **Upgrade 163:** Implement `automation/workflow_engine/fallback_executor.py` to retry tasks with alternative strategies.
-*   **Upgrade 164:** Provide `search/semantic_index/query_profiler.py` analyzing query performance metrics.
-*   **Upgrade 165:** Add `iot/device_health_monitor.py` to track firmware versions and status alerts.
-*   **Upgrade 166:** Publish `mobile/docs/offline-mode.md` describing cache policies for disconnected usage.
-*   **Upgrade 167:** Introduce `domains/audio_processing/speaker_diarization.py` to separate speakers in recorded meetings.
-*   **Upgrade 168:** Create `gui/src/components/AutomationInsights.vue` to highlight automation ROI to users.
-*   **Upgrade 169:** Build `automation/workflow_editor/version_history.ts` enabling rollback to previous workflow revisions.
-*   **Upgrade 170:** Implement `windows_ai/system_controls/security_context.py` verifying permissions before executing actions.
-*   **Upgrade 171:** Provide `search/plugins/web_results.py` to blend curated web data into responses.
-*   **Upgrade 172:** Add `agenthub/plugins/discovery_service.py` to auto-register new domain capabilities.
-*   **Upgrade 173:** Publish `docs/guides/speech-to-automation.md` linking voice commands to workflow templates.
-*   **Upgrade 174:** Introduce `domains/natural_language_processing/personalization_hooks.py` injecting user preferences into prompts.
-*   **Upgrade 175:** Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
-*   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
-*   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
-*   **Upgrade 178:** Provide `automation/workflow_runtime/audit_log.py` to track every automation decision.
-*   **Upgrade 179:** Add `gui/src/components/LiveWorkflowConsole.vue` streaming logs in real time.
-*   **Upgrade 180:** Publish `docs/guides/window-automation-patterns.md` covering best practices for window manipulation.
-*   **Upgrade 181:** Introduce `domains/computer_vision/pixel_heatmap.py` to debug what parts of the screen models observe.
-*   **Upgrade 182:** Create `windows_ai/integrations/edge_extension` enabling browser-level automation triggers.
-*   **Upgrade 183:** Build `agenthub/dialogue/contextual_prompt_cache.py` caching prompts aligned with conversation phases.
-*   **Upgrade 184:** Implement `automation/workflow_engine/priority_queue.py` for multi-user workflow scheduling.
-*   **Upgrade 185:** Provide `search/semantic_index/document_tags.py` to categorize indexed content by domain.
-*   **Upgrade 186:** Add `iot/device_actions/media_controls.py` exposing remote playback commands.
-*   **Upgrade 187:** Publish `mobile/docs/voice-quality-tuning.md` for optimizing microphone settings on phones.
-*   **Upgrade 188:** Introduce `domains/audio_processing/dynamic_noise_cancellation.py` adapting to ambient environments.
-*   **Upgrade 189:** Create `gui/src/components/AutomationDependencyGraph.vue` showing relationships between workflows.
-*   **Upgrade 190:** Build `automation/workflow_runtime/parallel_executor.py` to run independent branches concurrently.
-*   **Upgrade 191:** Implement `windows_ai/system_controls/credential_vault.py` for securely storing automation credentials.
-*   **Upgrade 192:** Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
-*   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
-*   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
-*   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
-*   **Upgrade 196:** Create `windows_ai/integrations/sharepoint_sync.py` to automate document approvals.
-*   **Upgrade 197:** Build `mobile/diagnostics/log_exporter.ts` allowing users to send diagnostics from the app.
-*   **Upgrade 198:** Implement `automation/workflow_engine/state_persistence.py` storing progress in case of restarts.
-*   **Upgrade 199:** Provide `search/ui/relevance_feedback.ts` to collect user feedback on search answers.
-*   **Upgrade 200:** Add `iot/voice_announcements.py` enabling the assistant to speak through connected speakers.
-*   **Upgrade 601:** Add `domains/audio_processing/audio_coordinator.py` acting as a coordinator that deepens audio intelligence pipelines.
-*   **Upgrade 602:** Introduce `domains/audio_processing/audio_optimizer.py` optimizing pipelines to enhance audio intelligence pipelines.
-*   **Upgrade 603:** Implement `domains/audio_processing/audio_bridge.py` bridging supporting services to expand audio intelligence pipelines.
-*   **Upgrade 604:** Create `domains/audio_processing/audio_trainer.py` training datasets that accelerate audio intelligence pipelines.
-*   **Upgrade 605:** Publish `domains/audio_processing/audio_analyzer.py` analyzing telemetry streams to refine audio intelligence pipelines.
-*   **Upgrade 606:** Provide `domains/audio_processing/audio_adapter.py` adapting integrations so audio intelligence pipelines can scale.
-*   **Upgrade 607:** Ship `domains/audio_processing/audio_studio.py` delivering studio tooling for teams to shape audio intelligence pipelines.
-*   **Upgrade 608:** Build `domains/audio_processing/audio_monitor.py` monitoring execution quality to safeguard audio intelligence pipelines.
-*   **Upgrade 609:** Deliver `domains/audio_processing/audio_toolkit.py` packaging toolkit assets that boost audio intelligence pipelines.
-*   **Upgrade 610:** Launch `domains/audio_processing/audio_blueprint.py` documenting blueprints that future-proof audio intelligence pipelines.
-*   **Upgrade 611:** Add `domains/natural_language_processing/language_coordinator.py` acting as a coordinator that deepens natural language orchestration.
-*   **Upgrade 612:** Introduce `domains/natural_language_processing/language_optimizer.py` optimizing pipelines to enhance natural language orchestration.
-*   **Upgrade 613:** Implement `domains/natural_language_processing/language_bridge.py` bridging supporting services to expand natural language orchestration.
-*   **Upgrade 614:** Create `domains/natural_language_processing/language_trainer.py` training datasets that accelerate natural language orchestration.
-*   **Upgrade 615:** Publish `domains/natural_language_processing/language_analyzer.py` analyzing telemetry streams to refine natural language orchestration.
-*   **Upgrade 616:** Provide `domains/natural_language_processing/language_adapter.py` adapting integrations so natural language orchestration can scale.
-*   **Upgrade 617:** Ship `domains/natural_language_processing/language_studio.py` delivering studio tooling for teams to shape natural language orchestration.
-*   **Upgrade 618:** Build `domains/natural_language_processing/language_monitor.py` monitoring execution quality to safeguard natural language orchestration.
-*   **Upgrade 619:** Deliver `domains/natural_language_processing/language_toolkit.py` packaging toolkit assets that boost natural language orchestration.
-*   **Upgrade 620:** Launch `domains/natural_language_processing/language_blueprint.py` documenting blueprints that future-proof natural language orchestration.
-*   **Upgrade 621:** Add `domains/computer_vision/vision_coordinator.py` acting as a coordinator that deepens computer vision understanding.
-*   **Upgrade 622:** Introduce `domains/computer_vision/vision_optimizer.py` optimizing pipelines to enhance computer vision understanding.
-*   **Upgrade 623:** Implement `domains/computer_vision/vision_bridge.py` bridging supporting services to expand computer vision understanding.
-*   **Upgrade 624:** Create `domains/computer_vision/vision_trainer.py` training datasets that accelerate computer vision understanding.
-*   **Upgrade 625:** Publish `domains/computer_vision/vision_analyzer.py` analyzing telemetry streams to refine computer vision understanding.
-*   **Upgrade 626:** Provide `domains/computer_vision/vision_adapter.py` adapting integrations so computer vision understanding can scale.
-*   **Upgrade 627:** Ship `domains/computer_vision/vision_studio.py` delivering studio tooling for teams to shape computer vision understanding.
-*   **Upgrade 628:** Build `domains/computer_vision/vision_monitor.py` monitoring execution quality to safeguard computer vision understanding.
-*   **Upgrade 629:** Deliver `domains/computer_vision/vision_toolkit.py` packaging toolkit assets that boost computer vision understanding.
-*   **Upgrade 630:** Launch `domains/computer_vision/vision_blueprint.py` documenting blueprints that future-proof computer vision understanding.
-*   **Upgrade 631:** Add `windows_ai/system_controls/windows_coordinator.py` acting as a coordinator that deepens Windows system control integrations.
-*   **Upgrade 632:** Introduce `windows_ai/system_controls/windows_optimizer.py` optimizing pipelines to enhance Windows system control integrations.
-*   **Upgrade 633:** Implement `windows_ai/system_controls/windows_bridge.py` bridging supporting services to expand Windows system control integrations.
-*   **Upgrade 634:** Create `windows_ai/system_controls/windows_trainer.py` training datasets that accelerate Windows system control integrations.
-*   **Upgrade 635:** Publish `windows_ai/system_controls/windows_analyzer.py` analyzing telemetry streams to refine Windows system control integrations.
-*   **Upgrade 636:** Provide `windows_ai/system_controls/windows_adapter.py` adapting integrations so Windows system control integrations can scale.
-*   **Upgrade 637:** Ship `windows_ai/system_controls/windows_studio.py` delivering studio tooling for teams to shape Windows system control integrations.
-*   **Upgrade 638:** Build `windows_ai/system_controls/windows_monitor.py` monitoring execution quality to safeguard Windows system control integrations.
-*   **Upgrade 639:** Deliver `windows_ai/system_controls/windows_toolkit.py` packaging toolkit assets that boost Windows system control integrations.
-*   **Upgrade 640:** Launch `windows_ai/system_controls/windows_blueprint.py` documenting blueprints that future-proof Windows system control integrations.
-*   **Upgrade 641:** Add `agenthub/agenthub_coordinator.py` acting as a coordinator that deepens core orchestration intelligence.
-*   **Upgrade 642:** Introduce `agenthub/agenthub_optimizer.py` optimizing pipelines to enhance core orchestration intelligence.
-*   **Upgrade 643:** Implement `agenthub/agenthub_bridge.py` bridging supporting services to expand core orchestration intelligence.
-*   **Upgrade 644:** Create `agenthub/agenthub_trainer.py` training datasets that accelerate core orchestration intelligence.
-*   **Upgrade 645:** Publish `agenthub/agenthub_analyzer.py` analyzing telemetry streams to refine core orchestration intelligence.
-*   **Upgrade 646:** Provide `agenthub/agenthub_adapter.py` adapting integrations so core orchestration intelligence can scale.
-*   **Upgrade 647:** Ship `agenthub/agenthub_studio.py` delivering studio tooling for teams to shape core orchestration intelligence.
-*   **Upgrade 648:** Build `agenthub/agenthub_monitor.py` monitoring execution quality to safeguard core orchestration intelligence.
-*   **Upgrade 649:** Deliver `agenthub/agenthub_toolkit.py` packaging toolkit assets that boost core orchestration intelligence.
-*   **Upgrade 650:** Launch `agenthub/agenthub_blueprint.py` documenting blueprints that future-proof core orchestration intelligence.
-*   **Upgrade 651:** Add `automation/automation_coordinator.py` acting as a coordinator that deepens workflow execution depth.
-*   **Upgrade 652:** Introduce `automation/automation_optimizer.py` optimizing pipelines to enhance workflow execution depth.
-*   **Upgrade 653:** Implement `automation/automation_bridge.py` bridging supporting services to expand workflow execution depth.
-*   **Upgrade 654:** Create `automation/automation_trainer.py` training datasets that accelerate workflow execution depth.
-*   **Upgrade 655:** Publish `automation/automation_analyzer.py` analyzing telemetry streams to refine workflow execution depth.
-*   **Upgrade 656:** Provide `automation/automation_adapter.py` adapting integrations so workflow execution depth can scale.
-*   **Upgrade 657:** Ship `automation/automation_studio.py` delivering studio tooling for teams to shape workflow execution depth.
-*   **Upgrade 658:** Build `automation/automation_monitor.py` monitoring execution quality to safeguard workflow execution depth.
-*   **Upgrade 659:** Deliver `automation/automation_toolkit.py` packaging toolkit assets that boost workflow execution depth.
-*   **Upgrade 660:** Launch `automation/automation_blueprint.py` documenting blueprints that future-proof workflow execution depth.
-*   **Upgrade 661:** Add `search/search_coordinator.py` acting as a coordinator that deepens semantic retrieval capabilities.
-*   **Upgrade 662:** Introduce `search/search_optimizer.py` optimizing pipelines to enhance semantic retrieval capabilities.
-*   **Upgrade 663:** Implement `search/search_bridge.py` bridging supporting services to expand semantic retrieval capabilities.
-*   **Upgrade 664:** Create `search/search_trainer.py` training datasets that accelerate semantic retrieval capabilities.
-*   **Upgrade 665:** Publish `search/search_analyzer.py` analyzing telemetry streams to refine semantic retrieval capabilities.
-*   **Upgrade 666:** Provide `search/search_adapter.py` adapting integrations so semantic retrieval capabilities can scale.
-*   **Upgrade 667:** Ship `search/search_studio.py` delivering studio tooling for teams to shape semantic retrieval capabilities.
-*   **Upgrade 668:** Build `search/search_monitor.py` monitoring execution quality to safeguard semantic retrieval capabilities.
-*   **Upgrade 669:** Deliver `search/search_toolkit.py` packaging toolkit assets that boost semantic retrieval capabilities.
-*   **Upgrade 670:** Launch `search/search_blueprint.py` documenting blueprints that future-proof semantic retrieval capabilities.
-*   **Upgrade 671:** Add `gui/src/components/gui_coordinator.vue` acting as a coordinator that deepens immersive user interaction.
-*   **Upgrade 672:** Introduce `gui/src/components/gui_optimizer.vue` optimizing pipelines to enhance immersive user interaction.
-*   **Upgrade 673:** Implement `gui/src/components/gui_bridge.vue` bridging supporting services to expand immersive user interaction.
-*   **Upgrade 674:** Create `gui/src/components/gui_trainer.vue` training datasets that accelerate immersive user interaction.
-*   **Upgrade 675:** Publish `gui/src/components/gui_analyzer.vue` analyzing telemetry streams to refine immersive user interaction.
-*   **Upgrade 676:** Provide `gui/src/components/gui_adapter.vue` adapting integrations so immersive user interaction can scale.
-*   **Upgrade 677:** Ship `gui/src/components/gui_studio.vue` delivering studio tooling for teams to shape immersive user interaction.
-*   **Upgrade 678:** Build `gui/src/components/gui_monitor.vue` monitoring execution quality to safeguard immersive user interaction.
-*   **Upgrade 679:** Deliver `gui/src/components/gui_toolkit.vue` packaging toolkit assets that boost immersive user interaction.
-*   **Upgrade 680:** Launch `gui/src/components/gui_blueprint.vue` documenting blueprints that future-proof immersive user interaction.
-*   **Upgrade 681:** Add `mobile/mobile_coordinator.ts` acting as a coordinator that deepens cross-device experiences.
-*   **Upgrade 682:** Introduce `mobile/mobile_optimizer.ts` optimizing pipelines to enhance cross-device experiences.
-*   **Upgrade 683:** Implement `mobile/mobile_bridge.ts` bridging supporting services to expand cross-device experiences.
-*   **Upgrade 684:** Create `mobile/mobile_trainer.ts` training datasets that accelerate cross-device experiences.
-*   **Upgrade 685:** Publish `mobile/mobile_analyzer.ts` analyzing telemetry streams to refine cross-device experiences.
-*   **Upgrade 686:** Provide `mobile/mobile_adapter.ts` adapting integrations so cross-device experiences can scale.
-*   **Upgrade 687:** Ship `mobile/mobile_studio.ts` delivering studio tooling for teams to shape cross-device experiences.
-*   **Upgrade 688:** Build `mobile/mobile_monitor.ts` monitoring execution quality to safeguard cross-device experiences.
-*   **Upgrade 689:** Deliver `mobile/mobile_toolkit.ts` packaging toolkit assets that boost cross-device experiences.
-*   **Upgrade 690:** Launch `mobile/mobile_blueprint.ts` documenting blueprints that future-proof cross-device experiences.
-*   **Upgrade 691:** Add `iot/iot_coordinator.py` acting as a coordinator that deepens device orchestration reach.
-*   **Upgrade 692:** Introduce `iot/iot_optimizer.py` optimizing pipelines to enhance device orchestration reach.
-*   **Upgrade 693:** Implement `iot/iot_bridge.py` bridging supporting services to expand device orchestration reach.
-*   **Upgrade 694:** Create `iot/iot_trainer.py` training datasets that accelerate device orchestration reach.
-*   **Upgrade 695:** Publish `iot/iot_analyzer.py` analyzing telemetry streams to refine device orchestration reach.
-*   **Upgrade 696:** Provide `iot/iot_adapter.py` adapting integrations so device orchestration reach can scale.
-*   **Upgrade 697:** Ship `iot/iot_studio.py` delivering studio tooling for teams to shape device orchestration reach.
-*   **Upgrade 698:** Build `iot/iot_monitor.py` monitoring execution quality to safeguard device orchestration reach.
-*   **Upgrade 699:** Deliver `iot/iot_toolkit.py` packaging toolkit assets that boost device orchestration reach.
-*   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
+Provides intelligent scheduling for semantic index rebuild operations with configurable
+schedules, resource management, and automatic optimization.
 
-Created: 2025-11-15
-Part of: Windows-AI Roadmap Implementation
+Features:
+- Flexible scheduling (cron-like syntax, interval-based, one-time)
+- Resource-aware execution (CPU, memory, disk I/O monitoring)
+- Incremental rebuild support
+- Priority-based scheduling
+- Automatic retry with exponential backoff
+- Comprehensive logging and monitoring
+
+Example:
+    from windows_ai.search.semantic_index.schedule_rebuild import RebuildScheduler
+    
+    scheduler = RebuildScheduler()
+    await scheduler.initialize()
+    
+    # Schedule daily rebuild at 2 AM
+    await scheduler.schedule_rebuild(
+        schedule_type="cron",
+        schedule="0 2 * * *",
+        rebuild_type="full"
+    )
+    
+    # Schedule incremental rebuild every 4 hours
+    await scheduler.schedule_rebuild(
+        schedule_type="interval",
+        interval_hours=4,
+        rebuild_type="incremental"
+    )
+
+Created: 2025-01-15
+Part of: Windows AI Semantic Search System
 """
 
+import asyncio
+import json
 import logging
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
 
-class ScheduleRebuild:
+# ============================================================================
+# Enums
+# ============================================================================
+
+class ScheduleType(Enum):
+    """Type of schedule"""
+    CRON = "cron"
+    INTERVAL = "interval"
+    ONE_TIME = "one_time"
+
+
+class RebuildType(Enum):
+    """Type of rebuild operation"""
+    FULL = "full"
+    INCREMENTAL = "incremental"
+    PARTIAL = "partial"
+
+
+class Priority(Enum):
+    """Priority level for rebuild operations"""
+    LOW = 1
+    NORMAL = 2
+    HIGH = 3
+    CRITICAL = 4
+
+
+class TaskStatus(Enum):
+    """Status of a rebuild task"""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+# ============================================================================
+# Dataclasses
+# ============================================================================
+
+@dataclass
+class RebuildSchedule:
     """
-    Implement `search/semantic_index/schedule_rebuild.py` for scheduled background re-indexing.
-*   **Upgrade 114:** Provide `automation/builder/validation_rules.py` ensuring drag-and-drop workflows compile correctly.
-*   **Upgrade 115:** Build `domains/natural_language_processing/intent_catalog.json` enumerating supported intents and entity slots.
-*   **Upgrade 116:** Publish `docs/guides/multimodal-examples.md` demonstrating combined voice, text, and vision interactions.
-*   **Upgrade 117:** Add `gui/src/components/VoiceLevelMeter.vue` for real-time microphone feedback during dictation.
-*   **Upgrade 118:** Integrate `agenthub/plugins/executor_registry.py` to coordinate domain-specific execution strategies.
-*   **Upgrade 119:** Create `windows_ai/integrations/outlook_calendar.py` to orchestrate meeting scheduling automations.
-*   **Upgrade 120:** Ship `domains/computer_vision/screen_region_classifier.py` to categorize UI elements for automation.
-*   **Upgrade 121:** Add `search/connectors/sharepoint.py` enabling enterprise document indexing from SharePoint repositories.
-*   **Upgrade 122:** Provide `automation/workflow_templates/productivity.json` with starter automations for productivity tasks.
-*   **Upgrade 123:** Implement `gui/src/components/WorkflowDebugger.vue` to inspect node states during automation execution.
-*   **Upgrade 124:** Introduce `domains/audio_processing/voiceprint_manager.py` supporting personalized wake-word detection.
-*   **Upgrade 125:** Add `agenthub/memory/session_tagger.py` to tag interactions for quick retrieval.
-*   **Upgrade 126:** Publish `docs/guides/device-hand-off.md` outlining how tasks migrate between desktop and mobile experiences.
-*   **Upgrade 127:** Create `windows_ai/system_controls/window_layout_manager.py` to orchestrate window snapping automations.
-*   **Upgrade 128:** Build `gui/src/components/WorkflowLibrary.vue` showcasing reusable automation recipes.
-*   **Upgrade 129:** Implement `mobile/offline/cache_manager.ts` enabling offline command queues synced later.
-*   **Upgrade 130:** Provide `search/semantic_index/embedding_cache.py` to reuse embeddings across repeated queries.
-*   **Upgrade 131:** Add `automation/runtime/task_recovery.py` to resume workflows after unexpected interruptions.
-*   **Upgrade 132:** Publish `docs/guides/vision-automation-patterns.md` sharing common automation flows using screen context.
-*   **Upgrade 133:** Introduce `domains/natural_language_processing/conversation_state.py` to maintain dialogue continuity.
-*   **Upgrade 134:** Create `windows_ai/system_controls/notification_bridge.py` linking Windows to cross-device alerts.
-*   **Upgrade 135:** Build `gui/src/components/TaskApprovalModal.vue` for user confirmations on sensitive operations.
-*   **Upgrade 136:** Add `automation/workflow_editor/hotkeys.ts` giving power users keyboard shortcuts in the builder.
-*   **Upgrade 137:** Implement `domains/audio_processing/latency_profiler.py` to monitor microphone capture performance.
-*   **Upgrade 138:** Provide `search/semantic_index/vector_exporter.py` for exporting embeddings to external analytics tools.
-*   **Upgrade 139:** Add `iot/hubs/azure_iot_bridge.py` integrating Azure IoT Hub for remote device control.
-*   **Upgrade 140:** Publish `mobile/docs/push-notification-guide.md` documenting configuration for major platforms.
-*   **Upgrade 141:** Create `agenthub/dialogue/prompt_planner.py` to orchestrate multi-turn guidance sequences.
-*   **Upgrade 142:** Implement `gui/src/components/MultimodalComposer.vue` enabling attachments of screenshots and audio clips.
-*   **Upgrade 143:** Provide `automation/workflow_runner/metrics.py` capturing run duration and success ratios.
-*   **Upgrade 144:** Add `search/ui/semantic-search-widget.ts` embedding search into the main dashboard.
-*   **Upgrade 145:** Publish `docs/guides/iot-automation-examples.md` describing sample device orchestration flows.
-*   **Upgrade 146:** Introduce `domains/computer_vision/window_text_extractor.py` using OCR for on-screen text capture.
-*   **Upgrade 147:** Create `windows_ai/integrations/onedrive_sync.py` enabling automation across cloud file events.
-*   **Upgrade 148:** Build `mobile/qr_pairing/flow.ts` to streamline connecting mobile devices with the desktop agent.
-*   **Upgrade 149:** Implement `agenthub/workflow_router_rules.yaml` describing routing heuristics for workflow selection.
-*   **Upgrade 150:** Provide `gui/src/components/SkillMarketplace.vue` to discover and install AI skill packs.
-*   **Upgrade 151:** Add `automation/workflow_editor/validation_messages.json` to offer localized error feedback.
-*   **Upgrade 152:** Publish `docs/guides/automation-api.md` explaining how external tools trigger workflows via HTTP.
-*   **Upgrade 153:** Introduce `domains/natural_language_processing/entity_resolver.py` to normalize user entities across domains.
-*   **Upgrade 154:** Create `windows_ai/system_controls/virtual_desktop_manager.py` automating workspace switching.
-*   **Upgrade 155:** Build `mobile/voice/streaming_adapter.py` for low-latency speech capture from phones.
-*   **Upgrade 156:** Implement `search/indexers/email_indexer.py` to include Outlook emails in semantic search.
-*   **Upgrade 157:** Provide `automation/workflow_runtime/policy_guard.py` enforcing governance rules before execution.
-*   **Upgrade 158:** Add `gui/src/components/KnowledgePanel.vue` summarizing search insights alongside conversations.
-*   **Upgrade 159:** Publish `docs/guides/multidevice-session-handling.md` clarifying session continuity rules.
-*   **Upgrade 160:** Introduce `domains/computer_vision/ui_theme_detector.py` to adapt automation to light/dark themes.
-*   **Upgrade 161:** Create `windows_ai/integrations/teams_messaging.py` enabling Teams chat automations.
-*   **Upgrade 162:** Build `agenthub/dialogue/clarification_manager.py` to ask for missing details before workflow launches.
-*   **Upgrade 163:** Implement `automation/workflow_engine/fallback_executor.py` to retry tasks with alternative strategies.
-*   **Upgrade 164:** Provide `search/semantic_index/query_profiler.py` analyzing query performance metrics.
-*   **Upgrade 165:** Add `iot/device_health_monitor.py` to track firmware versions and status alerts.
-*   **Upgrade 166:** Publish `mobile/docs/offline-mode.md` describing cache policies for disconnected usage.
-*   **Upgrade 167:** Introduce `domains/audio_processing/speaker_diarization.py` to separate speakers in recorded meetings.
-*   **Upgrade 168:** Create `gui/src/components/AutomationInsights.vue` to highlight automation ROI to users.
-*   **Upgrade 169:** Build `automation/workflow_editor/version_history.ts` enabling rollback to previous workflow revisions.
-*   **Upgrade 170:** Implement `windows_ai/system_controls/security_context.py` verifying permissions before executing actions.
-*   **Upgrade 171:** Provide `search/plugins/web_results.py` to blend curated web data into responses.
-*   **Upgrade 172:** Add `agenthub/plugins/discovery_service.py` to auto-register new domain capabilities.
-*   **Upgrade 173:** Publish `docs/guides/speech-to-automation.md` linking voice commands to workflow templates.
-*   **Upgrade 174:** Introduce `domains/natural_language_processing/personalization_hooks.py` injecting user preferences into prompts.
-*   **Upgrade 175:** Create `windows_ai/integrations/file_activity_monitor.py` to trigger automations on file events.
-*   **Upgrade 176:** Build `mobile/settings/automation_permissions.ts` controlling what workflows run from mobile.
-*   **Upgrade 177:** Implement `search/ui/pinned_results_manager.ts` letting users pin favorite search answers.
-*   **Upgrade 178:** Provide `automation/workflow_runtime/audit_log.py` to track every automation decision.
-*   **Upgrade 179:** Add `gui/src/components/LiveWorkflowConsole.vue` streaming logs in real time.
-*   **Upgrade 180:** Publish `docs/guides/window-automation-patterns.md` covering best practices for window manipulation.
-*   **Upgrade 181:** Introduce `domains/computer_vision/pixel_heatmap.py` to debug what parts of the screen models observe.
-*   **Upgrade 182:** Create `windows_ai/integrations/edge_extension` enabling browser-level automation triggers.
-*   **Upgrade 183:** Build `agenthub/dialogue/contextual_prompt_cache.py` caching prompts aligned with conversation phases.
-*   **Upgrade 184:** Implement `automation/workflow_engine/priority_queue.py` for multi-user workflow scheduling.
-*   **Upgrade 185:** Provide `search/semantic_index/document_tags.py` to categorize indexed content by domain.
-*   **Upgrade 186:** Add `iot/device_actions/media_controls.py` exposing remote playback commands.
-*   **Upgrade 187:** Publish `mobile/docs/voice-quality-tuning.md` for optimizing microphone settings on phones.
-*   **Upgrade 188:** Introduce `domains/audio_processing/dynamic_noise_cancellation.py` adapting to ambient environments.
-*   **Upgrade 189:** Create `gui/src/components/AutomationDependencyGraph.vue` showing relationships between workflows.
-*   **Upgrade 190:** Build `automation/workflow_runtime/parallel_executor.py` to run independent branches concurrently.
-*   **Upgrade 191:** Implement `windows_ai/system_controls/credential_vault.py` for securely storing automation credentials.
-*   **Upgrade 192:** Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
-*   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
-*   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
-*   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
-*   **Upgrade 196:** Create `windows_ai/integrations/sharepoint_sync.py` to automate document approvals.
-*   **Upgrade 197:** Build `mobile/diagnostics/log_exporter.ts` allowing users to send diagnostics from the app.
-*   **Upgrade 198:** Implement `automation/workflow_engine/state_persistence.py` storing progress in case of restarts.
-*   **Upgrade 199:** Provide `search/ui/relevance_feedback.ts` to collect user feedback on search answers.
-*   **Upgrade 200:** Add `iot/voice_announcements.py` enabling the assistant to speak through connected speakers.
-*   **Upgrade 601:** Add `domains/audio_processing/audio_coordinator.py` acting as a coordinator that deepens audio intelligence pipelines.
-*   **Upgrade 602:** Introduce `domains/audio_processing/audio_optimizer.py` optimizing pipelines to enhance audio intelligence pipelines.
-*   **Upgrade 603:** Implement `domains/audio_processing/audio_bridge.py` bridging supporting services to expand audio intelligence pipelines.
-*   **Upgrade 604:** Create `domains/audio_processing/audio_trainer.py` training datasets that accelerate audio intelligence pipelines.
-*   **Upgrade 605:** Publish `domains/audio_processing/audio_analyzer.py` analyzing telemetry streams to refine audio intelligence pipelines.
-*   **Upgrade 606:** Provide `domains/audio_processing/audio_adapter.py` adapting integrations so audio intelligence pipelines can scale.
-*   **Upgrade 607:** Ship `domains/audio_processing/audio_studio.py` delivering studio tooling for teams to shape audio intelligence pipelines.
-*   **Upgrade 608:** Build `domains/audio_processing/audio_monitor.py` monitoring execution quality to safeguard audio intelligence pipelines.
-*   **Upgrade 609:** Deliver `domains/audio_processing/audio_toolkit.py` packaging toolkit assets that boost audio intelligence pipelines.
-*   **Upgrade 610:** Launch `domains/audio_processing/audio_blueprint.py` documenting blueprints that future-proof audio intelligence pipelines.
-*   **Upgrade 611:** Add `domains/natural_language_processing/language_coordinator.py` acting as a coordinator that deepens natural language orchestration.
-*   **Upgrade 612:** Introduce `domains/natural_language_processing/language_optimizer.py` optimizing pipelines to enhance natural language orchestration.
-*   **Upgrade 613:** Implement `domains/natural_language_processing/language_bridge.py` bridging supporting services to expand natural language orchestration.
-*   **Upgrade 614:** Create `domains/natural_language_processing/language_trainer.py` training datasets that accelerate natural language orchestration.
-*   **Upgrade 615:** Publish `domains/natural_language_processing/language_analyzer.py` analyzing telemetry streams to refine natural language orchestration.
-*   **Upgrade 616:** Provide `domains/natural_language_processing/language_adapter.py` adapting integrations so natural language orchestration can scale.
-*   **Upgrade 617:** Ship `domains/natural_language_processing/language_studio.py` delivering studio tooling for teams to shape natural language orchestration.
-*   **Upgrade 618:** Build `domains/natural_language_processing/language_monitor.py` monitoring execution quality to safeguard natural language orchestration.
-*   **Upgrade 619:** Deliver `domains/natural_language_processing/language_toolkit.py` packaging toolkit assets that boost natural language orchestration.
-*   **Upgrade 620:** Launch `domains/natural_language_processing/language_blueprint.py` documenting blueprints that future-proof natural language orchestration.
-*   **Upgrade 621:** Add `domains/computer_vision/vision_coordinator.py` acting as a coordinator that deepens computer vision understanding.
-*   **Upgrade 622:** Introduce `domains/computer_vision/vision_optimizer.py` optimizing pipelines to enhance computer vision understanding.
-*   **Upgrade 623:** Implement `domains/computer_vision/vision_bridge.py` bridging supporting services to expand computer vision understanding.
-*   **Upgrade 624:** Create `domains/computer_vision/vision_trainer.py` training datasets that accelerate computer vision understanding.
-*   **Upgrade 625:** Publish `domains/computer_vision/vision_analyzer.py` analyzing telemetry streams to refine computer vision understanding.
-*   **Upgrade 626:** Provide `domains/computer_vision/vision_adapter.py` adapting integrations so computer vision understanding can scale.
-*   **Upgrade 627:** Ship `domains/computer_vision/vision_studio.py` delivering studio tooling for teams to shape computer vision understanding.
-*   **Upgrade 628:** Build `domains/computer_vision/vision_monitor.py` monitoring execution quality to safeguard computer vision understanding.
-*   **Upgrade 629:** Deliver `domains/computer_vision/vision_toolkit.py` packaging toolkit assets that boost computer vision understanding.
-*   **Upgrade 630:** Launch `domains/computer_vision/vision_blueprint.py` documenting blueprints that future-proof computer vision understanding.
-*   **Upgrade 631:** Add `windows_ai/system_controls/windows_coordinator.py` acting as a coordinator that deepens Windows system control integrations.
-*   **Upgrade 632:** Introduce `windows_ai/system_controls/windows_optimizer.py` optimizing pipelines to enhance Windows system control integrations.
-*   **Upgrade 633:** Implement `windows_ai/system_controls/windows_bridge.py` bridging supporting services to expand Windows system control integrations.
-*   **Upgrade 634:** Create `windows_ai/system_controls/windows_trainer.py` training datasets that accelerate Windows system control integrations.
-*   **Upgrade 635:** Publish `windows_ai/system_controls/windows_analyzer.py` analyzing telemetry streams to refine Windows system control integrations.
-*   **Upgrade 636:** Provide `windows_ai/system_controls/windows_adapter.py` adapting integrations so Windows system control integrations can scale.
-*   **Upgrade 637:** Ship `windows_ai/system_controls/windows_studio.py` delivering studio tooling for teams to shape Windows system control integrations.
-*   **Upgrade 638:** Build `windows_ai/system_controls/windows_monitor.py` monitoring execution quality to safeguard Windows system control integrations.
-*   **Upgrade 639:** Deliver `windows_ai/system_controls/windows_toolkit.py` packaging toolkit assets that boost Windows system control integrations.
-*   **Upgrade 640:** Launch `windows_ai/system_controls/windows_blueprint.py` documenting blueprints that future-proof Windows system control integrations.
-*   **Upgrade 641:** Add `agenthub/agenthub_coordinator.py` acting as a coordinator that deepens core orchestration intelligence.
-*   **Upgrade 642:** Introduce `agenthub/agenthub_optimizer.py` optimizing pipelines to enhance core orchestration intelligence.
-*   **Upgrade 643:** Implement `agenthub/agenthub_bridge.py` bridging supporting services to expand core orchestration intelligence.
-*   **Upgrade 644:** Create `agenthub/agenthub_trainer.py` training datasets that accelerate core orchestration intelligence.
-*   **Upgrade 645:** Publish `agenthub/agenthub_analyzer.py` analyzing telemetry streams to refine core orchestration intelligence.
-*   **Upgrade 646:** Provide `agenthub/agenthub_adapter.py` adapting integrations so core orchestration intelligence can scale.
-*   **Upgrade 647:** Ship `agenthub/agenthub_studio.py` delivering studio tooling for teams to shape core orchestration intelligence.
-*   **Upgrade 648:** Build `agenthub/agenthub_monitor.py` monitoring execution quality to safeguard core orchestration intelligence.
-*   **Upgrade 649:** Deliver `agenthub/agenthub_toolkit.py` packaging toolkit assets that boost core orchestration intelligence.
-*   **Upgrade 650:** Launch `agenthub/agenthub_blueprint.py` documenting blueprints that future-proof core orchestration intelligence.
-*   **Upgrade 651:** Add `automation/automation_coordinator.py` acting as a coordinator that deepens workflow execution depth.
-*   **Upgrade 652:** Introduce `automation/automation_optimizer.py` optimizing pipelines to enhance workflow execution depth.
-*   **Upgrade 653:** Implement `automation/automation_bridge.py` bridging supporting services to expand workflow execution depth.
-*   **Upgrade 654:** Create `automation/automation_trainer.py` training datasets that accelerate workflow execution depth.
-*   **Upgrade 655:** Publish `automation/automation_analyzer.py` analyzing telemetry streams to refine workflow execution depth.
-*   **Upgrade 656:** Provide `automation/automation_adapter.py` adapting integrations so workflow execution depth can scale.
-*   **Upgrade 657:** Ship `automation/automation_studio.py` delivering studio tooling for teams to shape workflow execution depth.
-*   **Upgrade 658:** Build `automation/automation_monitor.py` monitoring execution quality to safeguard workflow execution depth.
-*   **Upgrade 659:** Deliver `automation/automation_toolkit.py` packaging toolkit assets that boost workflow execution depth.
-*   **Upgrade 660:** Launch `automation/automation_blueprint.py` documenting blueprints that future-proof workflow execution depth.
-*   **Upgrade 661:** Add `search/search_coordinator.py` acting as a coordinator that deepens semantic retrieval capabilities.
-*   **Upgrade 662:** Introduce `search/search_optimizer.py` optimizing pipelines to enhance semantic retrieval capabilities.
-*   **Upgrade 663:** Implement `search/search_bridge.py` bridging supporting services to expand semantic retrieval capabilities.
-*   **Upgrade 664:** Create `search/search_trainer.py` training datasets that accelerate semantic retrieval capabilities.
-*   **Upgrade 665:** Publish `search/search_analyzer.py` analyzing telemetry streams to refine semantic retrieval capabilities.
-*   **Upgrade 666:** Provide `search/search_adapter.py` adapting integrations so semantic retrieval capabilities can scale.
-*   **Upgrade 667:** Ship `search/search_studio.py` delivering studio tooling for teams to shape semantic retrieval capabilities.
-*   **Upgrade 668:** Build `search/search_monitor.py` monitoring execution quality to safeguard semantic retrieval capabilities.
-*   **Upgrade 669:** Deliver `search/search_toolkit.py` packaging toolkit assets that boost semantic retrieval capabilities.
-*   **Upgrade 670:** Launch `search/search_blueprint.py` documenting blueprints that future-proof semantic retrieval capabilities.
-*   **Upgrade 671:** Add `gui/src/components/gui_coordinator.vue` acting as a coordinator that deepens immersive user interaction.
-*   **Upgrade 672:** Introduce `gui/src/components/gui_optimizer.vue` optimizing pipelines to enhance immersive user interaction.
-*   **Upgrade 673:** Implement `gui/src/components/gui_bridge.vue` bridging supporting services to expand immersive user interaction.
-*   **Upgrade 674:** Create `gui/src/components/gui_trainer.vue` training datasets that accelerate immersive user interaction.
-*   **Upgrade 675:** Publish `gui/src/components/gui_analyzer.vue` analyzing telemetry streams to refine immersive user interaction.
-*   **Upgrade 676:** Provide `gui/src/components/gui_adapter.vue` adapting integrations so immersive user interaction can scale.
-*   **Upgrade 677:** Ship `gui/src/components/gui_studio.vue` delivering studio tooling for teams to shape immersive user interaction.
-*   **Upgrade 678:** Build `gui/src/components/gui_monitor.vue` monitoring execution quality to safeguard immersive user interaction.
-*   **Upgrade 679:** Deliver `gui/src/components/gui_toolkit.vue` packaging toolkit assets that boost immersive user interaction.
-*   **Upgrade 680:** Launch `gui/src/components/gui_blueprint.vue` documenting blueprints that future-proof immersive user interaction.
-*   **Upgrade 681:** Add `mobile/mobile_coordinator.ts` acting as a coordinator that deepens cross-device experiences.
-*   **Upgrade 682:** Introduce `mobile/mobile_optimizer.ts` optimizing pipelines to enhance cross-device experiences.
-*   **Upgrade 683:** Implement `mobile/mobile_bridge.ts` bridging supporting services to expand cross-device experiences.
-*   **Upgrade 684:** Create `mobile/mobile_trainer.ts` training datasets that accelerate cross-device experiences.
-*   **Upgrade 685:** Publish `mobile/mobile_analyzer.ts` analyzing telemetry streams to refine cross-device experiences.
-*   **Upgrade 686:** Provide `mobile/mobile_adapter.ts` adapting integrations so cross-device experiences can scale.
-*   **Upgrade 687:** Ship `mobile/mobile_studio.ts` delivering studio tooling for teams to shape cross-device experiences.
-*   **Upgrade 688:** Build `mobile/mobile_monitor.ts` monitoring execution quality to safeguard cross-device experiences.
-*   **Upgrade 689:** Deliver `mobile/mobile_toolkit.ts` packaging toolkit assets that boost cross-device experiences.
-*   **Upgrade 690:** Launch `mobile/mobile_blueprint.ts` documenting blueprints that future-proof cross-device experiences.
-*   **Upgrade 691:** Add `iot/iot_coordinator.py` acting as a coordinator that deepens device orchestration reach.
-*   **Upgrade 692:** Introduce `iot/iot_optimizer.py` optimizing pipelines to enhance device orchestration reach.
-*   **Upgrade 693:** Implement `iot/iot_bridge.py` bridging supporting services to expand device orchestration reach.
-*   **Upgrade 694:** Create `iot/iot_trainer.py` training datasets that accelerate device orchestration reach.
-*   **Upgrade 695:** Publish `iot/iot_analyzer.py` analyzing telemetry streams to refine device orchestration reach.
-*   **Upgrade 696:** Provide `iot/iot_adapter.py` adapting integrations so device orchestration reach can scale.
-*   **Upgrade 697:** Ship `iot/iot_studio.py` delivering studio tooling for teams to shape device orchestration reach.
-*   **Upgrade 698:** Build `iot/iot_monitor.py` monitoring execution quality to safeguard device orchestration reach.
-*   **Upgrade 699:** Deliver `iot/iot_toolkit.py` packaging toolkit assets that boost device orchestration reach.
-*   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
+    Configuration for a scheduled rebuild operation
+    
+    Attributes:
+        schedule_id: Unique identifier for this schedule
+        schedule_type: Type of scheduling (cron, interval, one-time)
+        rebuild_type: Type of rebuild to perform
+        priority: Priority level for execution
+        enabled: Whether schedule is active
+        cron_expression: Cron expression (for CRON type)
+        interval_hours: Hours between executions (for INTERVAL type)
+        next_run: Next scheduled execution time
+        last_run: Last execution time
+        max_retries: Maximum retry attempts on failure
+        retry_count: Current retry count
+        retry_delay_seconds: Delay between retries
+        max_cpu_percent: Maximum CPU usage threshold
+        max_memory_percent: Maximum memory usage threshold
+        max_disk_io_percent: Maximum disk I/O threshold
+        metadata: Additional configuration data
+        created_at: Schedule creation time
+        updated_at: Last update time
+    """
+    schedule_id: str
+    schedule_type: ScheduleType
+    rebuild_type: RebuildType
+    priority: Priority = Priority.NORMAL
+    enabled: bool = True
+    cron_expression: Optional[str] = None
+    interval_hours: Optional[float] = None
+    next_run: Optional[datetime] = None
+    last_run: Optional[datetime] = None
+    max_retries: int = 3
+    retry_count: int = 0
+    retry_delay_seconds: int = 300
+    max_cpu_percent: float = 80.0
+    max_memory_percent: float = 75.0
+    max_disk_io_percent: float = 90.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert schedule to dictionary"""
+        return {
+            "schedule_id": self.schedule_id,
+            "schedule_type": self.schedule_type.value,
+            "rebuild_type": self.rebuild_type.value,
+            "priority": self.priority.value,
+            "enabled": self.enabled,
+            "cron_expression": self.cron_expression,
+            "interval_hours": self.interval_hours,
+            "next_run": self.next_run.isoformat() if self.next_run else None,
+            "last_run": self.last_run.isoformat() if self.last_run else None,
+            "max_retries": self.max_retries,
+            "retry_count": self.retry_count,
+            "retry_delay_seconds": self.retry_delay_seconds,
+            "max_cpu_percent": self.max_cpu_percent,
+            "max_memory_percent": self.max_memory_percent,
+            "max_disk_io_percent": self.max_disk_io_percent,
+            "metadata": self.metadata,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
+        }
+
+
+@dataclass
+class RebuildTask:
+    """
+    State tracking for a rebuild task execution
+    
+    Attributes:
+        task_id: Unique identifier for this task
+        schedule_id: Schedule that spawned this task
+        rebuild_type: Type of rebuild being performed
+        status: Current task status
+        start_time: Task start time
+        end_time: Task completion time
+        duration: Total execution duration in seconds
+        progress_percent: Current progress (0-100)
+        items_processed: Number of items processed
+        items_total: Total items to process
+        errors: List of error messages
+        error_count: Total number of errors
+        metadata: Additional task data
+    """
+    task_id: str
+    schedule_id: str
+    rebuild_type: RebuildType
+    status: TaskStatus = TaskStatus.PENDING
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    duration: Optional[float] = None
+    progress_percent: float = 0.0
+    items_processed: int = 0
+    items_total: int = 0
+    errors: List[str] = field(default_factory=list)
+    error_count: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def start(self):
+        """Mark task as started"""
+        self.status = TaskStatus.RUNNING
+        self.start_time = datetime.now()
+    
+    def complete(self):
+        """Mark task as completed"""
+        self.status = TaskStatus.COMPLETED
+        self.end_time = datetime.now()
+        if self.start_time:
+            self.duration = (self.end_time - self.start_time).total_seconds()
+        self.progress_percent = 100.0
+    
+    def fail(self, error: str):
+        """Mark task as failed"""
+        self.status = TaskStatus.FAILED
+        self.end_time = datetime.now()
+        if self.start_time:
+            self.duration = (self.end_time - self.start_time).total_seconds()
+        self.errors.append(error)
+        self.error_count += 1
+    
+    def update_progress(self, processed: int, total: int):
+        """Update task progress"""
+        self.items_processed = processed
+        self.items_total = total
+        if total > 0:
+            self.progress_percent = (processed / total) * 100.0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert task to dictionary"""
+        return {
+            "task_id": self.task_id,
+            "schedule_id": self.schedule_id,
+            "rebuild_type": self.rebuild_type.value,
+            "status": self.status.value,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "duration": self.duration,
+            "progress_percent": self.progress_percent,
+            "items_processed": self.items_processed,
+            "items_total": self.items_total,
+            "errors": self.errors,
+            "error_count": self.error_count,
+            "metadata": self.metadata
+        }
+
+
+@dataclass
+class ResourceUsage:
+    """
+    System resource usage metrics
+    
+    Attributes:
+        cpu_percent: CPU usage percentage
+        memory_percent: Memory usage percentage
+        disk_io_percent: Disk I/O usage percentage
+        network_io_percent: Network I/O usage percentage
+        timestamp: Measurement timestamp
+    """
+    cpu_percent: float = 0.0
+    memory_percent: float = 0.0
+    disk_io_percent: float = 0.0
+    network_io_percent: float = 0.0
+    timestamp: datetime = field(default_factory=datetime.now)
+    
+    def exceeds_thresholds(self, schedule: RebuildSchedule) -> bool:
+        """Check if resource usage exceeds schedule thresholds"""
+        return (
+            self.cpu_percent > schedule.max_cpu_percent or
+            self.memory_percent > schedule.max_memory_percent or
+            self.disk_io_percent > schedule.max_disk_io_percent
+        )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert resource usage to dictionary"""
+        return {
+            "cpu_percent": self.cpu_percent,
+            "memory_percent": self.memory_percent,
+            "disk_io_percent": self.disk_io_percent,
+            "network_io_percent": self.network_io_percent,
+            "timestamp": self.timestamp.isoformat()
+        }
+
+
+# ============================================================================
+# Main Scheduler Class
+# ============================================================================
+
+class RebuildScheduler:
+    """
+    Intelligent scheduler for semantic index rebuild operations
+    
+    Manages scheduled rebuild tasks with resource monitoring, retry logic,
+    and various scheduling patterns (cron, interval, one-time).
+    
+    Example:
+        scheduler = RebuildScheduler()
+        await scheduler.initialize()
+        
+        # Schedule daily rebuild at 2 AM
+        schedule_id = await scheduler.schedule_rebuild(
+            schedule_type=ScheduleType.CRON,
+            rebuild_type=RebuildType.INCREMENTAL,
+            cron_expression="0 2 * * *"
+        )
+        
+        # Schedule rebuild every 4 hours
+        schedule_id = await scheduler.schedule_rebuild(
+            schedule_type=ScheduleType.INTERVAL,
+            rebuild_type=RebuildType.PARTIAL,
+            interval_hours=4.0
+        )
     """
     
     def __init__(self):
-        """Initialize the schedule rebuild system."""
-        self.initialized = False
-        logger.info("Initialized schedule_rebuild")
+        """Initialize rebuild scheduler"""
+        self._initialized = False
+        self._lock = None
+        self._schedules: Dict[str, RebuildSchedule] = {}
+        self._active_tasks: Dict[str, RebuildTask] = {}
+        self._task_queue: List[str] = []
+        self._resource_history: Dict[str, List[ResourceUsage]] = defaultdict(list)
+        self._max_history_size = 1000
+        
+        logger.info("RebuildScheduler created")
     
-    def setup(self) -> bool:
+    async def initialize(self) -> bool:
         """
-        Set up the system and prepare for operation.
+        Initialize scheduler
         
         Returns:
-            bool: True if setup successful, False otherwise
+            True if initialization successful, False otherwise
+        """
+        if self._initialized:
+            logger.warning("RebuildScheduler already initialized")
+            return True
+        
+        try:
+            self._lock = asyncio.Lock()
+            self._initialized = True
+            logger.info("RebuildScheduler initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"RebuildScheduler initialization failed: {e}")
+            return False
+    
+    async def schedule_rebuild(
+        self,
+        schedule_type: ScheduleType,
+        rebuild_type: RebuildType,
+        cron_expression: Optional[str] = None,
+        interval_hours: Optional[float] = None,
+        priority: Priority = Priority.NORMAL,
+        **kwargs
+    ) -> str:
+        """
+        Create new rebuild schedule
+        
+        Args:
+            schedule_type: Type of scheduling (CRON, INTERVAL, ONE_TIME)
+            rebuild_type: Type of rebuild (FULL, INCREMENTAL, PARTIAL)
+            cron_expression: Cron expression (required for CRON type)
+            interval_hours: Hours between executions (required for INTERVAL type)
+            priority: Priority level for execution
+            **kwargs: Additional configuration options
+        
+        Returns:
+            schedule_id: Unique identifier for created schedule
+        
+        Raises:
+            ValueError: If invalid configuration provided
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        try:
+            # Validate configuration
+            if schedule_type == ScheduleType.CRON and not cron_expression:
+                raise ValueError("cron_expression required for CRON schedule type")
+            
+            if schedule_type == ScheduleType.INTERVAL and not interval_hours:
+                raise ValueError("interval_hours required for INTERVAL schedule type")
+            
+            async with self._lock:
+                # Generate unique schedule ID
+                schedule_id = f"schedule_{int(time.time() * 1000)}"
+                
+                # Create schedule
+                schedule = RebuildSchedule(
+                    schedule_id=schedule_id,
+                    schedule_type=schedule_type,
+                    rebuild_type=rebuild_type,
+                    priority=priority,
+                    cron_expression=cron_expression,
+                    interval_hours=interval_hours,
+                    **kwargs
+                )
+                
+                # Calculate next run time
+                schedule.next_run = await self._calculate_next_run(schedule)
+                
+                # Store schedule
+                self._schedules[schedule_id] = schedule
+                
+                logger.info(
+                    f"Created {schedule_type.value} schedule {schedule_id} "
+                    f"for {rebuild_type.value} rebuild, next run: {schedule.next_run}"
+                )
+                
+                return schedule_id
+        
+        except Exception as e:
+            logger.error(f"Failed to create schedule: {e}")
+            raise
+    
+    async def _calculate_next_run(self, schedule: RebuildSchedule) -> datetime:
+        """
+        Calculate next execution time for schedule
+        
+        Args:
+            schedule: Schedule configuration
+        
+        Returns:
+            Next execution datetime
         """
         try:
-            # TODO: Implement setup logic
+            if schedule.schedule_type == ScheduleType.ONE_TIME:
+                # One-time schedules run immediately
+                return datetime.now()
+            
+            elif schedule.schedule_type == ScheduleType.INTERVAL:
+                # Interval schedules run after specified hours from last run
+                if schedule.last_run:
+                    return schedule.last_run + timedelta(hours=schedule.interval_hours)
+                else:
+                    return datetime.now()
+            
+            elif schedule.schedule_type == ScheduleType.CRON:
+                # Parse cron expression and find next matching time
+                return await self._parse_cron(
+                    schedule.cron_expression,
+                    schedule.last_run or datetime.now()
+                )
+            
+            else:
+                logger.error(f"Unknown schedule type: {schedule.schedule_type}")
+                return datetime.now()
+        
+        except Exception as e:
+            logger.error(f"Failed to calculate next run: {e}")
+            return datetime.now()
+    
+    async def _parse_cron(
+        self,
+        expression: str,
+        from_time: datetime
+    ) -> datetime:
+        """
+        Parse cron expression and find next execution time
+        
+        Args:
+            expression: Cron expression (minute hour day month weekday)
+            from_time: Calculate next time after this datetime
+        
+        Returns:
+            Next matching datetime
+        
+        Example:
+            "0 2 * * *" -> Daily at 2:00 AM
+            "*/15 * * * *" -> Every 15 minutes
+        """
+        try:
+            # Parse cron fields: minute hour day month weekday
+            parts = expression.split()
+            if len(parts) != 5:
+                logger.error(f"Invalid cron expression: {expression}")
+                return from_time + timedelta(hours=1)
+            
+            minute, hour, day, month, weekday = parts
+            
+            # Start checking from next minute
+            current = from_time + timedelta(minutes=1)
+            current = current.replace(second=0, microsecond=0)
+            
+            # Search for next matching time (max 1 year ahead)
+            max_iterations = 366 * 24 * 60  # Days * hours * minutes
+            
+            for _ in range(max_iterations):
+                if self._matches_cron(current, minute, hour, day, month, weekday):
+                    return current
+                current += timedelta(minutes=1)
+            
+            logger.warning(f"No matching time found for cron: {expression}")
+            return from_time + timedelta(hours=1)
+        
+        except Exception as e:
+            logger.error(f"Failed to parse cron expression: {e}")
+            return from_time + timedelta(hours=1)
+    
+    def _matches_cron(
+        self,
+        dt: datetime,
+        minute: str,
+        hour: str,
+        day: str,
+        month: str,
+        weekday: str
+    ) -> bool:
+        """Check if datetime matches cron pattern"""
+        try:
+            # Check minute
+            if minute != "*" and dt.minute != int(minute):
+                return False
+            
+            # Check hour
+            if hour != "*" and dt.hour != int(hour):
+                return False
+            
+            # Check day
+            if day != "*" and dt.day != int(day):
+                return False
+            
+            # Check month
+            if month != "*" and dt.month != int(month):
+                return False
+            
+            # Check weekday (0 = Monday, 6 = Sunday in datetime)
+            if weekday != "*" and dt.weekday() != int(weekday):
+                return False
+            
+            return True
+        
+        except:
+            return False
+    
+    async def execute_rebuild(self, schedule_id: str) -> str:
+        """
+        Execute rebuild for schedule
+        
+        Args:
+            schedule_id: Schedule to execute
+        
+        Returns:
+            task_id: Unique identifier for created task
+        
+        Raises:
+            ValueError: If schedule not found or disabled
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            # Get schedule
+            schedule = self._schedules.get(schedule_id)
+            if not schedule:
+                raise ValueError(f"Schedule not found: {schedule_id}")
+            
+            if not schedule.enabled:
+                raise ValueError(f"Schedule disabled: {schedule_id}")
+            
+            # Check resource usage
+            resources = await self._check_resources()
+            if resources.exceeds_thresholds(schedule):
+                logger.warning(
+                    f"Resource thresholds exceeded for schedule {schedule_id}, "
+                    f"CPU: {resources.cpu_percent}%, Memory: {resources.memory_percent}%"
+                )
+                raise RuntimeError("Resource thresholds exceeded")
+            
+            # Create task
+            task_id = f"task_{int(time.time() * 1000)}"
+            task = RebuildTask(
+                task_id=task_id,
+                schedule_id=schedule_id,
+                rebuild_type=schedule.rebuild_type
+            )
+            
+            # Store task
+            self._active_tasks[task_id] = task
+            
+            # Launch rebuild in background
+            asyncio.create_task(self._run_rebuild(task, schedule))
+            
+            logger.info(f"Started rebuild task {task_id} for schedule {schedule_id}")
+            
+            return task_id
+    
+    async def _run_rebuild(self, task: RebuildTask, schedule: RebuildSchedule):
+        """
+        Execute rebuild task
+        
+        Args:
+            task: Task to execute
+            schedule: Schedule configuration
+        """
+        try:
+            task.start()
+            logger.info(f"Rebuild task {task.task_id} started")
+            
+            # Simulate rebuild operation (replace with actual implementation)
+            total_items = 1000
+            task.items_total = total_items
+            
+            for i in range(total_items):
+                # Check for cancellation
+                if task.status == TaskStatus.CANCELLED:
+                    logger.info(f"Task {task.task_id} cancelled")
+                    break
+                
+                # Simulate processing
+                await asyncio.sleep(0.01)
+                task.update_progress(i + 1, total_items)
+                
+                # Log progress every 10%
+                if (i + 1) % (total_items // 10) == 0:
+                    logger.info(f"Task {task.task_id} progress: {task.progress_percent:.1f}%")
+            
+            # Mark complete
+            task.complete()
+            
+            # Update schedule
+            schedule.last_run = datetime.now()
+            schedule.retry_count = 0
+            schedule.next_run = await self._calculate_next_run(schedule)
+            schedule.updated_at = datetime.now()
+            
+            logger.info(
+                f"Rebuild task {task.task_id} completed in {task.duration:.2f}s, "
+                f"next run: {schedule.next_run}"
+            )
+        
+        except Exception as e:
+            error_msg = f"Rebuild failed: {e}"
+            logger.error(f"Task {task.task_id} failed: {error_msg}")
+            task.fail(error_msg)
+            
+            # Handle retry logic
+            schedule.retry_count += 1
+            if schedule.retry_count < schedule.max_retries:
+                # Schedule retry with exponential backoff
+                retry_delay = schedule.retry_delay_seconds * (2 ** schedule.retry_count)
+                schedule.next_run = datetime.now() + timedelta(seconds=retry_delay)
+                logger.info(
+                    f"Retry {schedule.retry_count}/{schedule.max_retries} "
+                    f"scheduled in {retry_delay}s"
+                )
+            else:
+                logger.error(
+                    f"Max retries ({schedule.max_retries}) exceeded for "
+                    f"schedule {schedule.schedule_id}"
+                )
+                schedule.enabled = False
+        
+        finally:
+            # Remove from active tasks
+            async with self._lock:
+                self._active_tasks.pop(task.task_id, None)
+    
+    async def _check_resources(self) -> ResourceUsage:
+        """
+        Check current system resource usage
+        
+        Returns:
+            Current resource usage metrics
+        """
+        try:
+            # In production, use psutil or similar to get real metrics
+            # For now, return simulated values
+            resources = ResourceUsage(
+                cpu_percent=50.0,
+                memory_percent=60.0,
+                disk_io_percent=30.0,
+                network_io_percent=20.0
+            )
+            
+            # Store in history (limit size)
+            async with self._lock:
+                history = self._resource_history["system"]
+                history.append(resources)
+                if len(history) > self._max_history_size:
+                    history.pop(0)
+            
+            return resources
+        
+        except Exception as e:
+            logger.error(f"Failed to check resources: {e}")
+            return ResourceUsage()
+    
+    async def cancel_schedule(self, schedule_id: str) -> bool:
+        """
+        Cancel and remove schedule
+        
+        Args:
+            schedule_id: Schedule to cancel
+        
+        Returns:
+            True if cancelled, False if not found
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            schedule = self._schedules.pop(schedule_id, None)
+            if not schedule:
+                logger.warning(f"Schedule not found: {schedule_id}")
+                return False
+            
+            # Cancel any active tasks for this schedule
+            tasks_to_cancel = [
+                task_id for task_id, task in self._active_tasks.items()
+                if task.schedule_id == schedule_id
+            ]
+            
+            for task_id in tasks_to_cancel:
+                task = self._active_tasks[task_id]
+                task.status = TaskStatus.CANCELLED
+            
+            logger.info(
+                f"Cancelled schedule {schedule_id} and {len(tasks_to_cancel)} active tasks"
+            )
+            
+            return True
+    
+    async def pause_schedule(self, schedule_id: str) -> bool:
+        """
+        Pause schedule (disable without removing)
+        
+        Args:
+            schedule_id: Schedule to pause
+        
+        Returns:
+            True if paused, False if not found
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            schedule = self._schedules.get(schedule_id)
+            if not schedule:
+                logger.warning(f"Schedule not found: {schedule_id}")
+                return False
+            
+            schedule.enabled = False
+            schedule.updated_at = datetime.now()
+            
+            logger.info(f"Paused schedule {schedule_id}")
+            
+            return True
+    
+    async def resume_schedule(self, schedule_id: str) -> bool:
+        """
+        Resume paused schedule
+        
+        Args:
+            schedule_id: Schedule to resume
+        
+        Returns:
+            True if resumed, False if not found
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            schedule = self._schedules.get(schedule_id)
+            if not schedule:
+                logger.warning(f"Schedule not found: {schedule_id}")
+                return False
+            
+            schedule.enabled = True
+            schedule.next_run = await self._calculate_next_run(schedule)
+            schedule.updated_at = datetime.now()
+            
+            logger.info(f"Resumed schedule {schedule_id}, next run: {schedule.next_run}")
+            
+            return True
+    
+    async def list_schedules(
+        self,
+        filter_enabled: Optional[bool] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        List all schedules
+        
+        Args:
+            filter_enabled: Optional filter for enabled status
+        
+        Returns:
+            List of schedule dictionaries
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            schedules = list(self._schedules.values())
+            
+            # Apply filter
+            if filter_enabled is not None:
+                schedules = [s for s in schedules if s.enabled == filter_enabled]
+            
+            return [s.to_dict() for s in schedules]
+    
+    async def get_schedule(self, schedule_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get specific schedule
+        
+        Args:
+            schedule_id: Schedule identifier
+        
+        Returns:
+            Schedule dictionary or None if not found
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            schedule = self._schedules.get(schedule_id)
+            return schedule.to_dict() if schedule else None
+    
+    async def get_task(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get specific task
+        
+        Args:
+            task_id: Task identifier
+        
+        Returns:
+            Task dictionary or None if not found
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            task = self._active_tasks.get(task_id)
+            return task.to_dict() if task else None
+    
+    async def get_status(self) -> Dict[str, Any]:
+        """
+        Get scheduler status and statistics
+        
+        Returns:
+            Dictionary with scheduler status and metrics
+        """
+        if not self._initialized:
+            raise RuntimeError("Scheduler not initialized")
+        
+        async with self._lock:
+            # Count task statuses
+            task_stats = {
+                "pending": 0,
+                "running": 0,
+                "completed": 0,
+                "failed": 0,
+                "cancelled": 0
+            }
+            
+            for task in self._active_tasks.values():
+                task_stats[task.status.value] += 1
+            
+            return {
+                "initialized": self._initialized,
+                "total_schedules": len(self._schedules),
+                "enabled_schedules": sum(1 for s in self._schedules.values() if s.enabled),
+                "active_tasks": len(self._active_tasks),
+                "task_stats": task_stats,
+                "resource_history_size": len(self._resource_history.get("system", []))
+            }
+    
+    async def cleanup(self):
+        """Cleanup scheduler resources"""
+        if not self._initialized:
+            return
+        
+        try:
+            async with self._lock:
+                # Cancel all active tasks
+                for task in self._active_tasks.values():
+                    task.status = TaskStatus.CANCELLED
+                
+                # Clear all data structures
+                self._schedules.clear()
+                self._active_tasks.clear()
+                self._task_queue.clear()
+                self._resource_history.clear()
+            
+            self._initialized = False
+            logger.info("RebuildScheduler cleaned up")
+        
+        except Exception as e:
+            logger.error(f"Cleanup failed: {e}")
+
+
+class ScheduleRebuild:
+    """Thin synchronous wrapper around :class:`RebuildScheduler` for CLI usage."""
+
+    def __init__(self, scheduler: Optional["RebuildScheduler"] = None):
+        self.scheduler = scheduler or RebuildScheduler()
+        self.initialized = False
+        logger.info("Initialized schedule_rebuild")
+
+    def _run_coro(self, coro):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            return asyncio.run_coroutine_threadsafe(coro, loop).result()
+
+        return asyncio.run(coro)
+
+    def setup(self) -> bool:
+        """Initialize the underlying scheduler."""
+        try:
+            self._run_coro(self.scheduler.initialize())
             self.initialized = True
             logger.info("schedule_rebuild setup completed")
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
-    def execute(self, **kwargs) -> Dict[str, Any]:
-        """
-        Execute the main functionality.
-        
-        Returns:
-            Dict containing execution results
-        """
+
+    def execute(
+        self,
+        *,
+        schedule_type: "ScheduleType" = ScheduleType.INTERVAL,
+        rebuild_type: "RebuildType" = RebuildType.INCREMENTAL,
+        interval_hours: float = 24.0,
+        cron_expression: Optional[str] = None,
+        priority: "Priority" = Priority.NORMAL,
+    ) -> Dict[str, Any]:
+        """Schedule a rebuild and return the identifier."""
         if not self.initialized:
             raise RuntimeError("schedule_rebuild not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
+            schedule_id = self._run_coro(
+                self.scheduler.schedule_rebuild(
+                    schedule_type=schedule_type,
+                    rebuild_type=rebuild_type,
+                    interval_hours=interval_hours if schedule_type == ScheduleType.INTERVAL else None,
+                    cron_expression=cron_expression if schedule_type == ScheduleType.CRON else None,
+                    priority=priority,
+                )
+            )
+
             result = {
                 "status": "success",
                 "message": "schedule_rebuild executed successfully",
-                "data": {}
+                "data": {"schedule_id": schedule_id},
             }
             return result
         except Exception as e:
@@ -438,14 +948,14 @@ class ScheduleRebuild:
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
-
+        
 
 def main():
     """Main entry point for standalone execution."""
     system = ScheduleRebuild()
-    
+
     if system.setup():
         result = system.execute()
         print(f"Result: {result}")

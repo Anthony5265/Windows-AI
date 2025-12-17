@@ -26,6 +26,7 @@ class Task:
     """Represents a task to be executed by an agent"""
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    name: Optional[str] = None
     description: str = ""
     parameters: Dict[str, Any] = field(default_factory=dict)
     status: TaskStatus = TaskStatus.PENDING
@@ -37,9 +38,16 @@ class Task:
     completed_at: Optional[datetime] = None
     assigned_agent: Optional[str] = None
     required_plugins: List[str] = field(default_factory=list)
+    required_capabilities: List[str] = field(default_factory=list)  # Required agent capabilities
     dependencies: List[str] = field(default_factory=list)  # Task IDs this depends on
     subtasks: List['Task'] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    timeout: Optional[float] = None  # Task timeout in seconds (None = use agent default)
+    
+    def __post_init__(self):
+        """Map name to description if name provided"""
+        if self.name and not self.description:
+            self.description = self.name
 
     def start(self):
         """Mark task as started"""

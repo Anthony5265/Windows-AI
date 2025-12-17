@@ -87,7 +87,10 @@ class WorkflowRunner:
         command = self.catalog.render_command(spec, inputs)
         if not command:
             raise ValueError("Shell workflow missing command")
-        return self.terminal.run(command)
+        try:
+            return self.terminal.run(command)
+        except (ValueError, FileNotFoundError, OSError):
+            return self._run_subprocess(command)
 
     def _run_script(self, spec: WorkflowSpec, inputs: Dict[str, Any]) -> str:
         script = self.catalog.render_script(spec, inputs)
@@ -114,7 +117,7 @@ class WorkflowRunner:
                 raise ValueError("Action 'shell' requires command parameter")
             try:
                 output = self.terminal.run(command)
-            except ValueError:
+            except (ValueError, FileNotFoundError, OSError):
                 output = self._run_subprocess(command)
             return {"stdout": output}
         if action_name == "start_process":

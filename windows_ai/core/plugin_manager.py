@@ -136,6 +136,79 @@ class PluginManager:
     def get_plugin(self, plugin_id: str) -> Optional[Plugin]:
         """Get a plugin by ID"""
         return self.plugins.get(plugin_id)
+    
+    async def load_plugin(self, plugin_path: str) -> Plugin:
+        """Load a plugin from file path
+        
+        Args:
+            plugin_path: Path to plugin file
+        
+        Returns:
+            Loaded Plugin instance
+        
+        Raises:
+            FileNotFoundError: If plugin file not found
+            ValueError: If plugin file is invalid
+        """
+        plugin_file = Path(plugin_path)
+        if not plugin_file.exists():
+            raise FileNotFoundError(f"Plugin file not found: {plugin_path}")
+        
+        if not plugin_file.suffix == '.py':
+            raise ValueError(f"Plugin file must be Python file, got: {plugin_file.suffix}")
+        
+        category = "custom"
+        await self._load_plugin_file(plugin_file, category)
+        
+        # Return the last loaded plugin (which should be this one)
+        if self.plugins:
+            return list(self.plugins.values())[-1]
+        raise ValueError(f"Failed to load plugin from: {plugin_path}")
+    
+    async def load_plugin_from_code(self, code: str, plugin_id: str = "dynamic_plugin") -> Plugin:
+        """Load a plugin directly from Python code
+        
+        Args:
+            code: Python source code for plugin
+            plugin_id: ID to assign to plugin
+        
+        Returns:
+            Loaded Plugin instance
+        
+        Raises:
+            SyntaxError: If code has syntax errors
+            ValueError: If code doesn't contain valid plugin
+        """
+        import tempfile
+        import re
+        
+        # Validate code doesn't have dangerous imports (security sandbox)
+        dangerous_imports = ['os', 'sys', 'subprocess', 'socket', 'eval', 'exec']
+        for imp in dangerous_imports:
+            if re.search(rf'^\s*import\s+{imp}\b|^\s*from\s+{imp}\b', code, re.MULTILINE):
+                raise ValueError(f"Plugin code cannot import '{imp}' - security violation")
+        
+        # Create temporary file for dynamic plugin
+        with tempfile.NamedTemporaryFile(mode='w', suffix='_plugin.py', delete=False) as f:
+            f.write(code)
+            temp_path = f.name
+        
+        try:
+            # Load plugin from temp file
+            temp_file = Path(temp_path)
+            await self._load_plugin_file(temp_file, "dynamic")
+            
+            # Return loaded plugin
+            if self.plugins:
+                return list(self.plugins.values())[-1]
+            raise ValueError("Failed to load plugin from code")
+        finally:
+            # Clean up temp file
+            if Path(temp_path).exists():
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
 
     def get_all_plugins(self) -> List[Dict[str, Any]]:
         """Get information about all plugins"""

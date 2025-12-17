@@ -22,7 +22,5 @@
     "version",
     "created"
   ],
-  "recommendations": [
-    "stevenhansel.vscode-nvm"
-  ]
+  "recommendations": []
 }

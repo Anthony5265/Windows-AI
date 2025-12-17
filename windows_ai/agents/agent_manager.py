@@ -31,7 +31,7 @@ DANGEROUS_TASK_TYPES = {
 class AgentManager:
     """Manages multiple agents and task distribution"""
 
-    def __init__(self, plugin_manager: PluginManager):
+    def __init__(self, plugin_manager: Optional[PluginManager] = None):
         self.plugin_manager = plugin_manager
         self.agents: Dict[str, Agent] = {}
         self.tasks: Dict[str, Task] = {}
@@ -41,13 +41,16 @@ class AgentManager:
 
     async def initialize(self):
         """Initialize the agent manager"""
+        import os
         logger.info("Initializing agent manager...")
 
-        # Create default general-purpose agent
+        # Create default general-purpose agent with system auth token
+        system_token = os.environ.get('AGENT_AUTH_TOKEN', 'system-default-token-' + uuid.uuid4().hex[:16])
         default_agent = await self.create_agent(
             name="Default Agent",
             plugins=[],  # Has access to all plugins
-            config={'type': 'general'}
+            config={'type': 'general'},
+            auth_token=system_token
         )
 
         logger.info(f"Agent manager initialized with agent: {default_agent.id}")
@@ -56,21 +59,43 @@ class AgentManager:
         self,
         name: str,
         plugins: Optional[List[str]] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
+        capabilities: Optional[List[str]] = None,
+        available_plugins: Optional[List[str]] = None,
+        auth_token: Optional[str] = None
     ) -> Agent:
-        """Create a new agent"""
+        """Create a new agent with authentication"""
+        import os
+        
+        # Require authentication (from parameter, config, or environment)
+        token = auth_token or (config or {}).get('auth_token') or os.environ.get('AGENT_AUTH_TOKEN')
+        if not token:
+            raise PermissionError("Authentication required: AGENT_AUTH_TOKEN must be provided")
+        
+        # Validate token (basic validation - in production use JWT/OAuth)
+        if len(token) < 16:
+            raise ValueError("Invalid authentication token: must be at least 16 characters")
+        
         agent_id = f"agent_{uuid.uuid4().hex[:8]}"
-
+        
+        # Determine capabilities
+        agent_capabilities = plugins or capabilities or available_plugins or []
+        
+        # Create agent with auth token
+        final_config = config.copy() if config else {}
+        final_config['auth_token'] = token
+        final_config['capabilities'] = agent_capabilities
+        
         agent = Agent(
-            agent_id=agent_id,
             name=name,
+            agent_id=agent_id,
             plugin_manager=self.plugin_manager,
-            plugins=plugins or [],
-            config=config or {}
+            plugins=agent_capabilities,
+            config=final_config
         )
 
         self.agents[agent_id] = agent
-        logger.info(f"Created agent: {name} ({agent_id})")
+        logger.info(f"Agent created: {name} ({agent_id}) with capabilities: {agent_capabilities}")
 
         return agent
 
@@ -232,6 +257,101 @@ class AgentManager:
         
         return task
     
+    async def assign_task(self, task: Task, agent_id: Optional[str] = None) -> Optional[Agent]:
+        """Assign task to an agent.
+        
+        Args:
+            task: Task to assign
+            agent_id: Specific agent ID to assign to (optional)
+        
+        Returns:
+            Agent that was assigned the task, or None if no suitable agent
+        
+        Raises:
+            ValueError: Invalid task or agent
+        """
+        # Validate task
+        if not task:
+            raise ValueError("Task cannot be None")
+        
+        # Sanitize task description
+        if task.description:
+            task.description = self._sanitize_task_description(task.description)
+        
+        # If specific agent requested, use it
+        if agent_id:
+            if agent_id not in self.agents:
+                raise ValueError(f"Agent {agent_id} not found")
+            
+            agent = self.agents[agent_id]
+            
+            # Check if agent is available
+            if agent.status != AgentStatus.IDLE:
+                logger.warning(f"Agent {agent_id} is not idle: {agent.status}")
+                return None
+            
+            # Assign task
+            task.assigned_agent = agent_id
+            task.status = TaskStatus.IN_PROGRESS
+            logger.info(f"Assigned task {task.id} to agent {agent_id}")
+            
+            return agent
+        
+        # Otherwise, find suitable agent based on required capabilities
+        for agent in self.agents.values():
+            # Check if agent is available
+            if agent.status != AgentStatus.IDLE:
+                continue
+            
+            # Check if agent has required capabilities
+            if task.required_capabilities:
+                if not all(cap in agent.capabilities for cap in task.required_capabilities):
+                    continue
+            
+            # Check if agent has required plugins
+            if task.required_plugins:
+                if not all(plugin in agent.plugins for plugin in task.required_plugins):
+                    continue
+            
+            # Agent matches requirements
+            task.assigned_agent = agent.id
+            task.status = TaskStatus.IN_PROGRESS
+            logger.info(f"Auto-assigned task {task.id} to agent {agent.id}")
+            
+            return agent
+        
+        # No suitable agent found
+        logger.warning(f"No suitable agent found for task {task.id}")
+        return None
+    
+    def _sanitize_task_description(self, description: str) -> str:
+        """Sanitize task description to prevent XSS and injection attacks.
+        
+        Args:
+            description: Task description to sanitize
+            
+        Returns:
+            Sanitized description
+        """
+        if not description or not isinstance(description, str):
+            return description
+        
+        # Characters that are dangerous and should be removed
+        dangerous_chars = ['<', '>', '$', '{', '}', ';', '&', '|', '`']
+        
+        # Remove dangerous characters and patterns
+        sanitized = description
+        
+        # Remove path traversal patterns
+        while '../' in sanitized or '..\\' in sanitized:
+            sanitized = sanitized.replace('../', '').replace('..\\', '')
+        
+        # Remove dangerous characters
+        for char in dangerous_chars:
+            sanitized = sanitized.replace(char, '')
+        
+        return sanitized
+
     def _validate_command_safety(self, command: str):
         """Validate command for security threats.
         

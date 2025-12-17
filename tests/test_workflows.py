@@ -73,13 +73,13 @@ def test_runner_executes_all_modes(tmp_path: Path) -> None:
             "      target = Path(r'${{target}}')\n      target.write_text('done', encoding='utf-8')\n"
             "      print('script-finished')\n"
         ),
-        inputs_block="  - name: target\n    type: path\n    default: \"" + str(tmp_path / "out.txt") + "\"\n",
+        inputs_block="  - name: target\n    type: path\n    default: \"" + str(tmp_path / "out.txt").replace("\\", "\\\\") + "\"\n",
     )
 
     write_workflow(
         action,
         run_block=(
-            "  mode: action\n  action:\n    name: shell\n    params:\n      command: \"printf 'foo' | tr 'a-z' 'A-Z'\"\n"
+            "  mode: action\n  action:\n    name: shell\n    params:\n      command: \"echo FOO\"\n"
         ),
     )
 

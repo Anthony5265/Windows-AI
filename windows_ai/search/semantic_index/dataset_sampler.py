@@ -117,8 +117,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,15 @@ logger = logging.getLogger(__name__)
 class DatasetSampler:
     """
     Provide `search/semantic_index/dataset_sampler.py` for creating evaluation sets.
+    
+    This module handles stratified sampling from indexed datasets to create
+    evaluation, validation, and test sets for model assessment. It supports:
+    
+    - Stratified random sampling based on document attributes
+    - Train/validation/test split with configurable ratios
+    - Dataset persistence and loading
+    - Category-aware balancing
+    - Reproducible sampling with seed control
 *   **Upgrade 193:** Add `agenthub/dialogue/user_profile_adapter.py` bridging stored preferences with conversation context.
 *   **Upgrade 194:** Publish `docs/guides/vision-device-setup.md` to calibrate webcams for screen understanding.
 *   **Upgrade 195:** Introduce `domains/natural_language_processing/multilingual_router.py` to route requests to localized models.
@@ -236,52 +245,212 @@ class DatasetSampler:
 *   **Upgrade 700:** Launch `iot/iot_blueprint.py` documenting blueprints that future-proof device orchestration reach.
     """
     
-    def __init__(self):
-        """Initialize the dataset sampler system."""
+    def __init__(self, index_path: Optional[str] = None, cache_dir: Optional[str] = None):
+        """
+        Initialize the dataset sampler system.
+        
+        Args:
+            index_path: Path to indexed documents. Defaults to ~/.windows_ai/search_index
+            cache_dir: Path to cache sampled datasets. Defaults to ~/.windows_ai/sampled_datasets
+        """
         self.initialized = False
-        logger.info("Initialized dataset_sampler")
+        self.index_path = Path(index_path) if index_path else Path.home() / ".windows_ai" / "search_index"
+        self.cache_dir = Path(cache_dir) if cache_dir else Path.home() / ".windows_ai" / "sampled_datasets"
+        self.datasets: Dict[str, List[Dict[str, Any]]] = {}
+        self.metadata: Dict[str, Any] = {}
+        logger.info(f"Initialized dataset_sampler with index_path={self.index_path}")
     
     def setup(self) -> bool:
         """
         Set up the system and prepare for operation.
         
+        Creates necessary directories and validates configuration.
+        
         Returns:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Created cache directory: {self.cache_dir}")
+            
+            if not self.index_path.exists():
+                logger.warning(f"Index path does not exist: {self.index_path}")
+                self.index_path.mkdir(parents=True, exist_ok=True)
+            
             self.initialized = True
-            logger.info("dataset_sampler setup completed")
+            logger.info("dataset_sampler setup completed successfully")
             return True
         except Exception as e:
-            logger.error(f"Setup failed: {e}")
+            logger.error(f"Setup failed: {e}", exc_info=True)
             return False
+    
+    def _load_documents(self) -> List[Dict[str, Any]]:
+        """
+        Load all documents from index directory.
+        
+        Returns:
+            List of document dictionaries from JSON files
+        """
+        documents = []
+        try:
+            if not self.index_path.exists():
+                logger.warning(f"Index path does not exist: {self.index_path}")
+                return documents
+            
+            import json
+            for json_file in self.index_path.glob("*.json"):
+                try:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        doc = json.load(f)
+                        documents.append(doc)
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Failed to load document from {json_file}: {e}")
+                    continue
+            
+            logger.info(f"Loaded {len(documents)} documents from index")
+            return documents
+        except Exception as e:
+            logger.error(f"Error loading documents: {e}", exc_info=True)
+            return documents
+    
+    def _stratified_split(
+        self,
+        documents: List[Dict[str, Any]],
+        split_ratios: Dict[str, float],
+        stratify_by: Optional[str] = None,
+        seed: Optional[int] = None
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Create stratified train/validation/test splits.
+        
+        Args:
+            documents: List of documents to split
+            split_ratios: Dictionary with 'train', 'val', 'test' keys
+            stratify_by: Optional field name for stratification
+            seed: Random seed for reproducibility
+            
+        Returns:
+            Dictionary with splits {'train': [], 'val': [], 'test': []}
+        """
+        import random
+        
+        if seed is not None:
+            random.seed(seed)
+        
+        splits = {'train': [], 'val': [], 'test': []}
+        
+        try:
+            # Validate ratios sum to approximately 1.0
+            ratio_sum = sum(split_ratios.values())
+            if abs(ratio_sum - 1.0) > 0.01:
+                logger.warning(f"Split ratios sum to {ratio_sum}, not 1.0")
+            
+            # Normalize ratios
+            normalized_ratios = {k: v / ratio_sum for k, v in split_ratios.items()}
+            
+            if stratify_by and documents:
+                # Group documents by stratification field
+                groups: Dict[str, List[Dict[str, Any]]] = {}
+                for doc in documents:
+                    group_key = str(doc.get(stratify_by, 'unknown'))
+                    if group_key not in groups:
+                        groups[group_key] = []
+                    groups[group_key].append(doc)
+                
+                # Distribute each group
+                for group_docs in groups.values():
+                    shuffled = group_docs.copy()
+                    random.shuffle(shuffled)
+                    
+                    train_count = int(len(shuffled) * normalized_ratios.get('train', 0.7))
+                    val_count = int(len(shuffled) * normalized_ratios.get('val', 0.15))
+                    
+                    splits['train'].extend(shuffled[:train_count])
+                    splits['val'].extend(shuffled[train_count:train_count + val_count])
+                    splits['test'].extend(shuffled[train_count + val_count:])
+            else:
+                # Simple random split
+                shuffled = documents.copy()
+                random.shuffle(shuffled)
+                
+                train_count = int(len(shuffled) * normalized_ratios.get('train', 0.7))
+                val_count = int(len(shuffled) * normalized_ratios.get('val', 0.15))
+                
+                splits['train'] = shuffled[:train_count]
+                splits['val'] = shuffled[train_count:train_count + val_count]
+                splits['test'] = shuffled[train_count + val_count:]
+            
+            logger.info(f"Created splits - train: {len(splits['train'])}, val: {len(splits['val'])}, test: {len(splits['test'])}")
+            return splits
+        except Exception as e:
+            logger.error(f"Stratified split failed: {e}", exc_info=True)
+            raise
     
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
+        Execute dataset sampling.
         
+        Parameters:
+            split_ratios (dict): Train/val/test ratios {'train': 0.7, 'val': 0.15, 'test': 0.15}
+            stratify_by (str, optional): Document field to stratify by
+            seed (int, optional): Random seed for reproducibility
+            save_to_cache (bool): Whether to save splits to cache directory
+            
         Returns:
-            Dict containing execution results
+            Dict with status, message, and data containing split statistics
         """
         if not self.initialized:
             raise RuntimeError("dataset_sampler not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            split_ratios = kwargs.get('split_ratios', {'train': 0.7, 'val': 0.15, 'test': 0.15})
+            stratify_by = kwargs.get('stratify_by', None)
+            seed = kwargs.get('seed', None)
+            save_to_cache = kwargs.get('save_to_cache', True)
+            
+            logger.debug(f"Executing with split_ratios={split_ratios}, stratify_by={stratify_by}")
+            
+            documents = self._load_documents()
+            if not documents:
+                raise ValueError("No documents found in index")
+            
+            logger.info(f"Sampling from {len(documents)} documents")
+            
+            self.datasets = self._stratified_split(documents, split_ratios, stratify_by, seed)
+            
+            if save_to_cache:
+                import json
+                for split_name, docs in self.datasets.items():
+                    cache_file = self.cache_dir / f"{split_name}_dataset.json"
+                    try:
+                        with open(cache_file, 'w', encoding='utf-8') as f:
+                            json.dump(docs, f, indent=2, default=str)
+                        logger.info(f"Saved {split_name} dataset to {cache_file}")
+                    except IOError as e:
+                        logger.warning(f"Failed to save {split_name} dataset: {e}")
+            
             result = {
                 "status": "success",
-                "message": "dataset_sampler executed successfully",
-                "data": {}
+                "message": "Dataset sampling completed successfully",
+                "data": {
+                    "splits": {name: len(docs) for name, docs in self.datasets.items()},
+                    "total_documents": sum(len(docs) for docs in self.datasets.values()),
+                    "stratified_by": stratify_by,
+                    "seed": seed,
+                    "cache_location": str(self.cache_dir) if save_to_cache else None
+                }
             }
+            
+            self.metadata = result["data"]
+            logger.info(f"Sampling completed: {result}")
             return result
+            
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            return {"status": "error", "message": f"Validation error: {str(e)}", "data": None}
         except Exception as e:
-            logger.error(f"Execution failed: {e}")
-            return {
-                "status": "error",
-                "message": str(e),
-                "data": None
-            }
+            logger.error(f"Execution failed: {e}", exc_info=True)
+            return {"status": "error", "message": str(e), "data": None}
 
 
 def main():
