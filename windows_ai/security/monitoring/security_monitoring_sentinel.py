@@ -68,8 +68,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +151,9 @@ class SecurityMonitoringSentinel:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.threat_level = 'low'
+            self.alert_thresholds = kwargs.get('thresholds', {'high': 8, 'medium': 5, 'low': 2})
+            self.threats = []
             self.initialized = True
             logger.info("security_monitoring_sentinel setup completed")
             return True
@@ -170,11 +172,23 @@ class SecurityMonitoringSentinel:
             raise RuntimeError("security_monitoring_sentinel not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            threat = kwargs.get('threat', {})
+            if threat:
+                self.threats.append(threat)
+            
+            threat_score = len(self.threats)
+            
+            if threat_score >= self.alert_thresholds['high']:
+                self.threat_level = 'high'
+            elif threat_score >= self.alert_thresholds['medium']:
+                self.threat_level = 'medium'
+            else:
+                self.threat_level = 'low'
+            
             result = {
-                "status": "success",
-                "message": "security_monitoring_sentinel executed successfully",
-                "data": {}
+                "status": self.threat_level,
+                "message": f"Threat level: {self.threat_level} ({threat_score} threats detected)",
+                "data": {'threats': self.threats, 'level': self.threat_level}
             }
             return result
         except Exception as e:

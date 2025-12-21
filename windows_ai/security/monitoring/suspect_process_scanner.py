@@ -131,8 +131,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +277,14 @@ class SuspectProcessScanner:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.processes = {}
+            self.suspicious_patterns = [
+                'cmd.exe',
+                'powershell',
+                'wmic',
+                'taskkill',
+                'rundll32'
+            ]
             self.initialized = True
             logger.info("suspect_process_scanner setup completed")
             return True
@@ -296,11 +303,37 @@ class SuspectProcessScanner:
             raise RuntimeError("suspect_process_scanner not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import psutil
+            
+            suspicious = []
+            normal = 0
+            
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    proc_name = proc.info.get('name', '').lower()
+                    cmdline = ' '.join(proc.info.get('cmdline', [])).lower()
+                    
+                    is_suspicious = False
+                    for pattern in self.suspicious_patterns:
+                        if pattern.lower() in proc_name or pattern.lower() in cmdline:
+                            is_suspicious = True
+                            break
+                    
+                    if is_suspicious:
+                        suspicious.append({
+                            'pid': proc.info['pid'],
+                            'name': proc.info['name'],
+                            'cmdline': ' '.join(proc.info.get('cmdline', []))
+                        })
+                    else:
+                        normal += 1
+                except:
+                    pass
+            
             result = {
-                "status": "success",
-                "message": "suspect_process_scanner executed successfully",
-                "data": {}
+                "status": "alert" if suspicious else "clean",
+                "message": f"{len(suspicious)} suspicious processes detected, {normal} normal",
+                "data": {"suspicious_processes": suspicious, "normal_count": normal}
             }
             return result
         except Exception as e:

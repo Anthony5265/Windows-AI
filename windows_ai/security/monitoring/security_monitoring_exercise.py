@@ -61,8 +61,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,9 @@ class SecurityMonitoringExercise:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.exercise_scenarios = {"phishing_drill": {"type": "phishing", "difficulty": "medium"}, "malware_simulation": {"type": "malware", "difficulty": "high"}, "social_engineering": {"type": "social_eng", "difficulty": "medium"}}
+            self.execution_log = []
+            self.drill_metrics = {"total_drills": 0, "success_rate": 0.0, "avg_response_time": 0.0}
             self.initialized = True
             logger.info("security_monitoring_exercise setup completed")
             return True
@@ -156,13 +158,26 @@ class SecurityMonitoringExercise:
             raise RuntimeError("security_monitoring_exercise not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "security_monitoring_exercise executed successfully",
-                "data": {}
-            }
-            return result
+            import time
+            scenario_id = kwargs.get("scenario_id", "phishing_drill")
+            if scenario_id not in self.exercise_scenarios:
+                return {"status": "error", "message": f"Unknown scenario: {scenario_id}", "data": {}}
+            scenario = self.exercise_scenarios[scenario_id]
+            start_time = time.time()
+            user_response = kwargs.get("user_response", "correct")
+            success = user_response == "correct"
+            response_time = time.time() - start_time
+            execution_record = {"timestamp": __import__("datetime").datetime.now().isoformat(), "scenario_id": scenario_id, "scenario_type": scenario["type"], "difficulty": scenario["difficulty"], "user_response": user_response, "success": success, "response_time_ms": response_time * 1000}
+            self.execution_log.append(execution_record)
+            self.drill_metrics["total_drills"] += 1
+            successes = sum(1 for log in self.execution_log if log["success"])
+            self.drill_metrics["success_rate"] = (successes / self.drill_metrics["total_drills"]) * 100 if self.drill_metrics["total_drills"] > 0 else 0
+            avg_response = sum(log["response_time_ms"] for log in self.execution_log) / len(self.execution_log) if self.execution_log else 0
+            self.drill_metrics["avg_response_time"] = avg_response
+            return {"status": "success", "message": f"Exercise {scenario_id} executed", "data": {"execution_record": execution_record, "metrics": self.drill_metrics}}
+        except Exception as e:
+            logger.error(f"Execution failed: {e}")
+            return {"status": "error", "message": str(e), "data": {}}
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {

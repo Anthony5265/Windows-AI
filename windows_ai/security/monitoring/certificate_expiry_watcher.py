@@ -143,8 +143,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +301,10 @@ class CertificateExpiryWatcher:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.cert_path = kwargs.get('cert_path', '/etc/ssl/certs')
+            self.check_interval = kwargs.get('check_interval', 86400)  # 24 hours
+            self.warning_days = kwargs.get('warning_days', 30)
+            self.expiry_data = {}
             self.initialized = True
             logger.info("certificate_expiry_watcher setup completed")
             return True
@@ -320,11 +323,37 @@ class CertificateExpiryWatcher:
             raise RuntimeError("certificate_expiry_watcher not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import socket
+            import ssl
+            from datetime import datetime, timedelta
+            
+            cert_path = kwargs.get('cert_path', self.cert_path)
+            expiring_soon = []
+            expired = []
+            
+            # Scan certificates
+            with open(cert_path, 'r') as f:
+                cert_data = f.read()
+            
+            cert_info = ssl._ssl._test_decode_cert(cert_data)
+            not_after = datetime.strptime(cert_info['notAfter'], '%b %d %H:%M:%S %Y %Z')
+            days_until_expiry = (not_after - datetime.now()).days
+            
+            if days_until_expiry <= 0:
+                expired.append({'cert': cert_path, 'expired_days': abs(days_until_expiry)})
+            elif days_until_expiry <= self.warning_days:
+                expiring_soon.append({'cert': cert_path, 'days_until_expiry': days_until_expiry})
+            
+            self.expiry_data = {
+                'expired': expired,
+                'expiring_soon': expiring_soon,
+                'checked_at': datetime.now().isoformat()
+            }
+            
             result = {
-                "status": "success",
-                "message": "certificate_expiry_watcher executed successfully",
-                "data": {}
+                "status": "success" if not expired else "warning",
+                "message": f"{len(expiring_soon)} certs expiring soon, {len(expired)} expired",
+                "data": self.expiry_data
             }
             return result
         except Exception as e:

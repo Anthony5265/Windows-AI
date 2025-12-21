@@ -124,8 +124,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +263,10 @@ class ApiRateGuard:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.rate_limits = {}
+            self.request_timestamps = {}
+            self.quota_per_minute = 1000
+            self.quota_per_hour = 10000
             self.initialized = True
             logger.info("api_rate_guard setup completed")
             return True
@@ -282,12 +285,40 @@ class ApiRateGuard:
             raise RuntimeError("api_rate_guard not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "api_rate_guard executed successfully",
-                "data": {}
-            }
+            api_id = kwargs.get('api_id', 'default')
+            current_time = __import__('time').time()
+            
+            if api_id not in self.request_timestamps:
+                self.request_timestamps[api_id] = []
+            
+            # Clean old timestamps
+            self.request_timestamps[api_id] = [ts for ts in self.request_timestamps[api_id] if current_time - ts < 3600]
+            
+            # Check limits
+            requests_per_minute = len([ts for ts in self.request_timestamps[api_id] if current_time - ts < 60])
+            requests_per_hour = len(self.request_timestamps[api_id])
+            
+            if requests_per_minute > self.quota_per_minute or requests_per_hour > self.quota_per_hour:
+                result = {
+                    "status": "rate_limited",
+                    "message": "API rate limit exceeded",
+                    "data": {
+                        "requests_per_minute": requests_per_minute,
+                        "requests_per_hour": requests_per_hour,
+                        "limit_minute": self.quota_per_minute,
+                        "limit_hour": self.quota_per_hour
+                    }
+                }
+            else:
+                self.request_timestamps[api_id].append(current_time)
+                result = {
+                    "status": "success",
+                    "message": "Request allowed",
+                    "data": {
+                        "requests_per_minute": requests_per_minute,
+                        "requests_per_hour": requests_per_hour
+                    }
+                }
             return result
         except Exception as e:
             logger.error(f"Execution failed: {e}")

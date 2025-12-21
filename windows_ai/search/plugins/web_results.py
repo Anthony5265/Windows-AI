@@ -138,8 +138,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -281,48 +281,103 @@ class WebResults:
     def __init__(self):
         """Initialize the web results system."""
         self.initialized = False
+        self.dataset: List[Dict[str, Any]] = []
+        self.max_results: int = 5
         logger.info("Initialized web_results")
-    
-    def setup(self) -> bool:
+
+    def setup(self, dataset_path: Optional[str] = None, max_results: int = 5) -> bool:
         """
         Set up the system and prepare for operation.
-        
+
+        Args:
+            dataset_path: Optional path to a JSON file containing curated web results.
+                         Each item should be a dict with keys like "title", "url", "snippet".
+            max_results: Default number of results to return when a request does not specify top_k.
+
         Returns:
-            bool: True if setup successful, False otherwise
+            bool: True if setup successful, False otherwise.
         """
         try:
-            # TODO: Implement setup logic
+            self.max_results = max_results
+
+            if dataset_path:
+                path = Path(dataset_path)
+                if path.exists():
+                    import json
+
+                    with path.open("r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        if isinstance(data, list):
+                            self.dataset = data
+                        else:
+                            logger.warning("Dataset file is not a list; ignoring contents")
+                else:
+                    logger.warning("Dataset path provided but file does not exist: %s", dataset_path)
+
             self.initialized = True
-            logger.info("web_results setup completed")
+            logger.info("web_results setup completed with %s entries", len(self.dataset))
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
-    def execute(self, **kwargs) -> Dict[str, Any]:
+
+    def _score(self, query: str, item: Dict[str, Any]) -> float:
+        """Compute a simple relevance score based on token overlap."""
+        tokens = {t for t in query.lower().split() if t}
+        haystack = " ".join(
+            str(item.get(field, "")).lower() for field in ("title", "snippet", "url")
+        )
+        return sum(1 for t in tokens if t in haystack)
+
+    def execute(
+        self,
+        query: str,
+        sources: Optional[List[Dict[str, Any]]] = None,
+        top_k: Optional[int] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Execute the main functionality.
-        
+
+        Args:
+            query: Search query text.
+            sources: Optional list of pre-fetched results to rank; falls back to loaded dataset.
+            top_k: Optional override for number of results to return.
+
         Returns:
-            Dict containing execution results
+            Dict containing execution results.
         """
         if not self.initialized:
             raise RuntimeError("web_results not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
-            result = {
+            pool = sources if sources is not None else self.dataset
+            limit = top_k or self.max_results
+
+            if not query.strip():
+                raise ValueError("Query must be non-empty")
+
+            scored = []
+            for item in pool:
+                score = self._score(query, item)
+                scored.append((score, item))
+
+            scored.sort(key=lambda x: x[0], reverse=True)
+            results = [item for score, item in scored if score > 0][:limit]
+
+            return {
                 "status": "success",
-                "message": "web_results executed successfully",
-                "data": {}
+                "query": query,
+                "results": results,
+                "result_count": len(results),
+                "total_available": len(pool),
             }
-            return result
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
 
 

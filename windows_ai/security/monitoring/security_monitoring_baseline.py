@@ -64,8 +64,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,10 @@ class SecurityMonitoringBaseline:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.baseline_profiles = {}
+            self.comparison_thresholds = {"deviation_percent": 15.0, "anomaly_score": 0.8}
+            self.metrics_history = []
+            self.baseline_established = False
             self.initialized = True
             logger.info("security_monitoring_baseline setup completed")
             return True
@@ -162,13 +165,32 @@ class SecurityMonitoringBaseline:
             raise RuntimeError("security_monitoring_baseline not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "security_monitoring_baseline executed successfully",
-                "data": {}
-            }
-            return result
+            import psutil
+            action = kwargs.get("action", "capture")
+            if action == "capture":
+                metrics = {"timestamp": __import__("datetime").datetime.now().isoformat(), "cpu_percent": psutil.cpu_percent(interval=1), "memory_percent": psutil.virtual_memory().percent, "disk_percent": psutil.disk_usage("/").percent}
+                self.baseline_profiles["current"] = metrics
+                self.metrics_history.append(metrics)
+                if len(self.metrics_history) >= 10:
+                    self.baseline_established = True
+                return {"status": "success", "message": "Baseline metrics captured", "data": {"metrics": metrics, "baseline_ready": self.baseline_established, "history_count": len(self.metrics_history)}}
+            elif action == "detect_anomaly":
+                if not self.baseline_established or not self.metrics_history:
+                    return {"status": "warning", "message": "Insufficient baseline data", "data": {}}
+                current = kwargs.get("metrics", {})
+                anomalies = []
+                for key in ["cpu_percent", "memory_percent", "disk_percent"]:
+                    if key in current and self.baseline_profiles.get("current", {}).get(key) is not None:
+                        baseline = self.baseline_profiles["current"][key]
+                        deviation = abs(current[key] - baseline) / (baseline + 0.1)
+                        if deviation > self.comparison_thresholds["deviation_percent"] / 100:
+                            anomalies.append({"metric": key, "deviation": deviation, "threshold": self.comparison_thresholds["deviation_percent"]})
+                return {"status": "success", "message": f"Anomaly detection complete. Found {len(anomalies)} anomalies", "data": {"anomalies": anomalies}}
+            else:
+                return {"status": "error", "message": f"Unknown action: {action}", "data": {}}
+        except Exception as e:
+            logger.error(f"Execution failed: {e}")
+            return {"status": "error", "message": str(e), "data": {}}
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {

@@ -158,8 +158,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -331,7 +331,10 @@ class SiemForwarder:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.siem_host = kwargs.get('siem_host', 'localhost')
+            self.siem_port = kwargs.get('siem_port', 514)
+            self.event_queue = []
+            self.forwarded_count = 0
             self.initialized = True
             logger.info("siem_forwarder setup completed")
             return True
@@ -350,11 +353,32 @@ class SiemForwarder:
             raise RuntimeError("siem_forwarder not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import json
+            import socket
+            
+            event = kwargs.get('event', {})
+            if event:
+                self.event_queue.append(event)
+            
+            forwarded = 0
+            failed = 0
+            
+            for event_to_send in self.event_queue:
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    sock.sendto(json.dumps(event_to_send).encode(), (self.siem_host, self.siem_port))
+                    sock.close()
+                    self.forwarded_count += 1
+                    forwarded += 1
+                except:
+                    failed += 1
+            
+            self.event_queue = []
+            
             result = {
                 "status": "success",
-                "message": "siem_forwarder executed successfully",
-                "data": {}
+                "message": f"Forwarded {forwarded} events, {failed} failed",
+                "data": {"forwarded": self.forwarded_count, "failed": failed}
             }
             return result
         except Exception as e:

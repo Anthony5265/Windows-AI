@@ -673,9 +673,35 @@ class SearchAdapter:
             if self._health_check_task:
                 self._health_check_task.cancel()
                 try:
-                    await self._health_check_task
+                    await asyncio.wait_for(self._health_check_task, timeout=5)
                 except asyncio.CancelledError:
-                    pass
+                    logger.info("Health monitoring task cancelled")
+                except asyncio.TimeoutError:
+                    logger.warning("Health monitoring task did not exit before timeout; ignoring")
+                except Exception as e:
+                    logger.error(f"Health monitoring task cleanup error: {e}")
+                finally:
+                    self._health_check_task = None
+
+            # Close backend clients if they expose a close method
+            for name, client in self._backend_clients.items():
+                try:
+                    close_method = None
+                    for attr in ("aclose", "close", "disconnect"):
+                        candidate = getattr(client, attr, None)
+                        if callable(candidate):
+                            close_method = candidate
+                            break
+
+                    if close_method:
+                        result = close_method()
+                        if asyncio.iscoroutine(result):
+                            await result
+                        logger.info("Closed backend client: %s", name)
+                except Exception as client_error:
+                    logger.warning("Failed to close backend client %s: %s", name, client_error)
+
+            self._backend_clients.clear()
 
             self._initialized = False
             logger.info("SearchAdapter cleanup completed")
