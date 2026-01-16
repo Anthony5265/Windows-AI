@@ -5,7 +5,12 @@ Provides high-quality AI voice synthesis using ElevenLabs API
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List
-import aiohttp
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 import os
 import logging
 import json
@@ -109,8 +114,11 @@ class Plugin(IntegrationPlugin):
             self._api_key = os.environ.get("ELEVENLABS_API_KEY")
             
             # Create HTTP session with timeout
-            timeout = aiohttp.ClientTimeout(total=self._request_timeout)
-            self.session = aiohttp.ClientSession(timeout=timeout)
+            if AIOHTTP_AVAILABLE:
+                timeout = aiohttp.ClientTimeout(total=self._request_timeout)
+                self.session = aiohttp.ClientSession(timeout=timeout)
+            else:
+                self.session = None
             
             # Validate API key if available
             if self._api_key:
@@ -261,6 +269,9 @@ class Plugin(IntegrationPlugin):
             output_format: Audio format (mp3, pcm, ulaw, ogg)
             optimize_streaming_latency: Enable streaming optimization (0-4)
         """
+        if not self._api_key:
+            return await self._tts_offline(params)
+
         if not self._api_key:
             return await self._text_to_speech_offline(params)
         
@@ -626,6 +637,17 @@ class Plugin(IntegrationPlugin):
         logger.info("ElevenLabs plugin shutdown")
         return True
     
+    async def _tts_offline(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Offline TTS simulation"""
+        return {
+            "success": True,
+            "result": {
+                "audio": None,
+                "mode": "offline_simulation",
+                "note": "Configure ELEVENLABS_API_KEY for real text-to-speech"
+            }
+        }
+
     def get_schema(self) -> Dict[str, Any]:
         """Get plugin schema"""
         return {
