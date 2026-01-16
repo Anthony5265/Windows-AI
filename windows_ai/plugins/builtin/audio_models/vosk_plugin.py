@@ -5,7 +5,12 @@ Lightweight offline automatic speech recognition
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List
-import aiohttp
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 import os
 import logging
 import json
@@ -117,6 +122,7 @@ class Plugin(IntegrationPlugin):
             if self.session:
                 await self.session.close()
                 self.session = None
+        self._initialized = False
             
             self._cache.clear()
             logger.info("Vosk plugin disconnected")

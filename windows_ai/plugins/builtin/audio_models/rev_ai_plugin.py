@@ -10,6 +10,7 @@ class Plugin(IntegrationPlugin):
             author="Windows AI", plugin_type=PluginType.INTEGRATION, tags=["audio", "ai"]
         ))
         self.session = None
+        self._initialized = False
     async def initialize(self): self.session = aiohttp.ClientSession(); return True
     async def connect(self, cred): return True
     async def disconnect(self): await self.session.close() if self.session else None; return True
