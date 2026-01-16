@@ -5,7 +5,12 @@ Provides speech-to-text with speaker diarization, sentiment analysis, and entity
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List
-import aiohttp
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 import os
 import logging
 import json
@@ -107,8 +112,11 @@ class Plugin(IntegrationPlugin):
         try:
             self._api_key = os.environ.get("ASSEMBLYAI_API_KEY")
             
-            timeout = aiohttp.ClientTimeout(total=self._request_timeout)
-            self.session = aiohttp.ClientSession(timeout=timeout)
+            if AIOHTTP_AVAILABLE:
+                timeout = aiohttp.ClientTimeout(total=self._request_timeout)
+                self.session = aiohttp.ClientSession(timeout=timeout)
+            else:
+                self.session = None
             
             if self._api_key:
                 await self._validate_api_key()
@@ -231,6 +239,7 @@ class Plugin(IntegrationPlugin):
         """Transcribe audio file"""
         if not self._api_key:
             return await self._transcribe_offline(params)
+
         
         audio_url = params.get("audio_url")
         audio_file = params.get("audio_file")
