@@ -1,8 +1,6 @@
-<div align="center">
-
 # ⚡ WINDOWS AI ⚡
 
-### **THE ULTIMATE AI SUPERPOWER FOR WINDOWS**
+## **THE ULTIMATE AI SUPERPOWER FOR WINDOWS**
 
 **One installer. Infinite possibilities. Your PC just became intelligent.**
 
@@ -18,8 +16,6 @@
 ### 🎯 **[CLICK TO DOWNLOAD NOW](https://github.com/Anthony5265/Windows-AI/releases/latest)** 🎯
 
 **One `.exe` file → Double-click → Done. No Python. No code. No BS.**
-
-</div>
 
 ---
 
@@ -58,10 +54,6 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 
 ## 💥 WHAT CAN YOU DO? (THE SHORT LIST)
 
-<table>
-<tr>
-<td width="50%">
-
 ### 🧠 **CORE AI POWERS**
 
 ✅ **Chat** with ANY AI model (local or cloud)  
@@ -75,9 +67,6 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 ✅ **Data analysis** with natural language  
 ✅ **Multi-agent collaboration**  
 
-</td>
-<td width="50%">
-
 ### 🔌 **INTEGRATIONS & AUTOMATION**
 
 ✅ **GitHub** - Auto-review PRs, manage issues  
@@ -89,11 +78,7 @@ Unzip → Run → No installation. Perfect for USB drives or locked-down systems
 ✅ **IoT devices** - Control smart home  
 ✅ **Mobile companion** - Control from phone  
 ✅ **Context menu** - Right-click AI anywhere  
-✅ **Terminal integration** - CLI superpowers  
-
-</td>
-</tr>
-</table>
+✅ **Terminal integration** - CLI superpowers
 
 ## 🧩 Model Selection: Pick Any AI
 
@@ -208,12 +193,11 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 
 ---
 
-## 🎯 65 PRODUCTION PLUGINS + 2,000+ TEMPLATES
+### 65 PRODUCTION PLUGINS + 2,000+ TEMPLATES
 
 **Production Status:** 65 fully functional plugins with comprehensive test coverage. An additional 2,000+ plugin templates and scaffolding are available for rapid development.
 
-<details open>
-<summary><b>☁️ CLOUD & INFRASTRUCTURE (15 production plugins)</b></summary>
+#### ☁️ CLOUD & INFRASTRUCTURE (15 production plugins)
 
 - **AWS** - EC2, S3, Lambda, RDS, DynamoDB, CloudWatch, IAM
 - **Azure** - VMs, Storage, Functions, Cosmos DB, Key Vault
@@ -223,21 +207,14 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **Vercel** - Serverless deployment
 - **Cloudflare** - DNS, Workers, R2 storage
 
-</summary>
-</details>
-
-<details>
-<summary><b>🗄️ DATABASES (12 plugins)</b></summary>
+#### 🗄️ DATABASES (12 plugins)
 
 - PostgreSQL, MySQL, MongoDB, Redis, SQLite
 - Elasticsearch, Cassandra, DynamoDB
 - Firebase Realtime DB, Firestore
 - Supabase, PlanetScale
 
-</details>
-
-<details>
-<summary><b>🐙 DEV TOOLS (18 plugins)</b></summary>
+#### 🐙 DEV TOOLS (18 plugins)
 
 - **GitHub** - Repos, Issues, PRs, Actions, Gists
 - **GitLab** - Full CI/CD integration
@@ -250,10 +227,8 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **Discord** - Bot & webhooks
 - **Jira** - Issue tracking
 
-</details>
 
-<details>
-<summary><b>🤖 AI PROVIDERS (15 models)</b></summary>
+#### 🤖 AI PROVIDERS (15 models)
 
 - **OpenAI** - GPT-4, ChatGPT, DALL-E, Whisper
 - **Anthropic** - Claude 3 (Opus, Sonnet, Haiku)
@@ -264,10 +239,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **Stable Diffusion** - Image generation
 - **LiteLLM** - Universal API gateway
 
-</details>
-
-<details>
-<summary><b>📄 DOCUMENTS & FILES (16 plugins)</b></summary>
+#### 📄 DOCUMENTS & FILES (16 plugins)
 
 - **PDF** - Read, write, merge, split, OCR
 - **Word/Excel** - Full Office automation
@@ -277,10 +249,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **ZIP/Archive** - Compression utilities
 - **Markdown** - Parsing & rendering
 
-</details>
-
-<details>
-<summary><b>📧 COMMUNICATION (10 plugins)</b></summary>
+#### 📧 COMMUNICATION (10 plugins)
 
 - **Email** - Gmail, Outlook, IMAP/SMTP
 - **SMS** - Twilio, Vonage
@@ -291,10 +260,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **Twitter/X** - Post automation
 - **LinkedIn** - Professional networking
 
-</details>
-
-<details>
-<summary><b>🏠 IOT & SMART HOME (8 plugins)</b></summary>
+#### 🏠 IOT & SMART HOME (8 plugins)
 
 - **Home Assistant** - Full integration
 - **Philips Hue** - Lighting control
@@ -304,10 +270,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **IFTTT** - Automation chains
 - **Zigbee/Z-Wave** - Direct device control
 
-</details>
-
-<details>
-<summary><b>🔍 SEARCH & WEB (7 plugins)</b></summary>
+#### 🔍 SEARCH & WEB (7 plugins)
 
 - **Google Search** - Web scraping
 - **Bing** - Search API
@@ -316,10 +279,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **RSS Feeds** - Reader & aggregator
 - **Archive.org** - Wayback machine
 
-</details>
-
-<details>
-<summary><b>📊 DATA & ANALYTICS (9 plugins)</b></summary>
+#### 📊 DATA & ANALYTICS (9 plugins)
 
 - **Pandas** - Data manipulation
 - **NumPy** - Numerical computing
@@ -329,10 +289,7 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - **Power BI** - Business intelligence
 - **Google Analytics** - Web analytics
 
-</details>
-
-<details>
-<summary><b>🎮 EXTRAS (20+ more!)</b></summary>
+#### 🎮 EXTRAS (20+ more!)
 
 - Calendar sync, Task managers, Note-taking apps
 - Weather APIs, Stock market data, Crypto prices
@@ -341,8 +298,6 @@ Imagine you say: *"Build a website for my business, deploy it to AWS, set up the
 - Fitness trackers, Health data
 - Translation, Language learning
 - **And many more...**
-
-</details>
 
 ### 📦 **Plugin Marketplace**
 
@@ -565,15 +520,13 @@ Automation tab → "New workflow" → Describe what you want
 
 ### 💬 **Community**
 
-- **[Discord Server](#)** - Chat with users & devs
 - **[Discussions](https://github.com/Anthony5265/Windows-AI/discussions)** - Ideas & help
 - **[Twitter/X](https://twitter.com/WindowsAI)** - Updates & tips
 
 ---
 
-## 🚀 DOWNLOAD NOW
 
-<div align="center">
+## 🚀 DOWNLOAD NOW
 
 ## **[⚡ DOWNLOAD WINDOWS AI NOW ⚡](https://github.com/Anthony5265/Windows-AI/releases/latest)**
 
@@ -589,69 +542,45 @@ Automation tab → "New workflow" → Describe what you want
 
 [![GitHub stars](https://img.shields.io/github/stars/Anthony5265/Windows-AI?style=social)](https://github.com/Anthony5265/Windows-AI/stargazers)
 
-</div>
-
 ---
 
 ## ❓ FAQ
 
-<details>
-<summary><b>💰 How much does it cost?</b></summary>
+### 💰 How much does it cost?
 
 **Windows AI is 100% FREE** for all core features. Local AI models are free forever.
 
 Cloud providers (OpenAI, Anthropic) charge separately - bring your own API keys.
 
-</details>
-
-<details>
-<summary><b>🔒 Is my data safe?</b></summary>
+### 🔒 Is my data safe?
 
 **YES.** In local mode, NOTHING leaves your PC. In cloud mode, only what you explicitly request is sent to providers YOU choose.
 
 No telemetry. No tracking. Open source code you can audit.
 
-</details>
-
-<details>
-<summary><b>💻 Do I need to know how to code?</b></summary>
+### 💻 Do I need to know how to code?
 
 **NO.** The GUI is designed for everyone. Click, type, drag & drop. That's it.
 
 (But if you DO code, there's a powerful API for you too!)
 
-</details>
-
-<details>
-<summary><b>📡 Does it work offline?</b></summary>
+### 📡 Does it work offline?
 
 **YES!** Local mode works 100% offline after initial setup.
 
-</details>
-
-<details>
-<summary><b>🔄 How do updates work?</b></summary>
+### 🔄 How do updates work?
 
 **Automatic!** Windows AI checks for updates and notifies you. Click "Update" and it handles everything.
 
-</details>
-
-<details>
-<summary><b>🗑️ How do I uninstall?</b></summary>
+### 🗑️ How do I uninstall?
 
 Windows Settings → Apps → Windows AI → Uninstall. Clean removal, no leftovers.
 
-</details>
-
-<details>
-<summary><b>🐧 Linux/Mac support?</b></summary>
+### 🐧 Linux/Mac support?
 
 Windows AI is optimized for Windows, but we're exploring cross-platform support. Star the repo to stay updated!
 
-</details>
-
-<details>
-<summary><b>🔌 Can I build my own plugins?</b></summary>
+### 🔌 Can I build my own plugins?
 
 **YES!** Full plugin SDK available. Build anything you can imagine.
 
@@ -693,6 +622,19 @@ We welcome PRs! See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
+## 🗺️ Roadmap & Status
+
+- Canonical roadmap: [docs/master_plan/ROADMAP_MASTER.md](docs/master_plan/ROADMAP_MASTER.md)
+- Status dashboard: [docs/status/ROADMAP_STATUS.md](docs/status/ROADMAP_STATUS.md)
+
+Run updates with:
+
+```bash
+python scripts/roadmap/consolidate_roadmaps.py
+```
+
+This consolidates all ROADMAP/TODO markdowns, deduplicates items, and regenerates both docs.
+
 ## 📜 LICENSE
 
 **MIT License** - Use freely for personal or commercial projects.
@@ -714,11 +656,9 @@ Special thanks to the AI community for making this possible.
 
 ---
 
-<div align="center">
-
 ## 🎯 **THE FUTURE OF AI ON WINDOWS IS HERE** 🎯
 
-### **Download. Install. Transform Your PC.**
+### Download. Install. Transform Your PC
 
 [![Download Now](https://img.shields.io/badge/DOWNLOAD_NOW-Windows_AI-00D9FF?style=for-the-badge&logo=windows&logoColor=white&labelColor=000000)](https://github.com/Anthony5265/Windows-AI/releases/latest)
 
@@ -728,10 +668,8 @@ Special thanks to the AI community for making this possible.
 
 ⭐ **Star** • 🔀 **Fork** • 🐛 **Report Issues** • 💡 **Request Features**
 
-[Website](#) • [Docs](docs/) • [Discord](#) • [Twitter](#)
+[Docs](docs/) • [Twitter](https://twitter.com/WindowsAI)
 
 ---
 
 **Windows AI** - *Where Intelligence Meets Simplicity* ⚡
-
-</div>
