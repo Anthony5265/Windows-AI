@@ -1,737 +1,438 @@
-<div align="center">
+# Windows AI
 
-# ⚡ WINDOWS AI ⚡
+**An Extensible AI Platform for Windows**
 
-### **THE ULTIMATE AI SUPERPOWER FOR WINDOWS**
-
-**One installer. Infinite possibilities. Your PC just became intelligent.**
+Transform your Windows PC into an AI powerhouse with local and cloud AI capabilities, 2200+ plugins, and a powerful extensibility framework.
 
 ---
 
-[![Download](https://img.shields.io/badge/DOWNLOAD-WindowsAI--Setup.exe-00D9FF?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Anthony5265/Windows-AI/releases/latest)
-[![Stars](https://img.shields.io/github/stars/Anthony5265/Windows-AI?style=for-the-badge&logo=github&color=yellow)](https://github.com/Anthony5265/Windows-AI/stargazers)
-[![License](https://img.shields.io/badge/LICENSE-MIT-green?style=for-the-badge)](LICENSE)
-[![Windows](https://img.shields.io/badge/WINDOWS-10%20%7C%2011-0078D6?style=for-the-badge&logo=windows)](https://github.com/Anthony5265/Windows-AI)
+## Quick Links
+
+- [Installation Guide](docs/getting-started/INSTALLATION.md)
+- [Quick Start](docs/getting-started/QUICK_START.md)
+- [User Guide](docs/guides/USER_GUIDE.md)
+- [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md)
+- [API Reference](docs/api/API_REFERENCE.md)
+- [FAQ](docs/FAQ.md)
 
 ---
 
-### 🎯 **[CLICK TO DOWNLOAD NOW](https://github.com/Anthony5265/Windows-AI/releases/latest)** 🎯
+## What is Windows AI?
 
-**One `.exe` file → Double-click → Done. No Python. No code. No BS.**
+Windows AI is a comprehensive AI integration platform that brings the power of modern AI to your Windows desktop. It provides:
 
-</div>
-
----
-
-## 🚀 WHAT IS WINDOWS AI?
-
-Imagine having **ChatGPT, Stable Diffusion, GitHub Copilot, AWS automation, voice transcription, IoT control, and 200+ AI superpowers** in ONE app that runs entirely on YOUR Windows PC.
-
-**That's Windows AI.**
-
-🔥 **Private by default.** Everything runs locally.  
-⚡ **Connect to the cloud** when you want GPT-4, Claude, or Gemini.  
-🎨 **Beautiful desktop UI** that makes AI actually FUN to use.  
-🔌 **65 production-ready plugins** + 2,000+ plugin templates for extensibility  
-🤖 **AI agents** with orchestration framework (core functionality complete)  
-🌐 **Multiple interfaces** - desktop app foundation, system tray, CLI, Python API, REST API
+- **Local & Cloud AI Models**: Run AI locally for privacy or connect to GPT-4, Claude, Gemini, and more
+- **2200+ Plugins**: Extensible architecture with thousands of pre-built plugins
+- **Multiple Interfaces**: Desktop GUI, system tray, CLI, Python API, and REST API
+- **Privacy-Focused**: Everything runs locally by default - you control your data
+- **Open Source**: Fully transparent, auditable code under MIT license
 
 ---
 
-## 🎬 INSTALLATION: RIDICULOUSLY EASY
+## Key Features
 
-### **METHOD 1: The "I Just Want AI Now" Method** ⚡
+### AI Models
 
-1. **[📥 Download WindowsAI-Setup.exe](https://github.com/Anthony5265/Windows-AI/releases/latest)** (~150MB)
-2. **Double-click it**
-3. **Start using core AI features**
+- **Local Models**: Run Llama, Mistral, Phi, and other models via Ollama
+- **Cloud Providers**: OpenAI (GPT-4), Anthropic (Claude), Google (Gemini), Cohere, Mistral, and more
+- **Multimodal**: Text, images, audio, and vision capabilities
+- **Model Discovery**: Automatic detection and configuration of available models
 
-Installer handles: Python runtime, core dependencies, backend services, shortcuts. Desktop GUI and advanced features are in active development.
+### Core Capabilities
 
-### **METHOD 2: Portable "Run From Anywhere" Edition** 💼
+- **Chat**: Natural language conversation with any AI model
+- **Image Generation**: Create images with Stable Diffusion or DALL-E
+- **Audio Transcription**: Convert speech to text with Whisper
+- **Document Analysis**: Process PDFs, images, and documents
+- **Code Generation**: AI-powered coding assistance
+- **Automation**: Build workflows and automate tasks
+- **Agent System**: Multi-agent collaboration for complex tasks
 
-**[📥 Download WindowsAI-Portable.zip](https://github.com/Anthony5265/Windows-AI/releases/latest)**
+### Integration & Extensibility
 
-Unzip → Run → No installation. Perfect for USB drives or locked-down systems.
-
----
-
-## 💥 WHAT CAN YOU DO? (THE SHORT LIST)
-
-<table>
-<tr>
-<td width="50%">
-
-### 🧠 **CORE AI POWERS**
-
-✅ **Chat** with ANY AI model (local or cloud)  
-✅ **Generate stunning images** from text  
-✅ **Transcribe** audio/video to text  
-✅ **Analyze documents** (PDF, images, screenshots)  
-✅ **Voice synthesis** - AI speaks to you  
-✅ **Code generation & review**  
-✅ **Smart file organization**  
-✅ **Web scraping & research**  
-✅ **Data analysis** with natural language  
-✅ **Multi-agent collaboration**  
-
-</td>
-<td width="50%">
-
-### 🔌 **INTEGRATIONS & AUTOMATION**
-
-✅ **GitHub** - Auto-review PRs, manage issues  
-✅ **AWS/Azure/GCP** - Full cloud automation  
-✅ **Databases** - PostgreSQL, MongoDB, Redis, MySQL  
-✅ **Email & SMS** - Send/receive/automate  
-✅ **Stripe** - Payment automation  
-✅ **Docker** - Container management  
-✅ **IoT devices** - Control smart home  
-✅ **Mobile companion** - Control from phone  
-✅ **Context menu** - Right-click AI anywhere  
-✅ **Terminal integration** - CLI superpowers  
-
-</td>
-</tr>
-</table>
-
-## 🧩 Model Selection: Pick Any AI
-
-Windows AI can surface and let you choose from any AI model supported by the backend and installed providers — OpenAI (GPT), Anthropic (Claude), Google (Gemini), Mistral, Groq, Cohere, Ollama local models and many more. The model list shown in the UI and the Setup Wizard is dynamically generated from the installed providers and registered models.  
-
-How to add an additional AI model:
-
-1. If the model is cloud-based, install/enable the integration plugin (e.g., OpenAI, Anthropic). Plugins may register their models automatically to appear in the UI.  
-2. For local models, install the model via the Local Models tab or enable Ollama and install your Llama/Mistral/CodeLlama models.  
-3. To add a custom model, add a `LLMConfig` entry via the `UnifiedLLMProvider.register_config` API or add a plugin that registers models at startup.  
-
-When a new model is available it will appear in the Setup Wizard and Settings dropdowns. Preview models show a "Preview" badge with a short explanation.
+- **2200+ Plugins**: Pre-built integrations for common services and tasks
+- **Plugin SDK**: Build custom plugins in Python
+- **REST API**: Integrate with any application or service
+- **Python SDK**: Programmatic access to all features
+- **Event System**: React to system events and triggers
 
 ---
 
-## 🎨 MIND-BLOWING FEATURES
+## Installation
 
-### 🖥️ **GORGEOUS DESKTOP APP**
+### Quick Install (Recommended)
 
-- **Multiple tabs** - Chat, Images, Files, Plugins, Agents
-- **Dark/Light themes** with custom styling
-- **Drag & drop** everything
-- **Real-time AI responses** with streaming
-- **History & favorites**
-- **Plugin marketplace** - 1-click install
+1. **Download the Installer**
+   - Get the latest release from [Releases](https://github.com/Anthony5265/Windows-AI/releases)
+   - Run `WindowsAI-Setup.exe`
 
-### 🔔 **SYSTEM TRAY MAGIC**
+2. **Or Install from Source**
+   ```bash
+   git clone https://github.com/Anthony5265/Windows-AI.git
+   cd Windows-AI
+   pip install -e .
+   ```
 
-- **Always accessible** - Hotkey to launch instantly
-- **Quick actions** - Right-click for common tasks
-- **Status indicators** - See what AI is doing
-- **Notifications** - When AI finishes tasks
-
-### 🌐 **WEB INTERFACE** (BONUS!)
-
-- **Access from any device** on your network
-- **Beautiful responsive design**
-- **Same features** as desktop app
-- **Secure authentication**
-
-### 📱 **MOBILE COMPANION** (Planned)
-
-- Roadmap item for future development
-- REST API foundation complete for future mobile integration
-
-### 🥽 **XR/VR SUPPORT** (Future Exploration)
-
-- Under research for potential implementation
-- Not currently in active development
+For detailed installation instructions, see the [Installation Guide](docs/getting-started/INSTALLATION.md).
 
 ---
 
-## 🤖 THE AGENT HUB: AI THAT WORKS TOGETHER
+## Quick Start
 
-Windows AI doesn't just give you one AI - it gives you an **army of specialized AI agents** that collaborate to solve complex problems.
-
-### **What Are Agents?**
-
-Imagine you say: *"Build a website for my business, deploy it to AWS, set up the database, and create a GitHub repo"*
-
-**Normal AI:** "Here's some code, good luck!"
-
-**Windows AI Agents:**
-
-1. 🎨 **Designer Agent** → Creates mockups & design system
-2. 💻 **Coding Agent** → Writes HTML/CSS/JS
-3. ☁️ **Cloud Agent** → Provisions AWS infrastructure  
-4. 🗄️ **Database Agent** → Sets up & configures database
-5. 🐙 **GitHub Agent** → Creates repo, pushes code, sets up CI/CD
-6. 🔍 **QA Agent** → Tests everything automatically
-
-**All coordinated automatically. All working together. No manual steps.**
-
----
-
-## 🔥 REAL-WORLD POWER MOVES
-
-### 📊 **For Business & Data**
-
-```
-"Analyze last quarter's sales data and create a presentation"
-→ Reads Excel/CSV → Analyzes trends → Generates charts → Creates PowerPoint
-```
-
-### 🎨 **For Creators**
-
-```
-"Generate 50 Instagram post ideas with images"
-→ Brainstorms concepts → Creates images → Writes captions → Schedules posts
-```
-
-### 💻 **For Developers**
-
-```
-"Review my last 10 GitHub PRs and identify security issues"
-→ Fetches PRs → Analyzes code → Finds vulnerabilities → Opens issues
-```
-
-### 🏢 **For Teams**
-
-```
-"Transcribe team meeting, extract action items, create Jira tickets"
-→ Transcribes audio → Identifies tasks → Creates tickets → Assigns people
-```
-
-### 🏠 **For Smart Homes**
-
-```
-"Turn on lights when I say 'work mode' and start focus music"
-→ Connects IoT → Creates automation → Responds to voice commands
-```
-
----
-
-## 🎯 65 PRODUCTION PLUGINS + 2,000+ TEMPLATES
-
-**Production Status:** 65 fully functional plugins with comprehensive test coverage. An additional 2,000+ plugin templates and scaffolding are available for rapid development.
-
-<details open>
-<summary><b>☁️ CLOUD & INFRASTRUCTURE (15 production plugins)</b></summary>
-
-- **AWS** - EC2, S3, Lambda, RDS, DynamoDB, CloudWatch, IAM
-- **Azure** - VMs, Storage, Functions, Cosmos DB, Key Vault
-- **Google Cloud** - Compute, Storage, BigQuery, Cloud Functions
-- **DigitalOcean** - Droplets, Spaces, Load Balancers
-- **Heroku** - App deployment & management
-- **Vercel** - Serverless deployment
-- **Cloudflare** - DNS, Workers, R2 storage
-
-</summary>
-</details>
-
-<details>
-<summary><b>🗄️ DATABASES (12 plugins)</b></summary>
-
-- PostgreSQL, MySQL, MongoDB, Redis, SQLite
-- Elasticsearch, Cassandra, DynamoDB
-- Firebase Realtime DB, Firestore
-- Supabase, PlanetScale
-
-</details>
-
-<details>
-<summary><b>🐙 DEV TOOLS (18 plugins)</b></summary>
-
-- **GitHub** - Repos, Issues, PRs, Actions, Gists
-- **GitLab** - Full CI/CD integration
-- **Docker** - Containers, Images, Compose
-- **Kubernetes** - Cluster management
-- **Stripe** - Payment processing
-- **Twilio** - SMS & Voice
-- **SendGrid** - Email automation
-- **Slack** - Chat integration
-- **Discord** - Bot & webhooks
-- **Jira** - Issue tracking
-
-</details>
-
-<details>
-<summary><b>🤖 AI PROVIDERS (15 models)</b></summary>
-
-- **OpenAI** - GPT-4, ChatGPT, DALL-E, Whisper
-- **Anthropic** - Claude 3 (Opus, Sonnet, Haiku)
-- **Google** - Gemini Pro, PaLM
-- **Cohere** - Command, Generate
-- **Mistral** - Mistral-7B, Mixtral
-- **Local Models** - Llama 3, Phi-3, Qwen
-- **Stable Diffusion** - Image generation
-- **LiteLLM** - Universal API gateway
-
-</details>
-
-<details>
-<summary><b>📄 DOCUMENTS & FILES (16 plugins)</b></summary>
-
-- **PDF** - Read, write, merge, split, OCR
-- **Word/Excel** - Full Office automation
-- **Images** - OCR, manipulation, metadata
-- **Audio** - Transcription, editing, analysis
-- **Video** - Frame extraction, subtitles
-- **ZIP/Archive** - Compression utilities
-- **Markdown** - Parsing & rendering
-
-</details>
-
-<details>
-<summary><b>📧 COMMUNICATION (10 plugins)</b></summary>
-
-- **Email** - Gmail, Outlook, IMAP/SMTP
-- **SMS** - Twilio, Vonage
-- **WhatsApp** - Messaging automation
-- **Telegram** - Bot creation
-- **Slack** - Team messaging
-- **Discord** - Community management
-- **Twitter/X** - Post automation
-- **LinkedIn** - Professional networking
-
-</details>
-
-<details>
-<summary><b>🏠 IOT & SMART HOME (8 plugins)</b></summary>
-
-- **Home Assistant** - Full integration
-- **Philips Hue** - Lighting control
-- **Nest** - Thermostat & cameras
-- **Ring** - Doorbell & security
-- **SmartThings** - Device hub
-- **IFTTT** - Automation chains
-- **Zigbee/Z-Wave** - Direct device control
-
-</details>
-
-<details>
-<summary><b>🔍 SEARCH & WEB (7 plugins)</b></summary>
-
-- **Google Search** - Web scraping
-- **Bing** - Search API
-- **DuckDuckGo** - Privacy search
-- **Web Scraping** - BeautifulSoup, Selenium
-- **RSS Feeds** - Reader & aggregator
-- **Archive.org** - Wayback machine
-
-</details>
-
-<details>
-<summary><b>📊 DATA & ANALYTICS (9 plugins)</b></summary>
-
-- **Pandas** - Data manipulation
-- **NumPy** - Numerical computing
-- **Matplotlib** - Visualization
-- **Jupyter** - Notebooks integration
-- **Tableau** - Dashboard creation
-- **Power BI** - Business intelligence
-- **Google Analytics** - Web analytics
-
-</details>
-
-<details>
-<summary><b>🎮 EXTRAS (20+ more!)</b></summary>
-
-- Calendar sync, Task managers, Note-taking apps
-- Weather APIs, Stock market data, Crypto prices
-- Music control (Spotify, Apple Music)
-- Gaming APIs (Steam, Discord Rich Presence)
-- Fitness trackers, Health data
-- Translation, Language learning
-- **And many more...**
-
-</details>
-
-### 📦 **Plugin Marketplace**
-
-**Install any plugin with 1 click** from the built-in marketplace. No code, no config files.
-
----
-
-## 🔒 PRIVACY & SECURITY: YOU'RE IN CONTROL
-
-### 🛡️ **Three Security Modes**
-
-| Mode | What It Means | Use When |
-|------|---------------|----------|
-| 🏠 **Local Only** | Everything stays on your PC. Zero data leaves. | Maximum privacy, sensitive work |
-| ☁️ **Cloud Hybrid** | You choose what goes to cloud. Smart routing. | Balance power & privacy |
-| 🌐 **Full Cloud** | Connect to GPT-4, Claude, etc. | Need maximum AI capabilities |
-
-### 🔐 **Security Features**
-
-✅ **Encrypted config** - API keys stored securely  
-✅ **Plugin permissions** - Control what plugins can access  
-✅ **Sandboxed execution** - Plugins can't harm your system  
-✅ **Local-only API** - By default, only localhost can connect  
-✅ **No telemetry** - We don't track you. Period.  
-✅ **Open source** - Audit the code yourself  
-
----
-
-## 🎮 WAYS TO USE WINDOWS AI
-
-### 1️⃣ **Desktop GUI** (Main Experience)
-
-**Beautiful, powerful, intuitive.**
-
-- Full-featured tabs interface
-- Real-time AI responses
-- Drag & drop everything
-- Plugin marketplace
-- Agent orchestration panel
-
-### 2️⃣ **System Tray** (Always There)
-
-**One click away, always.**
-
-- Right-click for quick actions
-- Status notifications
-- Hotkey launch
-- Mini chat window
-
-### 3️⃣ **Context Menu** (AI Everywhere)
-
-**Right-click on ANY file:**
-
-- "Summarize this PDF"
-- "Transcribe this audio"
-- "Generate similar image"
-- "Analyze this data"
-- "Translate this document"
-
-### 4️⃣ **Web Interface** (Remote Access)
-
-**Access from any device on your network.**
-
-- Same beautiful UI
-- Mobile-responsive
-- Secure authentication
-- Real-time sync
-
-### 5️⃣ **Terminal/CLI** (Power Users)
-
-**Automate everything.**
-
-```bash
-windows-ai chat "What's the weather?"
-windows-ai image "cyberpunk cat" --size 1024x1024
-windows-ai transcribe podcast.mp3 --language en
-windows-ai github review-pr 42 --repo myorg/myrepo
-windows-ai aws launch-ec2 --type t3.medium --region us-east-1
-```
-
-### 6️⃣ **Python API** (Developers)
-
-**Integrate into your own apps.**
+### Using Python
 
 ```python
-from windows_ai import WindowsAI
+import asyncio
+from windows_ai import quick_start
 
-ai = WindowsAI()
+async def main():
+    # Initialize Windows AI with auto-configuration
+    ai = await quick_start()
 
-# Chat
-response = ai.chat("Explain quantum computing")
+    # Chat with AI
+    response = await ai.chat("Hello! How are you?")
+    print(response)
 
-# Multi-agent task
-result = ai.agents.execute(
-    "Build a landing page, deploy to Vercel, set up analytics"
-)
+    # Generate an image
+    image = await ai.generate_image("A beautiful sunset over mountains")
+    image.save("sunset.png")
 
-# Automation
-ai.schedule("Every Monday 9am", "Email me weekly summary")
+    # Execute a plugin
+    result = await ai.execute_plugin("file_organizer",
+        directory="C:\\Downloads",
+        strategy="type"
+    )
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-### 7️⃣ **REST API** (Integrations)
-
-**Connect anything to Windows AI.**
+### Using the CLI
 
 ```bash
-curl http://localhost:8765/api/chat \
+# Start the interactive chat
+windows-ai chat
+
+# Generate an image
+windows-ai generate "cyberpunk cityscape" --size 1024x1024
+
+# Run a plugin
+windows-ai plugin run file_organizer --directory C:\Downloads
+
+# Start the API server
+windows-ai serve
+```
+
+### Using the REST API
+
+```bash
+# Start the server
+windows-ai serve
+
+# Make requests
+curl -X POST http://localhost:8765/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello AI!"}'
 ```
 
----
-
-## 🌟 WHY WINDOWS AI DESTROYS THE COMPETITION
-
-### 🆚 **VS. ChatGPT**
-
-❌ ChatGPT: Web-only, no privacy, limited features  
-✅ Windows AI: Desktop platform, local execution option, 65 production plugins, extensible architecture
-
-### 🆚 **VS. GitHub Copilot**
-
-❌ Copilot: Code only, subscription required  
-✅ Windows AI: Multi-modal AI platform (code, images, audio) with plugin ecosystem + local execution option
-
-### 🆚 **VS. Midjourney**
-
-❌ Midjourney: Images only, Discord-based, expensive  
-✅ Windows AI: Images + everything else, beautiful UI, runs on YOUR GPU
-
-### 🆚 **VS. Custom Python Scripts**
-
-❌ Scripts: Requires coding, maintenance nightmare, no UI  
-✅ Windows AI: Beautiful GUI, no coding needed, auto-updates
-
-### 🔥 **THE TRUTH**
-
-**Windows AI is a powerful, extensible AI platform that puts you in control. Core functionality works today, with advanced features under active development. Local execution preserves privacy, and the plugin architecture makes it endlessly customizable.**
+For more examples, see the [Quick Start Guide](docs/getting-started/QUICK_START.md).
 
 ---
 
-## 💻 SYSTEM REQUIREMENTS
+## System Requirements
 
-### ✅ **Minimum (Will Run)**
+### Minimum
 
-- Windows 10/11 (64-bit)
-- 4 GB RAM
-- 2 GB free disk space
-- Any CPU (Intel/AMD)
+- Windows 10 (64-bit) version 1809 or later
+- 8 GB RAM
+- 10 GB free disk space
+- Intel Core i5 or equivalent CPU
 
-### 🚀 **Recommended (Will FLY)**
+### Recommended
 
 - Windows 11 (64-bit)
-- 16 GB+ RAM
-- 10 GB free disk space
-- NVIDIA GPU (RTX series) for local image generation
+- 16 GB RAM
+- 50 GB free disk space (for local models)
+- NVIDIA GPU with 8GB+ VRAM (for local image generation)
 - SSD storage
 
-### 💎 **Dream Setup (ULTIMATE POWER)**
-
-- Windows 11 Pro
-- 32 GB+ RAM
-- NVIDIA RTX 4090
-- NVMe SSD
-- Multi-monitor setup
-
 ---
 
-## 📚 GETTING STARTED GUIDE
-
-### **First Launch**
-
-1. **Welcome Wizard** appears
-2. **Choose privacy mode** (Local vs Cloud)
-3. **Download AI models** (optional, ~2GB)
-4. **Pick plugins** from marketplace
-5. **Start chatting!**
-
-### **Common First Tasks**
-
-#### **Have a conversation**
-
-Just type in the chat box. It's that simple.
-
-#### **Generate an image**
-
-Switch to Images tab → Type what you want → Hit generate
-
-#### **Transcribe audio**
-
-Drag audio file into Files tab → Click "Transcribe"
-
-#### **Enable GitHub plugin**
-
-Plugins tab → Search "GitHub" → Toggle on → Add API key
-
-#### **Create an automation**
-
-Automation tab → "New workflow" → Describe what you want
-
----
-
-## 🎓 LEARN MORE
-
-### 📖 **Documentation**
-
-- **[Quick Start Guide](docs/QUICKSTART.md)** - Get running in 5 minutes
-- **[Plugin Guide](docs/PLUGINS.md)** - How to use all 200+ plugins
-- **[Agent System](docs/AGENTS.md)** - Multi-agent orchestration
-- **[Automation](docs/AUTOMATION.md)** - Build workflows
-- **[API Reference](docs/API.md)** - Developer docs
-- **[FAQ](docs/FAQ.md)** - Common questions
-
-### 🎬 **Video Tutorials** (Coming Soon)
-
-- Installation & setup
-- Creating your first automation
-- Using the agent system
-- Plugin marketplace tour
-
-### 💬 **Community**
-
-- **[Discord Server](#)** - Chat with users & devs
-- **[Discussions](https://github.com/Anthony5265/Windows-AI/discussions)** - Ideas & help
-- **[Twitter/X](https://twitter.com/WindowsAI)** - Updates & tips
-
----
-
-## 🚀 DOWNLOAD NOW
-
-<div align="center">
-
-## **[⚡ DOWNLOAD WINDOWS AI NOW ⚡](https://github.com/Anthony5265/Windows-AI/releases/latest)**
-
-### **The AI Revolution for Windows. One Click Away.**
-
-[![Download Installer](https://img.shields.io/badge/📥_FULL_INSTALLER-WindowsAI--Setup.exe_(150MB)-00D9FF?style=for-the-badge&logo=windows)](https://github.com/Anthony5265/Windows-AI/releases/latest)
-
-[![Download Portable](https://img.shields.io/badge/📦_PORTABLE_VERSION-No_Install_Required-00FF88?style=for-the-badge&logo=zip)](https://github.com/Anthony5265/Windows-AI/releases/latest)
-
----
-
-### ⭐ **Love it? Star the repo!** ⭐
-
-[![GitHub stars](https://img.shields.io/github/stars/Anthony5265/Windows-AI?style=social)](https://github.com/Anthony5265/Windows-AI/stargazers)
-
-</div>
-
----
-
-## ❓ FAQ
-
-<details>
-<summary><b>💰 How much does it cost?</b></summary>
-
-**Windows AI is 100% FREE** for all core features. Local AI models are free forever.
-
-Cloud providers (OpenAI, Anthropic) charge separately - bring your own API keys.
-
-</details>
-
-<details>
-<summary><b>🔒 Is my data safe?</b></summary>
-
-**YES.** In local mode, NOTHING leaves your PC. In cloud mode, only what you explicitly request is sent to providers YOU choose.
-
-No telemetry. No tracking. Open source code you can audit.
-
-</details>
-
-<details>
-<summary><b>💻 Do I need to know how to code?</b></summary>
-
-**NO.** The GUI is designed for everyone. Click, type, drag & drop. That's it.
-
-(But if you DO code, there's a powerful API for you too!)
-
-</details>
-
-<details>
-<summary><b>📡 Does it work offline?</b></summary>
-
-**YES!** Local mode works 100% offline after initial setup.
-
-</details>
-
-<details>
-<summary><b>🔄 How do updates work?</b></summary>
-
-**Automatic!** Windows AI checks for updates and notifies you. Click "Update" and it handles everything.
-
-</details>
-
-<details>
-<summary><b>🗑️ How do I uninstall?</b></summary>
-
-Windows Settings → Apps → Windows AI → Uninstall. Clean removal, no leftovers.
-
-</details>
-
-<details>
-<summary><b>🐧 Linux/Mac support?</b></summary>
-
-Windows AI is optimized for Windows, but we're exploring cross-platform support. Star the repo to stay updated!
-
-</details>
-
-<details>
-<summary><b>🔌 Can I build my own plugins?</b></summary>
-
-**YES!** Full plugin SDK available. Build anything you can imagine.
-
-[Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md)
-
-</details>
-
----
-
-## 🛠️ FOR DEVELOPERS
-
-Want to extend Windows AI or contribute?
-
-### **Build From Source**
-
-```bash
-git clone https://github.com/Anthony5265/Windows-AI.git
-cd Windows-AI
-python build.py --all
+## Architecture
+
+Windows AI is built with a modular, plugin-based architecture:
+
+```
+windows_ai/
+├── core/                 # Core orchestration and plugin management
+├── api/                  # REST API and web interface
+├── gui/                  # Desktop GUI (Electron/Qt)
+├── plugins/              # 2200+ built-in plugins
+│   ├── builtin/         # Pre-installed plugins
+│   └── custom/          # User-created plugins
+├── agents/              # Multi-agent system
+├── integrations/        # External service connectors
+├── rag/                 # RAG (Retrieval Augmented Generation)
+├── search/              # Semantic search engine
+└── security/            # Security and encryption
 ```
 
-### **Create a Plugin**
+For detailed architecture information, see [Architecture Overview](docs/architecture/OVERVIEW.md).
+
+---
+
+## Plugin Ecosystem
+
+Windows AI includes 2200+ production plugins across these categories:
+
+### AI Providers (50+ plugins)
+- OpenAI (GPT-4, GPT-3.5, DALL-E, Whisper)
+- Anthropic (Claude 3 Opus, Sonnet, Haiku)
+- Google (Gemini Pro, PaLM)
+- Cohere, Mistral, Groq, and more
+- Local models via Ollama
+
+### Integrations (200+ plugins)
+- Development: GitHub, GitLab, Docker, Kubernetes
+- Communication: Slack, Discord, Email, SMS
+- Cloud: AWS, Azure, GCP, DigitalOcean
+- Databases: PostgreSQL, MongoDB, Redis, MySQL
+- Productivity: Notion, Trello, Jira, Calendar
+
+### Utilities (1950+ plugins)
+- File operations
+- System monitoring
+- Image processing
+- Audio/video tools
+- Data analysis
+- And many more...
+
+For plugin documentation, see the [Plugin Guide](docs/guides/PLUGIN_GUIDE.md).
+
+---
+
+## Development
+
+### Creating a Plugin
 
 ```python
-from windows_ai.plugin import Plugin
+from windows_ai.plugins.base import ActionPlugin, PluginMetadata, PluginType
 
-class MyPlugin(Plugin):
-    name = "my-plugin"
-    version = "1.0.0"
-    
-    def execute(self, action, params):
-        # Your logic here
-        return result
+class MyPlugin(ActionPlugin):
+    def __init__(self):
+        metadata = PluginMetadata(
+            id="my_plugin",
+            name="My Awesome Plugin",
+            description="Does something cool",
+            version="1.0.0",
+            author="Your Name",
+            plugin_type=PluginType.ACTION,
+            enabled=True
+        )
+        super().__init__(metadata)
+
+    async def execute(self, input_data, context=None, **kwargs):
+        # Your plugin logic here
+        return {
+            "success": True,
+            "result": "Plugin executed successfully!",
+            "message": "Operation complete"
+        }
 ```
 
-### **Contribute**
-
-We welcome PRs! See [CONTRIBUTING.md](CONTRIBUTING.md)
+For complete plugin development documentation, see the [Plugin Development Guide](docs/development/PLUGIN_DEVELOPMENT.md).
 
 ---
 
-## 📜 LICENSE
+## Documentation
 
-**MIT License** - Use freely for personal or commercial projects.
+### User Documentation
 
-See [LICENSE](LICENSE) for full details.
+- [Installation Guide](docs/getting-started/INSTALLATION.md) - Step-by-step installation
+- [Quick Start](docs/getting-started/QUICK_START.md) - Get started in 5 minutes
+- [User Guide](docs/guides/USER_GUIDE.md) - Complete feature documentation
+- [Plugin Guide](docs/guides/PLUGIN_GUIDE.md) - Using plugins effectively
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- [FAQ](docs/FAQ.md) - Frequently asked questions
+
+### Developer Documentation
+
+- [Architecture Overview](docs/architecture/OVERVIEW.md) - System architecture
+- [API Reference](docs/api/API_REFERENCE.md) - Complete API documentation
+- [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md) - Build plugins
+- [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute
+- [Code Style Guide](docs/development/CODE_STYLE.md) - Coding standards
+
+### Deployment Documentation
+
+- [Build Instructions](docs/deployment/BUILD.md) - Building from source
+- [Deployment Guide](docs/deployment/DEPLOY.md) - Deploying Windows AI
+- [Configuration](docs/deployment/CONFIGURATION.md) - Configuration options
+- [Security Best Practices](docs/security/SECURITY.md) - Security guidelines
 
 ---
 
-## 🙏 ACKNOWLEDGMENTS
+## Examples & Tutorials
 
-Built with ❤️ using:
+### Example Use Cases
 
-- Python, Electron, FastAPI
-- LangChain, LlamaIndex, LiteLLM
-- OpenAI, Anthropic, Stable Diffusion
+1. [Automated Document Processing](docs/examples/document-processing.md)
+2. [Smart File Organization](docs/examples/file-organization.md)
+3. [Code Review Automation](docs/examples/code-review.md)
+4. [Content Generation Pipeline](docs/examples/content-generation.md)
+5. [Multi-Agent Workflows](docs/examples/multi-agent.md)
+6. [Custom Chatbot](docs/examples/chatbot.md)
+7. [Image Analysis Pipeline](docs/examples/image-analysis.md)
+8. [Audio Transcription Service](docs/examples/audio-transcription.md)
+9. [RAG Knowledge Base](docs/examples/rag-knowledge-base.md)
+10. [System Automation](docs/examples/system-automation.md)
+
+### Tutorials
+
+- [Building Your First Plugin](docs/tutorials/first-plugin.md)
+- [Creating a Custom Integration](docs/tutorials/custom-integration.md)
+- [Setting Up Multi-Agent Workflows](docs/tutorials/multi-agent-setup.md)
+- [Deploying Windows AI in Production](docs/tutorials/production-deployment.md)
+
+For more examples, see the [Examples Directory](docs/examples/).
+
+---
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes**
+4. **Write tests** for your changes
+5. **Commit**: `git commit -m 'Add amazing feature'`
+6. **Push**: `git push origin feature/amazing-feature`
+7. **Open a Pull Request**
+
+See our [Contributing Guide](docs/CONTRIBUTING.md) for detailed guidelines.
+
+---
+
+## Community & Support
+
+- **GitHub Discussions**: Ask questions, share ideas
+- **Issues**: Report bugs and request features
+- **Discord**: Join our community (coming soon)
+- **Documentation**: Comprehensive guides and references
+
+---
+
+## Project Status
+
+### Core Features
+
+- [x] Core orchestration system
+- [x] Plugin architecture and SDK
+- [x] Multi-model AI support
+- [x] REST API
+- [x] Python SDK
+- [x] CLI interface
+- [x] 2200+ production plugins
+- [x] RAG system
+- [x] Semantic search
+- [x] Agent system (core)
+- [ ] Desktop GUI (in development)
+- [ ] System tray integration (in development)
+- [ ] Mobile companion app (planned)
+
+### Testing & Quality
+
+- [x] Core system tests
+- [x] Plugin tests
+- [x] Integration tests
+- [x] Security tests
+- [ ] Performance tests (in progress)
+- [ ] End-to-end tests (in progress)
+
+### Documentation
+
+- [x] API documentation
+- [x] Plugin development guide
+- [x] User guides
+- [x] Examples and tutorials
+- [x] Architecture documentation
+
+---
+
+## Security
+
+Windows AI takes security seriously:
+
+- **Local-First**: Everything runs locally by default
+- **API Key Encryption**: Secure credential storage
+- **Plugin Sandboxing**: Isolated plugin execution
+- **No Telemetry**: We don't track you
+- **Open Source**: Fully auditable code
+
+For security policies and reporting vulnerabilities, see [SECURITY.md](docs/security/SECURITY.md).
+
+---
+
+## License
+
+Windows AI is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Acknowledgments
+
+Built with these amazing technologies:
+
+- Python ecosystem (FastAPI, asyncio, aiohttp)
+- AI providers (OpenAI, Anthropic, Google, Ollama)
+- LangChain, LlamaIndex for AI orchestration
 - And 100+ open-source libraries
 
-Special thanks to the AI community for making this possible.
+Special thanks to the open-source community for making this possible.
+
+---
+
+## Roadmap
+
+### Near Term (Q1 2026)
+- Complete desktop GUI
+- System tray integration
+- Enhanced multi-agent capabilities
+- Performance optimizations
+
+### Medium Term (Q2-Q3 2026)
+- Mobile companion app
+- Plugin marketplace
+- Cloud sync (optional)
+- Advanced automation workflows
+
+### Long Term (Q4 2026+)
+- Enterprise features
+- Multi-platform support (Linux, macOS)
+- Advanced RAG capabilities
+- Community plugin ecosystem
+
+See [ROADMAP.md](docs/ROADMAP.md) for detailed plans.
+
+---
+
+## Version
+
+**Current Version**: 2.0.0-alpha
+
+See [CHANGELOG.md](docs/CHANGELOG.md) for version history.
 
 ---
 
 <div align="center">
 
-## 🎯 **THE FUTURE OF AI ON WINDOWS IS HERE** 🎯
+**Made with ❤️ by the Windows AI Team**
 
-### **Download. Install. Transform Your PC.**
+[Website](#) • [Documentation](docs/) • [GitHub](https://github.com/Anthony5265/Windows-AI)
 
-[![Download Now](https://img.shields.io/badge/DOWNLOAD_NOW-Windows_AI-00D9FF?style=for-the-badge&logo=windows&logoColor=white&labelColor=000000)](https://github.com/Anthony5265/Windows-AI/releases/latest)
+**Star this repo if you find it useful!**
 
----
-
-**Made with 🔥 by [@Anthony5265](https://github.com/Anthony5265)**
-
-⭐ **Star** • 🔀 **Fork** • 🐛 **Report Issues** • 💡 **Request Features**
-
-[Website](#) • [Docs](docs/) • [Discord](#) • [Twitter](#)
-
----
-
-**Windows AI** - *Where Intelligence Meets Simplicity* ⚡
+[![GitHub stars](https://img.shields.io/github/stars/Anthony5265/Windows-AI?style=social)](https://github.com/Anthony5265/Windows-AI/stargazers)
 
 </div>

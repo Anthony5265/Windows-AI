@@ -1,7 +1,13 @@
 """QwenVL Plugin - Multimodal vision-language understanding"""
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
-from typing import Dict, Any, List
-import aiohttp, os, logging, asyncio
+import asyncio
+import logging
+import os
+from typing import Any, Dict, List
+
+import aiohttp
+
+from windows_ai.plugins.base import (IntegrationPlugin, PluginMetadata,
+                                     PluginType)
 
 logger = logging.getLogger(__name__)
 

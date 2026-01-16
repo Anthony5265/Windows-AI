@@ -1,7 +1,13 @@
 """PaLI Plugin - Pathways Language-Image model"""
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
-from typing import Dict, Any
-import aiohttp, os, logging, asyncio
+import asyncio
+import logging
+import os
+from typing import Any, Dict
+
+import aiohttp
+
+from windows_ai.plugins.base import (IntegrationPlugin, PluginMetadata,
+                                     PluginType)
 
 logger = logging.getLogger(__name__)
 

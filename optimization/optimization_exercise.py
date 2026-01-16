@@ -10,9 +10,11 @@ Created: 2025-11-15
 Part of: Windows-AI Roadmap Implementation
 """
 
+import json
 import logging
-from typing import Dict, List, Optional, Any
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,8 @@ class OptimizationExercise:
     def __init__(self):
         """Initialize the optimization exercise system."""
         self.initialized = False
+        self.artifact_dir = Path("artifacts") / "optimization" / "exercise"
+        self.metadata_path = self.artifact_dir / "metadata.json"
         logger.info("Initialized optimization_exercise")
     
     def setup(self) -> bool:
@@ -37,7 +41,17 @@ class OptimizationExercise:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.artifact_dir.mkdir(parents=True, exist_ok=True)
+
+            metadata = {
+                "module": "optimization_exercise",
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "description": "Exercises that stress-test runtime optimization",
+                "artifacts": str(self.artifact_dir),
+            }
+            with self.metadata_path.open("w", encoding="utf-8") as handle:
+                json.dump(metadata, handle, indent=2)
+
             self.initialized = True
             logger.info("optimization_exercise setup completed")
             return True
@@ -56,11 +70,18 @@ class OptimizationExercise:
             raise RuntimeError("optimization_exercise not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            scenarios = kwargs.get("scenarios", [])
+            metrics = kwargs.get("metrics", {})
+
             result = {
                 "status": "success",
                 "message": "optimization_exercise executed successfully",
-                "data": {}
+                "data": {
+                    "artifact_root": str(self.artifact_dir),
+                    "metadata": str(self.metadata_path),
+                    "scenarios": scenarios,
+                    "metrics": metrics,
+                },
             }
             return result
         except Exception as e:

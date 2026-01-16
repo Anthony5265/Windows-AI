@@ -13,9 +13,11 @@ Created: 2025-11-15
 Part of: Windows-AI Roadmap Implementation
 """
 
+import json
 import logging
-from typing import Dict, List, Optional, Any
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,8 @@ class OptimizationBaseline:
     def __init__(self):
         """Initialize the optimization baseline system."""
         self.initialized = False
+        self.artifact_dir = Path("artifacts") / "optimization" / "baseline"
+        self.metadata_path = self.artifact_dir / "metadata.json"
         logger.info("Initialized optimization_baseline")
     
     def setup(self) -> bool:
@@ -43,7 +47,17 @@ class OptimizationBaseline:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.artifact_dir.mkdir(parents=True, exist_ok=True)
+
+            metadata = {
+                "module": "optimization_baseline",
+                "created_at": datetime.utcnow().isoformat() + "Z",
+                "description": "Baselines to detect optimization regressions",
+                "artifacts": str(self.artifact_dir),
+            }
+            with self.metadata_path.open("w", encoding="utf-8") as handle:
+                json.dump(metadata, handle, indent=2)
+
             self.initialized = True
             logger.info("optimization_baseline setup completed")
             return True
@@ -62,11 +76,18 @@ class OptimizationBaseline:
             raise RuntimeError("optimization_baseline not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            payload = kwargs.get("payload", {})
+            checkpoints = kwargs.get("checkpoints", [])
+
             result = {
                 "status": "success",
                 "message": "optimization_baseline executed successfully",
-                "data": {}
+                "data": {
+                    "artifact_root": str(self.artifact_dir),
+                    "metadata": str(self.metadata_path),
+                    "payload": payload,
+                    "checkpoints": checkpoints,
+                },
             }
             return result
         except Exception as e:

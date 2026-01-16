@@ -118,8 +118,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +251,9 @@ class PolicyComplianceChecker:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.policies = {}
+            self.compliance_status = {}
+            self.policy_file = kwargs.get('policy_file', '/etc/policies.yaml')
             self.initialized = True
             logger.info("policy_compliance_checker setup completed")
             return True
@@ -270,11 +272,31 @@ class PolicyComplianceChecker:
             raise RuntimeError("policy_compliance_checker not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import os
+
+            import yaml
+            
+            policy_file = kwargs.get('policy_file', self.policy_file)
+            
+            if os.path.exists(policy_file):
+                with open(policy_file, 'r') as f:
+                    self.policies = yaml.safe_load(f) or {}
+            
+            compliant = 0
+            non_compliant = 0
+            
+            for policy_name, policy_config in self.policies.items():
+                is_compliant = policy_config.get('enforced', False)
+                self.compliance_status[policy_name] = is_compliant
+                if is_compliant:
+                    compliant += 1
+                else:
+                    non_compliant += 1
+            
             result = {
-                "status": "success",
-                "message": "policy_compliance_checker executed successfully",
-                "data": {}
+                "status": "compliant" if non_compliant == 0 else "non-compliant",
+                "message": f"Compliance check: {compliant} compliant, {non_compliant} non-compliant",
+                "data": self.compliance_status
             }
             return result
         except Exception as e:

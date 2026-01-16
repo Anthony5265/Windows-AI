@@ -62,8 +62,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,9 @@ class SecurityMonitoringGuardian:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.protected_resources = {}
+            self.access_logs = []
+            self.protection_level = kwargs.get('level', 'high')
             self.initialized = True
             logger.info("security_monitoring_guardian setup completed")
             return True
@@ -158,11 +160,28 @@ class SecurityMonitoringGuardian:
             raise RuntimeError("security_monitoring_guardian not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            from datetime import datetime
+            
+            resource_id = kwargs.get('resource_id', '')
+            access_attempt = kwargs.get('access_attempt', {})
+            
+            is_allowed = self.protection_level == 'high'
+            
+            log_entry = {
+                'resource_id': resource_id,
+                'timestamp': datetime.now().isoformat(),
+                'allowed': is_allowed,
+                'protection_level': self.protection_level
+            }
+            self.access_logs.append(log_entry)
+            
+            if is_allowed and resource_id:
+                self.protected_resources[resource_id] = log_entry
+            
             result = {
-                "status": "success",
-                "message": "security_monitoring_guardian executed successfully",
-                "data": {}
+                "status": "allowed" if is_allowed else "blocked",
+                "message": f"Resource access {'allowed' if is_allowed else 'blocked'} at {self.protection_level} level",
+                "data": {'access_log': log_entry, 'total_accesses': len(self.access_logs)}
             }
             return result
         except Exception as e:

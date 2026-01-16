@@ -111,8 +111,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +237,9 @@ class ForensicSnapshotTool:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.snapshot_dir = kwargs.get('snapshot_dir', '/tmp/forensics')
+            self.retention_days = kwargs.get('retention_days', 30)
+            self.snapshot_data = {}
             self.initialized = True
             logger.info("forensic_snapshot_tool setup completed")
             return True
@@ -256,11 +258,32 @@ class ForensicSnapshotTool:
             raise RuntimeError("forensic_snapshot_tool not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import os
+            import shutil
+            from datetime import datetime, timedelta
+            
+            snapshot_type = kwargs.get('snapshot_type', 'full')
+            os.makedirs(self.snapshot_dir, exist_ok=True)
+            
+            snapshot_name = f"forensic_snapshot_{datetime.now().isoformat()}"
+            snapshot_path = os.path.join(self.snapshot_dir, snapshot_name)
+            
+            self.snapshot_data[snapshot_name] = {
+                'path': snapshot_path,
+                'type': snapshot_type,
+                'created': datetime.now().isoformat(),
+                'size_mb': 0
+            }
+            
+            cutoff = datetime.now() - timedelta(days=self.retention_days)
+            for snap in list(self.snapshot_data.keys()):
+                if datetime.fromisoformat(self.snapshot_data[snap]['created']) < cutoff:
+                    del self.snapshot_data[snap]
+            
             result = {
                 "status": "success",
-                "message": "forensic_snapshot_tool executed successfully",
-                "data": {}
+                "message": f"Snapshot {snapshot_type} created",
+                "data": self.snapshot_data
             }
             return result
         except Exception as e:

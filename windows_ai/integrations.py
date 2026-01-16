@@ -8,6 +8,8 @@ from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from .search.search_orchestrator import SearchOrchestrator
+
 # Import subsystems
 try:
     from iot.mqtt import MQTTAdapter
@@ -40,12 +42,7 @@ except ImportError:
     CLOUD_SYNC_AVAILABLE = False
     logging.warning("Cloud sync not available")
 
-try:
-    from search.engine import SearchEngine
-    SEARCH_AVAILABLE = True
-except ImportError:
-    SEARCH_AVAILABLE = False
-    logging.warning("Search engine not available")
+SEARCH_AVAILABLE = True
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +57,11 @@ iot_automation: Optional[Any] = None
 mesh_hub: Optional[Any] = None
 model_discovery: Optional[Any] = None
 cloud_sync: Optional[Any] = None
-search_engine: Optional[Any] = None
+search_orchestrator: Optional[SearchOrchestrator] = None
 
-def initialize_integrations():
+async def initialize_integrations():
     """Initialize all integration subsystems"""
-    global iot_automation, mesh_hub, model_discovery, cloud_sync, search_engine
+    global iot_automation, mesh_hub, model_discovery, cloud_sync, search_orchestrator, SEARCH_AVAILABLE
 
     logger.info("Initializing Windows AI integrations...")
 
@@ -105,13 +102,17 @@ def initialize_integrations():
             logger.error(f"Failed to initialize cloud sync: {e}")
 
     # Initialize Search
-    if SEARCH_AVAILABLE:
-        try:
-            logger.info("Initializing search engine...")
-            search_engine = SearchEngine()
-            logger.info("✓ Search engine initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize search: {e}")
+    try:
+        logger.info("Initializing search orchestrator...")
+        search_orchestrator = SearchOrchestrator()
+        SEARCH_AVAILABLE = await search_orchestrator.setup()
+        if SEARCH_AVAILABLE:
+            logger.info("✓ Search orchestrator initialized")
+        else:
+            logger.error("Search orchestrator failed to initialize")
+    except Exception as e:
+        SEARCH_AVAILABLE = False
+        logger.error(f"Failed to initialize search orchestrator: {e}")
 
     logger.info("All integrations initialized")
 
@@ -295,14 +296,33 @@ async def download_from_cloud():
 # Search API Endpoints
 # =====================================================================
 
+class SearchRequest(BaseModel):
+    query: str
+    filters: Optional[Dict[str, Any]] = None
+    limit: int = 10
+    offset: int = 0
+    backends: Optional[List[str]] = None
+    timeout: int = 30
+    expected_results: Optional[List[str]] = None
+    persist_cache: bool = False
+
 @router.post("/search")
-async def search(query: str, filters: Optional[Dict[str, Any]] = None):
+async def search(request: SearchRequest):
     """Universal search across files, apps, web"""
-    if not SEARCH_AVAILABLE or not search_engine:
-        raise HTTPException(status_code=503, detail="Search engine not available")
+    if not SEARCH_AVAILABLE or not search_orchestrator or not search_orchestrator.initialized:
+        raise HTTPException(status_code=503, detail="Search orchestrator not available")
 
     try:
-        results = search_engine.search(query, filters)
+        results = await search_orchestrator.search(
+            request.query,
+            filters=request.filters,
+            limit=request.limit,
+            offset=request.offset,
+            backends=request.backends,
+            timeout=request.timeout,
+            expected_results=request.expected_results,
+            persist_cache=request.persist_cache,
+        )
         return {"results": results, "count": len(results)}
     except Exception as e:
         logger.error(f"Error searching: {e}")
@@ -409,7 +429,7 @@ async def integration_status():
         },
         "search": {
             "available": SEARCH_AVAILABLE,
-            "initialized": search_engine is not None,
-            "status": "active" if (SEARCH_AVAILABLE and search_engine) else "unavailable"
+            "initialized": search_orchestrator is not None and search_orchestrator.initialized,
+            "status": "active" if (SEARCH_AVAILABLE and search_orchestrator and search_orchestrator.initialized) else "unavailable"
         }
     }

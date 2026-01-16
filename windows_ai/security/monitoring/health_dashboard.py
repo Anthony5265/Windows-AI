@@ -152,8 +152,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +319,12 @@ class HealthDashboard:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.metrics = {}
+            self.thresholds = {
+                'cpu_percent': 80,
+                'memory_percent': 85,
+                'disk_percent': 90
+            }
             self.initialized = True
             logger.info("health_dashboard setup completed")
             return True
@@ -338,11 +343,25 @@ class HealthDashboard:
             raise RuntimeError("health_dashboard not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
+            import psutil
+            
+            self.metrics['cpu_percent'] = psutil.cpu_percent(interval=1)
+            self.metrics['memory_percent'] = psutil.virtual_memory().percent
+            self.metrics['disk_percent'] = psutil.disk_usage('/').percent
+            self.metrics['timestamp'] = __import__('datetime').datetime.now().isoformat()
+            
+            alerts = []
+            for metric, threshold in self.thresholds.items():
+                if metric in self.metrics and self.metrics[metric] > threshold:
+                    alerts.append(f"{metric} exceeded threshold: {self.metrics[metric]:.1f}%")
+            
             result = {
-                "status": "success",
-                "message": "health_dashboard executed successfully",
-                "data": {}
+                "status": "warning" if alerts else "success",
+                "message": f"Health check complete: {len(alerts)} alerts" if alerts else "System healthy",
+                "data": {
+                    'metrics': self.metrics,
+                    'alerts': alerts
+                }
             }
             return result
         except Exception as e:

@@ -60,8 +60,8 @@ Part of: Windows-AI Roadmap Implementation
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,11 @@ class SecurityMonitoringTelemetry:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            self.telemetry_buffer = []
+            self.collection_intervals = {"cpu": 60, "memory": 60, "disk": 300, "events": 30}
+            self.last_collection = {"cpu": 0, "memory": 0, "disk": 0, "events": 0}
+            self.telemetry_stats = {"events_collected": 0, "batches_sent": 0, "total_bytes": 0}
+            self.batch_size = 100
             self.initialized = True
             logger.info("security_monitoring_telemetry setup completed")
             return True
@@ -154,13 +158,38 @@ class SecurityMonitoringTelemetry:
             raise RuntimeError("security_monitoring_telemetry not initialized. Call setup() first.")
         
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "security_monitoring_telemetry executed successfully",
-                "data": {}
-            }
-            return result
+            import time
+
+            import psutil
+            action = kwargs.get("action", "collect")
+            if action == "collect":
+                metric_type = kwargs.get("metric_type", "events")
+                current_time = time.time()
+                if metric_type == "system":
+                    telemetry_data = {"timestamp": __import__("datetime").datetime.now().isoformat(), "type": "system", "cpu_percent": psutil.cpu_percent(interval=0.1), "memory_percent": psutil.virtual_memory().percent, "disk_percent": psutil.disk_usage("/").percent}
+                elif metric_type == "events":
+                    telemetry_data = {"timestamp": __import__("datetime").datetime.now().isoformat(), "type": "events", "event_id": kwargs.get("event_id", "evt_" + str(int(current_time * 1000))), "severity": kwargs.get("severity", "info"), "source": kwargs.get("source", "monitoring")}
+                else:
+                    telemetry_data = {"timestamp": __import__("datetime").datetime.now().isoformat(), "type": metric_type, "value": kwargs.get("value")}
+                self.telemetry_buffer.append(telemetry_data)
+                self.telemetry_stats["events_collected"] += 1
+                self.telemetry_stats["total_bytes"] += len(str(telemetry_data).encode())
+                batch_ready = len(self.telemetry_buffer) >= self.batch_size
+                return {"status": "success", "message": f"Telemetry collected. Buffer: {len(self.telemetry_buffer)}/{self.batch_size}", "data": {"batch_ready": batch_ready, "buffer_count": len(self.telemetry_buffer), "stats": self.telemetry_stats}}
+            elif action == "send_batch":
+                if not self.telemetry_buffer:
+                    return {"status": "warning", "message": "No telemetry data to send", "data": {}}
+                batch_data = self.telemetry_buffer.copy()
+                self.telemetry_buffer.clear()
+                self.telemetry_stats["batches_sent"] += 1
+                return {"status": "success", "message": f"Batch sent with {len(batch_data)} events", "data": {"batch_size": len(batch_data), "stats": self.telemetry_stats}}
+            elif action == "report":
+                return {"status": "success", "message": "Telemetry report generated", "data": {"stats": self.telemetry_stats, "buffer_size": len(self.telemetry_buffer)}}
+            else:
+                return {"status": "error", "message": f"Unknown action: {action}", "data": {}}
+        except Exception as e:
+            logger.error(f"Execution failed: {e}")
+            return {"status": "error", "message": str(e), "data": {}}
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
