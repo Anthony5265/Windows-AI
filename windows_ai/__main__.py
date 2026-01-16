@@ -45,6 +45,12 @@ def main():
     )
 
     parser.add_argument(
+        '--gui',
+        action='store_true',
+        help='Launch GUI application'
+    )
+
+    parser.add_argument(
         '--version',
         action='version',
         version='Windows AI 2.0.0-alpha'
@@ -151,26 +157,16 @@ def list_plugins():
 
 def launch_gui():
     """Launch GUI interface"""
-    print("\n[*] Launching GUI...")
+    print("\n[*] Launching PyQt5 GUI...")
     try:
+        from windows_ai.gui import main as gui_main
+        gui_main()
+    except ImportError:
+        print("[!] PyQt5 not installed. Installing...")
         import subprocess
-        gui_path = Path(__file__).parent.parent / "apps" / "gui"
-
-        if not gui_path.exists():
-            print("[!] GUI directory not found at:", gui_path)
-            print("Make sure you're running from the repository root")
-            return
-
-        # Check if node_modules exists
-        node_modules = gui_path / "node_modules"
-        if not node_modules.exists():
-            print("[*] Installing GUI dependencies...")
-            subprocess.run(["npm", "install"], cwd=gui_path, check=True)
-
-        # Launch Electron
-        print("[*] Starting Electron GUI...")
-        subprocess.run(["npm", "start"], cwd=gui_path)
-
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyQt5"])
+        from windows_ai.gui import main as gui_main
+        gui_main()
     except FileNotFoundError:
         print("[!] Node.js/npm not found. Please install Node.js to run the GUI")
         print("Download from: https://nodejs.org/")
