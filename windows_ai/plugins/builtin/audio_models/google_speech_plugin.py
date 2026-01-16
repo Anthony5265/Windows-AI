@@ -5,7 +5,12 @@ Provides speech recognition and synthesis using Google Cloud APIs
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List
-import aiohttp
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 import os
 import logging
 import json
@@ -95,6 +100,7 @@ class Plugin(IntegrationPlugin):
         super().__init__(metadata)
         
         self.session = None
+        self._initialized = False
         self._api_key = None
         self._project_id = None
         self._endpoint = "https://speech.googleapis.com/v1"

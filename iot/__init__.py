@@ -7,7 +7,7 @@ from .mqtt import MQTTAdapter
 from .matter import MatterAdapter
 from .zigbee import ZigbeeAdapter
 from .home_assistant import HomeAssistantAdapter
-from .adapters import ZeroconfAdapter
+from .adapters.zeroconf import ZeroconfAdapter
 from .automation import WorkflowAutomation
 
 

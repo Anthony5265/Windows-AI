@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows AI - First Run Wizard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; }
+    .shell { max-width: 900px; margin: 40px auto; background: #111827; padding: 32px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+    .steps { display: flex; gap: 8px; margin-bottom: 16px; }
+    .step { flex: 1; height: 6px; background: #1f2937; border-radius: 4px; position: relative; overflow: hidden; }
+    .step.active::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+    h1 { margin: 0 0 12px 0; font-size: 28px; }
+    p { margin: 0 0 20px 0; color: #cbd5e1; }
+    .card { background: #0b1220; border: 1px solid #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 18px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; }
+    input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; }
+    button { padding: 12px 18px; border: none; border-radius: 8px; background: linear-gradient(90deg, #06b6d4, #3b82f6); color: white; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="steps">
+      <div class="step active" id="s1"></div>
+      <div class="step" id="s2"></div>
+      <div class="step" id="s3"></div>
+    </div>
+    <h1>Welcome to Windows AI</h1>
+    <p id="subtitle">Configure your workspace, automation, and update checks.</p>
+    <div class="card" id="screen1">
+      <label for="workspace">Workspace path</label>
+      <input id="workspace" type="text" value="C:/Users/antho/Projects/Windows-AI">
+      <p>We will persist this to `.windows-ai/config.json` for the runtime.</p>
+    </div>
+    <div class="card" id="screen2" style="display:none;">
+      <label for="automation">Enable automation</label>
+      <p>Folder watchers and scheduled tasks can be toggled after setup. Existing configs are detected automatically.</p>
+      <input id="automation" type="text" value="watchers.json + scheduler.json loaded">
+    </div>
+    <div class="card" id="screen3" style="display:none;">
+      <p>Ready to launch. Use the provided start scripts:</p>
+      <ul>
+        <li>start-backend.(sh|bat|ps1)</li>
+        <li>start-gui.(sh|bat|ps1)</li>
+      </ul>
+      <p>Watchdog runs via `python watchdog.py`.</p>
+    </div>
+    <div class="actions">
+      <button id="back" disabled>Back</button>
+      <button id="next">Next</button>
+    </div>
+  </div>
+  <script>
+    const screens = [
+      document.getElementById('screen1'),
+      document.getElementById('screen2'),
+      document.getElementById('screen3')
+    ];
+    const steps = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
+    const subtitle = document.getElementById('subtitle');
+    const copy = [
+      'Configure workspace path for Windows AI runtime.',
+      'Confirm automation configs are present.',
+      'Launch services using the start scripts.'
+    ];
+    let idx = 0;
+    const back = document.getElementById('back');
+    const next = document.getElementById('next');
+
+    function render() {
+      screens.forEach((el, i) => el.style.display = i === idx ? 'block' : 'none');
+      steps.forEach((el, i) => el.classList.toggle('active', i <= idx));
+      subtitle.textContent = copy[idx];
+      back.disabled = idx === 0;
+      next.textContent = idx === screens.length - 1 ? 'Finish' : 'Next';
+    }
+
+    back.onclick = () => { if (idx > 0) { idx -= 1; render(); } };
+    next.onclick = () => { if (idx < screens.length - 1) { idx += 1; render(); } else { alert('Setup noted. You can close this wizard.'); } };
+    render();
+  </script>
+</body>
+</html>

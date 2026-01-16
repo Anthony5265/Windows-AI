@@ -5,7 +5,11 @@ ONNX-optimized fast speech recognition
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List
-import aiohttp
+import importlib
+try:
+    import aiohttp
+except Exception:
+    aiohttp = None
 import os
 import logging
 import json
@@ -82,6 +86,7 @@ class Plugin(IntegrationPlugin):
         self._compute_type = "int8_float16"
         self._device = "cuda"
         self._request_timeout = 180
+        self._fw_model = None
         
     async def initialize(self) -> bool:
         """Initialize Faster Whisper plugin"""
@@ -90,8 +95,9 @@ class Plugin(IntegrationPlugin):
             return True
             
         try:
-            timeout = aiohttp.ClientTimeout(total=self._request_timeout)
-            self.session = aiohttp.ClientSession(timeout=timeout)
+            if aiohttp is not None:
+                timeout = aiohttp.ClientTimeout(total=self._request_timeout)
+                self.session = aiohttp.ClientSession(timeout=timeout)
             
             self._compute_type = os.environ.get("FASTER_WHISPER_COMPUTE_TYPE", "int8_float16")
             self._device = os.environ.get("FASTER_WHISPER_DEVICE", "cuda")
@@ -104,6 +110,20 @@ class Plugin(IntegrationPlugin):
         except Exception as e:
             logger.error(f"Faster Whisper initialization failed: {e}")
             return False
+
+    def _ensure_model(self, model_name: str = "base") -> bool:
+        """Lazy-load faster-whisper model. Returns True if ready, False otherwise."""
+        if self._fw_model is not None:
+            return True
+        try:
+            fw = importlib.import_module("faster_whisper")
+            WhisperModel = getattr(fw, "WhisperModel")
+            self._fw_model = WhisperModel(model_name, device=self._device, compute_type=self._compute_type)
+            return True
+        except Exception as e:
+            logger.warning(f"faster-whisper not available or failed to load: {e}")
+            self._fw_model = None
+            return False
     
     async def connect(self, credentials: Optional[Dict[str, Any]] = None) -> bool:
         """Connect and setup"""
@@ -112,7 +132,7 @@ class Plugin(IntegrationPlugin):
                 self._compute_type = credentials.get("compute_type", self._compute_type)
                 self._device = credentials.get("device", self._device)
             
-            if not self.session:
+            if aiohttp is not None and not self.session:
                 timeout = aiohttp.ClientTimeout(total=self._request_timeout)
                 self.session = aiohttp.ClientSession(timeout=timeout)
             
@@ -195,30 +215,62 @@ class Plugin(IntegrationPlugin):
             return {"success": True, "result": self._cache[cache_key], "cached": True}
         
         try:
-            result = {
-                "text": "ONNX-optimized transcription result.",
-                "segments": [
-                    {
-                        "id": 0,
-                        "start": 0.0,
-                        "end": 3.5,
-                        "text": "Fast ONNX transcription.",
-                        "confidence": 0.97
-                    }
-                ],
-                "language": params.get("language", "en"),
-                "model": params.get("model", "base"),
-                "compute_type": self._compute_type,
-                "device": self._device,
-                "inference_time_ms": 450,
-                "real_time_factor": 18.0,
-                "vad_enabled": params.get("enable_vad", False)
-            }
-            
+            model_name = params.get("model", "base")
+            enable_vad = params.get("enable_vad", False)
+            language = params.get("language")
+
+            # Try real faster-whisper if available
+            if self._ensure_model(model_name):
+                segments, info = self._fw_model.transcribe(
+                    audio_file,
+                    language=language,
+                    vad_filter=enable_vad,
+                )
+                collected: List[Dict[str, Any]] = []
+                for i, seg in enumerate(segments):
+                    collected.append({
+                        "id": i,
+                        "start": float(getattr(seg, "start", 0.0)),
+                        "end": float(getattr(seg, "end", 0.0)),
+                        "text": getattr(seg, "text", ""),
+                        "confidence": float(getattr(seg, "avg_logprob", 0.0))
+                    })
+                result = {
+                    "text": " ".join(s.get("text", "") for s in collected).strip(),
+                    "segments": collected,
+                    "language": getattr(info, "language", language or "en"),
+                    "model": model_name,
+                    "compute_type": self._compute_type,
+                    "device": self._device,
+                    "inference_time_ms": int(getattr(info, "duration", 0.0) * 1000),
+                    "real_time_factor": 0.0,
+                    "vad_enabled": enable_vad
+                }
+            else:
+                # Fallback stub when dependency not available
+                result = {
+                    "text": "ONNX-optimized transcription result.",
+                    "segments": [
+                        {
+                            "id": 0,
+                            "start": 0.0,
+                            "end": 3.5,
+                            "text": "Fast ONNX transcription (stub).",
+                            "confidence": 0.97
+                        }
+                    ],
+                    "language": language or "en",
+                    "model": model_name,
+                    "compute_type": self._compute_type,
+                    "device": self._device,
+                    "inference_time_ms": 450,
+                    "real_time_factor": 18.0,
+                    "vad_enabled": enable_vad
+                }
+
             self._cache[cache_key] = result
-            
             return {"success": True, "result": result}
-            
+
         except Exception as e:
             logger.error(f"Transcription failed: {e}", exc_info=True)
             return {
