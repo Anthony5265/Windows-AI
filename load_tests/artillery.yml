@@ -1,0 +1,172 @@
+# Artillery load testing configuration for Windows-AI
+# Run with: artillery run load_tests/artillery.yml
+# Or: artillery quick --count 50 --num 100 http://localhost:8000/api/v1/plugins
+
+config:
+  target: "{{ $processEnvironment.API_URL || 'http://localhost:8000' }}"
+  phases:
+    # Ramp up: gradually increase users
+    - duration: 60
+      arrivalRate: 5  # 5 users/second
+      name: "Ramp up"
+
+    # Steady state: maintain constant load
+    - duration: 300
+      arrivalRate: 10  # 10 users/second
+      name: "Steady state"
+
+    # Spike: sudden increase
+    - duration: 60
+      arrivalRate: 25  # 25 users/second
+      name: "Spike"
+
+    # Ramp down: gracefully decrease
+    - duration: 60
+      arrivalRate: 5  # 5 users/second
+      name: "Ramp down"
+
+  # Processor scripts
+  processor: "load_tests/processors.js"
+
+  # Variables for templating
+  variables:
+    plugin_ids:
+      - "webhook_handler"
+      - "data_processor"
+      - "api_client"
+      - "cache_manager"
+      - "logger"
+
+  # Configure timeout, think time, etc.
+  http:
+    timeout: 30
+    max: 100  # Max concurrent connections
+
+  # Logging
+  logs:
+    - filename: "load-test-{{ $timestamp }}.log"
+      level: "info"
+
+scenarios:
+  # Scenario 1: Normal API usage
+  - name: "Normal API Operations"
+    weight: 60
+    flow:
+      - get:
+          url: "/api/v1/health"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/plugins"
+          expect:
+            - statusCode: 200
+            - contentType: json
+          capture:
+            - json: "$[0].id"
+              as: "first_plugin_id"
+
+      - get:
+          url: "/api/v1/plugins/{{ first_plugin_id }}"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/plugins/search?q=handler&limit=10"
+          expect:
+            - statusCode: 200
+
+      - think: 2  # Think time between requests
+
+  # Scenario 2: Heavy API usage
+  - name: "Heavy API Load"
+    weight: 25
+    flow:
+      - loop:
+          - get:
+              url: "/api/v1/plugins?limit=50&offset={{ $loopCount * 50 }}"
+              expect:
+                - statusCode: 200
+
+          - post:
+              url: "/api/v1/batch"
+              json:
+                operations:
+                  - type: "list"
+                    resource: "plugins"
+                  - type: "get"
+                    resource: "plugin"
+                    id: "{{ plugin_ids[0] }}"
+              expect:
+                - statusCode: 200
+
+          - think: 1
+        count: 5
+
+  # Scenario 3: Plugin execution
+  - name: "Plugin Execution"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/v1/execute"
+          json:
+            plugin: "{{ plugin_ids[0] }}"
+            action: "trigger"
+            data:
+              test: "data"
+              timestamp: "{{ $timestamp }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "result"
+
+      - loop:
+          - post:
+              url: "/api/v1/plugins/{{ plugin_ids[$loopCount] }}/config"
+              json:
+                setting: "performance_mode"
+                value: true
+              expect:
+                - statusCode: 200 or statusCode: 404
+          count: "{{ plugin_ids.length }}"
+
+      - think: 3
+
+  # Scenario 4: Streaming/long-lived connections
+  - name: "Streaming Operations"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/logs/stream?filter=plugin&follow=true"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/events/subscribe?timeout=30"
+          expect:
+            - statusCode: 200
+
+      - think: 5
+
+  # Scenario 5: Error scenarios
+  - name: "Error Handling"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/v1/plugins/nonexistent"
+          expect:
+            - statusCode: 404
+
+      - post:
+          url: "/api/v1/execute"
+          json:
+            plugin: "invalid_plugin"
+            action: "trigger"
+          expect:
+            - statusCode: 400 or statusCode: 404
+
+      - get:
+          url: "/api/v1/plugins?limit=invalid"
+          expect:
+            - statusCode: 400
+
+      - think: 2
