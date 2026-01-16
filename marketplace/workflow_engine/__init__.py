@@ -1,10 +1,10 @@
 """
-Workflow Engine Plugin
-
-Orchestrate complex workflows
+Workflow execution engine
 """
 
-from .core import WorkflowEnginePlugin
+__version__ = "1.0.0"
+__author__ = "Windows AI"
 
-__version__ = "0.1.0"
-__all__ = ["WorkflowEnginePlugin"]
+from .core import WorkflowEngine
+
+__all__ = ["WorkflowEngine"]
