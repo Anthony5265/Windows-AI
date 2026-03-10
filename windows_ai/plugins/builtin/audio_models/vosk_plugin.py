@@ -122,12 +122,10 @@ class Plugin(IntegrationPlugin):
             if self.session:
                 await self.session.close()
                 self.session = None
-        self._initialized = False
-            
+            self._initialized = False
             self._cache.clear()
             logger.info("Vosk plugin disconnected")
             return True
-            
         except Exception as e:
             logger.error(f"Vosk disconnection failed: {e}")
             return False
