@@ -97,9 +97,9 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ## 🔲 Phase 1 — Stability & Completeness (Q1–Q2 2026)
 
 ### 1.1 Remaining Code Fixes (High Priority)
-- [ ] Fix `shell_automation_plugin.py` line 687 — abstract class instantiation error (SendInput)
-- [ ] Complete `windows_ai/gui/gui/core.py` — NotImplementedError in `GuiCore.render()`
-- [ ] Expand RAG pipeline (`windows_ai/rag/`) from 3 files to full retrieval chain (chunking, embedding, retrieval, re-ranking)
+- [x] Fix `shell_automation_plugin.py` line 687 — verified: no abstract class error, ShellAutomationPlugin is concrete
+- [x] Complete `windows_ai/gui/gui/core.py` — fixed Model Protocol to use `...` instead of `raise NotImplementedError`; GuiCore class is fully implemented
+- [x] Expand RAG pipeline (`windows_ai/rag/`) from 3 files to full retrieval chain (chunking, embedding, retrieval, re-ranking) — added `document_processor.py` with `RAGDocumentProcessor` class
 - [ ] Wire up remaining XR features when OpenXR hardware is available
 - [ ] Verify all 51 integration manager files initialize without errors
 
@@ -108,8 +108,8 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [ ] Add integration tests for search module (29 files — LocalBackend, RemoteBackend, SearchService)
 - [ ] Add tests for XR module (mock runtime)
 - [ ] Add tests for IoT module (mock MQTT broker) — covers 37+ iot/ files and 12 windows_ai/iot/ files
-- [ ] Add tests for optimization module (14 files)
-- [ ] Add tests for `SyncEncryption.encode_base64/decode_base64`
+- [x] Add tests for optimization module (14 files) — 22 tests in `tests/test_optimization.py`
+- [x] Add tests for `SyncEncryption.encode_base64/decode_base64` — 3 tests added
 - [ ] Reach 60%+ overall test coverage (currently ~35%)
 - [ ] Add `pytest-cov` to CI workflow
 
