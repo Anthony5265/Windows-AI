@@ -3649,10 +3649,12 @@ async def analyze_concurrency_issues(code: str):
 # =====================================================================
 
 # Note: Integration managers are initialized via the WindowsAI orchestrator
-# Import RAG router for RAG endpoints
+# Import routers for integrations and RAG endpoints
+from windows_ai.integrations import initialize_integrations, router as integrations_router
 from windows_ai.rag.api import router as rag_router
 
-# Include RAG routes
+# Include integration and RAG routes
+app.include_router(integrations_router)
 app.include_router(rag_router)
 
 
@@ -4483,7 +4485,7 @@ async def startup_event():
     logger.info("\n📦 PHASE 1 & 2: Core Integration")
     logger.info("-" * 70)
     logger.info("✓ Initializing integrations (IoT, Mesh, Models, Cloud, Search, RAG)...")
-    initialize_integrations()
+    await initialize_integrations()
 
     # Phase 3: Advanced Intelligence & User Experience
     logger.info("\n🧠 PHASE 3: Advanced Intelligence & User Experience")

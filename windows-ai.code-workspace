@@ -1,0 +1,37 @@
+{
+  "folders": [
+    { "path": "." },
+    { "path": "windows_ai" },
+    { "path": "windows-ai-agent" },
+    { "path": "windows-ai-tray" },
+    { "path": "gui" },
+    { "path": "iot" },
+    { "path": "apps" },
+    { "path": "sdk" },
+    { "path": "tools" },
+    { "path": "tests" }
+  ],
+  "settings": {
+    "terminal.integrated.shellIntegration.enabled": true,
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "**/.benchmarks": true
+    },
+    "search.exclude": {
+      "node_modules": true,
+      "build": true,
+      "htmlcov": true,
+      "coverage.xml": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-vscode.powershell",
+      "ms-vscode.vscode-node-azure-pack",
+      "ms-azuretools.vscode-docker",
+      "ms-toolsai.vscode-ai"
+    ]
+  }
+}

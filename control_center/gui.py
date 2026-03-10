@@ -6,6 +6,8 @@ to switch between local models and remote APIs.
 
 from __future__ import annotations
 
+import platform
+import threading
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Callable
 
@@ -95,6 +97,7 @@ class ChatGUI:
         backends: Optional[Dict[str, Backend]] = None,
         scheduler: Optional[EcoScheduler] = None,
         monitor: Optional[EcoMonitor] = None,
+        permission_prompt: Optional[Callable] = None,
     ) -> None:
         if tk is None or ttk is None:
             raise RuntimeError("tkinter is not available")

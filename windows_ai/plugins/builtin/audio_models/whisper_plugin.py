@@ -5,7 +5,12 @@ Provides speech-to-text transcription using OpenAI's Whisper models
 
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 from typing import Dict, Any, Optional, List, BinaryIO
-import aiohttp
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 import os
 import logging
 import json
@@ -88,9 +93,22 @@ class Plugin(IntegrationPlugin):
             # Detect API key from environment
             self._api_key = os.environ.get("OPENAI_API_KEY")
             
-            # Create HTTP session with custom timeout
-            timeout = aiohttp.ClientTimeout(total=self._request_timeout)
-            self.session = aiohttp.ClientSession(timeout=timeout)
+            # Create HTTP session with custom timeout (if aiohttp available)
+
+            
+            if AIOHTTP_AVAILABLE:
+
+            
+                timeout = aiohttp.ClientTimeout(total=self._request_timeout)
+
+            
+                self.session = aiohttp.ClientSession(timeout=timeout)
+
+            
+            else:
+
+            
+                self.session = None
             
             # Validate API key if available
             if self._api_key:
@@ -231,10 +249,6 @@ class Plugin(IntegrationPlugin):
             temperature: Sampling temperature (0-1, default 0)
             timestamp_granularities: List of timestamp granularities (segment, word)
         """
-        if not self._api_key:
-            # Simulate transcription without API key
-            return await self._transcribe_offline(params)
-        
         audio_file = params.get("audio_file")
         if not audio_file:
             return {
@@ -242,6 +256,10 @@ class Plugin(IntegrationPlugin):
                 "error": "audio_file parameter is required",
                 "error_code": "MISSING_PARAMETER"
             }
+
+        if not self._api_key:
+            # Simulate transcription without API key
+            return await self._transcribe_offline(params)
         
         # Check cache
         cache_key = f"transcribe:{audio_file}:{params.get('language', 'auto')}"
