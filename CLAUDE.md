@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **⚠️ MANDATORY:** Before starting any development work, read `ROADMAP.md` and `BLUEPRINT.md` in full. Those are the single sources of truth for project status, architecture, and priorities. All work must follow the phased roadmap. See [Agent Compliance](#agent-compliance-rules) at the bottom of this file.
+> **⚠️ MANDATORY:** Before starting any development work, read `ROADMAP.md` and `BLUEPRINT.md` in full. Those are the single sources of truth for project status, architecture, and priorities. All work must follow the phased roadmap. See the Agent Compliance Rules section at the bottom of this file.
 
 ## Project Overview
 

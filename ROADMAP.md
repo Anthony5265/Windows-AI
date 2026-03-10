@@ -4,7 +4,7 @@
 **Single Source of Truth** — All other roadmap/plan files are archived; see `docs/archive/roadmaps/`.  
 **Repository:** [Anthony5265/Windows-AI](https://github.com/Anthony5265/Windows-AI)
 
-> **⚠️ MANDATORY FOR ALL AI AGENTS:** Every agent session (Claude, Copilot, or any other AI assistant) **MUST** read this file and `BLUEPRINT.md` before starting any development work. All implementation decisions, priorities, and sequencing must follow this roadmap. Deviations require explicit user approval. See the [Enforcement](#-enforcement--agent-compliance) section below.
+> **⚠️ MANDATORY FOR ALL AI AGENTS:** Every agent session (Claude, Copilot, or any other AI assistant) **MUST** read this file and `BLUEPRINT.md` before starting any development work. All implementation decisions, priorities, and sequencing must follow this roadmap. Deviations require explicit user approval. See the Enforcement section at the bottom of this file.
 
 ---
 

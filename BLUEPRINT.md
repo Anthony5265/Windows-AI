@@ -3,7 +3,7 @@
 **Version:** 2.1 (March 2026)  
 **Single Source of Truth** — Supersedes `docs/WindowsAI_Master_Blueprint.md`, `docs/WindowsAI_Blueprint_Index.md`, and all previous blueprint versions.
 
-> **⚠️ MANDATORY FOR ALL AI AGENTS:** Every agent session (Claude, Copilot, or any other AI assistant) **MUST** read this file and `ROADMAP.md` before starting any development work. This blueprint defines the system architecture, directory structure, and component contracts. See [Enforcement](#-enforcement--agent-compliance) at the bottom.
+> **⚠️ MANDATORY FOR ALL AI AGENTS:** Every agent session (Claude, Copilot, or any other AI assistant) **MUST** read this file and `ROADMAP.md` before starting any development work. This blueprint defines the system architecture, directory structure, and component contracts. See the Enforcement section at the bottom of this file.
 
 ---
 
