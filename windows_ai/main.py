@@ -1993,7 +1993,15 @@ async def handle_file_event(watcher_id: str, watcher_name: str, event_type: str,
 
         logger.info(f"AI response for {file_path}: {response[:100]}...")
 
-        # TODO: Store automation results or send notification
+        # Store automation result in the file event log
+        try:
+            automation_log_path = Path("logs/automation_events.log")
+            automation_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with automation_log_path.open("a", encoding="utf-8") as fh:
+                import time as _t
+                fh.write(f"{_t.strftime('%Y-%m-%dT%H:%M:%SZ')}\t{file_path}\t{response[:200]}\n")
+        except Exception:
+            pass  # Non-critical logging failure should not propagate
 
     except Exception as e:
         logger.error(f"Error handling file event: {e}")
@@ -2015,7 +2023,15 @@ async def handle_scheduled_task(task_id: str, task_name: str, action: str, promp
 
         logger.info(f"Task {task_name} completed: {response[:100]}...")
 
-        # TODO: Store task results or send notification
+        # Store task result in the scheduled task log
+        try:
+            task_log_path = Path("logs/scheduled_tasks.log")
+            task_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with task_log_path.open("a", encoding="utf-8") as fh:
+                import time as _t
+                fh.write(f"{_t.strftime('%Y-%m-%dT%H:%M:%SZ')}\t{task_id}\t{task_name}\t{response[:200]}\n")
+        except Exception:
+            pass  # Non-critical logging failure should not propagate
 
     except Exception as e:
         logger.error(f"Error executing scheduled task: {e}")

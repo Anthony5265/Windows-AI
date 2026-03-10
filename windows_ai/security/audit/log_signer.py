@@ -255,38 +255,133 @@ class LogSigner:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            import hashlib
+            import hmac
+            import os
+            # Initialize signing key from environment or generate ephemeral key
+            self._signing_key = os.environ.get("LOG_SIGNING_KEY", "").encode() or os.urandom(32)
+            self._algorithm = kwargs.get("algorithm", "sha256")
+            self._log_dir = Path(kwargs.get("log_dir", "logs"))
+            self._log_dir.mkdir(parents=True, exist_ok=True)
+            self._signed_count = 0
             self.initialized = True
             logger.info("log_signer setup completed")
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
+
+    def sign_entry(self, entry: str) -> Dict[str, Any]:
+        """
+        Cryptographically sign a single log entry.
+
+        Args:
+            entry: The log entry string to sign.
+
+        Returns:
+            Dict with the original entry, its HMAC signature, and algorithm.
+        """
+        import hmac
+        import hashlib
+        import time
+        mac = hmac.new(self._signing_key, entry.encode("utf-8"), hashlib.sha256)
+        return {
+            "entry": entry,
+            "signature": mac.hexdigest(),
+            "algorithm": "hmac-sha256",
+            "timestamp": time.time(),
+        }
+
+    def verify_entry(self, entry: str, signature: str) -> bool:
+        """Verify the HMAC signature of a log entry."""
+        import hmac
+        import hashlib
+        expected = hmac.new(self._signing_key, entry.encode("utf-8"), hashlib.sha256)
+        return hmac.compare_digest(expected.hexdigest(), signature)
+
+    def sign_file(self, file_path: str) -> Dict[str, Any]:
+        """
+        Sign all lines in a log file, appending signatures.
+
+        Args:
+            file_path: Path to the log file.
+
+        Returns:
+            Dict with file path, line count signed, and output path.
+        """
+        import hmac
+        import hashlib
+        src = Path(file_path)
+        if not src.exists():
+            return {"status": "error", "message": f"File not found: {file_path}"}
+        out_path = src.with_suffix(".signed.log")
+        signed_lines = []
+        with src.open("r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                stripped = line.rstrip("\n")
+                mac = hmac.new(self._signing_key, stripped.encode("utf-8"), hashlib.sha256)
+                signed_lines.append(f"{stripped}\t|SIG={mac.hexdigest()}")
+                self._signed_count += 1
+        with out_path.open("w", encoding="utf-8") as fh:
+            fh.write("\n".join(signed_lines))
+        return {
+            "status": "success",
+            "source": str(src),
+            "output": str(out_path),
+            "lines_signed": len(signed_lines),
+        }
+
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
-        
+        Execute the log signer — sign provided entries or a log file.
+
+        Keyword Args:
+            entries (list): List of log entry strings to sign individually.
+            file_path (str): Path to a log file whose lines should be signed.
+            verify (dict): ``{"entry": str, "signature": str}`` to verify a
+                           previously generated signature.
+
         Returns:
-            Dict containing execution results
+            Dict containing execution results.
         """
         if not self.initialized:
             raise RuntimeError("log_signer not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "log_signer executed successfully",
-                "data": {}
-            }
-            return result
+            action = kwargs.get("action", "sign")
+            if action == "verify":
+                entry = kwargs.get("entry", "")
+                signature = kwargs.get("signature", "")
+                valid = self.verify_entry(entry, signature)
+                return {
+                    "status": "success",
+                    "valid": valid,
+                    "message": "Signature valid" if valid else "Signature invalid",
+                    "data": {"entry": entry, "valid": valid},
+                }
+            elif action == "sign_file":
+                file_path = kwargs.get("file_path", "")
+                result = self.sign_file(file_path)
+                return {
+                    "status": result.get("status", "error"),
+                    "message": result.get("message", "File signed"),
+                    "data": result,
+                }
+            else:
+                # Default: sign a list of entries
+                entries = kwargs.get("entries", [kwargs.get("entry", "test-entry")])
+                signed = [self.sign_entry(e) for e in entries]
+                return {
+                    "status": "success",
+                    "message": f"Signed {len(signed)} log entries",
+                    "data": {"signed_entries": signed, "total_signed": self._signed_count + len(signed)},
+                }
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
 
 

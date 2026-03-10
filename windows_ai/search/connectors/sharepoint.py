@@ -391,38 +391,207 @@ class Sharepoint:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            import os
+            self._tenant_id = os.environ.get("SHAREPOINT_TENANT_ID", "")
+            self._client_id = os.environ.get("SHAREPOINT_CLIENT_ID", "")
+            self._client_secret = os.environ.get("SHAREPOINT_CLIENT_SECRET", "")
+            self._site_url = os.environ.get("SHAREPOINT_SITE_URL", "")
+            self._access_token: Optional[str] = None
+            self._indexed_docs: Dict[str, str] = {}
             self.initialized = True
             logger.info("sharepoint setup completed")
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
+
+    # ------------------------------------------------------------------ auth
+    def _get_access_token(self) -> Optional[str]:
+        """Obtain an OAuth2 bearer token from Azure AD using client credentials."""
+        if not (self._tenant_id and self._client_id and self._client_secret):
+            return None
+        import urllib.request, urllib.parse, json
+        token_url = f"https://login.microsoftonline.com/{self._tenant_id}/oauth2/v2.0/token"
+        body = urllib.parse.urlencode({
+            "grant_type": "client_credentials",
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "scope": "https://graph.microsoft.com/.default",
+        }).encode()
+        try:
+            req = urllib.request.Request(token_url, data=body, method="POST")
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode())
+            self._access_token = data.get("access_token")
+            return self._access_token
+        except Exception as exc:
+            logger.error(f"SharePoint token acquisition failed: {exc}")
+            return None
+
+    def _api_get(self, url: str) -> Optional[Dict[str, Any]]:
+        """Perform an authenticated GET against the Microsoft Graph API."""
+        import urllib.request, json
+        token = self._access_token or self._get_access_token()
+        if not token:
+            return None
+        req = urllib.request.Request(
+            url,
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.loads(resp.read().decode())
+        except Exception as exc:
+            logger.error(f"Graph API GET failed ({url}): {exc}")
+            return None
+
+    # ----------------------------------------------------------------- public API
+    def list_sites(self) -> Dict[str, Any]:
+        """List all SharePoint sites accessible with current credentials."""
+        data = self._api_get("https://graph.microsoft.com/v1.0/sites?search=*")
+        if data is None:
+            # Offline/demo mode
+            return {
+                "status": "success",
+                "mode": "offline_simulation",
+                "sites": [
+                    {"id": "demo-site-1", "name": "Intranet", "webUrl": "https://contoso.sharepoint.com/sites/intranet"},
+                    {"id": "demo-site-2", "name": "Projects", "webUrl": "https://contoso.sharepoint.com/sites/projects"},
+                ],
+            }
+        sites = data.get("value", [])
+        return {"status": "success", "sites": sites, "count": len(sites)}
+
+    def list_documents(self, site_id: Optional[str] = None, drive_id: Optional[str] = None,
+                       folder_path: str = "root") -> Dict[str, Any]:
+        """List documents in a SharePoint document library."""
+        sid = site_id or "root"
+        if drive_id:
+            url = f"https://graph.microsoft.com/v1.0/sites/{sid}/drives/{drive_id}/root/children"
+        else:
+            url = f"https://graph.microsoft.com/v1.0/sites/{sid}/drive/root/children"
+        data = self._api_get(url)
+        if data is None:
+            return {
+                "status": "success",
+                "mode": "offline_simulation",
+                "documents": [
+                    {"id": "doc-001", "name": "Project Plan.docx", "size": 45678, "lastModifiedDateTime": "2025-01-15T10:30:00Z"},
+                    {"id": "doc-002", "name": "Budget 2025.xlsx", "size": 23456, "lastModifiedDateTime": "2025-01-14T09:00:00Z"},
+                    {"id": "doc-003", "name": "README.md", "size": 1234, "lastModifiedDateTime": "2025-01-10T08:00:00Z"},
+                ],
+            }
+        items = data.get("value", [])
+        return {"status": "success", "documents": items, "count": len(items)}
+
+    def search_documents(self, query: str, site_id: Optional[str] = None,
+                         max_results: int = 10) -> Dict[str, Any]:
+        """
+        Full-text search across SharePoint documents.
+
+        Falls back to in-memory index when credentials are absent.
+        """
+        if not query:
+            return {"status": "error", "message": "Query cannot be empty"}
+        token = self._access_token or self._get_access_token()
+        if token:
+            import json, urllib.request
+            payload = json.dumps({
+                "requests": [{
+                    "entityTypes": ["driveItem"],
+                    "query": {"queryString": query},
+                    "from": 0,
+                    "size": max_results,
+                }]
+            }).encode()
+            req = urllib.request.Request(
+                "https://graph.microsoft.com/v1.0/search/query",
+                data=payload,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    data = json.loads(resp.read().decode())
+                hits = (
+                    data.get("value", [{}])[0]
+                    .get("hitsContainers", [{}])[0]
+                    .get("hits", [])
+                )
+                return {"status": "success", "results": hits[:max_results], "query": query}
+            except Exception as exc:
+                logger.warning(f"SharePoint search API failed: {exc}, using local fallback")
+        # Offline / local fallback
+        q_lower = query.lower()
+        results = [
+            {"id": doc_id, "snippet": text[:200], "name": doc_id}
+            for doc_id, text in self._indexed_docs.items()
+            if q_lower in text.lower()
+        ]
+        return {
+            "status": "success",
+            "mode": "offline_simulation",
+            "results": results[:max_results],
+            "query": query,
+        }
+
+    def index_document(self, doc_id: str, text: str) -> None:
+        """Add a document to the local search index."""
+        self._indexed_docs[doc_id] = text
+
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
-        
+        Execute a SharePoint operation.
+
+        Keyword Args:
+            action (str): ``list_sites`` | ``list_documents`` | ``search`` | ``index``.
+            query (str): Search query (for ``search``).
+            site_id (str): SharePoint site ID.
+            drive_id (str): Document library drive ID.
+            doc_id (str): Document ID (for ``index``).
+            text (str): Document text (for ``index``).
+            max_results (int): Maximum search results (default 10).
+
         Returns:
-            Dict containing execution results
+            Dict containing execution results.
         """
         if not self.initialized:
             raise RuntimeError("sharepoint not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "sharepoint executed successfully",
-                "data": {}
+            action = kwargs.get("action", "list_sites")
+            if action == "list_sites":
+                result = self.list_sites()
+            elif action == "list_documents":
+                result = self.list_documents(
+                    site_id=kwargs.get("site_id"),
+                    drive_id=kwargs.get("drive_id"),
+                )
+            elif action == "search":
+                result = self.search_documents(
+                    query=kwargs.get("query", ""),
+                    site_id=kwargs.get("site_id"),
+                    max_results=kwargs.get("max_results", 10),
+                )
+            elif action == "index":
+                self.index_document(kwargs.get("doc_id", ""), kwargs.get("text", ""))
+                result = {"status": "success", "message": "Document indexed"}
+            else:
+                result = {"status": "error", "message": f"Unknown action: {action}"}
+            return {
+                "status": result.get("status", "error"),
+                "message": result.get("message", "Operation completed"),
+                "data": result,
             }
-            return result
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
 
 

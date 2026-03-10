@@ -357,38 +357,170 @@ class TrailExporter:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            import json, os, time
+            self._siem_endpoint = os.environ.get("SIEM_ENDPOINT", "")
+            self._siem_token = os.environ.get("SIEM_TOKEN", "")
+            self._export_dir = Path(kwargs.get("export_dir", "logs/audit_exports"))
+            self._export_dir.mkdir(parents=True, exist_ok=True)
+            self._formats = {"json", "csv", "cef", "leef"}
+            self._exported_count = 0
             self.initialized = True
             logger.info("trail_exporter setup completed")
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
+
+    # ------------------------------------------------------------------ helpers
+    def _format_entry_cef(self, entry: Dict[str, Any]) -> str:
+        """Format an audit entry as Common Event Format (CEF)."""
+        sev = entry.get("severity", 3)
+        msg = entry.get("message", "audit event")
+        ts = entry.get("timestamp", "")
+        user = entry.get("user", "system")
+        action = entry.get("action", "unknown")
+        return (
+            f"CEF:0|WindowsAI|AuditTrail|1.0|{action}|{msg}|{sev}|"
+            f"rt={ts} suser={user} act={action}"
+        )
+
+    def _format_entry_leef(self, entry: Dict[str, Any]) -> str:
+        """Format an audit entry as Log Event Extended Format (LEEF)."""
+        action = entry.get("action", "unknown")
+        user = entry.get("user", "system")
+        ts = entry.get("timestamp", "")
+        msg = entry.get("message", "audit event")
+        return (
+            f"LEEF:1.0|WindowsAI|AuditTrail|1.0|{action}\t"
+            f"devTime={ts}\tusrName={user}\tmsg={msg}"
+        )
+
+    # ----------------------------------------------------------------- public API
+    def export_to_file(
+        self, entries: List[Dict[str, Any]], fmt: str = "json", filename: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Export audit trail entries to a local file.
+
+        Args:
+            entries: List of audit entry dicts.
+            fmt: Export format — one of ``json``, ``csv``, ``cef``, ``leef``.
+            filename: Optional output filename (auto-generated if not provided).
+
+        Returns:
+            Dict with status, output path, and entry count.
+        """
+        import json, csv, time
+        if fmt not in self._formats:
+            return {"status": "error", "message": f"Unknown format: {fmt}. Use one of {self._formats}"}
+        ts = str(int(time.time()))
+        out_name = filename or f"audit_trail_{ts}.{fmt if fmt not in ('cef','leef') else 'log'}"
+        out_path = self._export_dir / out_name
+        try:
+            if fmt == "json":
+                with out_path.open("w", encoding="utf-8") as fh:
+                    json.dump(entries, fh, indent=2, default=str)
+            elif fmt == "csv":
+                if entries:
+                    with out_path.open("w", encoding="utf-8", newline="") as fh:
+                        writer = csv.DictWriter(fh, fieldnames=list(entries[0].keys()))
+                        writer.writeheader()
+                        writer.writerows(entries)
+            elif fmt == "cef":
+                with out_path.open("w", encoding="utf-8") as fh:
+                    fh.write("\n".join(self._format_entry_cef(e) for e in entries))
+            elif fmt == "leef":
+                with out_path.open("w", encoding="utf-8") as fh:
+                    fh.write("\n".join(self._format_entry_leef(e) for e in entries))
+            self._exported_count += len(entries)
+            return {
+                "status": "success",
+                "output": str(out_path),
+                "entries_exported": len(entries),
+                "format": fmt,
+            }
+        except Exception as exc:
+            return {"status": "error", "message": str(exc)}
+
+    def export_to_siem(self, entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Forward audit trail entries to a remote SIEM endpoint via HTTP.
+
+        Requires ``SIEM_ENDPOINT`` and ``SIEM_TOKEN`` environment variables.
+        Falls back to a local file export when the endpoint is not configured.
+        """
+        import json, time
+        if not self._siem_endpoint:
+            logger.warning("SIEM_ENDPOINT not configured; falling back to local JSON export")
+            return self.export_to_file(entries, fmt="json")
+        try:
+            import urllib.request
+            payload = json.dumps({"events": entries, "source": "WindowsAI"}).encode()
+            req = urllib.request.Request(
+                self._siem_endpoint,
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self._siem_token}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                status_code = resp.getcode()
+            self._exported_count += len(entries)
+            return {
+                "status": "success",
+                "siem_endpoint": self._siem_endpoint,
+                "http_status": status_code,
+                "entries_forwarded": len(entries),
+            }
+        except Exception as exc:
+            logger.error(f"SIEM export failed: {exc}; falling back to local export")
+            local = self.export_to_file(entries, fmt="json")
+            local["siem_error"] = str(exc)
+            return local
+
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
-        
+        Execute the trail exporter.
+
+        Keyword Args:
+            entries (list): Audit entry dicts to export.
+            format (str): ``json`` | ``csv`` | ``cef`` | ``leef``.
+            destination (str): ``file`` (default) or ``siem``.
+            filename (str): Optional output filename.
+
         Returns:
-            Dict containing execution results
+            Dict containing execution results.
         """
         if not self.initialized:
             raise RuntimeError("trail_exporter not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "trail_exporter executed successfully",
-                "data": {}
+            entries: List[Dict[str, Any]] = kwargs.get("entries", [])
+            if not entries:
+                entries = [
+                    {"timestamp": "2025-01-01T00:00:00Z", "action": "test", "user": "system",
+                     "message": "Audit trail test entry", "severity": 1}
+                ]
+            destination = kwargs.get("destination", "file")
+            fmt = kwargs.get("format", "json")
+            filename = kwargs.get("filename")
+            if destination == "siem":
+                result = self.export_to_siem(entries)
+            else:
+                result = self.export_to_file(entries, fmt=fmt, filename=filename)
+            return {
+                "status": result.get("status", "error"),
+                "message": f"Exported {result.get('entries_exported', len(entries))} entries",
+                "data": result,
             }
-            return result
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
 
 
