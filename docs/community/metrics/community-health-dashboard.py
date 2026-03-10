@@ -191,7 +191,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-class Community-Health-Dashboard:
+class CommunityHealthDashboard:
     """
     Add `community/metrics/community-health-dashboard.py` tracking contributor metrics.
 *   **Upgrade 426:** Implement `plugins/marketplace/ui/featured_carousel.vue` highlighting new plugins.

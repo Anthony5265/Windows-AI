@@ -232,6 +232,14 @@ class SyncEncryption:
         encrypted = base64.b64decode(base64_data)
         return self.decrypt_data(encrypted, encryption_key)
 
+    def encode_base64(self, data: bytes) -> str:
+        """Encode raw bytes as a base64 string."""
+        return base64.b64encode(data).decode()
+
+    def decode_base64(self, data: str) -> bytes:
+        """Decode a base64 string to raw bytes."""
+        return base64.b64decode(data)
+
     def rotate_key(
         self,
         old_key: EncryptionKey,
