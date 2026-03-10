@@ -638,3 +638,42 @@ INTEGRATIONS_REGISTRY = {
         "narrative": {"features": ["story_gen", "quest_gen"]},
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Router and lifecycle helpers expected by windows_ai.main
+# ---------------------------------------------------------------------------
+import logging as _logging
+
+try:
+    from fastapi import APIRouter as _APIRouter
+    router = _APIRouter(prefix="/integrations", tags=["integrations"])
+
+    @router.get("/status")
+    async def integrations_status():
+        """Return a summary of all available integration managers."""
+        return {
+            "status": "ok",
+            "managers": list(__all__),
+            "count": len(__all__),
+        }
+except ImportError:
+    # fastapi not available – provide a no-op stub
+    class _RouterStub:  # type: ignore[no-redef]
+        def get(self, *a, **kw):
+            def _deco(fn):
+                return fn
+            return _deco
+    router = _RouterStub()
+
+_logger = _logging.getLogger(__name__)
+
+
+async def initialize_integrations() -> None:
+    """
+    Lightweight integration initialisation called at app startup.
+
+    Heavy manager initialisation is deferred to the WindowsAI orchestrator;
+    this function just logs that the integration layer is ready.
+    """
+    _logger.info("Integration layer ready (%d managers registered)", len(__all__))

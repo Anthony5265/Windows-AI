@@ -615,11 +615,6 @@ class SearchCoordinator:
             name: healthy
             for name, healthy in self.backend_health.items()
         }
-            return {
-                "status": "error",
-                "message": str(e),
-                "data": None
-            }
 
 
 def main():

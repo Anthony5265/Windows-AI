@@ -140,10 +140,10 @@ categories:
       - path: build-complete-installer.bat
         kind: file
         description: "Windows batch helper for packaging the installer."
-      - path: build-release.sh
+      - path: scripts/build/build-release.sh
         kind: file
         description: "Release automation for Unix-like environments."
-      - path: build_installer.ps1
+      - path: scripts/build/build_installer.ps1
         kind: file
         description: "PowerShell build entry point for installer packaging."
       - path: start-all.sh
@@ -152,16 +152,16 @@ categories:
       - path: start-all.bat
         kind: file
         description: "Launches the complete local stack on Windows."
-      - path: start-backend.sh
+      - path: scripts/entry/start-backend.sh
         kind: file
         description: "Starts backend services for local development (Unix)."
-      - path: start-backend.bat
+      - path: scripts/entry/start-backend.bat
         kind: file
         description: "Starts backend services for local development (Windows)."
-      - path: start-gui.sh
+      - path: scripts/entry/start-gui.sh
         kind: file
         description: "Runs the GUI locally on Unix-like systems."
-      - path: start-gui.bat
+      - path: scripts/entry/start-gui.bat
         kind: file
         description: "Runs the GUI locally on Windows."
       - path: start-tray.sh

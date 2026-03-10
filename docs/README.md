@@ -30,9 +30,26 @@ Welcome to the Windows AI documentation hub. All project documentation is centra
 ### 🚀 Deployment
 **Location:** `deployment/`
 - [Windows Installer Build Guide](deployment/BUILD_WINDOWS_INSTALLER.md)
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
+- [Release Notes](RELEASE_NOTES.md) - Version history and changelog
 - Deployment strategies
 - Configuration guides
 - Production setup
+
+### 📋 Planning & Phases
+**Location:** `planning/`
+- [Phase 2 Plan](planning/PHASE_2_PLAN.md) - Upcoming development plan
+- [Phase 1 Completion](planning/PHASE_1_COMPLETION.md) - Phase 1 summary
+- [P0 Handoff Report](planning/P0_HANDOFF_REPORT.md) - Priority-zero handoff
+- [P0 Task Execution Summary](planning/P0_TASK_EXECUTION_SUMMARY.md) - Task execution log
+- [Agent Coordination](planning/AGENT_COORDINATION.md) - Multi-agent coordination docs
+
+### 📊 Status Reports
+**Location:** `status/`
+- [Current Status](status/CURRENT_STATUS.md) - Up-to-date project status
+- [Honest Status Report](status/HONEST_STATUS.md) - Detailed implementation audit
+- [Architecture Analysis](status/ARCHITECTURE_ANALYSIS.md) - Component breakdown
+- [Plugin Audit](status/PLUGIN_AUDIT_COMPLETE.md) - Plugin-by-plugin status
 
 ### 🔒 Security
 **Location:** `security/`

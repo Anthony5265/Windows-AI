@@ -132,8 +132,8 @@ class Plugin(IntegrationPlugin):
                 return await self._generate_description(parameters)
             elif action == "batch_caption":
                 return await self._batch_caption(parameters)
-        elif action in ("analyze_image", "describe_image"):
-            return await self._caption_image(params)
+            elif action in ("analyze_image", "describe_image"):
+                return await self._caption_image(parameters)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:

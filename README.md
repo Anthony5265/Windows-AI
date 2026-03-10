@@ -71,6 +71,14 @@ Windows AI is a comprehensive AI integration platform that brings the power of m
    git clone https://github.com/Anthony5265/Windows-AI.git
    cd Windows-AI
    pip install -e .
+
+   # Start the backend
+   bash scripts/entry/start-backend.sh      # Linux/macOS
+   pwsh scripts/entry/start-backend.ps1    # Windows PowerShell
+
+   # Start the GUI
+   bash scripts/entry/start-gui.sh         # Linux/macOS
+   pwsh scripts/entry/start-gui.ps1        # Windows PowerShell
    ```
 
 For detailed installation instructions, see the [Installation Guide](docs/getting-started/INSTALLATION.md).
@@ -266,9 +274,16 @@ For complete plugin development documentation, see the [Plugin Development Guide
 ### Deployment Documentation
 
 - [Build Instructions](docs/deployment/BUILD.md) - Building from source
-- [Deployment Guide](docs/deployment/DEPLOY.md) - Deploying Windows AI
+- [Deployment Guide](docs/DEPLOYMENT.md) - Deploying Windows AI
+- [Release Notes](docs/RELEASE_NOTES.md) - Version history and changelog
 - [Configuration](docs/deployment/CONFIGURATION.md) - Configuration options
 - [Security Best Practices](docs/security/SECURITY.md) - Security guidelines
+
+### Planning & Status
+
+- [Current Status](docs/status/CURRENT_STATUS.md) - Up-to-date project status
+- [Phase 2 Plan](docs/planning/PHASE_2_PLAN.md) - Upcoming development plan
+- [Phase 1 Completion](docs/planning/PHASE_1_COMPLETION.md) - Phase 1 summary
 
 ---
 
@@ -395,25 +410,25 @@ Special thanks to the open-source community for making this possible.
 
 ## Roadmap
 
-### Near Term (Q1 2026)
-- Complete desktop GUI
-- System tray integration
-- Enhanced multi-agent capabilities
-- Performance optimizations
+### Near Term (Q1–Q2 2026)
+- Fix remaining stub implementations (mobile, full RAG pipeline)
+- Reach 60%+ test coverage
+- Plugin marketplace browser in GUI
+- Multi-agent task flow visualization
 
-### Medium Term (Q2-Q3 2026)
+### Medium Term (Q2–Q3 2026)
+- Performance hardening (<200ms p95 API latency)
+- Security audit + rate limiting
 - Mobile companion app
-- Plugin marketplace
-- Cloud sync (optional)
-- Advanced automation workflows
+- PyInstaller + Windows installer verified on Windows 10/11
 
-### Long Term (Q4 2026+)
-- Enterprise features
+### Long Term (Q3–Q4 2026)
+- Enterprise features (RBAC, SSO, audit logging)
+- Community plugin ecosystem + marketplace website
 - Multi-platform support (Linux, macOS)
-- Advanced RAG capabilities
-- Community plugin ecosystem
+- Edge IoT + mesh network inference
 
-See [ROADMAP.md](docs/ROADMAP.md) for detailed plans.
+See **[ROADMAP.md](ROADMAP.md)** for the full phased roadmap and **[BLUEPRINT.md](BLUEPRINT.md)** for the architecture blueprint.
 
 ---
 

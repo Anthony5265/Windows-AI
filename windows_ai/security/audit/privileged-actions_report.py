@@ -154,7 +154,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-class Privileged-ActionsReport:
+class PrivilegedActionsReport:
     """
     Add `security/audit/privileged-actions_report.py` summarizing elevated operations.
 *   **Upgrade 362:** Create `tests/regression/plugin_compatibility.py` ensuring plugin ecosystem stability.

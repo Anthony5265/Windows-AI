@@ -116,8 +116,8 @@ class Plugin(IntegrationPlugin):
                 return await self._embed_image(parameters)
             elif action == "compute_similarity":
                 return await self._compute_similarity(parameters)
-        elif action in ("analyze_image", "describe_image"):
-            return await self._classify_image(params)
+            elif action in ("analyze_image", "describe_image"):
+                return await self._classify_image(parameters)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:

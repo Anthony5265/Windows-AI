@@ -6,19 +6,22 @@ This directory contains all development, build, deployment, and utility scripts 
 
 ### 🏗️ Build Scripts
 **`build/`** - Scripts for building the project
-- `build-release.sh` - Build production release
-- `build-portable.ps1` - Build portable version
-- `build_installer.ps1` - Build Windows installer
-- `*.spec` - PyInstaller specifications
-- `build-artifacts.js` - Artifact generation
+- `build-release.sh` - Build production release (Linux/macOS)
+- `build-installer.ps1` - Build Windows NSIS installer (PowerShell)
+- `build.ps1` - Build Python backend (PowerShell)
+- `build_installer.py` - Python-driven installer build
+- `create_build_scripts.py` - Generate platform-specific build scripts
 
 **Usage:**
 ```bash
-# Build release version
-./build/build-release.sh
+# Build release version (Linux/macOS)
+bash scripts/build/build-release.sh
 
-# Build Windows installer
-powershell ./build/build_installer.ps1
+# Build Windows installer (PowerShell)
+pwsh scripts/build/build-installer.ps1
+
+# Python-driven installer
+python scripts/build/build_installer.py
 ```
 
 ### 🚀 Deployment Scripts
@@ -29,23 +32,22 @@ powershell ./build/build_installer.ps1
 
 ### 🧪 Development Scripts
 **`dev/`** - Development utilities
-- `start-all.sh/bat` - Start all services
-- `start-backend.sh/bat` - Start backend only
-- `start-gui.sh/bat` - Start GUI only
-- `start-tray.sh/bat` - Start system tray
-- `start-watchdog.sh/bat` - Start watchdog process
-- `watchdog.py` - Process monitoring
-- `plugin_agent.py` - Plugin development agent
-- `lint.js` - Code linting
-- Development environment setup
+- Development environment setup and tooling
+
+**`entry/`** - Application launchers
+- `start-backend.sh/bat/ps1` - Start backend API server
+- `start-gui.sh/bat/ps1` - Launch Electron GUI
 
 **Usage:**
 ```bash
-# Start all components
-./dev/start-all.sh
+# Start backend (Linux/macOS)
+bash scripts/entry/start-backend.sh
 
-# Start backend only
-./dev/start-backend.sh
+# Start GUI (Linux/macOS)
+bash scripts/entry/start-gui.sh
+
+# Start backend (Windows PowerShell)
+pwsh scripts/entry/start-backend.ps1
 ```
 
 ### ⚙️ Generators
