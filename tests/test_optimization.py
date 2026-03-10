@@ -36,6 +36,8 @@ class TestProfileHardware:
         assert "frequency_mhz" in cpu
         assert "architecture" in cpu
         # Cores should be positive integers
+        assert isinstance(cpu["logical_cores"], int)
+        assert isinstance(cpu["physical_cores"], int)
         assert cpu["logical_cores"] >= 1
         assert cpu["physical_cores"] >= 1
 
