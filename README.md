@@ -71,6 +71,14 @@ Windows AI is a comprehensive AI integration platform that brings the power of m
    git clone https://github.com/Anthony5265/Windows-AI.git
    cd Windows-AI
    pip install -e .
+
+   # Start the backend
+   bash scripts/entry/start-backend.sh      # Linux/macOS
+   pwsh scripts/entry/start-backend.ps1    # Windows PowerShell
+
+   # Start the GUI
+   bash scripts/entry/start-gui.sh         # Linux/macOS
+   pwsh scripts/entry/start-gui.ps1        # Windows PowerShell
    ```
 
 For detailed installation instructions, see the [Installation Guide](docs/getting-started/INSTALLATION.md).
@@ -266,9 +274,16 @@ For complete plugin development documentation, see the [Plugin Development Guide
 ### Deployment Documentation
 
 - [Build Instructions](docs/deployment/BUILD.md) - Building from source
-- [Deployment Guide](docs/deployment/DEPLOY.md) - Deploying Windows AI
+- [Deployment Guide](docs/DEPLOYMENT.md) - Deploying Windows AI
+- [Release Notes](docs/RELEASE_NOTES.md) - Version history and changelog
 - [Configuration](docs/deployment/CONFIGURATION.md) - Configuration options
 - [Security Best Practices](docs/security/SECURITY.md) - Security guidelines
+
+### Planning & Status
+
+- [Current Status](docs/status/CURRENT_STATUS.md) - Up-to-date project status
+- [Phase 2 Plan](docs/planning/PHASE_2_PLAN.md) - Upcoming development plan
+- [Phase 1 Completion](docs/planning/PHASE_1_COMPLETION.md) - Phase 1 summary
 
 ---
 

@@ -8,8 +8,8 @@
 ### Current Problem
 Users must manually run scripts:
 ```bash
-./start-backend.sh
-./start-gui.sh
+scripts/entry/start-backend.sh
+scripts/entry/start-gui.sh
 ./start-tray.sh
 ./start-watchdog.sh
 ```

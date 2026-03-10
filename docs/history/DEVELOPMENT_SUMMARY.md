@@ -150,8 +150,8 @@ Windows-AI/
 │   └── preload.js
 │
 ├── start-all.sh / .bat      ⭐ One-command launcher
-├── start-backend.sh / .bat
-├── start-gui.sh / .bat
+├── scripts/entry/start-backend.sh / .bat
+├── scripts/entry/start-gui.sh / .bat
 ├── start-tray.sh / .bat
 │
 ├── GETTING_STARTED.md       ⭐ Comprehensive guide (362 lines)
@@ -552,8 +552,8 @@ pip install -r requirements.txt
 npm install
 
 # Start developing
-./start-backend.sh    # Terminal 1
-./start-gui.sh        # Terminal 2
+bash scripts/entry/start-backend.sh    # Terminal 1
+bash scripts/entry/start-gui.sh        # Terminal 2
 ```
 
 ---
