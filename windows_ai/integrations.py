@@ -359,7 +359,19 @@ async def handle_context_menu(request: ContextMenuRequest):
                 "action": "open_gui_with_context"
             }
 
-            # TODO: Integrate with GUI to show analysis
+            # Notify the GUI via a lightweight IPC event if the GUI server is running
+            try:
+                import urllib.request as _ur, json as _j
+                _payload = _j.dumps({"event": "file_analysis", "data": response}).encode()
+                _req = _ur.Request(
+                    "http://127.0.0.1:8010/api/v1/events",
+                    data=_payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                _ur.urlopen(_req, timeout=1)
+            except Exception:
+                pass  # GUI not running — analysis result returned inline to caller
             return response
 
         elif action == "summarize_file":

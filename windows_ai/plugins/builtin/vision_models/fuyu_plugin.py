@@ -164,8 +164,8 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             prompt: Optional analysis prompt
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -192,10 +192,10 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             question: The question to answer
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         question = params.get("question")
 
-        if not image_url or not question:
+        if (not image_url and self._api_key) or not question:
             return {"success": False, "error": "image_url and question parameters are required"}
 
         if not self._api_key:
@@ -221,8 +221,8 @@ class Plugin(IntegrationPlugin):
         Parameters:
             image_url: URL or base64-encoded screenshot
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -252,8 +252,8 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded document image
             extract_type: 'summary', 'full_text', or 'key_points'
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:

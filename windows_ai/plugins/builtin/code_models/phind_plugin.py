@@ -107,7 +107,7 @@ class Plugin(IntegrationPlugin):
                 return await self._search_code(parameters)
             elif action == "answer_question":
                 return await self._answer_question(parameters)
-            elif action == "generate_code":
+            elif action == "generate_code" or action == "complete_code":
                 return await self._generate_code(parameters)
             elif action == "explain_error":
                 return await self._explain_error(parameters)

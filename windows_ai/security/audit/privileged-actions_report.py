@@ -311,38 +311,152 @@ class Privileged-ActionsReport:
             bool: True if setup successful, False otherwise
         """
         try:
-            # TODO: Implement setup logic
+            import os, time
+            self._report_dir = Path(kwargs.get("report_dir", "logs/privileged_reports"))
+            self._report_dir.mkdir(parents=True, exist_ok=True)
+            self._action_log: List[Dict[str, Any]] = []
+            self._severity_threshold = kwargs.get("severity_threshold", 0)
             self.initialized = True
             logger.info("privileged-actions_report setup completed")
             return True
         except Exception as e:
             logger.error(f"Setup failed: {e}")
             return False
-    
+
+    # ------------------------------------------------------------------ helpers
+    _PRIVILEGED_ACTIONS = {
+        "admin_login", "privilege_escalation", "sudo", "runas", "registry_write",
+        "firewall_change", "service_install", "user_create", "user_delete",
+        "group_policy_change", "audit_log_clear", "remote_shell", "credential_access",
+        "token_impersonation", "dll_injection", "process_inject",
+    }
+
+    def record_action(self, action: str, user: str, details: Optional[str] = None,
+                      severity: int = 3) -> Dict[str, Any]:
+        """
+        Record a privileged action in the in-memory log.
+
+        Args:
+            action: Action identifier string.
+            user: Username that performed the action.
+            details: Optional human-readable description.
+            severity: Severity level 1 (info) – 5 (critical).
+
+        Returns:
+            The recorded entry dict.
+        """
+        import time
+        entry: Dict[str, Any] = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "action": action,
+            "user": user,
+            "details": details or action,
+            "severity": severity,
+            "is_known_privileged": action in self._PRIVILEGED_ACTIONS,
+        }
+        self._action_log.append(entry)
+        return entry
+
+    def generate_report(self, entries: Optional[List[Dict[str, Any]]] = None,
+                        output_format: str = "json") -> Dict[str, Any]:
+        """
+        Generate a summary report of privileged actions.
+
+        Args:
+            entries: List of action entries (uses in-memory log if None).
+            output_format: ``json`` or ``text``.
+
+        Returns:
+            Dict with summary statistics and the report content.
+        """
+        import json, time
+        data = entries if entries is not None else self._action_log
+        high_severity = [e for e in data if e.get("severity", 0) >= 4]
+        known_privileged = [e for e in data if e.get("is_known_privileged")]
+        by_user: Dict[str, int] = {}
+        for e in data:
+            by_user[e.get("user", "unknown")] = by_user.get(e.get("user", "unknown"), 0) + 1
+        summary = {
+            "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "total_actions": len(data),
+            "high_severity_count": len(high_severity),
+            "known_privileged_count": len(known_privileged),
+            "actions_by_user": by_user,
+            "top_users": sorted(by_user.items(), key=lambda x: -x[1])[:5],
+            "high_severity_actions": high_severity[:20],
+            "entries": data,
+        }
+        if output_format == "text":
+            lines = [
+                "=== Privileged Actions Report ===",
+                f"Generated: {summary['generated_at']}",
+                f"Total actions: {summary['total_actions']}",
+                f"High severity: {summary['high_severity_count']}",
+                f"Known privileged: {summary['known_privileged_count']}",
+                "",
+                "Actions by user:",
+            ]
+            for user, count in summary["top_users"]:
+                lines.append(f"  {user}: {count}")
+            report_text = "\n".join(lines)
+            report_path = self._report_dir / f"report_{int(time.time())}.txt"
+            report_path.write_text(report_text, encoding="utf-8")
+            summary["report_path"] = str(report_path)
+            summary["report_text"] = report_text
+        else:
+            report_path = self._report_dir / f"report_{int(time.time())}.json"
+            report_path.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+            summary["report_path"] = str(report_path)
+        return summary
+
     def execute(self, **kwargs) -> Dict[str, Any]:
         """
-        Execute the main functionality.
-        
+        Execute the privileged-actions reporter.
+
+        Keyword Args:
+            action (str): ``"record"`` or ``"report"`` (default ``"report"``).
+            entries (list): Audit entries to analyse (for ``report``).
+            action_name (str): Action identifier (for ``record``).
+            user (str): Username (for ``record``).
+            details (str): Description (for ``record``).
+            severity (int): 1-5 (for ``record``).
+            output_format (str): ``json`` | ``text`` (for ``report``).
+
         Returns:
-            Dict containing execution results
+            Dict containing execution results.
         """
         if not self.initialized:
             raise RuntimeError("privileged-actions_report not initialized. Call setup() first.")
-        
+
         try:
-            # TODO: Implement core functionality
-            result = {
-                "status": "success",
-                "message": "privileged-actions_report executed successfully",
-                "data": {}
-            }
-            return result
+            action = kwargs.get("action", "report")
+            if action == "record":
+                entry = self.record_action(
+                    action=kwargs.get("action_name", "unknown"),
+                    user=kwargs.get("user", "system"),
+                    details=kwargs.get("details"),
+                    severity=kwargs.get("severity", 3),
+                )
+                return {
+                    "status": "success",
+                    "message": "Action recorded",
+                    "data": entry,
+                }
+            else:
+                entries = kwargs.get("entries")
+                fmt = kwargs.get("output_format", "json")
+                report = self.generate_report(entries=entries, output_format=fmt)
+                return {
+                    "status": "success",
+                    "message": f"Report generated with {report['total_actions']} actions",
+                    "data": report,
+                }
         except Exception as e:
             logger.error(f"Execution failed: {e}")
             return {
                 "status": "error",
                 "message": str(e),
-                "data": None
+                "data": None,
             }
 
 

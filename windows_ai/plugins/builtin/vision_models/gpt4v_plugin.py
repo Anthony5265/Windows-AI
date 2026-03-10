@@ -161,7 +161,7 @@ class Plugin(IntegrationPlugin):
                 "error": "OpenAI API key not configured"
             }
         
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         if not image_url:
             return {
                 "success": False,
@@ -182,7 +182,7 @@ class Plugin(IntegrationPlugin):
     
     async def _answer_question(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Answer questions about image"""
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         question = params.get("question")
         
         if not image_url or not question:
@@ -203,7 +203,7 @@ class Plugin(IntegrationPlugin):
     
     async def _extract_text(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Extract text from image (OCR)"""
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         if not image_url:
             return {
                 "success": False,

@@ -132,6 +132,8 @@ class Plugin(IntegrationPlugin):
                 return await self._generate_description(parameters)
             elif action == "batch_caption":
                 return await self._batch_caption(parameters)
+        elif action in ("analyze_image", "describe_image"):
+            return await self._caption_image(params)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:
@@ -155,8 +157,8 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image data
             max_length: Maximum caption length (default 50)
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -190,10 +192,10 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             question: The question to answer
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         question = params.get("question")
 
-        if not image_url or not question:
+        if (not image_url and self._api_key) or not question:
             return {"success": False, "error": "image_url and question parameters are required"}
 
         if not self._api_key:
@@ -234,8 +236,8 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             detail_level: 'brief', 'standard', or 'detailed'
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:

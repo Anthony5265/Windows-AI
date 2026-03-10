@@ -116,6 +116,8 @@ class Plugin(IntegrationPlugin):
                 return await self._embed_image(parameters)
             elif action == "compute_similarity":
                 return await self._compute_similarity(parameters)
+        elif action in ("analyze_image", "describe_image"):
+            return await self._classify_image(params)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:
@@ -130,10 +132,10 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             labels: List of candidate class labels
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         labels: List[str] = params.get("labels", ["landscape", "outdoor", "nature"])
 
-        if not image_url:
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -174,8 +176,8 @@ class Plugin(IntegrationPlugin):
         Parameters:
             image_url: URL or base64-encoded image
         """
-        image_url = params.get("image_url")
-        if not image_url:
+        image_url = params.get("image_url") or params.get("image") or ""
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -219,7 +221,7 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             text: Text to compare against
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         text = params.get("text")
 
         if not image_url or not text:

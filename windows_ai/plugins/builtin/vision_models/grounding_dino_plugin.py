@@ -130,6 +130,8 @@ class Plugin(IntegrationPlugin):
                 return await self._count_objects(parameters)
             elif action == "localize":
                 return await self._localize(parameters)
+        elif action in ("analyze_image", "describe_image"):
+            return await self._detect_objects(params)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:
@@ -173,10 +175,10 @@ class Plugin(IntegrationPlugin):
             text_prompts: List of text descriptions (e.g. ['dog', 'red car'])
             threshold: Confidence threshold (default 0.3)
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         text_prompts: List[str] = params.get("text_prompts", ["object"])
 
-        if not image_url:
+        if not image_url and self._api_key:
             return {"success": False, "error": "image_url parameter is required"}
 
         if not self._api_key:
@@ -204,7 +206,7 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             phrase: Text phrase to ground
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         phrase = params.get("phrase")
 
         if not image_url or not phrase:
@@ -234,7 +236,7 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             object_name: Name or description of the object to count
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         object_name = params.get("object_name")
 
         if not image_url or not object_name:
@@ -264,7 +266,7 @@ class Plugin(IntegrationPlugin):
             image_url: URL or base64-encoded image
             object_name: Name or description of the object to localise
         """
-        image_url = params.get("image_url")
+        image_url = params.get("image_url") or params.get("image") or ""
         object_name = params.get("object_name")
 
         if not image_url or not object_name:

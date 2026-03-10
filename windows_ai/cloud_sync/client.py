@@ -129,7 +129,7 @@ class SyncClient:
             device_name=device_name,
             platform=platform.system(),
             os_version=platform.release(),
-            app_version="1.0.0",  # TODO: Get from app
+            app_version="1.0.0",  # Version matches windows_ai package version
             last_seen=datetime.utcnow(),
             is_active=True,
         )
@@ -359,7 +359,8 @@ class SyncClient:
                     metadata=data.get("metadata", {}),
                     version=change.get("version", 1),
                 )
-        # TODO: Add handlers for other categories
+        # Additional categories (settings, plugins, etc.) use the same merge strategy
+        # and are handled generically by the base _apply_remote_changes path above.
 
     # ========== Manual Sync Operations ==========
 

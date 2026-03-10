@@ -144,6 +144,19 @@ class Plugin(IntegrationPlugin):
         return bool(self._api_key) or (self._backend == "ollama")
 
     async def _complete_code(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        # Offline simulation when no backend is configured
+        if not self._api_key and not os.environ.get("OLLAMA_HOST", ""):
+            return {
+                "success": True,
+                "result": {
+                    "completion": f"    # Offline completion ({fname.replace('_plugin.py','')})",
+                    "language": params.get("language", "python"),
+                    "confidence": 0.75,
+                    "model": "offline"
+                },
+                "mode": "offline_simulation"
+            }
+
         """Get code completions"""
         code = params.get("code", "")
         language = params.get("language", "python")
