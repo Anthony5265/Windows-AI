@@ -8,6 +8,7 @@ try:
     import httpx
     _HTTPX_AVAILABLE = True
 except ImportError:  # pragma: no cover
+    httpx = None  # type: ignore[assignment]
     _HTTPX_AVAILABLE = False
 
 from .embeddings import embed

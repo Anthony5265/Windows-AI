@@ -410,25 +410,25 @@ Special thanks to the open-source community for making this possible.
 
 ## Roadmap
 
-### Near Term (Q1 2026)
-- Complete desktop GUI
-- System tray integration
-- Enhanced multi-agent capabilities
-- Performance optimizations
+### Near Term (Q1–Q2 2026)
+- Fix remaining stub implementations (mobile, full RAG pipeline)
+- Reach 60%+ test coverage
+- Plugin marketplace browser in GUI
+- Multi-agent task flow visualization
 
-### Medium Term (Q2-Q3 2026)
+### Medium Term (Q2–Q3 2026)
+- Performance hardening (<200ms p95 API latency)
+- Security audit + rate limiting
 - Mobile companion app
-- Plugin marketplace
-- Cloud sync (optional)
-- Advanced automation workflows
+- PyInstaller + Windows installer verified on Windows 10/11
 
-### Long Term (Q4 2026+)
-- Enterprise features
+### Long Term (Q3–Q4 2026)
+- Enterprise features (RBAC, SSO, audit logging)
+- Community plugin ecosystem + marketplace website
 - Multi-platform support (Linux, macOS)
-- Advanced RAG capabilities
-- Community plugin ecosystem
+- Edge IoT + mesh network inference
 
-See [ROADMAP.md](docs/ROADMAP.md) for detailed plans.
+See **[ROADMAP.md](ROADMAP.md)** for the full phased roadmap and **[BLUEPRINT.md](BLUEPRINT.md)** for the architecture blueprint.
 
 ---
 
