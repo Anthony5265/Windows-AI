@@ -130,8 +130,8 @@ class Plugin(IntegrationPlugin):
                 return await self._count_objects(parameters)
             elif action == "localize":
                 return await self._localize(parameters)
-        elif action in ("analyze_image", "describe_image"):
-            return await self._detect_objects(params)
+            elif action in ("analyze_image", "describe_image"):
+                return await self._detect_objects(parameters)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:

@@ -130,8 +130,8 @@ class Plugin(IntegrationPlugin):
                 return await self._zero_shot_classify(parameters)
             elif action == "embed_image":
                 return await self._embed_image(parameters)
-        elif action in ("analyze_image", "describe_image"):
-            return await self._classify_image(params)
+            elif action in ("analyze_image", "describe_image"):
+                return await self._classify_image(parameters)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:

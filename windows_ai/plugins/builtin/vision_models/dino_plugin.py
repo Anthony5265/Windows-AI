@@ -117,8 +117,8 @@ class Plugin(IntegrationPlugin):
                 return await self._detect_objects(parameters)
             elif action == "segment_image":
                 return await self._segment_image(parameters)
-        elif action in ("analyze_image", "describe_image"):
-            return await self._extract_features(params)
+            elif action in ("analyze_image", "describe_image"):
+                return await self._extract_features(parameters)
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:
