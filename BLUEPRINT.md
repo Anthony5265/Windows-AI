@@ -1,7 +1,9 @@
 # Windows AI — Master Blueprint
 
-**Version:** 2.0 (March 2026)  
+**Version:** 2.1 (March 2026)  
 **Single Source of Truth** — Supersedes `docs/WindowsAI_Master_Blueprint.md`, `docs/WindowsAI_Blueprint_Index.md`, and all previous blueprint versions.
+
+> **⚠️ MANDATORY FOR ALL AI AGENTS:** Every agent session (Claude, Copilot, or any other AI assistant) **MUST** read this file and `ROADMAP.md` before starting any development work. This blueprint defines the system architecture, directory structure, and component contracts. See [Enforcement](#-enforcement--agent-compliance) at the bottom.
 
 ---
 
@@ -42,7 +44,7 @@ Windows AI is a **locally-runnable, privacy-respecting AI platform for Windows**
                            ↓
 ╔══════════════════════════════════════════════════════════════════╗
 ║                     PLUGIN LAYER                                 ║
-║          2,197 plugins in windows_ai/plugins/builtin/           ║
+║          2,203 plugins in windows_ai/plugins/builtin/           ║
 ║  windows/  windows_os/  audio_models/  vision_models/           ║
 ║  code_models/  cloud/  creative/  finance/  gaming/  ...        ║
 ╚══════════════════════════╤═══════════════════════════════════════╝
@@ -105,7 +107,7 @@ Windows-AI/
 │   │   ├── credentials_routes.py ← Credential CRUD API
 │   │   └── ...
 │   │
-│   ├── integrations/             ← 43 AI/service managers
+│   ├── integrations/             ← 51 AI/service manager files
 │   │   ├── __init__.py           ← Registry + initialize_integrations()
 │   │   ├── ai_providers.py       ← OpenAI, Anthropic, Google, Groq…
 │   │   ├── audio_speech.py       ← Whisper, ElevenLabs, Azure TTS…
@@ -116,12 +118,12 @@ Windows-AI/
 │   │   ├── base.py               ← Plugin, PluginMetadata, PluginType
 │   │   ├── registry.py           ← Plugin registry
 │   │   ├── loader.py             ← Dynamic plugin loading
-│   │   └── builtin/              ← 2,197 built-in plugins
+│   │   └── builtin/              ← 2,203 built-in plugins across 27 categories
 │   │       ├── windows/          ← 51 Windows automation plugins
-│   │       ├── windows_os/       ← 30 Windows OS management plugins
-│   │       ├── audio_models/     ← 29 audio AI plugins
-│   │       ├── vision_models/    ← 21 vision AI plugins
-│   │       ├── code_models/      ← 16 code AI plugins
+│   │       ├── windows_os/       ← 31 Windows OS management plugins
+│   │       ├── audio_models/     ← 29 audio AI plugins (300–650 lines each)
+│   │       ├── vision_models/    ← 21 vision AI plugins (150–320 lines each)
+│   │       ├── code_models/      ← 16 code AI plugins (296–416 lines each)
 │   │       ├── cloud/            ← Cloud service plugins
 │   │       ├── creative/         ← Creative AI plugins
 │   │       ├── finance/          ← Finance AI plugins
@@ -130,7 +132,7 @@ Windows-AI/
 │   ├── agents/                   ← Multi-agent system
 │   ├── rag/                      ← RAG pipeline (retrieval, chunking, re-rank)
 │   ├── vector_db/                ← ChromaDB, Faiss, Pinecone, Qdrant, Weaviate
-│   ├── search/                   ← Search service (local + remote + semantic)
+│   ├── search/                   ← Search service (29 files, 10,007 lines — local + remote + semantic)
 │   ├── security/                 ← Sandbox, audit, permissions, encryption
 │   ├── frameworks/               ← UnifiedLLM, LangChain, LlamaIndex wrappers
 │   ├── optimization/             ← Hardware profiling + tuning profiles
@@ -164,19 +166,23 @@ Windows-AI/
 │   ├── input_manager.py          ← XRInputManager (controllers, hands, eyes)
 │   └── spatial_ui/               ← Spatial UI panels + GestureVoiceController
 │
-├── iot/                          ← IoT device management
+├── iot/                          ← IoT device management (37 files — MQTT, Matter, Zigbee, HA, Tuya, Ring, Nest, Hue…)
 │   ├── models.py                 ← Device, DeviceAdapter base classes
 │   ├── mqtt.py                   ← MQTT protocol adapter
 │   ├── matter.py                 ← Matter protocol adapter
 │   ├── zigbee.py                 ← Zigbee adapter
 │   ├── home_assistant.py         ← Home Assistant integration
-│   └── automation.py             ← WorkflowAutomation
+│   ├── automation.py             ← WorkflowAutomation
+│   ├── adapters/                 ← Device-specific adapters (Arduino, ESP, Ring, Tuya, TP-Link, Sonos…)
+│   ├── device_actions/           ← Device action handlers
+│   └── hubs/                     ← Hub integrations
 │
-├── optimization/                 ← Hardware optimization
-│   ├── profiling.py              ← profile_hardware() using psutil/stdlib
-│   └── tuning.py                 ← Tuner, PROFILES (balanced/performance/eco)
+├── optimization/                 ← Hardware optimization (14 files — profiling, tuning, telemetry, sentinel, guardian)
+│   ├── profiling.py              ← profile_hardware() using psutil/stdlib (334 lines)
+│   ├── tuning.py                 ← Tuner, PROFILES (balanced/performance/eco)
+│   └── optimization_*.py         ← Telemetry, scanner, guardian, companion, workflow, etc.
 │
-├── tests/                        ← Test suite (238 test files)
+├── tests/                        ← Test suite (253 test files)
 │   ├── unit/                     ← Unit tests
 │   ├── integration/              ← Integration tests
 │   ├── e2e/                      ← End-to-end tests
@@ -226,10 +232,10 @@ plugin = MyPlugin()                   # singleton instance
 | Type | Count | Location | Purpose |
 |---|---|---|---|
 | Windows Automation | 51 | `builtin/windows/` | Windows OS automation (registry, firewall, RDP…) |
-| Windows OS Management | 30 | `builtin/windows_os/` | VSS, AD, Hyper-V, WinGet, WSL2… |
-| Audio AI | 29 | `builtin/audio_models/` | Whisper, Vosk, Azure Speech, ElevenLabs… |
-| Vision AI | 21 | `builtin/vision_models/` | CLIP, BLIP2, DINO, Florence2, Grounding DINO… |
-| Code AI | 16 | `builtin/code_models/` | GitHub Copilot, CodeWhisperer, Tabnine… |
+| Windows OS Management | 31 | `builtin/windows_os/` | VSS, AD, Hyper-V, WinGet, WSL2… |
+| Audio AI | 29 | `builtin/audio_models/` | Whisper, Vosk, Azure Speech, ElevenLabs… (300–650 lines each) |
+| Vision AI | 21 | `builtin/vision_models/` | CLIP, BLIP2, DINO, Florence2, Grounding DINO… (150–320 lines each) |
+| Code AI | 16 | `builtin/code_models/` | GitHub Copilot, CodeWhisperer, Tabnine… (296–416 lines each) |
 | Cloud Services | ~50 | `builtin/cloud/` | AWS, Azure, GCP integrations |
 | Creative AI | ~40 | `builtin/creative/` | Image/video/music generation |
 | Finance AI | ~30 | `builtin/finance/` | Market data, trading, analysis |
@@ -237,7 +243,7 @@ plugin = MyPlugin()                   # singleton instance
 
 ---
 
-## 🤖 Integration Managers (43 Total)
+## 🤖 Integration Managers (51 files)
 
 Each manager in `windows_ai/integrations/` follows the same pattern:
 
@@ -264,7 +270,7 @@ class MyManager:
 | `VectorStoresManager` | Pinecone, Weaviate, Qdrant, ChromaDB |
 | `RAGPipelineManager` | Full RAG orchestration |
 | `AIAgentsManager` | Multi-agent task coordination |
-| … | (43 total — see `integrations/__init__.py`) |
+| … | (51 files — see `integrations/__init__.py` and directory listing) |
 
 ---
 
@@ -432,6 +438,24 @@ docs/archive/roadmaps/
       ├── ROADMAP.md
       └── ROADMAP_CONSOLIDATION_SUMMARY.md
 ```
+
+---
+
+## 🛡️ Enforcement — Agent Compliance
+
+> **This section is MANDATORY for all AI agents working on this repository.**
+
+1. **Read before coding.** Every agent session must read `BLUEPRINT.md` (this file) and `ROADMAP.md` before making changes. These define the architecture and development plan.
+
+2. **Follow the architecture.** All new code must fit within the layered architecture described above. Do not create parallel systems or competing module hierarchies.
+
+3. **Use correct paths.** Plugin directories are at `windows_ai/plugins/builtin/{category}/`. The correct categories include: `audio_models/`, `vision_models/`, `code_models/`, `windows/`, `windows_os/`, etc. There are no directories named `windows_ai/plugins/audio_ai/`, `vision_ai/`, or `code_ai/`.
+
+4. **Update on changes.** When adding new modules, directories, or major features, update this file's repository structure section.
+
+5. **No contradictions.** If `CLAUDE.md`, `.github/copilot-instructions.md`, or `docs/planning/TODO_MASTER.md` contradicts this blueprint, **this blueprint takes precedence**. Update the conflicting file.
+
+6. **Cross-references.** This enforcement is also declared in `ROADMAP.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`.
 
 ---
 
