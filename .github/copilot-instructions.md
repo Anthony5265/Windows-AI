@@ -1,5 +1,18 @@
 # Windows AI - AI Agent Development Instructions
 
+## 📋 CRITICAL RULE — ROADMAP & BLUEPRINT COMPLIANCE ⚠️
+
+> **BEFORE writing any code, you MUST read `ROADMAP.md` and `BLUEPRINT.md` in the repository root.** These are the **single sources of truth** for project status, architecture, priorities, and development phases. All work must follow the phased roadmap (Phase 1 → 2 → 3 → 4). Deviations require explicit user approval.
+>
+> **Key rules:**
+> 1. Follow the roadmap phases in order. Do not start Phase 3 work while Phase 1 items remain.
+> 2. When you complete a roadmap item, mark it `[x]` in `ROADMAP.md` and commit.
+> 3. If this file contradicts `ROADMAP.md` or `BLUEPRINT.md`, those files take precedence.
+> 4. Use correct plugin paths: `windows_ai/plugins/builtin/{category}/` (NOT `windows_ai/plugins/audio_ai/` etc.)
+> 5. Verify actual file state before claiming status. Run `find`/`wc -l` to count files.
+
+---
+
 ## 🤖 CRITICAL RULE #0 - SUBAGENT AWARENESS & AUTO-DELEGATION ⚠️
 
 **YOU HAVE 78 SPECIALIZED SUBAGENTS AT YOUR DISPOSAL - USE THEM AUTOMATICALLY!**

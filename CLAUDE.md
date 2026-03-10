@@ -2,11 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **⚠️ MANDATORY:** Before starting any development work, read `ROADMAP.md` and `BLUEPRINT.md` in full. Those are the single sources of truth for project status, architecture, and priorities. All work must follow the phased roadmap. See the Agent Compliance Rules section at the bottom of this file.
+
 ## Project Overview
 
-Windows AI is a comprehensive AI platform for Windows that provides 2500+ AI capabilities through a unified interface. It combines a Python backend (FastAPI-based) with an Electron desktop GUI, offering local and cloud AI features including chat, image generation, document processing, automation, and 200+ integrations.
+Windows AI is a comprehensive AI platform for Windows that provides 2,000+ AI capabilities through a unified interface. It combines a Python backend (FastAPI-based) with an Electron desktop GUI, offering local and cloud AI features including chat, image generation, document processing, automation, and 200+ integrations.
 
-**Current Project Status:** ~50-55% complete (see TODO_MASTER.md for detailed breakdown)
+**Current Project Status:** ~75% production-ready (see `ROADMAP.md` for detailed breakdown)
 
 ### Honest Status Assessment
 
@@ -15,23 +17,30 @@ Windows AI is a comprehensive AI platform for Windows that provides 2500+ AI cap
 - ✅ API server with REST endpoints (100%)
 - ✅ Security system with multi-level sandbox (100%)
 - ✅ Build system (PyInstaller + Electron) (100%)
-- ✅ 2,068 of 2,151 plugins functional (96.1%)
-- ✅ Windows Core Plugins (49/49 complete)
-- ✅ Windows OS Plugins (30/30 complete)
-- ✅ 621+ comprehensive tests (95%)
+- ✅ 2,203 plugins across 27 categories in `builtin/` (~90% functional)
+- ✅ Windows Core Plugins (51/51 complete)
+- ✅ Windows OS Plugins (31/31 complete)
+- ✅ Audio Model Plugins (29 plugins, 300–650 lines each — real implementations)
+- ✅ Vision Model Plugins (21 plugins, 150–320 lines each — real implementations)
+- ✅ Code Model Plugins (16 plugins, 296–416 lines each — real implementations)
+- ✅ 253 test files (passing)
 - ✅ Unified configuration system (100%)
+- ✅ Search module (29 files, 10,007 lines)
+- ✅ IoT module (37 files in `iot/` + 12 files in `windows_ai/iot/`)
+- ✅ Optimization module (14 files, 1,532 lines)
+- ✅ XR module (runtime 230 lines, input_manager 319 lines, spatial_ui)
+- ✅ Security module (14+ files, 11 subdirectories)
 
-**Critical Gaps (Stubbed/Incomplete):**
-- ❌ Audio AI Plugins (25 plugins - ALL are 20-line stubs - 0%)
-- ❌ Vision AI Plugins (20 plugins - ALL are 20-line stubs - 0%)
-- ❌ Code AI Plugins (15 plugins - ALL are 20-line stubs - 0%)
-- ❌ Search Module (20 of 22 files are TODO stubs - 15%)
-- ❌ Optimization Module (10 of 13 files are TODO stubs - 25%)
-- ❌ IoT Integration (28 of 33 files have TODOs - 20%)
-- ❌ XR/AR/VR (Only 3 placeholder files - 10%)
-- ⚠️ Mobile Support (Placeholder only - 10%)
+**Areas Needing Work (Not stubs — need expansion or testing):**
+- ⚠️ RAG pipeline (3 files — needs expansion to full retrieval chain)
+- ⚠️ Mobile companion app (`mobile/` — has TypeScript code but needs integration)
+- ⚠️ CI/CD pipelines (~70%)
+- ⚠️ Documentation (~65% consolidated)
+- ⚠️ Test coverage (~35% — target is 60%+)
 
-**When working on this codebase:** Be honest about implementation status. Don't claim features work if they're stubs. Check file content before making assertions.
+**When working on this codebase:** Be honest about implementation status. Verify actual file contents before making assertions. Use `ROADMAP.md` and `BLUEPRINT.md` as the sources of truth.
+
+**⚠️ Plugin Path Correction:** Audio/Vision/Code model plugins live at `windows_ai/plugins/builtin/audio_models/`, `vision_models/`, `code_models/` respectively. There are NO directories at `windows_ai/plugins/audio_ai/`, `vision_ai/`, or `code_ai/`.
 
 ---
 
@@ -122,21 +131,21 @@ npm run start:all                     # Start all services
 
 ### Core Design Pattern: Master Orchestrator
 
-The system uses a centralized orchestrator pattern where `WindowsAI` class (in `windows_ai/core/orchestrator.py`) acts as the master entry point to 43+ specialized managers, each handling specific domains (LLMs, vision, audio, databases, cloud services, etc.).
+The system uses a centralized orchestrator pattern where `WindowsAI` class (in `windows_ai/core/orchestrator.py`) acts as the master entry point to 51 specialized integration managers, each handling specific domains (LLMs, vision, audio, databases, cloud services, etc.).
 
 ```
 WindowsAI Orchestrator (Master Entry Point)
 ├── Auto Setup & Configuration
 ├── Dependency Installer
-├── 43+ Specialized Managers
+├── 51 Integration Managers (windows_ai/integrations/)
 │   ├── LLM Manager (OpenAI, Anthropic, Google, etc.)
 │   ├── Vision Manager (object detection, face recognition, OCR)
 │   ├── Audio Manager (transcription, TTS, speech recognition)
 │   ├── Database Manager (PostgreSQL, MongoDB, Redis, etc.)
 │   ├── Cloud Manager (AWS, Azure, GCP)
 │   ├── Automation Manager (RPA, workflows)
-│   └── ... (37+ more managers)
-└── Plugin System (2,151 plugins - 96.1% functional)
+│   └── ... (45+ more managers)
+└── Plugin System (2,203 plugins across 27 categories)
 ```
 
 ### Key Architectural Principles
@@ -563,11 +572,14 @@ The codebase has an extensive module structure with 200+ Python files in `window
 The `src/` directory contains additional organized modules mirroring capabilities in domains, services, backends, automation, etc.
 
 **File count breakdown** (from comprehensive analysis):
-- Total Python files: 3,468
-- Code quality markers: 938 (TODOs, FIXMEs, XXXs, HACKs, BUGs)
-- Functional plugins: 2,068
-- Stub plugins: 83 (critical gap in AI features)
-- Generated plugins (unverified): 381
+- Total Python files: 3,769+
+- Plugin files in `builtin/`: 2,203 across 27 categories
+- Integration manager files: 51
+- Test files: 253
+- Search module files: 29
+- IoT files: 37 (root) + 12 (windows_ai/iot/)
+- Optimization files: 14
+- Security files: 14+ with 11 subdirectories
 
 ---
 
@@ -775,11 +787,11 @@ EOF
 **Overview**: Rewrote and expanded CLAUDE.md to serve as a complete AI-assistant guide for the Windows AI codebase.
 
 **Changes Made** (merged via PR #492, originally proposed in PR #491):
-- Added honest project status assessment (50-55% complete)
+- Added honest project status assessment (50-55% complete at the time; updated to ~75% in March 2026)
 - Documented all architecture components and directory structure
 - Included complete configuration system guide with examples
 - Added development patterns, testing guidelines, and security philosophy
-- Documented critical gaps: Audio AI, Vision AI, Code AI, Search modules
+- Documented critical gaps: Audio AI, Vision AI, Code AI, Search modules (since implemented — see ROADMAP.md)
 - Included git workflow, commit conventions, and branch naming
 - Added best practices section for AI assistants
 - Added quick reference commands and documentation links
@@ -789,68 +801,54 @@ EOF
 
 ---
 
-## Critical Areas Needing Implementation
+## Areas Needing Work
 
-**When working on these areas, you're implementing from scratch:**
+> **Note:** The following areas are NOT stubs — they have real implementations. They need expansion, testing, or integration work. Always check `ROADMAP.md` for the current phase priorities.
 
-### 1. Audio AI Plugins (25 plugins - ALL STUBS)
+### 1. RAG Pipeline (3 files — needs expansion)
 
-Location: `windows_ai/plugins/audio_ai/`
+Location: `windows_ai/rag/` (engine.py, api.py, __init__.py)
 
-**Needs full implementation:**
-- Voice cloning, audio enhancement, music generation
-- Speech emotion detection, speaker diarization
-- Audio transcription enhancement
-- All are currently 20-line stubs with NotImplementedError
+**Needs:**
+- Full retrieval chain with chunking, embedding, retrieval, re-ranking
+- Integration with the existing 29-file search module
+- Hybrid search (BM25 + dense vector)
 
-### 2. Vision AI Plugins (20 plugins - ALL STUBS)
+### 2. Mobile Companion App
 
-Location: `windows_ai/plugins/vision_ai/`
+Location: `mobile/` (root-level directory)
 
-**Needs full implementation:**
-- Object detection, face recognition, pose estimation
-- Image segmentation, optical character recognition
-- Visual question answering
-- All are currently 20-line stubs with NotImplementedError
+**Has:** TypeScript modules (adapter, trainer, studio, toolkit, analyzer, monitor, bridge, coordinator), QR pairing flow
+**Needs:** Integration with desktop backend, push notifications, testing
 
-### 3. Code AI Plugins (15 plugins - ALL STUBS)
+### 3. Test Coverage (target: 60%+, currently ~35%)
 
-Location: `windows_ai/plugins/code_ai/`
+**Needs:**
+- Unit tests for all 31 windows_os plugins
+- Integration tests for search module (29 files)
+- Tests for IoT, XR, and optimization modules
+- Coverage reporting in CI
 
-**Needs full implementation:**
-- Code generation, code review, refactoring
-- Bug detection, test generation
-- All are currently 20-line stubs with NotImplementedError
+### 4. Documentation Consolidation (~65%)
 
-### 4. Search Module (20/22 files are stubs)
+**Needs:**
+- Plugin index document (`docs/plugins/PLUGIN_INDEX.md`)
+- API reference update (`docs/api/API_REFERENCE.md`)
+- Plugin development guide
 
-Location: `windows_ai/search/`
+---
 
-**Needs implementation:**
-- Web search integration
-- Local file search
-- Semantic search capabilities
-- Most files contain TODO comments
+## Correct Plugin Paths — IMPORTANT
 
-### 5. Optimization Module (10/13 files are stubs)
+| Category | Correct Path | Count | Status |
+|---|---|---|---|
+| Windows | `windows_ai/plugins/builtin/windows/` | 51 | ✅ Production |
+| Windows OS | `windows_ai/plugins/builtin/windows_os/` | 31 | ✅ Production |
+| Audio Models | `windows_ai/plugins/builtin/audio_models/` | 29 | ✅ Functional (300–650 lines) |
+| Vision Models | `windows_ai/plugins/builtin/vision_models/` | 21 | ✅ Functional (150–320 lines) |
+| Code Models | `windows_ai/plugins/builtin/code_models/` | 16 | ✅ Functional (296–416 lines) |
 
-
-Location: `windows_ai/search/`
-
-**Needs implementation:**
-- Web search integration
-- Local file search
-- Semantic search capabilities
-- Most files contain TODO comments
-
-### 5. Optimization Module (10/13 files are stubs)
-
-Location: `windows_ai/optimization/`
-
-**Needs implementation:**
-- Performance optimization
-- Memory management
-- Query optimization
+**⚠️ These paths DO NOT EXIST:** `windows_ai/plugins/audio_ai/`, `windows_ai/plugins/vision_ai/`, `windows_ai/plugins/code_ai/`
 
 ---
 
@@ -990,20 +988,19 @@ async def execute(self, **kwargs):
 
 ## Summary: Key Takeaways
 
-1. **Project is ~50-55% complete** - Be honest about implementation status
-2. **Core systems work well** - Orchestrator, API, security, build system
-3. **Critical gaps exist** - Audio AI, Vision AI, Code AI, Search modules are mostly stubs
-4. **Use unified config** - WindowsAIConfig for all configuration needs
-5. **Security first** - But freedom-oriented (OFF by default)
-6. **Test everything** - Comprehensive test suite with pytest markers
-7. **Verify before claiming** - Read files, check for stubs/TODOs
-8. **Follow conventions** - Commit messages, branch naming, code style
-9. **Document changes** - Update TODO_MASTER.md and relevant docs
-10. **Build works** - PyInstaller + Electron system is production-ready
+1. **Project is ~75% production-ready** — Be honest about implementation status; verify with `ROADMAP.md`
+2. **Core systems work well** — Orchestrator, API, security, build system, all plugin categories
+3. **Audio/Vision/Code plugins are real implementations** — NOT stubs (300–650 lines each); paths are `builtin/audio_models/`, `vision_models/`, `code_models/`
+4. **RAG pipeline needs expansion** — Only 3 files currently; search module (29 files) is functional
+5. **Use unified config** — WindowsAIConfig for all configuration needs
+6. **Security first** — But freedom-oriented (OFF by default)
+7. **Test coverage needs work** — 253 test files, ~35% coverage (target 60%+)
+8. **Follow the roadmap** — `ROADMAP.md` and `BLUEPRINT.md` are the single sources of truth
+9. **Follow conventions** — Commit messages, branch naming, code style
+10. **Build works** — PyInstaller + Electron system is production-ready
 
 ---
 
-**Last Updated**: December 24, 2024
 **Last Updated**: March 10, 2026
 **Repository**: https://github.com/Anthony5265/Windows-AI
 **License**: MIT
@@ -1036,4 +1033,25 @@ python -c "from windows_ai.config.unified_config import get_config; print(get_co
 
 ---
 
+## Agent Compliance Rules
+
+> **⚠️ MANDATORY — These rules apply to every Claude Code session working on this repository.**
+
+1. **Read `ROADMAP.md` and `BLUEPRINT.md` first.** Before making any code changes, read both files in full. They are the single sources of truth for project status, architecture, and priorities.
+
+2. **Follow the phased roadmap.** Work must follow the phase order (Phase 1 → 2 → 3 → 4). Do not skip ahead unless the user explicitly requests it.
+
+3. **Update documentation.** When completing roadmap items, mark them `[x]` in `ROADMAP.md`. When adding new features, add them to the appropriate phase first.
+
+4. **This file defers to ROADMAP.md and BLUEPRINT.md.** If anything in this `CLAUDE.md` file contradicts `ROADMAP.md` or `BLUEPRINT.md`, those files take precedence. Update this file to match.
+
+5. **Verify before claiming.** Always check actual file contents (line counts, real code vs. stubs) before asserting implementation status. Use `find`, `wc -l`, or read files directly.
+
+6. **Use correct plugin paths.** Plugins are at `windows_ai/plugins/builtin/{category}/`. Never reference `windows_ai/plugins/audio_ai/`, `vision_ai/`, or `code_ai/` — those paths do not exist.
+
+---
+
 *This guide is maintained to help AI assistants work effectively with the Windows AI codebase. Keep it updated as the project evolves.*
+
+**Last Updated:** March 10, 2026  
+**Authoritative documents:** `ROADMAP.md` (roadmap) · `BLUEPRINT.md` (architecture)
