@@ -131,21 +131,21 @@ npm run start:all                     # Start all services
 
 ### Core Design Pattern: Master Orchestrator
 
-The system uses a centralized orchestrator pattern where `WindowsAI` class (in `windows_ai/core/orchestrator.py`) acts as the master entry point to 43+ specialized managers, each handling specific domains (LLMs, vision, audio, databases, cloud services, etc.).
+The system uses a centralized orchestrator pattern where `WindowsAI` class (in `windows_ai/core/orchestrator.py`) acts as the master entry point to 51 specialized integration managers, each handling specific domains (LLMs, vision, audio, databases, cloud services, etc.).
 
 ```
 WindowsAI Orchestrator (Master Entry Point)
 ├── Auto Setup & Configuration
 ├── Dependency Installer
-├── 43+ Specialized Managers
+├── 51 Integration Managers (windows_ai/integrations/)
 │   ├── LLM Manager (OpenAI, Anthropic, Google, etc.)
 │   ├── Vision Manager (object detection, face recognition, OCR)
 │   ├── Audio Manager (transcription, TTS, speech recognition)
 │   ├── Database Manager (PostgreSQL, MongoDB, Redis, etc.)
 │   ├── Cloud Manager (AWS, Azure, GCP)
 │   ├── Automation Manager (RPA, workflows)
-│   └── ... (37+ more managers)
-└── Plugin System (2,151 plugins - 96.1% functional)
+│   └── ... (45+ more managers)
+└── Plugin System (2,203 plugins across 27 categories)
 ```
 
 ### Key Architectural Principles
@@ -572,11 +572,14 @@ The codebase has an extensive module structure with 200+ Python files in `window
 The `src/` directory contains additional organized modules mirroring capabilities in domains, services, backends, automation, etc.
 
 **File count breakdown** (from comprehensive analysis):
-- Total Python files: 3,468
-- Code quality markers: 938 (TODOs, FIXMEs, XXXs, HACKs, BUGs)
-- Functional plugins: 2,068
-- Stub plugins: 83 (critical gap in AI features)
-- Generated plugins (unverified): 381
+- Total Python files: 3,769+
+- Plugin files in `builtin/`: 2,203 across 27 categories
+- Integration manager files: 51
+- Test files: 253
+- Search module files: 29
+- IoT files: 37 (root) + 12 (windows_ai/iot/)
+- Optimization files: 14
+- Security files: 14+ with 11 subdirectories
 
 ---
 
@@ -784,11 +787,11 @@ EOF
 **Overview**: Rewrote and expanded CLAUDE.md to serve as a complete AI-assistant guide for the Windows AI codebase.
 
 **Changes Made** (merged via PR #492, originally proposed in PR #491):
-- Added honest project status assessment (50-55% complete)
+- Added honest project status assessment (50-55% complete at the time; updated to ~75% in March 2026)
 - Documented all architecture components and directory structure
 - Included complete configuration system guide with examples
 - Added development patterns, testing guidelines, and security philosophy
-- Documented critical gaps: Audio AI, Vision AI, Code AI, Search modules
+- Documented critical gaps: Audio AI, Vision AI, Code AI, Search modules (since implemented — see ROADMAP.md)
 - Included git workflow, commit conventions, and branch naming
 - Added best practices section for AI assistants
 - Added quick reference commands and documentation links
@@ -985,16 +988,16 @@ async def execute(self, **kwargs):
 
 ## Summary: Key Takeaways
 
-1. **Project is ~50-55% complete** - Be honest about implementation status
-2. **Core systems work well** - Orchestrator, API, security, build system
-3. **Critical gaps exist** - Audio AI, Vision AI, Code AI, Search modules are mostly stubs
-4. **Use unified config** - WindowsAIConfig for all configuration needs
-5. **Security first** - But freedom-oriented (OFF by default)
-6. **Test everything** - Comprehensive test suite with pytest markers
-7. **Verify before claiming** - Read files, check for stubs/TODOs
-8. **Follow conventions** - Commit messages, branch naming, code style
-9. **Document changes** - Update TODO_MASTER.md and relevant docs
-10. **Build works** - PyInstaller + Electron system is production-ready
+1. **Project is ~75% production-ready** — Be honest about implementation status; verify with `ROADMAP.md`
+2. **Core systems work well** — Orchestrator, API, security, build system, all plugin categories
+3. **Audio/Vision/Code plugins are real implementations** — NOT stubs (300–650 lines each); paths are `builtin/audio_models/`, `vision_models/`, `code_models/`
+4. **RAG pipeline needs expansion** — Only 3 files currently; search module (29 files) is functional
+5. **Use unified config** — WindowsAIConfig for all configuration needs
+6. **Security first** — But freedom-oriented (OFF by default)
+7. **Test coverage needs work** — 253 test files, ~35% coverage (target 60%+)
+8. **Follow the roadmap** — `ROADMAP.md` and `BLUEPRINT.md` are the single sources of truth
+9. **Follow conventions** — Commit messages, branch naming, code style
+10. **Build works** — PyInstaller + Electron system is production-ready
 
 ---
 

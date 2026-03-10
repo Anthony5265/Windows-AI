@@ -36,7 +36,7 @@ Windows AI is a **locally-runnable, privacy-respecting AI platform for Windows**
                            ↓
 ╔══════════════════════════════════════════════════════════════════╗
 ║                   INTEGRATION LAYER                              ║
-║         43 Specialized Managers (windows_ai/integrations/)      ║
+║         51 Specialized Managers (windows_ai/integrations/)      ║
 ║  AI Providers · Image Gen · Audio/Speech · Video · Documents    ║
 ║  Browser Automation · Databases · Cloud Storage · Monitoring    ║
 ║  Agents · RAG Pipeline · Vector Stores · Workflows · Email      ║
@@ -112,7 +112,7 @@ Windows-AI/
 │   │   ├── ai_providers.py       ← OpenAI, Anthropic, Google, Groq…
 │   │   ├── audio_speech.py       ← Whisper, ElevenLabs, Azure TTS…
 │   │   ├── image_generation.py   ← DALL-E, Stable Diffusion, Midjourney…
-│   │   └── ... (43 total)
+│   │   └── ... (51 files total)
 │   │
 │   ├── plugins/                  ← Plugin system
 │   │   ├── base.py               ← Plugin, PluginMetadata, PluginType
