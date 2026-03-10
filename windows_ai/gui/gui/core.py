@@ -11,7 +11,7 @@ class Model(Protocol):
 
     def generate(self, prompt: str) -> str:
         """Generate a response for a given prompt."""
-        raise NotImplementedError
+        ...
 
 
 class OverlayWidget:

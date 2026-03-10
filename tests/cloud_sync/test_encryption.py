@@ -268,6 +268,72 @@ class TestSyncEncryption:
 
         assert decrypted == test_data
 
+    def test_encode_base64(self):
+        """Test standalone base64 encoding of raw bytes"""
+        encryption = SyncEncryption(use_nacl=False)
+
+        # Test basic encoding
+        data = b"Hello, World!"
+        encoded = encryption.encode_base64(data)
+        assert isinstance(encoded, str)
+        assert encoded == "SGVsbG8sIFdvcmxkIQ=="
+
+        # Test empty bytes
+        assert encryption.encode_base64(b"") == ""
+
+        # Test binary data with all byte values
+        binary_data = bytes(range(256))
+        encoded_binary = encryption.encode_base64(binary_data)
+        assert isinstance(encoded_binary, str)
+        # Verify only valid base64 characters
+        assert all(
+            c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+            for c in encoded_binary
+        )
+
+    def test_decode_base64(self):
+        """Test standalone base64 decoding to raw bytes"""
+        encryption = SyncEncryption(use_nacl=False)
+
+        # Test basic decoding
+        encoded = "SGVsbG8sIFdvcmxkIQ=="
+        decoded = encryption.decode_base64(encoded)
+        assert isinstance(decoded, bytes)
+        assert decoded == b"Hello, World!"
+
+        # Test empty string
+        assert encryption.decode_base64("") == b""
+
+        # Test roundtrip with various data
+        test_data = [
+            b"Simple ASCII text",
+            b"\x00\x01\x02\xff\xfe\xfd",
+            b"A" * 1000,
+            bytes(range(256)),
+        ]
+        for data in test_data:
+            encoded = encryption.encode_base64(data)
+            decoded = encryption.decode_base64(encoded)
+            assert decoded == data
+
+    def test_encode_decode_base64_roundtrip(self):
+        """Test that encode_base64 and decode_base64 are inverse operations"""
+        encryption = SyncEncryption(use_nacl=False)
+
+        # Test with encryption output
+        key = encryption.create_key_from_password("roundtrip_test")
+        original = b"Sensitive data for roundtrip test"
+        encrypted = encryption.encrypt_data(original, key)
+
+        # Encode the encrypted bytes to base64 and decode back
+        b64 = encryption.encode_base64(encrypted)
+        recovered = encryption.decode_base64(b64)
+        assert recovered == encrypted
+
+        # Verify the recovered encrypted data can still be decrypted
+        decrypted = encryption.decrypt_data(recovered, key)
+        assert decrypted == original
+
 
 @pytest.fixture
 def encryption():
