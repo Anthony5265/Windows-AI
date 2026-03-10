@@ -287,7 +287,7 @@ class EventLogPlugin(IntegrationPlugin):
     async def _export_log(self, log_name: str = "System", path: str = "", **kwargs) -> Dict[str, Any]:
         """Export log to file"""
         if not path:
-            path = r"$env:TEMP\\" + log_name.replace('/', '_') + "_$(Get-Date -Format 'yyyyMMdd_HHmmss').evtx"
+            path = rf"$env:TEMP\{log_name.replace('/', '_')}_$(Get-Date -Format 'yyyyMMdd_HHmmss').evtx"
         cmd = f"""
         $exportPath = "{path}"
         wevtutil epl '{log_name}' $exportPath

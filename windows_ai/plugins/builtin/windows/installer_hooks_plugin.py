@@ -310,8 +310,8 @@ $logs = @()
             return {"success": False, "error": "Either 'app_name' or 'guid' is required"}
 
         filter_clause = (
-            f"$_.PSChildName -eq '{guid.replace(chr(39), chr(39)*2)}'" if guid
-            else f"$props.DisplayName -like '*{app_name.replace(chr(39), chr(39)*2)}*'"
+            f"$_.PSChildName -eq '{guid.replace(chr(39), chr(39) * 2)}'" if guid
+            else f"$props.DisplayName -like '*{app_name.replace(chr(39), chr(39) * 2)}*'"
         )
         cmd = f"""
 $result = $null
