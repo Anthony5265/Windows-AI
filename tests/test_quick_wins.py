@@ -131,7 +131,7 @@ async def test_agent_task_delegation():
     manager = AgentManager()
     await manager.initialize()
 
-    agent = await manager.create_agent("test_worker", capabilities=["general"], auth_token="test-token-at-least-16")
+    agent = await manager.create_agent("test_worker", capabilities=["general"], auth_token="test_auth_token_16ch")
     assert agent is not None
     assert agent.name == "test_worker"
 

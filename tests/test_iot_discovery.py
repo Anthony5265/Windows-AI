@@ -8,6 +8,12 @@ from windows_ai.iot.device_manager import DeviceManager, Device
 from windows_ai.iot.discovery import DeviceDiscovery, DiscoveredDevice
 
 
+@pytest.fixture
+def device_manager(tmp_path):
+    """Create a DeviceManager with isolated tmp storage."""
+    return DeviceManager(storage_path=str(tmp_path / "devices.json"))
+
+
 def test_device_creation():
     """Test Device can be created with required fields."""
     device = Device(device_id="test-001", device_type="sensor")
@@ -37,66 +43,59 @@ def test_device_manager_creation():
     assert dm is not None
 
 
-def test_device_manager_register_device(tmp_path):
+def test_device_manager_register_device(device_manager):
     """Test registering a device with DeviceManager."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    result = dm.register_device("dev-001", "sensor", name="Temperature Sensor")
+    result = device_manager.register_device("dev-001", "sensor", name="Temperature Sensor")
     assert result["status"] == "success"
     assert "device" in result
 
 
-def test_device_manager_get_device(tmp_path):
+def test_device_manager_get_device(device_manager):
     """Test retrieving a registered device."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-002", "actuator", name="Light Switch")
-    result = dm.get_device("dev-002")
+    device_manager.register_device("dev-002", "actuator", name="Light Switch")
+    result = device_manager.get_device("dev-002")
     assert result["status"] == "success"
     assert result["device"]["device_id"] == "dev-002"
 
 
-def test_device_manager_list_devices(tmp_path):
+def test_device_manager_list_devices(device_manager):
     """Test listing all registered devices."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-003", "sensor")
-    dm.register_device("dev-004", "actuator")
-    result = dm.list_devices()
+    device_manager.register_device("dev-003", "sensor")
+    device_manager.register_device("dev-004", "actuator")
+    result = device_manager.list_devices()
     assert result["status"] == "success"
     assert len(result["devices"]) >= 2
 
 
-def test_device_manager_unregister_device(tmp_path):
+def test_device_manager_unregister_device(device_manager):
     """Test unregistering a device."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-005", "sensor")
-    result = dm.unregister_device("dev-005")
+    device_manager.register_device("dev-005", "sensor")
+    result = device_manager.unregister_device("dev-005")
     assert result["status"] == "success"
     # Device should no longer be found
-    result = dm.get_device("dev-005")
+    result = device_manager.get_device("dev-005")
     assert result["status"] == "error"
 
 
-def test_device_manager_update_status(tmp_path):
+def test_device_manager_update_status(device_manager):
     """Test updating device status."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-006", "sensor")
-    result = dm.update_device_status("dev-006", "online")
+    device_manager.register_device("dev-006", "sensor")
+    result = device_manager.update_device_status("dev-006", "online")
     assert result["status"] == "success"
 
 
-def test_device_manager_create_group(tmp_path):
+def test_device_manager_create_group(device_manager):
     """Test creating a device group."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-007", "sensor")
-    dm.register_device("dev-008", "sensor")
-    result = dm.create_device_group("sensors", ["dev-007", "dev-008"])
+    device_manager.register_device("dev-007", "sensor")
+    device_manager.register_device("dev-008", "sensor")
+    result = device_manager.create_device_group("sensors", ["dev-007", "dev-008"])
     assert result["status"] == "success"
 
 
-def test_device_manager_get_statistics(tmp_path):
+def test_device_manager_get_statistics(device_manager):
     """Test getting device statistics."""
-    dm = DeviceManager(storage_path=str(tmp_path / "devices.json"))
-    dm.register_device("dev-009", "sensor")
-    result = dm.get_device_statistics()
+    device_manager.register_device("dev-009", "sensor")
+    result = device_manager.get_device_statistics()
     assert isinstance(result, dict)
 
 
