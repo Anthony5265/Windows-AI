@@ -16,6 +16,18 @@ from .engine import (
     ContextBuilder
 )
 
+from .document_processor import (
+    RAGDocumentProcessor,
+    DocumentProcessor,
+    ChunkConfig,
+    ChunkStrategy,
+    Document,
+    DocumentChunk,
+    FileReader,
+    FileType,
+    TextChunker,
+)
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -26,4 +38,13 @@ __all__ = [
     "RerankStrategy",
     "Reranker",
     "ContextBuilder",
+    "RAGDocumentProcessor",
+    "DocumentProcessor",
+    "ChunkConfig",
+    "ChunkStrategy",
+    "Document",
+    "DocumentChunk",
+    "FileReader",
+    "FileType",
+    "TextChunker",
 ]
