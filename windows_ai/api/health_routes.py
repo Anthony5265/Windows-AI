@@ -132,6 +132,64 @@ async def check_plugins_health():
         )
 
 
+@router.get("/integrations")
+async def check_integrations_health():
+    """
+    Check health of all integration managers.
+    
+    Returns initialization status for each integration manager,
+    useful for verifying which AI providers and services are available.
+    """
+    try:
+        import importlib
+        import os
+        
+        manager_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "integrations")
+        results = {}
+        
+        for fname in sorted(os.listdir(manager_dir)):
+            if not fname.endswith('.py') or fname == '__init__.py':
+                continue
+            module_name = f"windows_ai.integrations.{fname[:-3]}"
+            try:
+                mod = importlib.import_module(module_name)
+                for attr_name in dir(mod):
+                    obj = getattr(mod, attr_name)
+                    if isinstance(obj, type) and attr_name.endswith('Manager') and attr_name != 'Manager':
+                        try:
+                            instance = obj()
+                            await instance.initialize()
+                            results[attr_name] = {
+                                "status": "healthy",
+                                "initialized": getattr(instance, '_initialized', True),
+                            }
+                        except Exception as e:
+                            results[attr_name] = {
+                                "status": "unhealthy",
+                                "error": str(e)[:200],
+                            }
+            except Exception as e:
+                results[fname] = {
+                    "status": "error",
+                    "error": str(e)[:200],
+                }
+        
+        healthy = sum(1 for v in results.values() if v["status"] == "healthy")
+        total = len(results)
+        
+        return {
+            "status": "healthy" if healthy == total else "degraded" if healthy > 0 else "unhealthy",
+            "total": total,
+            "healthy": healthy,
+            "unhealthy": total - healthy,
+            "managers": results,
+        }
+    
+    except Exception as e:
+        logger.error(f"Integration health check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/logs/recent")
 async def get_recent_logs(
     level: Optional[str] = None,

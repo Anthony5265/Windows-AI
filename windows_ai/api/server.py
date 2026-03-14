@@ -17,6 +17,7 @@ from windows_ai.api.chat_routes import router as chat_router
 from windows_ai.api.frontend_routes import router as frontend_router
 from windows_ai.api.setup_routes import router as setup_router
 from windows_ai.api.credentials_routes import router as credentials_router
+from windows_ai.api.health_routes import router as health_router
 from windows_ai.api.middleware import setup_middleware
 from windows_ai.core.plugin_manager import PluginManager
 from windows_ai.frameworks.unified_llm import UnifiedLLMProvider
@@ -133,6 +134,9 @@ app.include_router(setup_router, tags=["setup"])
 
 # Include credentials routes (API key management)
 app.include_router(credentials_router, tags=["credentials"])
+
+# Include health check routes
+app.include_router(health_router, tags=["health"])
 
 # Global plugin manager
 _plugin_manager: PluginManager = None

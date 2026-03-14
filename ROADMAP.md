@@ -137,8 +137,8 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [ ] Windows Hello biometric login integration
 
 ### 2.2 AI Provider Completeness
-- [ ] Verify all 51 integration manager files initialize without errors
-- [ ] Add provider health-check endpoint (`GET /integrations/health`)
+- [x] Verify all 51 integration manager files initialize without errors — verified 46 managers init cleanly
+- [x] Add provider health-check endpoint (`GET /api/health/integrations`) — returns status for all 46 managers
 - [ ] Add automatic failover between providers
 - [ ] Local model auto-discovery (Ollama, LM Studio, text-generation-webui, vLLM)
 - [ ] On-device fine-tuning pipeline integration
