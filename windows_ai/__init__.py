@@ -14,24 +14,16 @@ Quick Start:
     >>> asyncio.run(main())
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.0a1"
 
 # Core functionality
 from windows_ai.core import WindowsAI, get_windows_ai, quick_start
-
-# Legacy imports
-from windows_ai.sso import SSOClient
-from windows_ai.policy import PolicyManager
 
 __all__ = [
     # Core
     "WindowsAI",
     "get_windows_ai",
     "quick_start",
-
-    # Legacy
-    "SSOClient",
-    "PolicyManager",
 
     # Metadata
     "__version__"
