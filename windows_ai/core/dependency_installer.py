@@ -154,24 +154,25 @@ class DependencyInstaller:
         }
 
     async def install_all(self):
-        """Install all dependencies"""
+        """Install all required dependencies.
+        
+        Only installs the core required packages (not optional ones).
+        Optional packages are installed on-demand when features are first used.
+        """
         logger.info("[*] Starting dependency installation...")
 
-        # Install required packages first
+        # Only install required packages - optional ones install on demand
         logger.info(f"Installing {len(self.required_packages)} required packages...")
         for name, spec in self.required_packages.items():
             await self._install_package(name, spec, required=True)
-
-        # Install optional packages (best effort)
-        logger.info(f"Installing {len(self.optional_packages)} optional packages...")
-        for name, info in self.optional_packages.items():
-            await self._install_package(name, info["package"], required=False, feature=info["feature"])
 
         # Summary
         logger.info(f"[+] Installed: {len(self.installed)} packages")
         if self.failed:
             logger.warning(f"[!] Failed: {len(self.failed)} packages")
             logger.warning(f"  Failed packages: {', '.join(self.failed)}")
+        
+        logger.info("[*] Optional packages will be installed when features are first used.")
 
     async def _install_package(self, name: str, spec: str, required: bool = False, feature: str = None):
         """Install a single package"""
