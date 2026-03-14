@@ -132,6 +132,9 @@ async def check_plugins_health():
         )
 
 
+MAX_ERROR_LENGTH = 200
+
+
 @router.get("/integrations")
 async def check_integrations_health():
     """
@@ -166,12 +169,12 @@ async def check_integrations_health():
                         except Exception as e:
                             results[attr_name] = {
                                 "status": "unhealthy",
-                                "error": str(e)[:200],
+                                "error": str(e)[:MAX_ERROR_LENGTH],
                             }
             except Exception as e:
                 results[fname] = {
                     "status": "error",
-                    "error": str(e)[:200],
+                    "error": str(e)[:MAX_ERROR_LENGTH],
                 }
         
         healthy = sum(1 for v in results.values() if v["status"] == "healthy")
