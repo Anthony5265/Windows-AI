@@ -781,3 +781,6 @@ class BluetoothPlugin(IntegrationPlugin):
 
 # Export the plugin class
 __all__ = ["BluetoothPlugin"]
+
+
+plugin = BluetoothPlugin()

@@ -921,3 +921,6 @@ $verification | ConvertTo-Json
         """Cleanup plugin resources."""
         self._initialized = False
         logger.info("Windows System Restore plugin cleaned up")
+
+
+plugin = SystemRestorePlugin()

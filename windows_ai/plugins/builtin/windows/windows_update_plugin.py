@@ -1102,3 +1102,6 @@ class WindowsUpdatePlugin(IntegrationPlugin):
         """Cleanup plugin resources."""
         self._initialized = False
         logger.info("Windows Update plugin cleaned up")
+
+
+plugin = WindowsUpdatePlugin()

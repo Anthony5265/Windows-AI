@@ -1200,3 +1200,6 @@ class WindowsTerminalPlugin(IntegrationPlugin):
     async def cleanup(self):
         """Cleanup plugin resources."""
         logger.info("Windows Terminal plugin cleaned up")
+
+
+plugin = WindowsTerminalPlugin()

@@ -711,3 +711,6 @@ class PerformanceRecorderPlugin(IntegrationPlugin):
     async def cleanup(self):
         """Cleanup plugin resources"""
         self.logger.info("Cleaning up Performance Recorder plugin")
+
+
+plugin = PerformanceRecorderPlugin()

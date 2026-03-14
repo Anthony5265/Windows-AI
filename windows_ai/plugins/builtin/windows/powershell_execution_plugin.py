@@ -1029,3 +1029,6 @@ class PowerShellExecutionPlugin(IntegrationPlugin):
         }}
         '''
         return await self._run_powershell(ps_script, timeout=iterations * 60 + 60)
+
+
+plugin = PowerShellExecutionPlugin()

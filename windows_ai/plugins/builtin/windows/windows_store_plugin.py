@@ -814,3 +814,6 @@ class WindowsStorePlugin(IntegrationPlugin):
     async def cleanup(self):
         """Cleanup plugin resources"""
         self.logger.info("Cleaning up Windows Store plugin")
+
+
+plugin = WindowsStorePlugin()

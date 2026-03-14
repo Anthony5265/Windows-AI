@@ -533,3 +533,6 @@ $logs = Get-WinEvent -LogName 'Microsoft-Windows-Containers*' -MaxEvents $maxEve
             raise Exception(stderr.decode() if stderr else "PowerShell execution failed")
         
         return stdout.decode().strip()
+
+
+plugin = SandboxPlugin()

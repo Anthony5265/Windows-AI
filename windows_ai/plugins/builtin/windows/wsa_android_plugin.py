@@ -667,3 +667,6 @@ class WSAAndroidPlugin(IntegrationPlugin):
     async def cleanup(self):
         """Cleanup plugin resources"""
         self.logger.info("Cleaning up WSA Android plugin")
+
+
+plugin = WSAAndroidPlugin()

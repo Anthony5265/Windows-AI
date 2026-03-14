@@ -523,3 +523,6 @@ $settings = if (Test-Path $regPath) { Get-ItemProperty -Path $regPath } else { $
 
 # Export the plugin class
 __all__ = ["ClipboardSyncPlugin"]
+
+
+plugin = ClipboardSyncPlugin()

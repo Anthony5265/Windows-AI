@@ -617,3 +617,6 @@ class BitsTransferPlugin(IntegrationPlugin):
         }
         '''
         return await self._run_powershell(script)
+
+
+plugin = BitsTransferPlugin()

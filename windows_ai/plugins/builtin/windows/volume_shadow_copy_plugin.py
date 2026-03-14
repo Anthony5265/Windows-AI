@@ -1172,3 +1172,6 @@ class VolumeShadowCopyPlugin(IntegrationPlugin):
         $checks
         '''
         return await self._run_powershell(script)
+
+
+plugin = VolumeShadowCopyPlugin()

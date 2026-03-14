@@ -107,7 +107,8 @@ class WindowsWinRMPlugin(IntegrationPlugin):
             name="Windows Remote Management",
             description="PowerShell Remoting and WinRM session management",
             version="2.0.0",
-            author="Windows AI Team"
+            author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
         self._sessions: Dict[str, RemoteSession] = {}
@@ -1470,3 +1471,6 @@ $analysis | ConvertTo-Json -Depth 4
         except Exception as e:
             logger.error(f"PowerShell execution failed: {e}")
             raise
+
+
+plugin = WindowsWinRMPlugin()

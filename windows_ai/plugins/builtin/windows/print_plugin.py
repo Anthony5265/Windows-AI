@@ -92,7 +92,8 @@ class WindowsPrintPlugin(IntegrationPlugin):
             name="Windows Print Management",
             description="Printer and print job management",
             version="2.0.0",
-            author="Windows AI Team"
+            author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
     
@@ -1036,3 +1037,6 @@ $spoolFiles = Get-ChildItem $spool_path -ErrorAction SilentlyContinue
         except Exception as e:
             logger.error(f"PowerShell execution failed: {e}")
             raise
+
+
+plugin = WindowsPrintPlugin()

@@ -22,11 +22,8 @@ class ProcessManagementPlugin(IntegrationPlugin):
             description="Monitor, control, and analyze Windows processes",
             version="2.0.0",
             author="Windows AI Team",
-            category="windows",
             plugin_type=PluginType.INTEGRATION,
             tags=["process", "task", "management", "monitoring", "windows"],
-            requires_admin=False,
-            platforms=["windows"]
         )
         super().__init__(metadata)
 
@@ -641,3 +638,6 @@ class ProcessManagementPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         logger.info("Process Management plugin cleaned up")
+
+
+plugin = ProcessManagementPlugin()

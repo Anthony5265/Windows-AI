@@ -21,9 +21,7 @@ class WindowsDefenderPlugin(IntegrationPlugin):
             description="Manage Windows Defender antivirus and security features",
             version="1.0.0",
             author="Windows AI Team",
-            category="security",
-            platforms=["windows"],
-            dependencies=[],
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
         self.logger = logging.getLogger(__name__)
@@ -597,3 +595,6 @@ class WindowsDefenderPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         self.logger.info("Windows Defender plugin cleaned up")
+
+
+plugin = WindowsDefenderPlugin()

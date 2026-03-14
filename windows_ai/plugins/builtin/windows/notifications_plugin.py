@@ -1126,3 +1126,6 @@ Start-Process "ms-settings:notifications"
         """Cleanup plugin resources."""
         self._initialized = False
         logger.info("Windows Notifications plugin cleaned up")
+
+
+plugin = NotificationsPlugin()

@@ -21,9 +21,7 @@ class EventLogPlugin(IntegrationPlugin):
             description="Read and manage Windows Event Logs",
             version="1.0.0",
             author="Windows AI Team",
-            category="system",
-            platforms=["windows"],
-            dependencies=[],
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
         self.logger = logging.getLogger(__name__)
@@ -424,3 +422,6 @@ class EventLogPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         self.logger.info("Event Log plugin cleaned up")
+
+
+plugin = EventLogPlugin()

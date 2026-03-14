@@ -24,11 +24,8 @@ class PowerShellBridgePlugin(IntegrationPlugin):
             description="Execute PowerShell scripts and commands with advanced session management",
             version="2.0.0",
             author="Windows AI Team",
-            category="windows",
             plugin_type=PluginType.INTEGRATION,
             tags=["powershell", "scripting", "automation", "windows"],
-            requires_admin=False,
-            platforms=["windows"]
         )
         super().__init__(metadata)
         self._sessions: Dict[str, Dict[str, Any]] = {}
@@ -536,3 +533,6 @@ class PowerShellBridgePlugin(IntegrationPlugin):
         """Cleanup plugin resources"""
         self._sessions.clear()
         logger.info("PowerShell Bridge plugin cleaned up")
+
+
+plugin = PowerShellBridgePlugin()

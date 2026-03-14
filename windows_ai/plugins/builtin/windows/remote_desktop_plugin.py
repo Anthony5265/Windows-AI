@@ -622,3 +622,6 @@ $events | ConvertTo-Json
 
 
 __all__ = ["RemoteDesktopPlugin"]
+
+
+plugin = RemoteDesktopPlugin()

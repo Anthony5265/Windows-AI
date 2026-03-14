@@ -22,11 +22,8 @@ class WindowsFirewallPlugin(IntegrationPlugin):
             description="Manage Windows Defender Firewall rules, profiles, and settings",
             version="2.0.0",
             author="Windows AI Team",
-            category="windows",
             plugin_type=PluginType.INTEGRATION,
             tags=["firewall", "security", "network", "rules", "windows"],
-            requires_admin=True,
-            platforms=["windows"]
         )
         super().__init__(metadata)
 
@@ -681,3 +678,6 @@ class WindowsFirewallPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         logger.info("Windows Firewall plugin cleaned up")
+
+
+plugin = WindowsFirewallPlugin()

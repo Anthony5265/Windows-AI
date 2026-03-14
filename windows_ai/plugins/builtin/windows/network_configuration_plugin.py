@@ -1084,3 +1084,6 @@ class NetworkConfigurationPlugin(IntegrationPlugin):
         }
         '''
         return await self._run_powershell(script)
+
+
+plugin = NetworkConfigurationPlugin()
