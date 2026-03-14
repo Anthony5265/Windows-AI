@@ -36,7 +36,12 @@ def _safe_import(module_path, names=None):
         if names:
             return tuple(getattr(mod, name, None) for name in names)
         return mod
-    except (ImportError, Exception):
+    except ImportError:
+        if names:
+            return tuple(None for _ in names)
+        return None
+    except Exception as e:
+        logging.getLogger(__name__).debug(f"Failed to import {module_path}: {e}")
         if names:
             return tuple(None for _ in names)
         return None
@@ -46,8 +51,10 @@ FolderWatcherManager, WatcherConfig, EXAMPLE_WATCHERS = _safe_import(
     'windows_ai.folder_watcher', ['FolderWatcherManager', 'WatcherConfig', 'EXAMPLE_WATCHERS'])
 TaskScheduler, ScheduledTask, EXAMPLE_TASKS = _safe_import(
     'windows_ai.scheduler', ['TaskScheduler', 'ScheduledTask', 'EXAMPLE_TASKS'])
-PhaseBootstrapper = _safe_import('windows_ai.phase_bootstrap', ['PhaseBootstrapper'])[0] if _safe_import('windows_ai.phase_bootstrap') else None
-PhaseTracker = _safe_import('windows_ai.phase_tracker', ['PhaseTracker'])[0] if _safe_import('windows_ai.phase_tracker') else None
+_pb_mod = _safe_import('windows_ai.phase_bootstrap', ['PhaseBootstrapper'])
+PhaseBootstrapper = _pb_mod[0] if _pb_mod else None
+_pt_mod = _safe_import('windows_ai.phase_tracker', ['PhaseTracker'])
+PhaseTracker = _pt_mod[0] if _pt_mod else None
 
 # Import plugin system
 try:
