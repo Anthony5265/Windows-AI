@@ -7,7 +7,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class NetworkConfigurationPlugin(IntegrationPlugin):
             description="Comprehensive Windows network management and configuration",
             version="2.0.0",
             author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
             tags=["network", "windows", "dns", "firewall", "wifi", "vpn"]
         )
         super().__init__(metadata)
@@ -73,6 +74,15 @@ class NetworkConfigurationPlugin(IntegrationPlugin):
         except Exception as e:
             logger.error(f"PowerShell execution failed: {e}")
             return {"success": False, "error": str(e)}
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
 
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
         """Execute network configuration actions."""

@@ -98,6 +98,15 @@ class BluetoothPlugin(IntegrationPlugin):
         logger.info("Windows Bluetooth plugin initialized")
         return True
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a Bluetooth management action"""
         action = kwargs.get("action", "get_bluetooth_status")

@@ -9,8 +9,13 @@ Provides comprehensive Windows Registry management capabilities including:
 - Value type support (String, DWORD, Binary, etc.)
 """
 import asyncio
-import winreg
 import json
+try:
+    import winreg
+    _HAS_WINREG = True
+except ImportError:
+    _HAS_WINREG = False
+    winreg = None
 from typing import Dict, Any, Optional, List, Union
 from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 import logging
@@ -18,27 +23,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Registry hive mappings
-HIVE_MAP = {
-    "HKEY_CLASSES_ROOT": winreg.HKEY_CLASSES_ROOT,
-    "HKCR": winreg.HKEY_CLASSES_ROOT,
-    "HKEY_CURRENT_USER": winreg.HKEY_CURRENT_USER,
-    "HKCU": winreg.HKEY_CURRENT_USER,
-    "HKEY_LOCAL_MACHINE": winreg.HKEY_LOCAL_MACHINE,
-    "HKLM": winreg.HKEY_LOCAL_MACHINE,
-    "HKEY_USERS": winreg.HKEY_USERS,
-    "HKU": winreg.HKEY_USERS,
-    "HKEY_CURRENT_CONFIG": winreg.HKEY_CURRENT_CONFIG,
+if _HAS_WINREG:
+    HIVE_MAP = {
+        "HKEY_CLASSES_ROOT": winreg.HKEY_CLASSES_ROOT,
+        "HKCR": winreg.HKEY_CLASSES_ROOT,
+        "HKEY_CURRENT_USER": winreg.HKEY_CURRENT_USER,
+        "HKCU": winreg.HKEY_CURRENT_USER,
+        "HKEY_LOCAL_MACHINE": winreg.HKEY_LOCAL_MACHINE,
+        "HKLM": winreg.HKEY_LOCAL_MACHINE,
+        "HKEY_USERS": winreg.HKEY_USERS,
+        "HKU": winreg.HKEY_USERS,
+        "HKEY_CURRENT_CONFIG": winreg.HKEY_CURRENT_CONFIG,
     "HKCC": winreg.HKEY_CURRENT_CONFIG,
-}
+    }
+else:
+    HIVE_MAP = {}
 
-VALUE_TYPES = {
-    "REG_SZ": winreg.REG_SZ,
-    "REG_EXPAND_SZ": winreg.REG_EXPAND_SZ,
-    "REG_BINARY": winreg.REG_BINARY,
-    "REG_DWORD": winreg.REG_DWORD,
-    "REG_QWORD": winreg.REG_QWORD,
-    "REG_MULTI_SZ": winreg.REG_MULTI_SZ,
-}
+if _HAS_WINREG:
+    VALUE_TYPES = {
+        "REG_SZ": winreg.REG_SZ,
+        "REG_EXPAND_SZ": winreg.REG_EXPAND_SZ,
+        "REG_BINARY": winreg.REG_BINARY,
+        "REG_DWORD": winreg.REG_DWORD,
+        "REG_QWORD": winreg.REG_QWORD,
+        "REG_MULTI_SZ": winreg.REG_MULTI_SZ,
+    }
+else:
+    VALUE_TYPES = {}
 
 
 class WindowsRegistryManagementPlugin(IntegrationPlugin):

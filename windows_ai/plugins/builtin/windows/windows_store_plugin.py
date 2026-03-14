@@ -99,6 +99,15 @@ class WindowsStorePlugin(IntegrationPlugin):
         self.logger.info("Initializing Windows Store plugin")
         return True
 
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute Windows Store operations"""
         action = kwargs.get("action", "list_packages")

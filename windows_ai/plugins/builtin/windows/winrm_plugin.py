@@ -13,7 +13,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +114,15 @@ class WindowsWinRMPlugin(IntegrationPlugin):
         self._jobs: Dict[str, RemoteJob] = {}
         self._trusted_hosts: List[TrustedHost] = []
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
         """Execute WinRM actions"""
         actions = {

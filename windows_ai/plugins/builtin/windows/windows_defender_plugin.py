@@ -8,7 +8,7 @@ import logging
 import subprocess
 from typing import Any, Dict, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 
 class WindowsDefenderPlugin(IntegrationPlugin):
@@ -101,6 +101,15 @@ class WindowsDefenderPlugin(IntegrationPlugin):
     async def initialize(self) -> bool:
         """Initialize the plugin"""
         self.logger.info("Initializing Windows Defender plugin")
+        return True
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
         return True
 
     async def execute(self, **kwargs) -> Dict[str, Any]:

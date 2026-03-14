@@ -98,6 +98,15 @@ class SystemRestorePlugin(IntegrationPlugin):
             logger.error(f"Failed to initialize System Restore plugin: {e}")
             return False
 
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a system restore action."""
         action = kwargs.get("action", "get_protection_status")

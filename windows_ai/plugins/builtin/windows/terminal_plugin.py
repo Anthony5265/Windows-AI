@@ -130,6 +130,15 @@ class WindowsTerminalPlugin(IntegrationPlugin):
             logger.error(f"Failed to initialize Windows Terminal plugin: {e}")
             return False
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a Windows Terminal action."""
         action = kwargs.get("action", "")

@@ -116,6 +116,15 @@ class WindowsUpdatePlugin(IntegrationPlugin):
             logger.error(f"Failed to initialize Windows Update plugin: {e}")
             return False
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a Windows Update action."""
         action = kwargs.get("action", "check_updates")

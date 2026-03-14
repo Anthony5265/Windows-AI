@@ -8,7 +8,7 @@ import logging
 import subprocess
 from typing import Any, Dict, Optional, List
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 
 class EventLogPlugin(IntegrationPlugin):
@@ -72,6 +72,15 @@ class EventLogPlugin(IntegrationPlugin):
     async def initialize(self) -> bool:
         """Initialize the plugin"""
         self.logger.info("Initializing Event Log plugin")
+        return True
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
         return True
 
     async def execute(self, **kwargs) -> Dict[str, Any]:

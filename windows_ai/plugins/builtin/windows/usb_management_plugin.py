@@ -7,7 +7,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ class USBManagementPlugin(IntegrationPlugin):
             description="Comprehensive USB device management - enumerate, eject, mount, and configure USB devices",
             version="2.0.0",
             author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
             tags=["usb", "devices", "hardware", "storage", "windows"],
         )
         super().__init__(metadata)
@@ -111,7 +112,7 @@ class USBManagementPlugin(IntegrationPlugin):
                 "return_code": process.returncode,
             }
         except Exception as e:
-            logger.error(f"PowerShell execution error: {e}")
+            logger.warning(f"PowerShell execution unavailable: {e}")
             return {"success": False, "output": "", "error": str(e), "return_code": -1}
 
     async def initialize(self) -> bool:
@@ -125,7 +126,7 @@ class USBManagementPlugin(IntegrationPlugin):
             logger.info("USB Management plugin initialized successfully")
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize USB Management plugin: {e}")
+            logger.warning(f"USB Management plugin not available (requires Windows): {e}")
             return False
 
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
@@ -1043,13 +1044,14 @@ class USBManagementPlugin(IntegrationPlugin):
         """
         return await self._run_powershell(script)
 
-    async def connect(self) -> bool:
+    async def connect(self, credentials: Dict[str, str]) -> bool:
         """Connect to USB management services"""
         return await self.initialize()
 
-    async def disconnect(self) -> None:
+    async def disconnect(self) -> bool:
         """Disconnect from USB management services"""
         await self.cleanup()
+        return True
 
 
 # Plugin instance for registration

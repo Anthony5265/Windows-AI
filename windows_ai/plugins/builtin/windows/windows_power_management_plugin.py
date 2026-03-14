@@ -27,6 +27,9 @@ class WindowsPowerManagementPlugin(ToolPlugin):
     - Performance vs battery optimization
     """
 
+    def __init__(self):
+        super().__init__(self.get_metadata())
+
     @staticmethod
     def get_metadata() -> PluginMetadata:
         return PluginMetadata(

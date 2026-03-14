@@ -20,6 +20,9 @@ class SystemInfoPlugin(ToolPlugin):
     Provides detailed system information and monitoring.
     """
 
+    def __init__(self):
+        super().__init__(self.get_metadata())
+
     @staticmethod
     def get_metadata() -> PluginMetadata:
         return PluginMetadata(
@@ -191,3 +194,6 @@ class SystemInfoPlugin(ToolPlugin):
             "description": "Get detailed system information including CPU, memory, disk, network status, and running processes. Use this when the user asks about system resources, performance, or hardware.",
             "parameters": self.get_schema()
         }
+
+
+plugin = SystemInfoPlugin()
