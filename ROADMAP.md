@@ -114,7 +114,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 1.2 Test Coverage (Target: 60%+)
 - [x] Add unit tests for all 31 windows_os plugins — 450 parametrized tests in `tests/test_windows_os_plugins.py`
 - [x] Add integration tests for search module (29 files — LocalBackend, RemoteBackend, SearchService) — 8 tests in `tests/test_search.py`
-- [ ] Add tests for XR module (mock runtime)
+- [x] Add tests for XR module (mock runtime) — 12 tests in `tests/test_xr_module.py`
 - [x] Add tests for IoT module (mock MQTT broker) — 15 tests in `tests/test_iot_discovery.py`, 4 tests in `tests/test_iot_mqtt.py`
 - [x] Add tests for optimization module (14 files) — 22 tests in `tests/test_optimization.py`
 - [x] Add tests for `SyncEncryption.encode_base64/decode_base64` — 3 tests added
@@ -150,7 +150,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 
 ### 2.3 Plugin Ecosystem
 - [x] Plugin marketplace API (`GET /marketplace`, `POST /marketplace/install`) — `windows_ai/api/marketplace_routes.py` with browse, search, install, uninstall, categories, stats
-- [ ] Plugin signature verification
+- [x] Plugin signature verification — `windows_ai/security/plugin_verification.py` with SHA-256 hashing, sign/verify/batch operations
 - [ ] Plugin sandboxing (already partially implemented in security module — 14+ files, 11 subdirectories)
 - [ ] Community plugin submission process
 - [ ] Plugin dependency resolver
@@ -188,7 +188,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 3.3 Reliability
 - [x] Health check endpoint with all manager statuses — `GET /api/health/integrations` checks all 46 managers
 - [x] Circuit breaker pattern for external API calls — `windows_ai/core/circuit_breaker.py` with `CircuitBreaker`, `CircuitBreakerRegistry`, decorator
-- [ ] Graceful degradation when providers are unavailable
+- [x] Graceful degradation when providers are unavailable — orchestrator initializes managers concurrently with try/except, provider failover handles runtime failures
 - [ ] Automatic crash recovery (watchdog.py already exists)
 - [ ] Distributed tracing (OpenTelemetry)
 
