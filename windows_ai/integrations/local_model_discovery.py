@@ -52,10 +52,15 @@ class LocalModelDiscovery:
     - llama.cpp: Native C++ inference
     """
 
-    def __init__(self):
+    def __init__(self, timeout: float = 10.0):
+        """
+        Args:
+            timeout: Timeout in seconds for each provider discovery (default 10).
+        """
         self._models: List[LocalModel] = []
         self._initialized = False
         self._providers: Dict[str, bool] = {}
+        self._timeout = timeout
     
     async def initialize(self):
         """Initialize and run first discovery."""
@@ -103,7 +108,7 @@ class LocalModelDiscovery:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
             
             if proc.returncode == 0:
                 lines = stdout.decode().strip().split("\n")

@@ -232,6 +232,10 @@ def circuit_breaker(
     """
     Decorator to wrap an async function with a circuit breaker.
     
+    Each unique `name` creates one circuit breaker in the global registry.
+    If the same name is used on multiple functions, they share a circuit
+    breaker (i.e., failures in one affect the other).
+    
     Usage:
         @circuit_breaker("openai", failure_threshold=5, recovery_timeout=30)
         async def call_openai(prompt: str) -> str:
