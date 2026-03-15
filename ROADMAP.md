@@ -144,7 +144,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 2.2 AI Provider Completeness
 - [x] Verify all 51 integration manager files initialize without errors — verified 46 managers init cleanly
 - [x] Add provider health-check endpoint (`GET /api/health/integrations`) — returns status for all 46 managers
-- [ ] Add automatic failover between providers
+- [x] Add automatic failover between providers — `windows_ai/core/provider_failover.py` with `ProviderFailover` class
 - [x] Local model auto-discovery (Ollama, LM Studio, text-generation-webui, vLLM) — `windows_ai/integrations/local_model_discovery.py` with `LocalModelDiscovery` class
 - [ ] On-device fine-tuning pipeline integration
 
@@ -187,7 +187,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 
 ### 3.3 Reliability
 - [x] Health check endpoint with all manager statuses — `GET /api/health/integrations` checks all 46 managers
-- [ ] Circuit breaker pattern for external API calls
+- [x] Circuit breaker pattern for external API calls — `windows_ai/core/circuit_breaker.py` with `CircuitBreaker`, `CircuitBreakerRegistry`, decorator
 - [ ] Graceful degradation when providers are unavailable
 - [ ] Automatic crash recovery (watchdog.py already exists)
 - [ ] Distributed tracing (OpenTelemetry)
