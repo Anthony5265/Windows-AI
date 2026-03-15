@@ -36,7 +36,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 | API Layer (`windows_ai/api/`) | ✅ Production | 15 route files, ~95% |
 | FastAPI server (`windows_ai/main.py`) | ✅ Production | Functional |
 | Search module (`windows_ai/search/`) | ✅ Functional | 29 files, 10,007 lines total |
-| RAG pipeline (`windows_ai/rag/`) | ⚠️ Minimal | 3 files (engine, api, __init__) |
+| RAG pipeline (`windows_ai/rag/`) | ✅ Functional | 4 files (engine, api, document_processor, __init__) |
 | Vector DB (`windows_ai/vector_db/`) | ✅ Functional | 8 integrations |
 | Agent system (`windows_ai/agents/`) | ✅ Functional | 4 files (agent, agent_manager, task) |
 | Security system (`windows_ai/security/`) | ✅ Functional | 14+ files, 11 subdirectories |
@@ -45,10 +45,10 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 | IoT module (`windows_ai/iot/`) | ✅ Functional | 12 files, 4,084 lines — BLE scanner, device manager |
 | Optimization module (`optimization/`) | ✅ Functional | 14 files, 1,532 lines — profiling, tuning, telemetry |
 | Electron GUI (`apps/gui/`) | ✅ Functional | main.js, preload.js, updater.js, renderer/ |
-| Test suite (`tests/`) | ✅ Passing | 253 test files |
+| Test suite (`tests/`) | ✅ Passing | 253+ test files, 674+ passing tests |
 | CI/CD (`.github/workflows/`) | ⚠️ Partial | ~70% |
 | Build system (PyInstaller + electron-builder) | ✅ Production | Functional |
-| Documentation | ⚠️ Being consolidated | ~65% |
+| Documentation | ⚠️ Being consolidated | ~80% |
 | Mobile companion (`mobile/`) | ⚠️ Early stage | TypeScript modules, QR pairing, adapter code |
 
 **Overall: ~75% production-ready**
@@ -88,12 +88,17 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 
 ### Quality
 - [x] All 11 quick-win tests passing — `tests/test_quick_wins.py` fixed to match current API signatures (10/10 passing)
-- [x] 253 test files in `tests/`
+- [x] 253+ test files in `tests/`
 - [x] 12+ syntax errors found and fixed across the codebase
 - [x] `docs/archive/roadmaps/` consolidates all old roadmap files
 - [x] Integration manager tests — `tests/test_integration_managers.py` rewritten (141/141 passing)
 - [x] Search module tests — `tests/test_search.py` rewritten with 8 tests
 - [x] IoT module tests — `tests/test_iot_discovery.py` rewritten (15 tests), `tests/test_iot_mqtt.py` rewritten (4 tests)
+- [x] Windows OS plugin tests — `tests/test_windows_os_plugins.py` (450 parametrized tests, all passing)
+- [x] API endpoint tests — `tests/test_api_endpoints.py` fixed from Flask to FastAPI (26 tests)
+- [x] Marketplace tests — `tests/test_marketplace.py` (11 tests)
+- [x] Local model discovery tests — `tests/test_local_model_discovery.py` (8 tests)
+- [x] Core systems tests — `tests/test_core_systems.py` (28 tests for RAG, workflow, agents, cache, streaming)
 
 ---
 
@@ -107,22 +112,22 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Verify all 51 integration manager files initialize without errors — all 45 unique manager classes import, instantiate, and initialize without errors; 141 parametrized tests passing
 
 ### 1.2 Test Coverage (Target: 60%+)
-- [ ] Add unit tests for all 31 windows_os plugins
+- [x] Add unit tests for all 31 windows_os plugins — 450 parametrized tests in `tests/test_windows_os_plugins.py`
 - [x] Add integration tests for search module (29 files — LocalBackend, RemoteBackend, SearchService) — 8 tests in `tests/test_search.py`
 - [ ] Add tests for XR module (mock runtime)
 - [x] Add tests for IoT module (mock MQTT broker) — 15 tests in `tests/test_iot_discovery.py`, 4 tests in `tests/test_iot_mqtt.py`
 - [x] Add tests for optimization module (14 files) — 22 tests in `tests/test_optimization.py`
 - [x] Add tests for `SyncEncryption.encode_base64/decode_base64` — 3 tests added
-- [ ] Reach 60%+ overall test coverage (currently ~35%)
+- [ ] Reach 60%+ overall test coverage (currently ~40%)
 - [ ] Add `pytest-cov` to CI workflow
 
 ### 1.3 Documentation
 - [x] Single ROADMAP.md (this file)
 - [x] Single BLUEPRINT.md
-- [ ] Update `docs/api/API_REFERENCE.md` with all new endpoints
+- [x] Update `docs/api/API_REFERENCE.md` with all new endpoints — comprehensive API reference with 65 endpoints across 11 categories
 - [x] Update `CLAUDE.md` honest status section to match actual state (~75%)
-- [ ] Add `docs/plugins/PLUGIN_INDEX.md` — catalogue all 2,203 plugins across 27 categories
-- [ ] Add `docs/development/plugin_development.md`
+- [x] Add `docs/plugins/PLUGIN_INDEX.md` — catalogue all 2,155 plugins across 27 categories
+- [x] Add `docs/development/plugin_development.md` — complete plugin development guide with examples
 
 ---
 
@@ -140,11 +145,11 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Verify all 51 integration manager files initialize without errors — verified 46 managers init cleanly
 - [x] Add provider health-check endpoint (`GET /api/health/integrations`) — returns status for all 46 managers
 - [ ] Add automatic failover between providers
-- [ ] Local model auto-discovery (Ollama, LM Studio, text-generation-webui, vLLM)
+- [x] Local model auto-discovery (Ollama, LM Studio, text-generation-webui, vLLM) — `windows_ai/integrations/local_model_discovery.py` with `LocalModelDiscovery` class
 - [ ] On-device fine-tuning pipeline integration
 
 ### 2.3 Plugin Ecosystem
-- [ ] Plugin marketplace API (`GET /marketplace`, `POST /marketplace/install`)
+- [x] Plugin marketplace API (`GET /marketplace`, `POST /marketplace/install`) — `windows_ai/api/marketplace_routes.py` with browse, search, install, uninstall, categories, stats
 - [ ] Plugin signature verification
 - [ ] Plugin sandboxing (already partially implemented in security module — 14+ files, 11 subdirectories)
 - [ ] Community plugin submission process
@@ -168,7 +173,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 
 ### 3.1 Performance
 - [ ] Profile and optimize API response times (target: <200ms p95)
-- [ ] Implement response caching layer
+- [x] Implement response caching layer — `windows_ai/core/cache.py` with InMemoryCache and Redis backends (417 lines)
 - [ ] Lazy-load integration managers (currently all init at startup)
 - [ ] Background plugin pre-warming
 - [ ] Memory usage optimization (target: <500MB idle)
@@ -181,7 +186,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [ ] CVE monitoring for dependencies (`pip-audit` in CI)
 
 ### 3.3 Reliability
-- [ ] Health check endpoint with all manager statuses
+- [x] Health check endpoint with all manager statuses — `GET /api/health/integrations` checks all 46 managers
 - [ ] Circuit breaker pattern for external API calls
 - [ ] Graceful degradation when providers are unavailable
 - [ ] Automatic crash recovery (watchdog.py already exists)
