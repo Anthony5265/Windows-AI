@@ -161,7 +161,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 2.4 Search & RAG
 - [x] Full RAG pipeline with chunking, embedding, retrieval, re-ranking — expanded to 6 files (engine, api, document_processor, hybrid_search, file_indexer, __init__)
 - [x] Windows file system indexer — `windows_ai/rag/file_indexer.py` with recursive indexing, file watching via watchdog
-- [ ] Semantic search over plugin documentation (leverage existing 29-file search module)
+- [x] Semantic search over plugin documentation — `windows_ai/search/plugin_search.py` with BM25-backed PluginSearchIndex
 - [x] Hybrid search (BM25 + dense vector) for all document types — `windows_ai/rag/hybrid_search.py` with BM25Index, VectorIndex, HybridSearch (RRF fusion)
 
 ### 2.5 Mobile Companion App
@@ -177,7 +177,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 3.1 Performance
 - [ ] Profile and optimize API response times (target: <200ms p95)
 - [x] Implement response caching layer — `windows_ai/core/cache.py` with InMemoryCache and Redis backends (417 lines)
-- [ ] Lazy-load integration managers (currently all init at startup)
+- [x] Lazy-load integration managers — `windows_ai/core/lazy_loader.py` with `LazyManagerLoader`, per-manager locks, load-time tracking
 - [ ] Background plugin pre-warming
 - [ ] Memory usage optimization (target: <500MB idle)
 
@@ -195,7 +195,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Health check endpoint with all manager statuses — `GET /api/health/integrations` checks all 46 managers
 - [x] Circuit breaker pattern for external API calls — `windows_ai/core/circuit_breaker.py` with `CircuitBreaker`, `CircuitBreakerRegistry`, decorator
 - [x] Graceful degradation when providers are unavailable — orchestrator initializes managers concurrently with try/except, provider failover handles runtime failures
-- [ ] Automatic crash recovery (watchdog.py already exists)
+- [x] Automatic crash recovery — `windows_ai/core/crash_recovery.py` with heartbeat monitoring, automatic restart, exponential backoff
 - [ ] Distributed tracing (OpenTelemetry)
 
 ### 3.4 Build & Distribution
