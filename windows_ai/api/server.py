@@ -23,6 +23,8 @@ from windows_ai.api.agent_routes import router as agent_router
 from windows_ai.api.sse_routes import router as sse_router
 from windows_ai.api.websocket_routes import router as websocket_router
 from windows_ai.api.workflow_routes import router as workflow_router
+from windows_ai.api.observability_routes import router as observability_router
+from windows_ai.api.mesh_routes import router as mesh_router
 from windows_ai.api.middleware import setup_middleware
 from windows_ai.api.rate_limiter import RateLimitMiddleware
 from windows_ai.core.plugin_manager import PluginManager
@@ -158,6 +160,12 @@ app.include_router(websocket_router, tags=["websocket"])
 
 # Include workflow routes (DAG workflow engine)
 app.include_router(workflow_router, tags=["workflows"])
+
+# Include observability routes (tracing, metrics, logging)
+app.include_router(observability_router, tags=["observability"])
+
+# Include mesh network routes (distributed coordination)
+app.include_router(mesh_router, tags=["mesh"])
 
 # Add rate limiting middleware
 app.add_middleware(
