@@ -95,6 +95,9 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Search module tests — `tests/test_search.py` rewritten with 8 tests
 - [x] IoT module tests — `tests/test_iot_discovery.py` rewritten (15 tests), `tests/test_iot_mqtt.py` rewritten (4 tests)
 - [x] Windows OS plugin tests — `tests/test_windows_os_plugins.py` (450 parametrized tests, all passing)
+- [x] Agent, SSE, WebSocket, Workflow routes wired into FastAPI server — `server.py` now includes all route modules
+- [x] Workflow API routes — `windows_ai/api/workflow_routes.py` with CRUD, execute, import/export endpoints
+- [x] 792 tests passing across all test files
 - [x] API endpoint tests — `tests/test_api_endpoints.py` fixed from Flask to FastAPI (26 tests)
 - [x] Marketplace tests — `tests/test_marketplace.py` (11 tests)
 - [x] Local model discovery tests — `tests/test_local_model_discovery.py` (8 tests)
@@ -153,13 +156,13 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Plugin signature verification — `windows_ai/security/plugin_verification.py` with SHA-256 hashing, sign/verify/batch operations
 - [ ] Plugin sandboxing (already partially implemented in security module — 14+ files, 11 subdirectories)
 - [ ] Community plugin submission process
-- [ ] Plugin dependency resolver
+- [x] Plugin dependency resolver — `windows_ai/plugins/dependency_resolver.py` with topological sort, circular detection, transaction support
 
 ### 2.4 Search & RAG
-- [ ] Full RAG pipeline with chunking, embedding, retrieval, re-ranking (expand from 3 files)
-- [ ] Windows file system indexer (integration with Windows Search)
+- [x] Full RAG pipeline with chunking, embedding, retrieval, re-ranking — expanded to 6 files (engine, api, document_processor, hybrid_search, file_indexer, __init__)
+- [x] Windows file system indexer — `windows_ai/rag/file_indexer.py` with recursive indexing, file watching via watchdog
 - [ ] Semantic search over plugin documentation (leverage existing 29-file search module)
-- [ ] Hybrid search (BM25 + dense vector) for all document types
+- [x] Hybrid search (BM25 + dense vector) for all document types — `windows_ai/rag/hybrid_search.py` with BM25Index, VectorIndex, HybridSearch (RRF fusion)
 
 ### 2.5 Mobile Companion App
 - [ ] Complete `mobile/` TypeScript companion app (has adapter, trainer, studio, toolkit, analyzer, monitor, bridge, coordinator — needs integration)
@@ -180,10 +183,13 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 
 ### 3.2 Security
 - [ ] Complete security audit (penetration test simulations)
-- [ ] Rate limiting per API key
+- [x] Rate limiting per API key — `RateLimitMiddleware` wired into FastAPI app via `windows_ai/api/rate_limiter.py`
 - [ ] RBAC for multi-user scenarios (advanced_rbac.py exists — needs verification)
 - [ ] Secrets rotation automation (credential_rotation_scheduler.py exists — needs verification)
 - [ ] CVE monitoring for dependencies (`pip-audit` in CI)
+- [x] Expanded crypto module — `windows_ai/security/crypto.py` with Fernet encryption, PBKDF2 key derivation, password hashing, SHA-256
+- [x] Expanded threat monitor — `windows_ai/security/threat_monitor.py` with categorized scanning, rate anomaly detection, IP reputation, alert callbacks
+- [x] Expanded rollback manager — `windows_ai/security/rollback.py` with checkpoints, transactions, history tracking
 
 ### 3.3 Reliability
 - [x] Health check endpoint with all manager statuses — `GET /api/health/integrations` checks all 46 managers

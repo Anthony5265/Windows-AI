@@ -19,7 +19,12 @@ from windows_ai.api.setup_routes import router as setup_router
 from windows_ai.api.credentials_routes import router as credentials_router
 from windows_ai.api.health_routes import router as health_router
 from windows_ai.api.marketplace_routes import router as marketplace_router
+from windows_ai.api.agent_routes import router as agent_router
+from windows_ai.api.sse_routes import router as sse_router
+from windows_ai.api.websocket_routes import router as websocket_router
+from windows_ai.api.workflow_routes import router as workflow_router
 from windows_ai.api.middleware import setup_middleware
+from windows_ai.api.rate_limiter import RateLimitMiddleware
 from windows_ai.core.plugin_manager import PluginManager
 from windows_ai.frameworks.unified_llm import UnifiedLLMProvider
 from windows_ai.core.credential_manager import CredentialManager
@@ -141,6 +146,25 @@ app.include_router(health_router, tags=["health"])
 
 # Include marketplace routes
 app.include_router(marketplace_router, tags=["marketplace"])
+
+# Include agent routes (agent orchestration)
+app.include_router(agent_router, tags=["agents"])
+
+# Include SSE routes (server-sent events for streaming)
+app.include_router(sse_router, tags=["sse"])
+
+# Include WebSocket routes (real-time communication)
+app.include_router(websocket_router, tags=["websocket"])
+
+# Include workflow routes (DAG workflow engine)
+app.include_router(workflow_router, tags=["workflows"])
+
+# Add rate limiting middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=int(os.environ.get("RATE_LIMIT_RPM", "120")),
+    burst_size=int(os.environ.get("RATE_LIMIT_BURST", "20")),
+)
 
 # Global plugin manager
 _plugin_manager: PluginManager = None
