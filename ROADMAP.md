@@ -36,7 +36,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 | API Layer (`windows_ai/api/`) | ✅ Production | 15 route files, ~95% |
 | FastAPI server (`windows_ai/main.py`) | ✅ Production | Functional |
 | Search module (`windows_ai/search/`) | ✅ Functional | 29 files, 10,007 lines total |
-| RAG pipeline (`windows_ai/rag/`) | ✅ Functional | 4 files (engine, api, document_processor, __init__) |
+| RAG pipeline (`windows_ai/rag/`) | ✅ Functional | 6 files (engine, api, document_processor, hybrid_search, file_indexer, __init__) |
 | Vector DB (`windows_ai/vector_db/`) | ✅ Functional | 8 integrations |
 | Agent system (`windows_ai/agents/`) | ✅ Functional | 4 files (agent, agent_manager, task) |
 | Security system (`windows_ai/security/`) | ✅ Functional | 14+ files, 11 subdirectories |
@@ -45,7 +45,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 | IoT module (`windows_ai/iot/`) | ✅ Functional | 12 files, 4,084 lines — BLE scanner, device manager |
 | Optimization module (`optimization/`) | ✅ Functional | 14 files, 1,532 lines — profiling, tuning, telemetry |
 | Electron GUI (`apps/gui/`) | ✅ Functional | main.js, preload.js, updater.js, renderer/ |
-| Test suite (`tests/`) | ✅ Passing | 253+ test files, 674+ passing tests |
+| Test suite (`tests/`) | ✅ Passing | 253+ test files, 897+ passing tests |
 | CI/CD (`.github/workflows/`) | ⚠️ Partial | ~70% |
 | Build system (PyInstaller + electron-builder) | ✅ Production | Functional |
 | Documentation | ⚠️ Being consolidated | ~80% |
@@ -97,7 +97,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Windows OS plugin tests — `tests/test_windows_os_plugins.py` (450 parametrized tests, all passing)
 - [x] Agent, SSE, WebSocket, Workflow routes wired into FastAPI server — `server.py` now includes all route modules
 - [x] Workflow API routes — `windows_ai/api/workflow_routes.py` with CRUD, execute, import/export endpoints
-- [x] 792 tests passing across all test files
+- [x] 897+ tests passing across all test files
 - [x] API endpoint tests — `tests/test_api_endpoints.py` fixed from Flask to FastAPI (26 tests)
 - [x] Marketplace tests — `tests/test_marketplace.py` (11 tests)
 - [x] Local model discovery tests — `tests/test_local_model_discovery.py` (8 tests)
@@ -196,7 +196,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Circuit breaker pattern for external API calls — `windows_ai/core/circuit_breaker.py` with `CircuitBreaker`, `CircuitBreakerRegistry`, decorator
 - [x] Graceful degradation when providers are unavailable — orchestrator initializes managers concurrently with try/except, provider failover handles runtime failures
 - [x] Automatic crash recovery — `windows_ai/core/crash_recovery.py` with heartbeat monitoring, automatic restart, exponential backoff
-- [ ] Distributed tracing (OpenTelemetry)
+- [x] Distributed tracing (OpenTelemetry) — `windows_ai/observability/` with Tracer, Span, SpanContext, MetricsCollector (Counter/Gauge/Histogram), StructuredLogger with context propagation
 
 ### 3.4 Build & Distribution
 - [ ] PyInstaller build verified and tested on Windows 10/11
@@ -213,7 +213,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [ ] Complete Matter protocol support (matter.py adapter exists — needs full verification)
 - [ ] Home Assistant full integration (home_assistant.py + enhanced_ha.py adapters exist — verify completeness)
 - [ ] Edge inference (run small models on IoT devices)
-- [ ] Mesh network for multi-device AI coordination (`windows_ai/mesh/` exists)
+- [x] Mesh network for multi-device AI coordination — `windows_ai/mesh/` with MeshNode (leader election, TLS), PeerDiscovery (UDP multicast), DistributedTaskQueue (load balancing), StateSync (eventual consistency), AgentCoordinator (distributed inference, RAG fan-out, pipelines)
 
 ### 4.2 Community
 - [ ] Plugin marketplace website
@@ -257,10 +257,13 @@ Windows AI Platform
 │   │   ├── health/               Health AI plugins
 │   │   └── ... (27 categories)
 │   ├── agents/                   Multi-agent coordination (4 files)
-│   ├── rag/                      RAG pipeline (3 files — needs expansion)
-│   ├── vector_db/                ChromaDB, Faiss, Pinecone, Weaviate, Qdrant
+│   ├── rag/                      RAG pipeline (6 files — engine, api, document_processor, hybrid_search, file_indexer)
+│   ├── vector_db/                ChromaDB, Faiss, Pinecone, Weaviate, Qdrant, Milvus
 │   ├── search/                   Search service (29 files, 10,007 lines)
 │   ├── security/                 Sandbox, RBAC, audit, crypto, threat monitor (14+ files, 11 subdirs)
+│   ├── observability/            Distributed tracing, metrics, structured logging
+│   ├── cli/                      CLI tools (commands, diagnostics, configuration)
+│   ├── mesh/                     Mesh networking (node, peer discovery, task queue, state sync, coordinator)
 │   ├── frameworks/               UnifiedLLM, LangChain, LlamaIndex wrappers
 │   ├── optimization/             Config (__init__.py only — main module at root)
 │   ├── iot/                      IoT (12 files, 4,084 lines — BLE, device mgmt)
