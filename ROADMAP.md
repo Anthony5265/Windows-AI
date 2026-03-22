@@ -97,7 +97,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Windows OS plugin tests — `tests/test_windows_os_plugins.py` (450 parametrized tests, all passing)
 - [x] Agent, SSE, WebSocket, Workflow routes wired into FastAPI server — `server.py` now includes all route modules
 - [x] Workflow API routes — `windows_ai/api/workflow_routes.py` with CRUD, execute, import/export endpoints
-- [x] 1128+ tests passing across all test files
+- [x] 1171+ tests passing across all test files
 - [x] API endpoint tests — `tests/test_api_endpoints.py` fixed from Flask to FastAPI (26 tests)
 - [x] Marketplace tests — `tests/test_marketplace.py` (11 tests)
 - [x] Local model discovery tests — `tests/test_local_model_discovery.py` (8 tests)
@@ -155,7 +155,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Plugin marketplace API (`GET /marketplace`, `POST /marketplace/install`) — `windows_ai/api/marketplace_routes.py` with browse, search, install, uninstall, categories, stats
 - [x] Plugin signature verification — `windows_ai/security/plugin_verification.py` with SHA-256 hashing, sign/verify/batch operations
 - [x] Plugin sandboxing — `windows_ai/security/plugin_sandbox.py` with SandboxLevel (NONE→MAXIMUM), import guard, resource limits, path/network access control
-- [ ] Community plugin submission process
+- [x] Community plugin submission process — `windows_ai/plugins/submission.py` with PluginSubmissionManager: create/submit/validate/review/approve/publish workflow
 - [x] Plugin dependency resolver — `windows_ai/plugins/dependency_resolver.py` with topological sort, circular detection, transaction support
 
 ### 2.4 Search & RAG
@@ -186,7 +186,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Rate limiting per API key — `RateLimitMiddleware` wired into FastAPI app via `windows_ai/api/rate_limiter.py`
 - [x] RBAC for multi-user scenarios — `windows_ai/security/advanced_rbac.py` with PermissionLevel, ResourceType, Role hierarchy, User management (466 lines, verified)
 - [x] Secrets rotation automation — `windows_ai/security/credential_rotation_scheduler.py` with CredentialType, RotationStatus, scheduled rotation (980 lines, verified)
-- [ ] CVE monitoring for dependencies (`pip-audit` in CI)
+- [x] CVE monitoring for dependencies (`pip-audit` in CI) — added to `.github/workflows/ci-cd.yml` alongside bandit and safety
 - [x] Expanded crypto module — `windows_ai/security/crypto.py` with Fernet encryption, PBKDF2 key derivation, password hashing, SHA-256
 - [x] Expanded threat monitor — `windows_ai/security/threat_monitor.py` with categorized scanning, rate anomaly detection, IP reputation, alert callbacks
 - [x] Expanded rollback manager — `windows_ai/security/rollback.py` with checkpoints, transactions, history tracking
