@@ -97,7 +97,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Windows OS plugin tests — `tests/test_windows_os_plugins.py` (450 parametrized tests, all passing)
 - [x] Agent, SSE, WebSocket, Workflow routes wired into FastAPI server — `server.py` now includes all route modules
 - [x] Workflow API routes — `windows_ai/api/workflow_routes.py` with CRUD, execute, import/export endpoints
-- [x] 1081+ tests passing across all test files
+- [x] 1128+ tests passing across all test files
 - [x] API endpoint tests — `tests/test_api_endpoints.py` fixed from Flask to FastAPI (26 tests)
 - [x] Marketplace tests — `tests/test_marketplace.py` (11 tests)
 - [x] Local model discovery tests — `tests/test_local_model_discovery.py` (8 tests)
@@ -122,7 +122,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Add tests for optimization module (14 files) — 22 tests in `tests/test_optimization.py`
 - [x] Add tests for `SyncEncryption.encode_base64/decode_base64` — 3 tests added
 - [ ] Reach 60%+ overall test coverage (currently ~40%)
-- [ ] Add `pytest-cov` to CI workflow
+- [x] Add `pytest-cov` to CI workflow — already present in `.github/workflows/ci.yml` and `.github/workflows/test.yml` with coverage enforcement
 
 ### 1.3 Documentation
 - [x] Single ROADMAP.md (this file)
@@ -149,7 +149,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Add provider health-check endpoint (`GET /api/health/integrations`) — returns status for all 46 managers
 - [x] Add automatic failover between providers — `windows_ai/core/provider_failover.py` with `ProviderFailover` class
 - [x] Local model auto-discovery (Ollama, LM Studio, text-generation-webui, vLLM) — `windows_ai/integrations/local_model_discovery.py` with `LocalModelDiscovery` class
-- [ ] On-device fine-tuning pipeline integration
+- [x] On-device fine-tuning pipeline integration — `windows_ai/core/fine_tuning.py` with FineTunePipeline, LoRA/QLoRA support, dataset validation, job management
 
 ### 2.3 Plugin Ecosystem
 - [x] Plugin marketplace API (`GET /marketplace`, `POST /marketplace/install`) — `windows_ai/api/marketplace_routes.py` with browse, search, install, uninstall, categories, stats
@@ -182,7 +182,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 - [x] Memory usage optimization (target: <500MB idle) — integrated in `api_profiler.py` with psutil-based memory tracking and target validation
 
 ### 3.2 Security
-- [ ] Complete security audit (penetration test simulations)
+- [x] Complete security audit (penetration test simulations) — `windows_ai/security/security_audit.py` with SecurityAuditor: SQL injection, XSS, path traversal, auth, rate limiting, crypto, info disclosure tests
 - [x] Rate limiting per API key — `RateLimitMiddleware` wired into FastAPI app via `windows_ai/api/rate_limiter.py`
 - [x] RBAC for multi-user scenarios — `windows_ai/security/advanced_rbac.py` with PermissionLevel, ResourceType, Role hierarchy, User management (466 lines, verified)
 - [x] Secrets rotation automation — `windows_ai/security/credential_rotation_scheduler.py` with CredentialType, RotationStatus, scheduled rotation (980 lines, verified)
@@ -212,12 +212,12 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 4.1 IoT & Edge
 - [x] Complete Matter protocol support — `iot/matter.py` expanded to 280+ lines with MatterDeviceType, MatterFabricState, MatterNode, commissioning, cluster commands (on_off, level_control, thermostat), subscriptions, fabric management
 - [x] Home Assistant full integration — `iot/adapters/homeassistant_adapter.py` + `iot/adapters/enhanced_ha_adapter.py` (verified complete)
-- [ ] Edge inference (run small models on IoT devices)
+- [x] Edge inference (run small models on IoT devices) — `windows_ai/iot/edge_inference.py` with EdgeInferenceManager: node registration, model deployment, compatibility checks, inference routing
 - [x] Mesh network for multi-device AI coordination — `windows_ai/mesh/` with MeshNode (leader election, TLS), PeerDiscovery (UDP multicast), DistributedTaskQueue (load balancing), StateSync (eventual consistency), AgentCoordinator (distributed inference, RAG fan-out, pipelines)
 
 ### 4.2 Community
 - [ ] Plugin marketplace website
-- [ ] Developer SDK documentation
+- [x] Developer SDK documentation — `docs/api/PYTHON_SDK.md` + `docs/api/CLI_REFERENCE.md` (complete with all commands, env vars, exit codes)
 - [ ] Community Discord / GitHub Discussions
 - [ ] Plugin of the week / featured plugins
 - [x] Contribution guide improvements — `CONTRIBUTING.md` expanded with dev setup, code style, testing, PR guidelines, architecture overview
