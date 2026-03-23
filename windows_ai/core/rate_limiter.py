@@ -6,7 +6,7 @@ import logging
 import time
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 from enum import Enum
 
 logger = logging.getLogger(__name__)
