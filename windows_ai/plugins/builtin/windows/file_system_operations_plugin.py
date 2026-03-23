@@ -1387,3 +1387,6 @@ class FileSystemOperationsPlugin(IntegrationPlugin):
         }} | ConvertTo-Json
         '''
         return await self._run_powershell(script)
+
+
+plugin = FileSystemOperationsPlugin()

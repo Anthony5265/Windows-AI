@@ -555,6 +555,15 @@ $events | ConvertTo-Json
         logger.info(f"Plugin {self.metadata.id} initialized with {len(self.actions)} actions")
         return True
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a Remote Desktop action"""
         action = kwargs.get("action", "get_rdp_status")
@@ -613,3 +622,6 @@ $events | ConvertTo-Json
 
 
 __all__ = ["RemoteDesktopPlugin"]
+
+
+plugin = RemoteDesktopPlugin()

@@ -474,6 +474,15 @@ $logs = Get-WinEvent -LogName 'Microsoft-Windows-Containers*' -MaxEvents $maxEve
             }
         }
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a sandbox action"""
         action = kwargs.get("action", "get_sandbox_status")
@@ -524,3 +533,6 @@ $logs = Get-WinEvent -LogName 'Microsoft-Windows-Containers*' -MaxEvents $maxEve
             raise Exception(stderr.decode() if stderr else "PowerShell execution failed")
         
         return stdout.decode().strip()
+
+
+plugin = SandboxPlugin()

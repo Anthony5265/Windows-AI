@@ -450,6 +450,15 @@ $settings = if (Test-Path $regPath) { Get-ItemProperty -Path $regPath } else { $
         logger.info(f"Plugin {self.metadata.id} initialized with {len(self.actions)} actions")
         return True
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a clipboard action"""
         action = kwargs.get("action", "get_clipboard_text")
@@ -514,3 +523,6 @@ $settings = if (Test-Path $regPath) { Get-ItemProperty -Path $regPath } else { $
 
 # Export the plugin class
 __all__ = ["ClipboardSyncPlugin"]
+
+
+plugin = ClipboardSyncPlugin()

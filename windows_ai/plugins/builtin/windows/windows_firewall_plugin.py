@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,8 @@ class WindowsFirewallPlugin(IntegrationPlugin):
             description="Manage Windows Defender Firewall rules, profiles, and settings",
             version="2.0.0",
             author="Windows AI Team",
-            category="windows",
+            plugin_type=PluginType.INTEGRATION,
             tags=["firewall", "security", "network", "rules", "windows"],
-            requires_admin=True,
-            platforms=["windows"]
         )
         super().__init__(metadata)
 
@@ -57,6 +55,15 @@ class WindowsFirewallPlugin(IntegrationPlugin):
             return {"success": False, "error": f"Command timed out after {timeout} seconds"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
 
     async def execute(self, action: str = "status", params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute firewall management actions"""
@@ -671,3 +678,6 @@ class WindowsFirewallPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         logger.info("Windows Firewall plugin cleaned up")
+
+
+plugin = WindowsFirewallPlugin()

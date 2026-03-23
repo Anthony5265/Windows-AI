@@ -119,6 +119,15 @@ class WSAAndroidPlugin(IntegrationPlugin):
         
         self._adb_path = "adb"  # Default to PATH
 
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute WSA/Android operations"""
         action = kwargs.get("action", "get_wsa_status")
@@ -658,3 +667,6 @@ class WSAAndroidPlugin(IntegrationPlugin):
     async def cleanup(self):
         """Cleanup plugin resources"""
         self.logger.info("Cleaning up WSA Android plugin")
+
+
+plugin = WSAAndroidPlugin()

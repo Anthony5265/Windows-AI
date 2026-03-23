@@ -19,6 +19,9 @@ class WebSearchPlugin(ToolPlugin):
     Allows the AI to search the web for current information.
     """
 
+    def __init__(self):
+        super().__init__(self.get_metadata())
+
     @staticmethod
     def get_metadata() -> PluginMetadata:
         return PluginMetadata(
@@ -142,3 +145,6 @@ class WebSearchPlugin(ToolPlugin):
             "description": "Search the web for current information. Use this when you need up-to-date information or facts about current events, news, or topics that may have changed since your training data.",
             "parameters": self.get_schema()
         }
+
+
+plugin = WebSearchPlugin()

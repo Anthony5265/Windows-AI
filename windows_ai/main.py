@@ -20,6 +20,7 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 from dataclasses import asdict
 import logging
+import importlib
 
 from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,757 +28,300 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import httpx
 
-# Import automation systems
-from windows_ai.folder_watcher import (
-    FolderWatcherManager, WatcherConfig, EXAMPLE_WATCHERS
-)
-from windows_ai.scheduler import (
-    TaskScheduler, ScheduledTask, EXAMPLE_TASKS
-)
-from windows_ai.phase_bootstrap import PhaseBootstrapper
-from windows_ai.phase_tracker import PhaseTracker
+# Helper to safely import optional modules
+def _safe_import(module_path, names=None):
+    """Safely import a module or specific names from it, returning None on failure."""
+    try:
+        mod = importlib.import_module(module_path)
+        if names:
+            return tuple(getattr(mod, name, None) for name in names)
+        return mod
+    except ImportError:
+        if names:
+            return tuple(None for _ in names)
+        return None
+    except Exception as e:
+        logging.getLogger(__name__).debug(f"Failed to import {module_path}: {e}")
+        if names:
+            return tuple(None for _ in names)
+        return None
+
+# Import automation systems (optional - need watchdog/croniter)
+FolderWatcherManager, WatcherConfig, EXAMPLE_WATCHERS = _safe_import(
+    'windows_ai.folder_watcher', ['FolderWatcherManager', 'WatcherConfig', 'EXAMPLE_WATCHERS'])
+TaskScheduler, ScheduledTask, EXAMPLE_TASKS = _safe_import(
+    'windows_ai.scheduler', ['TaskScheduler', 'ScheduledTask', 'EXAMPLE_TASKS'])
+_pb_mod = _safe_import('windows_ai.phase_bootstrap', ['PhaseBootstrapper'])
+PhaseBootstrapper = _pb_mod[0] if _pb_mod else None
+_pt_mod = _safe_import('windows_ai.phase_tracker', ['PhaseTracker'])
+PhaseTracker = _pt_mod[0] if _pt_mod else None
 
 # Import plugin system
-from windows_ai.plugins.registry import PluginRegistry
+try:
+    from windows_ai.plugins.registry import PluginRegistry
+except ImportError:
+    PluginRegistry = None
 
 # Import model manager
-from windows_ai.model_manager import ModelManager
+try:
+    from windows_ai.model_manager import ModelManager
+except ImportError:
+    ModelManager = None
 
-# Import update system
-from windows_ai.updater.update_client import UpdateClient, UpdateStatus
+# Import update system (optional - needs aiofiles)
+UpdateClient = UpdateStatus = None
+try:
+    from windows_ai.updater.update_client import UpdateClient, UpdateStatus
+except ImportError:
+    pass
 
-# Import all advanced AI capabilities
-from windows_ai.context_manager import (
-    get_context_manager, initialize_context_system, ContextualAwarenessSystem
-)
-from windows_ai.xai import (
-    get_xai_system, initialize_xai_system, ExplainableAI,
-    ActionType, ActionExplanation
-)
-from windows_ai.hotkeys import (
-    get_hotkey_manager, initialize_hotkey_system, GlobalHotkeyManager
-)
-from windows_ai.proactive_assistant import (
-    get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant
-)
-from windows_ai.anomaly_detector import (
-    get_anomaly_detector, initialize_anomaly_detector, AnomalyDetector
-)
-from windows_ai.voice_activation import (
-    get_voice_system, initialize_voice_system, VoiceActivationSystem
-)
-from windows_ai.self_healing import (
-    get_healing_system, initialize_healing_system, SelfHealingSystem
-)
-from windows_ai.performance_optimizer import (
-    get_performance_optimizer, initialize_performance_optimizer, PerformanceOptimizer
-)
-from windows_ai.plugin_validator import (
-    get_plugin_validator, initialize_plugin_validator, PluginValidator
-)
-from windows_ai.reinforcement_learning import (
-    get_rl_system, initialize_rl_system, ReinforcementLearningSystem
-)
-from windows_ai.advanced_nlp import (
-    get_nlp_engine, initialize_nlp_engine, AdvancedNLPEngine
-)
-from windows_ai.multi_agent_system import (
-    get_multi_agent_system, initialize_multi_agent_system, MultiAgentSystem
-)
-from windows_ai.code_generator import (
-    get_code_generator, initialize_code_generator, AICodeGenerator
-)
-from windows_ai.testing_framework import (
-    get_testing_framework, initialize_testing_framework, ComprehensiveTestingFramework
-)
-from windows_ai.neural_architecture_search import (
-    get_nas_system, initialize_nas_system, NeuralArchitectureSearch
-)
-from windows_ai.federated_learning import (
-    get_fl_system, initialize_fl_system, FederatedLearningSystem
-)
-from windows_ai.quantum_optimizer import (
-    get_quantum_optimizer, initialize_quantum_optimizer, QuantumInspiredOptimizer
-)
-from windows_ai.gan_generator import (
-    get_gan_generator, initialize_gan_generator, GANContentGenerator
-)
-from windows_ai.transfer_learning import (
-    get_tl_manager, initialize_tl_manager, TransferLearningManager
-)
-from windows_ai.automl import (
-    get_automl, initialize_automl, AutoMLSystem
-)
-from windows_ai.explainable_dl import (
-    get_explainable_dl, initialize_explainable_dl, ExplainableDLSystem
-)
-from windows_ai.adversarial_defense import (
-    get_adv_defense, initialize_adv_defense, AdversarialDefenseSystem
-)
-from windows_ai.meta_learning import (
-    get_meta_learning, initialize_meta_learning, MetaLearningEngine
-)
-from windows_ai.continual_learning import (
-    get_continual_learning, initialize_continual_learning, ContinualLearningSystem
-)
-from windows_ai.graph_neural_network import (
-    get_gnn, initialize_gnn, GraphNeuralNetwork
-)
-from windows_ai.attention_mechanism import (
-    get_attention, initialize_attention, AttentionEngine
-)
-from windows_ai.knowledge_graph import (
-    get_kg_builder, initialize_kg_builder, KnowledgeGraphBuilder
-)
-from windows_ai.causal_inference import (
-    get_causal_inference, initialize_causal_inference, CausalInferenceEngine
-)
-from windows_ai.bayesian_optimization import (
-    get_bayes_opt, initialize_bayes_opt, BayesianOptimizer
-)
-from windows_ai.ensemble_learning import (
-    get_ensemble, initialize_ensemble, EnsembleLearningManager
-)
-from windows_ai.active_learning import (
-    get_active_learning, initialize_active_learning, ActiveLearningSystem
-)
-from windows_ai.semi_supervised import (
-    get_semi_supervised, initialize_semi_supervised, SemiSupervisedLearning
-)
-from windows_ai.few_shot_learning import (
-    get_few_shot, initialize_few_shot, FewShotLearningEngine
-)
-from windows_ai.zero_shot_learning import (
-    get_zero_shot, initialize_zero_shot, ZeroShotLearningSystem
-)
-from windows_ai.neuromorphic_computing import (
-    get_neuromorphic, initialize_neuromorphic, NeuromorphicSystem
-)
-from windows_ai.swarm_intelligence import (
-    get_swarm, initialize_swarm, SwarmIntelligence
-)
-from windows_ai.evolutionary_algorithms import (
-    get_evolutionary, initialize_evolutionary, EvolutionaryAlgorithms
-)
-from windows_ai.neuroevolution import (
-    get_neuroevolution, initialize_neuroevolution, NeuroEvolution
-)
-from windows_ai.hybrid_ai import (
-    get_hybrid_ai, initialize_hybrid_ai, HybridAISystem
-)
-from windows_ai.emotion_recognition import (
-    get_emotion_rec, initialize_emotion_rec, EmotionRecognitionSystem
-)
-from windows_ai.gesture_recognition import (
-    get_gesture_rec, initialize_gesture_rec, GestureRecognitionSystem
-)
-from windows_ai.biometric_auth import (
-    get_biometric_auth, initialize_biometric_auth, BiometricAuthSystem
-)
-from windows_ai.predictive_maintenance import (
-    get_predictive_maint, initialize_predictive_maint, PredictiveMaintenanceSystem
-)
-from windows_ai.recommendation_engine import (
-    get_recommendation, initialize_recommendation, RecommendationEngine
-)
-from windows_ai.auto_documentation import (
-    get_auto_doc, initialize_auto_doc, AutoDocumentationSystem
-)
-from windows_ai.code_review_ai import (
-    get_code_review, initialize_code_review, CodeReviewAI
-)
-from windows_ai.bug_prediction import (
-    get_bug_prediction, initialize_bug_prediction, BugPredictionSystem
-)
-from windows_ai.dependency_analyzer import (
-    get_dep_analyzer, initialize_dep_analyzer, DependencyAnalyzer
-)
-from windows_ai.performance_profiler import (
-    get_perf_profiler, initialize_perf_profiler, PerformanceProfilerAI
-)
-from windows_ai.security_scanner import (
-    get_security_scanner, initialize_security_scanner, SecurityVulnerabilityScanner
-)
-from windows_ai.api_usage_analyzer import (
-    get_api_analyzer, initialize_api_analyzer, APIUsageAnalyzer
-)
-from windows_ai.query_optimizer import (
-    get_query_optimizer, initialize_query_optimizer, DatabaseQueryOptimizer
-)
-from windows_ai.memory_leak_detector import (
-    get_memory_detector, initialize_memory_detector, MemoryLeakDetector
-)
-from windows_ai.concurrency_analyzer import (
-    get_concurrency_analyzer, initialize_concurrency_analyzer, ConcurrencyAnalyzer
-)
-from windows_ai.object_detection import (
-    get_obj_detection, initialize_obj_detection, ObjectDetectionSystem
-)
-from windows_ai.image_segmentation import (
-    get_img_seg, initialize_img_seg, ImageSegmentationSystem
-)
-from windows_ai.face_recognition import (
-    get_face_rec, initialize_face_rec, FaceRecognitionSystem
-)
-from windows_ai.pose_estimation import (
-    get_pose_est, initialize_pose_est, PoseEstimationSystem
-)
-from windows_ai.scene_understanding import (
-    get_scene_understanding, initialize_scene_understanding, SceneUnderstandingSystem
-)
-from windows_ai.optical_flow import (
-    get_optical_flow, initialize_optical_flow, OpticalFlowSystem
-)
-from windows_ai.depth_estimation import (
-    get_depth_estimation, initialize_depth_estimation, DepthEstimationSystem
-)
-from windows_ai.image_captioning import (
-    get_image_captioning, initialize_image_captioning, ImageCaptioningSystem
-)
-from windows_ai.visual_qa import (
-    get_visual_qa, initialize_visual_qa, VisualQASystem
-)
-from windows_ai.style_transfer import (
-    get_style_transfer, initialize_style_transfer, StyleTransferSystem
-)
-from windows_ai.super_resolution import (
-    get_super_resolution, initialize_super_resolution, SuperResolutionSystem
-)
-from windows_ai.image_enhancement import (
-    get_image_enhancement, initialize_image_enhancement, ImageEnhancementSystem
-)
-from windows_ai.anomaly_vision import (
-    get_anomaly_vision, initialize_anomaly_vision, VisualAnomalyDetectionSystem
-)
-from windows_ai.ocr_system import (
-    get_ocr_system, initialize_ocr_system, OCREngineSystem
-)
-from windows_ai.document_analysis import (
-    get_document_analysis, initialize_document_analysis, DocumentAnalysisSystem
-)
-from windows_ai.video_analysis import (
-    get_video_analysis, initialize_video_analysis, VideoAnalysisSystem
-)
-from windows_ai.action_recognition import (
-    get_action_recognition, initialize_action_recognition, ActionRecognitionSystem
-)
-from windows_ai.tracking_system import (
-    get_tracking_system, initialize_tracking_system, ObjectTrackingSystem
-)
-from windows_ai.image_retrieval import (
-    get_image_retrieval, initialize_image_retrieval, ImageRetrievalSystem
-)
-from windows_ai.text_summarization import (
-    get_text_summarization, initialize_text_summarization, TextSummarizationSystem
-)
-from windows_ai.machine_translation import (
-    get_machine_translation, initialize_machine_translation, MachineTranslationSystem
-)
-from windows_ai.question_answering import (
-    get_question_answering, initialize_question_answering, QuestionAnsweringSystem
-)
-from windows_ai.dialogue_system import (
-    get_dialogue_system, initialize_dialogue_system, DialogueSystemSystem
-)
-from windows_ai.text_generation import (
-    get_text_generation, initialize_text_generation, TextGenerationSystem
-)
-from windows_ai.language_modeling import (
-    get_language_modeling, initialize_language_modeling, LanguageModelingSystem
-)
-from windows_ai.named_entity_recognition import (
-    get_named_entity_recognition, initialize_named_entity_recognition, NamedEntityRecognitionSystem
-)
-from windows_ai.relation_extraction import (
-    get_relation_extraction, initialize_relation_extraction, RelationExtractionSystem
-)
-from windows_ai.coreference_resolution import (
-    get_coreference_resolution, initialize_coreference_resolution, CoreferenceResolutionSystem
-)
-from windows_ai.semantic_parsing import (
-    get_semantic_parsing, initialize_semantic_parsing, SemanticParsingSystem
-)
-from windows_ai.intent_classification import (
-    get_intent_classification, initialize_intent_classification, IntentClassificationSystem
-)
-from windows_ai.slot_filling import (
-    get_slot_filling, initialize_slot_filling, SlotFillingSystem
-)
-from windows_ai.text_classification import (
-    get_text_classification, initialize_text_classification, TextClassificationSystem
-)
-from windows_ai.topic_modeling import (
-    get_topic_modeling, initialize_topic_modeling, TopicModelingSystem
-)
-from windows_ai.document_clustering import (
-    get_document_clustering, initialize_document_clustering, DocumentClusteringSystem
-)
-from windows_ai.information_extraction import (
-    get_information_extraction, initialize_information_extraction, InformationExtractionSystem
-)
-from windows_ai.text_simplification import (
-    get_text_simplification, initialize_text_simplification, TextSimplificationSystem
-)
-from windows_ai.paraphrase_generation import (
-    get_paraphrase_generation, initialize_paraphrase_generation, ParaphraseGenerationSystem
-)
-from windows_ai.grammar_correction import (
-    get_grammar_correction, initialize_grammar_correction, GrammarCorrectionSystem
-)
-from windows_ai.readability_analysis import (
-    get_readability_analysis, initialize_readability_analysis, ReadabilityAnalysisSystem
-)
-from windows_ai.motion_planning import (
-    get_motion_planning, initialize_motion_planning, MotionPlanningSystem
-)
-from windows_ai.path_planning import (
-    get_path_planning, initialize_path_planning, PathPlanningSystem
-)
-from windows_ai.slam_system import (
-    get_slam_system, initialize_slam_system, SLAMSystemSystem
-)
-from windows_ai.robot_localization import (
-    get_robot_localization, initialize_robot_localization, RobotLocalizationSystem
-)
-from windows_ai.inverse_kinematics import (
-    get_inverse_kinematics, initialize_inverse_kinematics, InverseKinematicsSystem
-)
-from windows_ai.forward_kinematics import (
-    get_forward_kinematics, initialize_forward_kinematics, ForwardKinematicsSystem
-)
-from windows_ai.collision_detection import (
-    get_collision_detection, initialize_collision_detection, CollisionDetectionSystem
-)
-from windows_ai.grasp_planning import (
-    get_grasp_planning, initialize_grasp_planning, GraspPlanningSystem
-)
-from windows_ai.manipulation_control import (
-    get_manipulation_control, initialize_manipulation_control, ManipulationControlSystem
-)
-from windows_ai.trajectory_optimization import (
-    get_trajectory_optimization, initialize_trajectory_optimization, TrajectoryOptimizationSystem
-)
-from windows_ai.force_control import (
-    get_force_control, initialize_force_control, ForceControlSystem
-)
-from windows_ai.compliance_control import (
-    get_compliance_control, initialize_compliance_control, ComplianceControlSystem
-)
-from windows_ai.visual_servoing import (
-    get_visual_servoing, initialize_visual_servoing, VisualServoingSystem
-)
-from windows_ai.sensor_fusion import (
-    get_sensor_fusion, initialize_sensor_fusion, SensorFusionSystem
-)
-from windows_ai.obstacle_avoidance import (
-    get_obstacle_avoidance, initialize_obstacle_avoidance, ObstacleAvoidanceSystem
-)
-from windows_ai.autonomous_navigation import (
-    get_autonomous_navigation, initialize_autonomous_navigation, AutonomousNavigationSystem
-)
-from windows_ai.multi_robot_coordination import (
-    get_multi_robot_coordination, initialize_multi_robot_coordination, MultiRobotCoordinationSystem
-)
-from windows_ai.task_planning import (
-    get_task_planning, initialize_task_planning, TaskPlanningSystem
-)
-from windows_ai.behavior_trees import (
-    get_behavior_trees, initialize_behavior_trees, BehaviorTreesSystem
-)
-from windows_ai.robot_learning import (
-    get_robot_learning, initialize_robot_learning, RobotLearningSystem
-)
-from windows_ai.time_series_forecasting import (
-    get_time_series_forecasting, initialize_time_series_forecasting, TimeSeriesForecastingSystem
-)
-from windows_ai.anomaly_detection_ts import (
-    get_anomaly_detection_ts, initialize_anomaly_detection_ts, AnomalyDetectionTSSystem
-)
-from windows_ai.trend_analysis import (
-    get_trend_analysis, initialize_trend_analysis, TrendAnalysisSystem
-)
-from windows_ai.seasonality_detection import (
-    get_seasonality_detection, initialize_seasonality_detection, SeasonalityDetectionSystem
-)
-from windows_ai.change_point_detection import (
-    get_change_point_detection, initialize_change_point_detection, ChangePointDetectionSystem
-)
-from windows_ai.arima_model import (
-    get_arima_model, initialize_arima_model, ARIMAModelSystem
-)
-from windows_ai.lstm_forecasting import (
-    get_lstm_forecasting, initialize_lstm_forecasting, LSTMForecastingSystem
-)
-from windows_ai.prophet_forecasting import (
-    get_prophet_forecasting, initialize_prophet_forecasting, ProphetForecastingSystem
-)
-from windows_ai.wavelet_analysis import (
-    get_wavelet_analysis, initialize_wavelet_analysis, WaveletAnalysisSystem
-)
-from windows_ai.spectral_analysis import (
-    get_spectral_analysis, initialize_spectral_analysis, SpectralAnalysisSystem
-)
-from windows_ai.correlation_analysis import (
-    get_correlation_analysis, initialize_correlation_analysis, CorrelationAnalysisSystem
-)
-from windows_ai.granger_causality import (
-    get_granger_causality, initialize_granger_causality, GrangerCausalitySystem
-)
-from windows_ai.vector_autoregression import (
-    get_vector_autoregression, initialize_vector_autoregression, VectorAutoregressionSystem
-)
-from windows_ai.state_space_models import (
-    get_state_space_models, initialize_state_space_models, StateSpaceModelsSystem
-)
-from windows_ai.kalman_filter import (
-    get_kalman_filter, initialize_kalman_filter, KalmanFilterSystem
-)
-from windows_ai.particle_filter import (
-    get_particle_filter, initialize_particle_filter, ParticleFilterSystem
-)
-from windows_ai.hidden_markov_model import (
-    get_hidden_markov_model, initialize_hidden_markov_model, HiddenMarkovModelSystem
-)
-from windows_ai.gaussian_process import (
-    get_gaussian_process, initialize_gaussian_process, GaussianProcessSystem
-)
-from windows_ai.ensemble_forecasting import (
-    get_ensemble_forecasting, initialize_ensemble_forecasting, EnsembleForecastingSystem
-)
-from windows_ai.demand_forecasting import (
-    get_demand_forecasting, initialize_demand_forecasting, DemandForecastingSystem
-)
-from windows_ai.smart_contract_analyzer import (
-    get_smart_contract_analyzer, initialize_smart_contract_analyzer, SmartContractAnalyzerSystem
-)
-from windows_ai.crypto_price_predictor import (
-    get_crypto_price_predictor, initialize_crypto_price_predictor, CryptoPricePredictorSystem
-)
-from windows_ai.blockchain_analytics import (
-    get_blockchain_analytics, initialize_blockchain_analytics, BlockchainAnalyticsSystem
-)
-from windows_ai.fraud_detection_crypto import (
-    get_fraud_detection_crypto, initialize_fraud_detection_crypto, FraudDetectionCryptoSystem
-)
-from windows_ai.wallet_risk_assessment import (
-    get_wallet_risk_assessment, initialize_wallet_risk_assessment, WalletRiskAssessmentSystem
-)
-from windows_ai.defi_optimizer import (
-    get_defi_optimizer, initialize_defi_optimizer, DeFiOptimizerSystem
-)
-from windows_ai.nft_valuation import (
-    get_nft_valuation, initialize_nft_valuation, NFTValuationSystem
-)
-from windows_ai.token_sentiment import (
-    get_token_sentiment, initialize_token_sentiment, TokenSentimentSystem
-)
-from windows_ai.market_manipulation_detector import (
-    get_market_manipulation_detector, initialize_market_manipulation_detector, MarketManipulationDetectorSystem
-)
-from windows_ai.liquidity_analyzer import (
-    get_liquidity_analyzer, initialize_liquidity_analyzer, LiquidityAnalyzerSystem
-)
-from windows_ai.gas_price_optimizer import (
-    get_gas_price_optimizer, initialize_gas_price_optimizer, GasPriceOptimizerSystem
-)
-from windows_ai.yield_farming_optimizer import (
-    get_yield_farming_optimizer, initialize_yield_farming_optimizer, YieldFarmingOptimizerSystem
-)
-from windows_ai.portfolio_rebalancer import (
-    get_portfolio_rebalancer, initialize_portfolio_rebalancer, PortfolioRebalancerSystem
-)
-from windows_ai.arbitrage_detector import (
-    get_arbitrage_detector, initialize_arbitrage_detector, ArbitrageDetectorSystem
-)
-from windows_ai.chain_analysis import (
-    get_chain_analysis, initialize_chain_analysis, ChainAnalysisSystem
-)
-from windows_ai.transaction_classifier import (
-    get_transaction_classifier, initialize_transaction_classifier, TransactionClassifierSystem
-)
-from windows_ai.whale_tracker import (
-    get_whale_tracker, initialize_whale_tracker, WhaleTrackerSystem
-)
-from windows_ai.consensus_simulator import (
-    get_consensus_simulator, initialize_consensus_simulator, ConsensusSimulatorSystem
-)
-from windows_ai.crypto_tax_optimizer import (
-    get_crypto_tax_optimizer, initialize_crypto_tax_optimizer, CryptoTaxOptimizerSystem
-)
-from windows_ai.dao_governance import (
-    get_dao_governance, initialize_dao_governance, DAOGovernanceSystem
-)
+# Import all advanced AI capabilities (optional — graceful degradation)
+# These modules are imported safely so the app starts even if some are missing.
+_ai_modules = {}
 
-from windows_ai.cognitive_model_builder import (
-    get_cognitive_builder, initialize_cognitive_builder, CognitiveModelBuilder
-)
-from windows_ai.digital_twin_system import (
-    get_digital_twin, initialize_digital_twin, DigitalTwinSystem
-)
-from windows_ai.context_persistence_manager import (
-    get_context_manager, initialize_context_manager, ContextPersistenceManager
-)
-from windows_ai.proactive_assistant import (
-    get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant
-)
-from windows_ai.application_monitor import (
-    get_application_monitor, initialize_application_monitor, ApplicationMonitor
-)
-from windows_ai.anomaly_detector_system import (
-    get_anomaly_detector_system, initialize_anomaly_detector_system, AnomalyDetectorSystem
-)
-from windows_ai.self_healing_workflows import (
-    get_self_healing_workflows, initialize_self_healing_workflows, SelfHealingWorkflows
-)
-from windows_ai.reinforcement_feedback import (
-    get_reinforcement_feedback, initialize_reinforcement_feedback, ReinforcementFeedback
-)
-from windows_ai.adaptive_workflow_engine import (
-    get_adaptive_workflow_engine, initialize_adaptive_workflow_engine, AdaptiveWorkflowEngine
-)
-from windows_ai.causal_reasoning_engine import (
-    get_causal_reasoning_engine, initialize_causal_reasoning_engine, CausalReasoningEngine
-)
-from windows_ai.hierarchical_task_planner import (
-    get_hierarchical_task_planner, initialize_hierarchical_task_planner, HierarchicalTaskPlanner
-)
-from windows_ai.multi_agent_coordinator import (
-    get_multi_agent_coordinator, initialize_multi_agent_coordinator, MultiAgentCoordinator
-)
-from windows_ai.online_learning_system import (
-    get_online_learning_system, initialize_online_learning_system, OnlineLearningSystem
-)
-from windows_ai.active_learning_collector import (
-    get_active_learning_collector, initialize_active_learning_collector, ActiveLearningCollector
-)
-from windows_ai.meta_learning_optimizer import (
-    get_meta_learning_optimizer, initialize_meta_learning_optimizer, MetaLearningOptimizer
-)
-from windows_ai.quantum_resistant_crypto import (
-    get_quantum_resistant_crypto, initialize_quantum_resistant_crypto, QuantumResistantCrypto
-)
-from windows_ai.threat_hunting_ai import (
-    get_threat_hunting_ai, initialize_threat_hunting_ai, ThreatHuntingAi
-)
-from windows_ai.deception_network import (
-    get_deception_network, initialize_deception_network, DeceptionNetwork
-)
-from windows_ai.data_sovereignty_ledger import (
-    get_data_sovereignty_ledger, initialize_data_sovereignty_ledger, DataSovereigntyLedger
-)
-from windows_ai.autonomous_hardening import (
-    get_autonomous_hardening, initialize_autonomous_hardening, AutonomousHardening
-)
-from windows_ai.homomorphic_encryption import (
-    get_homomorphic_encryption, initialize_homomorphic_encryption, HomomorphicEncryption
-)
-from windows_ai.blockchain_integrity import (
-    get_blockchain_integrity, initialize_blockchain_integrity, BlockchainIntegrity
-)
-from windows_ai.vulnerability_scanner_ai import (
-    get_vulnerability_scanner_ai, initialize_vulnerability_scanner_ai, VulnerabilityScannerAi
-)
-from windows_ai.sandbox_executor import (
-    get_sandbox_executor, initialize_sandbox_executor, SandboxExecutor
-)
-from windows_ai.zero_trust_enforcer import (
-    get_zero_trust_enforcer, initialize_zero_trust_enforcer, ZeroTrustEnforcer
-)
-from windows_ai.secure_enclave_integration import (
-    get_secure_enclave_integration, initialize_secure_enclave_integration, SecureEnclaveIntegration
-)
-from windows_ai.differential_privacy import (
-    get_differential_privacy, initialize_differential_privacy, DifferentialPrivacy
-)
-from windows_ai.biometric_auth_system import (
-    get_biometric_auth_system, initialize_biometric_auth_system, BiometricAuthSystem
-)
-from windows_ai.privacy_shield import (
-    get_privacy_shield, initialize_privacy_shield, PrivacyShield
-)
-from windows_ai.security_audit_ai import (
-    get_security_audit_ai, initialize_security_audit_ai, SecurityAuditAi
-)
-from windows_ai.firmware_ai_hooks import (
-    get_firmware_ai_hooks, initialize_firmware_ai_hooks, FirmwareAiHooks
-)
-from windows_ai.silicon_accelerator import (
-    get_silicon_accelerator, initialize_silicon_accelerator, SiliconAccelerator
-)
-from windows_ai.biometric_sensor_hub import (
-    get_biometric_sensor_hub, initialize_biometric_sensor_hub, BiometricSensorHub
-)
-from windows_ai.universal_app_api import (
-    get_universal_app_api, initialize_universal_app_api, UniversalAppApi
-)
-from windows_ai.cross_app_workflow import (
-    get_cross_app_workflow, initialize_cross_app_workflow, CrossAppWorkflow
-)
-from windows_ai.swarm_intelligence_computing import (
-    get_swarm_intelligence_computing, initialize_swarm_intelligence_computing, SwarmIntelligenceComputing
-)
-from windows_ai.federated_edge_learning import (
-    get_federated_edge_learning, initialize_federated_edge_learning, FederatedEdgeLearning
-)
-from windows_ai.gpu_optimizer import (
-    get_gpu_optimizer, initialize_gpu_optimizer, GpuOptimizer
-)
-from windows_ai.directml_integration import (
-    get_directml_integration, initialize_directml_integration, DirectmlIntegration
-)
-from windows_ai.resource_governor import (
-    get_resource_governor, initialize_resource_governor, ResourceGovernor
-)
-from windows_ai.power_manager_ai import (
-    get_power_manager_ai, initialize_power_manager_ai, PowerManagerAi
-)
-from windows_ai.os_patch_automation import (
-    get_os_patch_automation, initialize_os_patch_automation, OsPatchAutomation
-)
-from windows_ai.driver_manager_auto import (
-    get_driver_manager_auto, initialize_driver_manager_auto, DriverManagerAuto
-)
-from windows_ai.hardware_monitor import (
-    get_hardware_monitor, initialize_hardware_monitor, HardwareMonitor
-)
-from windows_ai.thermal_optimizer import (
-    get_thermal_optimizer, initialize_thermal_optimizer, ThermalOptimizer
-)
-from windows_ai.plugin_sdk_manager import (
-    get_plugin_sdk_manager, initialize_plugin_sdk_manager, PluginSdkManager
-)
-from windows_ai.api_monitor import (
-    get_api_monitor, initialize_api_monitor, ApiMonitor
-)
-from windows_ai.visual_plugin_builder import (
-    get_visual_plugin_builder, initialize_visual_plugin_builder, VisualPluginBuilder
-)
-from windows_ai.hot_reload_system import (
-    get_hot_reload_system, initialize_hot_reload_system, HotReloadSystem
-)
-from windows_ai.automated_plugin_tester import (
-    get_automated_plugin_tester, initialize_automated_plugin_tester, AutomatedPluginTester
-)
-from windows_ai.model_fusion_engine import (
-    get_model_fusion_engine, initialize_model_fusion_engine, ModelFusionEngine
-)
-from windows_ai.decentralized_model_registry import (
-    get_decentralized_model_registry, initialize_decentralized_model_registry, DecentralizedModelRegistry
-)
-from windows_ai.developer_xp_system import (
-    get_developer_xp_system, initialize_developer_xp_system, DeveloperXpSystem
-)
-from windows_ai.ai_guided_learning import (
-    get_ai_guided_learning, initialize_ai_guided_learning, AiGuidedLearning
-)
-from windows_ai.code_generator_ai import (
-    get_code_generator_ai, initialize_code_generator_ai, CodeGeneratorAi
-)
-from windows_ai.test_case_generator import (
-    get_test_case_generator, initialize_test_case_generator, TestCaseGenerator
-)
-from windows_ai.predictive_debugger import (
-    get_predictive_debugger, initialize_predictive_debugger, PredictiveDebugger
-)
-from windows_ai.self_modifying_code import (
-    get_self_modifying_code, initialize_self_modifying_code, SelfModifyingCode
-)
-from windows_ai.universal_plugin_adapter import (
-    get_universal_plugin_adapter, initialize_universal_plugin_adapter, UniversalPluginAdapter
-)
-from windows_ai.marketplace_integration import (
-    get_marketplace_integration, initialize_marketplace_integration, MarketplaceIntegration
-)
-from windows_ai.eye_tracking_controller import (
-    get_eye_tracking_controller, initialize_eye_tracking_controller, EyeTrackingController
-)
-from windows_ai.gesture_recognizer import (
-    get_gesture_recognizer, initialize_gesture_recognizer, GestureRecognizer
-)
-from windows_ai.bci_interface import (
-    get_bci_interface, initialize_bci_interface, BciInterface
-)
-from windows_ai.switch_control_system import (
-    get_switch_control_system, initialize_switch_control_system, SwitchControlSystem
-)
-from windows_ai.screen_reader_ai import (
-    get_screen_reader_ai, initialize_screen_reader_ai, ScreenReaderAi
-)
-from windows_ai.haptic_feedback_system import (
-    get_haptic_feedback_system, initialize_haptic_feedback_system, HapticFeedbackSystem
-)
-from windows_ai.braille_display_adapter import (
-    get_braille_display_adapter, initialize_braille_display_adapter, BrailleDisplayAdapter
-)
-from windows_ai.cognitive_simplifier import (
-    get_cognitive_simplifier, initialize_cognitive_simplifier, CognitiveSimplifier
-)
-from windows_ai.distraction_reducer import (
-    get_distraction_reducer, initialize_distraction_reducer, DistractionReducer
-)
-from windows_ai.memory_assistant import (
-    get_memory_assistant, initialize_memory_assistant, MemoryAssistant
-)
-from windows_ai.cultural_adapter import (
-    get_cultural_adapter, initialize_cultural_adapter, CulturalAdapter
-)
-from windows_ai.multilingual_engine import (
-    get_multilingual_engine, initialize_multilingual_engine, MultilingualEngine
-)
-from windows_ai.emotional_intelligence import (
-    get_emotional_intelligence, initialize_emotional_intelligence, EmotionalIntelligence
-)
-from windows_ai.personalized_tts import (
-    get_personalized_tts, initialize_personalized_tts, PersonalizedTts
-)
-from windows_ai.adaptive_ui_generator import (
-    get_adaptive_ui_generator, initialize_adaptive_ui_generator, AdaptiveUiGenerator
-)
-from windows_ai.universal_clipboard import (
-    get_universal_clipboard, initialize_universal_clipboard, UniversalClipboard
-)
-from windows_ai.smart_home_orchestrator import (
-    get_smart_home_orchestrator, initialize_smart_home_orchestrator, SmartHomeOrchestrator
-)
-from windows_ai.cloud_sync_manager import (
-    get_cloud_sync_manager, initialize_cloud_sync_manager, CloudSyncManager
-)
-from windows_ai.far_field_voice import (
-    get_far_field_voice, initialize_far_field_voice, FarFieldVoice
-)
-from windows_ai.speaker_diarization import (
-    get_speaker_diarization, initialize_speaker_diarization, SpeakerDiarization
-)
-from windows_ai.spatial_audio_engine import (
-    get_spatial_audio_engine, initialize_spatial_audio_engine, SpatialAudioEngine
-)
-from windows_ai.ar_overlay_system import (
-    get_ar_overlay_system, initialize_ar_overlay_system, ArOverlaySystem
-)
-from windows_ai.cross_device_sync import (
-    get_cross_device_sync, initialize_cross_device_sync, CrossDeviceSync
-)
-from windows_ai.iot_hub_integration import (
-    get_iot_hub_integration, initialize_iot_hub_integration, IotHubIntegration
-)
-from windows_ai.edge_computing_orchestrator import (
-    get_edge_computing_orchestrator, initialize_edge_computing_orchestrator, EdgeComputingOrchestrator
-)
-from windows_ai.mesh_network_coordinator import (
-    get_mesh_network_coordinator, initialize_mesh_network_coordinator, MeshNetworkCoordinator
-)
-from windows_ai.device_discovery import (
-    get_device_discovery, initialize_device_discovery, DeviceDiscovery
-)
-from windows_ai.protocol_adapter import (
-    get_protocol_adapter, initialize_protocol_adapter, ProtocolAdapter
-)
-from windows_ai.energy_optimizer_iot import (
-    get_energy_optimizer_iot, initialize_energy_optimizer_iot, EnergyOptimizerIot
-)
-from windows_ai.remote_control_system import (
-    get_remote_control_system, initialize_remote_control_system, RemoteControlSystem
-)
+get_context_manager, initialize_context_system, ContextualAwarenessSystem = _safe_import('windows_ai.context_manager', ["get_context_manager", "initialize_context_system", "ContextualAwarenessSystem"])
+get_xai_system, initialize_xai_system, ExplainableAI, ActionType, ActionExplanation = _safe_import('windows_ai.xai', ["get_xai_system", "initialize_xai_system", "ExplainableAI", "ActionType", "ActionExplanation"])
+get_hotkey_manager, initialize_hotkey_system, GlobalHotkeyManager = _safe_import('windows_ai.hotkeys', ["get_hotkey_manager", "initialize_hotkey_system", "GlobalHotkeyManager"])
+get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant = _safe_import('windows_ai.proactive_assistant', ["get_proactive_assistant", "initialize_proactive_assistant", "ProactiveAssistant"])
+get_anomaly_detector, initialize_anomaly_detector, AnomalyDetector = _safe_import('windows_ai.anomaly_detector', ["get_anomaly_detector", "initialize_anomaly_detector", "AnomalyDetector"])
+get_voice_system, initialize_voice_system, VoiceActivationSystem = _safe_import('windows_ai.voice_activation', ["get_voice_system", "initialize_voice_system", "VoiceActivationSystem"])
+get_healing_system, initialize_healing_system, SelfHealingSystem = _safe_import('windows_ai.self_healing', ["get_healing_system", "initialize_healing_system", "SelfHealingSystem"])
+get_performance_optimizer, initialize_performance_optimizer, PerformanceOptimizer = _safe_import('windows_ai.performance_optimizer', ["get_performance_optimizer", "initialize_performance_optimizer", "PerformanceOptimizer"])
+get_plugin_validator, initialize_plugin_validator, PluginValidator = _safe_import('windows_ai.plugin_validator', ["get_plugin_validator", "initialize_plugin_validator", "PluginValidator"])
+get_rl_system, initialize_rl_system, ReinforcementLearningSystem = _safe_import('windows_ai.reinforcement_learning', ["get_rl_system", "initialize_rl_system", "ReinforcementLearningSystem"])
+get_nlp_engine, initialize_nlp_engine, AdvancedNLPEngine = _safe_import('windows_ai.advanced_nlp', ["get_nlp_engine", "initialize_nlp_engine", "AdvancedNLPEngine"])
+get_multi_agent_system, initialize_multi_agent_system, MultiAgentSystem = _safe_import('windows_ai.multi_agent_system', ["get_multi_agent_system", "initialize_multi_agent_system", "MultiAgentSystem"])
+get_code_generator, initialize_code_generator, AICodeGenerator = _safe_import('windows_ai.code_generator', ["get_code_generator", "initialize_code_generator", "AICodeGenerator"])
+get_testing_framework, initialize_testing_framework, ComprehensiveTestingFramework = _safe_import('windows_ai.testing_framework', ["get_testing_framework", "initialize_testing_framework", "ComprehensiveTestingFramework"])
+get_nas_system, initialize_nas_system, NeuralArchitectureSearch = _safe_import('windows_ai.neural_architecture_search', ["get_nas_system", "initialize_nas_system", "NeuralArchitectureSearch"])
+get_fl_system, initialize_fl_system, FederatedLearningSystem = _safe_import('windows_ai.federated_learning', ["get_fl_system", "initialize_fl_system", "FederatedLearningSystem"])
+get_quantum_optimizer, initialize_quantum_optimizer, QuantumInspiredOptimizer = _safe_import('windows_ai.quantum_optimizer', ["get_quantum_optimizer", "initialize_quantum_optimizer", "QuantumInspiredOptimizer"])
+get_gan_generator, initialize_gan_generator, GANContentGenerator = _safe_import('windows_ai.gan_generator', ["get_gan_generator", "initialize_gan_generator", "GANContentGenerator"])
+get_tl_manager, initialize_tl_manager, TransferLearningManager = _safe_import('windows_ai.transfer_learning', ["get_tl_manager", "initialize_tl_manager", "TransferLearningManager"])
+get_automl, initialize_automl, AutoMLSystem = _safe_import('windows_ai.automl', ["get_automl", "initialize_automl", "AutoMLSystem"])
+get_explainable_dl, initialize_explainable_dl, ExplainableDLSystem = _safe_import('windows_ai.explainable_dl', ["get_explainable_dl", "initialize_explainable_dl", "ExplainableDLSystem"])
+get_adv_defense, initialize_adv_defense, AdversarialDefenseSystem = _safe_import('windows_ai.adversarial_defense', ["get_adv_defense", "initialize_adv_defense", "AdversarialDefenseSystem"])
+get_meta_learning, initialize_meta_learning, MetaLearningEngine = _safe_import('windows_ai.meta_learning', ["get_meta_learning", "initialize_meta_learning", "MetaLearningEngine"])
+get_continual_learning, initialize_continual_learning, ContinualLearningSystem = _safe_import('windows_ai.continual_learning', ["get_continual_learning", "initialize_continual_learning", "ContinualLearningSystem"])
+get_gnn, initialize_gnn, GraphNeuralNetwork = _safe_import('windows_ai.graph_neural_network', ["get_gnn", "initialize_gnn", "GraphNeuralNetwork"])
+get_attention, initialize_attention, AttentionEngine = _safe_import('windows_ai.attention_mechanism', ["get_attention", "initialize_attention", "AttentionEngine"])
+get_kg_builder, initialize_kg_builder, KnowledgeGraphBuilder = _safe_import('windows_ai.knowledge_graph', ["get_kg_builder", "initialize_kg_builder", "KnowledgeGraphBuilder"])
+get_causal_inference, initialize_causal_inference, CausalInferenceEngine = _safe_import('windows_ai.causal_inference', ["get_causal_inference", "initialize_causal_inference", "CausalInferenceEngine"])
+get_bayes_opt, initialize_bayes_opt, BayesianOptimizer = _safe_import('windows_ai.bayesian_optimization', ["get_bayes_opt", "initialize_bayes_opt", "BayesianOptimizer"])
+get_ensemble, initialize_ensemble, EnsembleLearningManager = _safe_import('windows_ai.ensemble_learning', ["get_ensemble", "initialize_ensemble", "EnsembleLearningManager"])
+get_active_learning, initialize_active_learning, ActiveLearningSystem = _safe_import('windows_ai.active_learning', ["get_active_learning", "initialize_active_learning", "ActiveLearningSystem"])
+get_semi_supervised, initialize_semi_supervised, SemiSupervisedLearning = _safe_import('windows_ai.semi_supervised', ["get_semi_supervised", "initialize_semi_supervised", "SemiSupervisedLearning"])
+get_few_shot, initialize_few_shot, FewShotLearningEngine = _safe_import('windows_ai.few_shot_learning', ["get_few_shot", "initialize_few_shot", "FewShotLearningEngine"])
+get_zero_shot, initialize_zero_shot, ZeroShotLearningSystem = _safe_import('windows_ai.zero_shot_learning', ["get_zero_shot", "initialize_zero_shot", "ZeroShotLearningSystem"])
+get_neuromorphic, initialize_neuromorphic, NeuromorphicSystem = _safe_import('windows_ai.neuromorphic_computing', ["get_neuromorphic", "initialize_neuromorphic", "NeuromorphicSystem"])
+get_swarm, initialize_swarm, SwarmIntelligence = _safe_import('windows_ai.swarm_intelligence', ["get_swarm", "initialize_swarm", "SwarmIntelligence"])
+get_evolutionary, initialize_evolutionary, EvolutionaryAlgorithms = _safe_import('windows_ai.evolutionary_algorithms', ["get_evolutionary", "initialize_evolutionary", "EvolutionaryAlgorithms"])
+get_neuroevolution, initialize_neuroevolution, NeuroEvolution = _safe_import('windows_ai.neuroevolution', ["get_neuroevolution", "initialize_neuroevolution", "NeuroEvolution"])
+get_hybrid_ai, initialize_hybrid_ai, HybridAISystem = _safe_import('windows_ai.hybrid_ai', ["get_hybrid_ai", "initialize_hybrid_ai", "HybridAISystem"])
+get_emotion_rec, initialize_emotion_rec, EmotionRecognitionSystem = _safe_import('windows_ai.emotion_recognition', ["get_emotion_rec", "initialize_emotion_rec", "EmotionRecognitionSystem"])
+get_gesture_rec, initialize_gesture_rec, GestureRecognitionSystem = _safe_import('windows_ai.gesture_recognition', ["get_gesture_rec", "initialize_gesture_rec", "GestureRecognitionSystem"])
+get_biometric_auth, initialize_biometric_auth, BiometricAuthSystem = _safe_import('windows_ai.biometric_auth', ["get_biometric_auth", "initialize_biometric_auth", "BiometricAuthSystem"])
+get_predictive_maint, initialize_predictive_maint, PredictiveMaintenanceSystem = _safe_import('windows_ai.predictive_maintenance', ["get_predictive_maint", "initialize_predictive_maint", "PredictiveMaintenanceSystem"])
+get_recommendation, initialize_recommendation, RecommendationEngine = _safe_import('windows_ai.recommendation_engine', ["get_recommendation", "initialize_recommendation", "RecommendationEngine"])
+get_auto_doc, initialize_auto_doc, AutoDocumentationSystem = _safe_import('windows_ai.auto_documentation', ["get_auto_doc", "initialize_auto_doc", "AutoDocumentationSystem"])
+get_code_review, initialize_code_review, CodeReviewAI = _safe_import('windows_ai.code_review_ai', ["get_code_review", "initialize_code_review", "CodeReviewAI"])
+get_bug_prediction, initialize_bug_prediction, BugPredictionSystem = _safe_import('windows_ai.bug_prediction', ["get_bug_prediction", "initialize_bug_prediction", "BugPredictionSystem"])
+get_dep_analyzer, initialize_dep_analyzer, DependencyAnalyzer = _safe_import('windows_ai.dependency_analyzer', ["get_dep_analyzer", "initialize_dep_analyzer", "DependencyAnalyzer"])
+get_perf_profiler, initialize_perf_profiler, PerformanceProfilerAI = _safe_import('windows_ai.performance_profiler', ["get_perf_profiler", "initialize_perf_profiler", "PerformanceProfilerAI"])
+get_security_scanner, initialize_security_scanner, SecurityVulnerabilityScanner = _safe_import('windows_ai.security_scanner', ["get_security_scanner", "initialize_security_scanner", "SecurityVulnerabilityScanner"])
+get_api_analyzer, initialize_api_analyzer, APIUsageAnalyzer = _safe_import('windows_ai.api_usage_analyzer', ["get_api_analyzer", "initialize_api_analyzer", "APIUsageAnalyzer"])
+get_query_optimizer, initialize_query_optimizer, DatabaseQueryOptimizer = _safe_import('windows_ai.query_optimizer', ["get_query_optimizer", "initialize_query_optimizer", "DatabaseQueryOptimizer"])
+get_memory_detector, initialize_memory_detector, MemoryLeakDetector = _safe_import('windows_ai.memory_leak_detector', ["get_memory_detector", "initialize_memory_detector", "MemoryLeakDetector"])
+get_concurrency_analyzer, initialize_concurrency_analyzer, ConcurrencyAnalyzer = _safe_import('windows_ai.concurrency_analyzer', ["get_concurrency_analyzer", "initialize_concurrency_analyzer", "ConcurrencyAnalyzer"])
+get_obj_detection, initialize_obj_detection, ObjectDetectionSystem = _safe_import('windows_ai.object_detection', ["get_obj_detection", "initialize_obj_detection", "ObjectDetectionSystem"])
+get_img_seg, initialize_img_seg, ImageSegmentationSystem = _safe_import('windows_ai.image_segmentation', ["get_img_seg", "initialize_img_seg", "ImageSegmentationSystem"])
+get_face_rec, initialize_face_rec, FaceRecognitionSystem = _safe_import('windows_ai.face_recognition', ["get_face_rec", "initialize_face_rec", "FaceRecognitionSystem"])
+get_pose_est, initialize_pose_est, PoseEstimationSystem = _safe_import('windows_ai.pose_estimation', ["get_pose_est", "initialize_pose_est", "PoseEstimationSystem"])
+get_scene_understanding, initialize_scene_understanding, SceneUnderstandingSystem = _safe_import('windows_ai.scene_understanding', ["get_scene_understanding", "initialize_scene_understanding", "SceneUnderstandingSystem"])
+get_optical_flow, initialize_optical_flow, OpticalFlowSystem = _safe_import('windows_ai.optical_flow', ["get_optical_flow", "initialize_optical_flow", "OpticalFlowSystem"])
+get_depth_estimation, initialize_depth_estimation, DepthEstimationSystem = _safe_import('windows_ai.depth_estimation', ["get_depth_estimation", "initialize_depth_estimation", "DepthEstimationSystem"])
+get_image_captioning, initialize_image_captioning, ImageCaptioningSystem = _safe_import('windows_ai.image_captioning', ["get_image_captioning", "initialize_image_captioning", "ImageCaptioningSystem"])
+get_visual_qa, initialize_visual_qa, VisualQASystem = _safe_import('windows_ai.visual_qa', ["get_visual_qa", "initialize_visual_qa", "VisualQASystem"])
+get_style_transfer, initialize_style_transfer, StyleTransferSystem = _safe_import('windows_ai.style_transfer', ["get_style_transfer", "initialize_style_transfer", "StyleTransferSystem"])
+get_super_resolution, initialize_super_resolution, SuperResolutionSystem = _safe_import('windows_ai.super_resolution', ["get_super_resolution", "initialize_super_resolution", "SuperResolutionSystem"])
+get_image_enhancement, initialize_image_enhancement, ImageEnhancementSystem = _safe_import('windows_ai.image_enhancement', ["get_image_enhancement", "initialize_image_enhancement", "ImageEnhancementSystem"])
+get_anomaly_vision, initialize_anomaly_vision, VisualAnomalyDetectionSystem = _safe_import('windows_ai.anomaly_vision', ["get_anomaly_vision", "initialize_anomaly_vision", "VisualAnomalyDetectionSystem"])
+get_ocr_system, initialize_ocr_system, OCREngineSystem = _safe_import('windows_ai.ocr_system', ["get_ocr_system", "initialize_ocr_system", "OCREngineSystem"])
+get_document_analysis, initialize_document_analysis, DocumentAnalysisSystem = _safe_import('windows_ai.document_analysis', ["get_document_analysis", "initialize_document_analysis", "DocumentAnalysisSystem"])
+get_video_analysis, initialize_video_analysis, VideoAnalysisSystem = _safe_import('windows_ai.video_analysis', ["get_video_analysis", "initialize_video_analysis", "VideoAnalysisSystem"])
+get_action_recognition, initialize_action_recognition, ActionRecognitionSystem = _safe_import('windows_ai.action_recognition', ["get_action_recognition", "initialize_action_recognition", "ActionRecognitionSystem"])
+get_tracking_system, initialize_tracking_system, ObjectTrackingSystem = _safe_import('windows_ai.tracking_system', ["get_tracking_system", "initialize_tracking_system", "ObjectTrackingSystem"])
+get_image_retrieval, initialize_image_retrieval, ImageRetrievalSystem = _safe_import('windows_ai.image_retrieval', ["get_image_retrieval", "initialize_image_retrieval", "ImageRetrievalSystem"])
+get_text_summarization, initialize_text_summarization, TextSummarizationSystem = _safe_import('windows_ai.text_summarization', ["get_text_summarization", "initialize_text_summarization", "TextSummarizationSystem"])
+get_machine_translation, initialize_machine_translation, MachineTranslationSystem = _safe_import('windows_ai.machine_translation', ["get_machine_translation", "initialize_machine_translation", "MachineTranslationSystem"])
+get_question_answering, initialize_question_answering, QuestionAnsweringSystem = _safe_import('windows_ai.question_answering', ["get_question_answering", "initialize_question_answering", "QuestionAnsweringSystem"])
+get_dialogue_system, initialize_dialogue_system, DialogueSystemSystem = _safe_import('windows_ai.dialogue_system', ["get_dialogue_system", "initialize_dialogue_system", "DialogueSystemSystem"])
+get_text_generation, initialize_text_generation, TextGenerationSystem = _safe_import('windows_ai.text_generation', ["get_text_generation", "initialize_text_generation", "TextGenerationSystem"])
+get_language_modeling, initialize_language_modeling, LanguageModelingSystem = _safe_import('windows_ai.language_modeling', ["get_language_modeling", "initialize_language_modeling", "LanguageModelingSystem"])
+get_named_entity_recognition, initialize_named_entity_recognition, NamedEntityRecognitionSystem = _safe_import('windows_ai.named_entity_recognition', ["get_named_entity_recognition", "initialize_named_entity_recognition", "NamedEntityRecognitionSystem"])
+get_relation_extraction, initialize_relation_extraction, RelationExtractionSystem = _safe_import('windows_ai.relation_extraction', ["get_relation_extraction", "initialize_relation_extraction", "RelationExtractionSystem"])
+get_coreference_resolution, initialize_coreference_resolution, CoreferenceResolutionSystem = _safe_import('windows_ai.coreference_resolution', ["get_coreference_resolution", "initialize_coreference_resolution", "CoreferenceResolutionSystem"])
+get_semantic_parsing, initialize_semantic_parsing, SemanticParsingSystem = _safe_import('windows_ai.semantic_parsing', ["get_semantic_parsing", "initialize_semantic_parsing", "SemanticParsingSystem"])
+get_intent_classification, initialize_intent_classification, IntentClassificationSystem = _safe_import('windows_ai.intent_classification', ["get_intent_classification", "initialize_intent_classification", "IntentClassificationSystem"])
+get_slot_filling, initialize_slot_filling, SlotFillingSystem = _safe_import('windows_ai.slot_filling', ["get_slot_filling", "initialize_slot_filling", "SlotFillingSystem"])
+get_text_classification, initialize_text_classification, TextClassificationSystem = _safe_import('windows_ai.text_classification', ["get_text_classification", "initialize_text_classification", "TextClassificationSystem"])
+get_topic_modeling, initialize_topic_modeling, TopicModelingSystem = _safe_import('windows_ai.topic_modeling', ["get_topic_modeling", "initialize_topic_modeling", "TopicModelingSystem"])
+get_document_clustering, initialize_document_clustering, DocumentClusteringSystem = _safe_import('windows_ai.document_clustering', ["get_document_clustering", "initialize_document_clustering", "DocumentClusteringSystem"])
+get_information_extraction, initialize_information_extraction, InformationExtractionSystem = _safe_import('windows_ai.information_extraction', ["get_information_extraction", "initialize_information_extraction", "InformationExtractionSystem"])
+get_text_simplification, initialize_text_simplification, TextSimplificationSystem = _safe_import('windows_ai.text_simplification', ["get_text_simplification", "initialize_text_simplification", "TextSimplificationSystem"])
+get_paraphrase_generation, initialize_paraphrase_generation, ParaphraseGenerationSystem = _safe_import('windows_ai.paraphrase_generation', ["get_paraphrase_generation", "initialize_paraphrase_generation", "ParaphraseGenerationSystem"])
+get_grammar_correction, initialize_grammar_correction, GrammarCorrectionSystem = _safe_import('windows_ai.grammar_correction', ["get_grammar_correction", "initialize_grammar_correction", "GrammarCorrectionSystem"])
+get_readability_analysis, initialize_readability_analysis, ReadabilityAnalysisSystem = _safe_import('windows_ai.readability_analysis', ["get_readability_analysis", "initialize_readability_analysis", "ReadabilityAnalysisSystem"])
+get_motion_planning, initialize_motion_planning, MotionPlanningSystem = _safe_import('windows_ai.motion_planning', ["get_motion_planning", "initialize_motion_planning", "MotionPlanningSystem"])
+get_path_planning, initialize_path_planning, PathPlanningSystem = _safe_import('windows_ai.path_planning', ["get_path_planning", "initialize_path_planning", "PathPlanningSystem"])
+get_slam_system, initialize_slam_system, SLAMSystemSystem = _safe_import('windows_ai.slam_system', ["get_slam_system", "initialize_slam_system", "SLAMSystemSystem"])
+get_robot_localization, initialize_robot_localization, RobotLocalizationSystem = _safe_import('windows_ai.robot_localization', ["get_robot_localization", "initialize_robot_localization", "RobotLocalizationSystem"])
+get_inverse_kinematics, initialize_inverse_kinematics, InverseKinematicsSystem = _safe_import('windows_ai.inverse_kinematics', ["get_inverse_kinematics", "initialize_inverse_kinematics", "InverseKinematicsSystem"])
+get_forward_kinematics, initialize_forward_kinematics, ForwardKinematicsSystem = _safe_import('windows_ai.forward_kinematics', ["get_forward_kinematics", "initialize_forward_kinematics", "ForwardKinematicsSystem"])
+get_collision_detection, initialize_collision_detection, CollisionDetectionSystem = _safe_import('windows_ai.collision_detection', ["get_collision_detection", "initialize_collision_detection", "CollisionDetectionSystem"])
+get_grasp_planning, initialize_grasp_planning, GraspPlanningSystem = _safe_import('windows_ai.grasp_planning', ["get_grasp_planning", "initialize_grasp_planning", "GraspPlanningSystem"])
+get_manipulation_control, initialize_manipulation_control, ManipulationControlSystem = _safe_import('windows_ai.manipulation_control', ["get_manipulation_control", "initialize_manipulation_control", "ManipulationControlSystem"])
+get_trajectory_optimization, initialize_trajectory_optimization, TrajectoryOptimizationSystem = _safe_import('windows_ai.trajectory_optimization', ["get_trajectory_optimization", "initialize_trajectory_optimization", "TrajectoryOptimizationSystem"])
+get_force_control, initialize_force_control, ForceControlSystem = _safe_import('windows_ai.force_control', ["get_force_control", "initialize_force_control", "ForceControlSystem"])
+get_compliance_control, initialize_compliance_control, ComplianceControlSystem = _safe_import('windows_ai.compliance_control', ["get_compliance_control", "initialize_compliance_control", "ComplianceControlSystem"])
+get_visual_servoing, initialize_visual_servoing, VisualServoingSystem = _safe_import('windows_ai.visual_servoing', ["get_visual_servoing", "initialize_visual_servoing", "VisualServoingSystem"])
+get_sensor_fusion, initialize_sensor_fusion, SensorFusionSystem = _safe_import('windows_ai.sensor_fusion', ["get_sensor_fusion", "initialize_sensor_fusion", "SensorFusionSystem"])
+get_obstacle_avoidance, initialize_obstacle_avoidance, ObstacleAvoidanceSystem = _safe_import('windows_ai.obstacle_avoidance', ["get_obstacle_avoidance", "initialize_obstacle_avoidance", "ObstacleAvoidanceSystem"])
+get_autonomous_navigation, initialize_autonomous_navigation, AutonomousNavigationSystem = _safe_import('windows_ai.autonomous_navigation', ["get_autonomous_navigation", "initialize_autonomous_navigation", "AutonomousNavigationSystem"])
+get_multi_robot_coordination, initialize_multi_robot_coordination, MultiRobotCoordinationSystem = _safe_import('windows_ai.multi_robot_coordination', ["get_multi_robot_coordination", "initialize_multi_robot_coordination", "MultiRobotCoordinationSystem"])
+get_task_planning, initialize_task_planning, TaskPlanningSystem = _safe_import('windows_ai.task_planning', ["get_task_planning", "initialize_task_planning", "TaskPlanningSystem"])
+get_behavior_trees, initialize_behavior_trees, BehaviorTreesSystem = _safe_import('windows_ai.behavior_trees', ["get_behavior_trees", "initialize_behavior_trees", "BehaviorTreesSystem"])
+get_robot_learning, initialize_robot_learning, RobotLearningSystem = _safe_import('windows_ai.robot_learning', ["get_robot_learning", "initialize_robot_learning", "RobotLearningSystem"])
+get_time_series_forecasting, initialize_time_series_forecasting, TimeSeriesForecastingSystem = _safe_import('windows_ai.time_series_forecasting', ["get_time_series_forecasting", "initialize_time_series_forecasting", "TimeSeriesForecastingSystem"])
+get_anomaly_detection_ts, initialize_anomaly_detection_ts, AnomalyDetectionTSSystem = _safe_import('windows_ai.anomaly_detection_ts', ["get_anomaly_detection_ts", "initialize_anomaly_detection_ts", "AnomalyDetectionTSSystem"])
+get_trend_analysis, initialize_trend_analysis, TrendAnalysisSystem = _safe_import('windows_ai.trend_analysis', ["get_trend_analysis", "initialize_trend_analysis", "TrendAnalysisSystem"])
+get_seasonality_detection, initialize_seasonality_detection, SeasonalityDetectionSystem = _safe_import('windows_ai.seasonality_detection', ["get_seasonality_detection", "initialize_seasonality_detection", "SeasonalityDetectionSystem"])
+get_change_point_detection, initialize_change_point_detection, ChangePointDetectionSystem = _safe_import('windows_ai.change_point_detection', ["get_change_point_detection", "initialize_change_point_detection", "ChangePointDetectionSystem"])
+get_arima_model, initialize_arima_model, ARIMAModelSystem = _safe_import('windows_ai.arima_model', ["get_arima_model", "initialize_arima_model", "ARIMAModelSystem"])
+get_lstm_forecasting, initialize_lstm_forecasting, LSTMForecastingSystem = _safe_import('windows_ai.lstm_forecasting', ["get_lstm_forecasting", "initialize_lstm_forecasting", "LSTMForecastingSystem"])
+get_prophet_forecasting, initialize_prophet_forecasting, ProphetForecastingSystem = _safe_import('windows_ai.prophet_forecasting', ["get_prophet_forecasting", "initialize_prophet_forecasting", "ProphetForecastingSystem"])
+get_wavelet_analysis, initialize_wavelet_analysis, WaveletAnalysisSystem = _safe_import('windows_ai.wavelet_analysis', ["get_wavelet_analysis", "initialize_wavelet_analysis", "WaveletAnalysisSystem"])
+get_spectral_analysis, initialize_spectral_analysis, SpectralAnalysisSystem = _safe_import('windows_ai.spectral_analysis', ["get_spectral_analysis", "initialize_spectral_analysis", "SpectralAnalysisSystem"])
+get_correlation_analysis, initialize_correlation_analysis, CorrelationAnalysisSystem = _safe_import('windows_ai.correlation_analysis', ["get_correlation_analysis", "initialize_correlation_analysis", "CorrelationAnalysisSystem"])
+get_granger_causality, initialize_granger_causality, GrangerCausalitySystem = _safe_import('windows_ai.granger_causality', ["get_granger_causality", "initialize_granger_causality", "GrangerCausalitySystem"])
+get_vector_autoregression, initialize_vector_autoregression, VectorAutoregressionSystem = _safe_import('windows_ai.vector_autoregression', ["get_vector_autoregression", "initialize_vector_autoregression", "VectorAutoregressionSystem"])
+get_state_space_models, initialize_state_space_models, StateSpaceModelsSystem = _safe_import('windows_ai.state_space_models', ["get_state_space_models", "initialize_state_space_models", "StateSpaceModelsSystem"])
+get_kalman_filter, initialize_kalman_filter, KalmanFilterSystem = _safe_import('windows_ai.kalman_filter', ["get_kalman_filter", "initialize_kalman_filter", "KalmanFilterSystem"])
+get_particle_filter, initialize_particle_filter, ParticleFilterSystem = _safe_import('windows_ai.particle_filter', ["get_particle_filter", "initialize_particle_filter", "ParticleFilterSystem"])
+get_hidden_markov_model, initialize_hidden_markov_model, HiddenMarkovModelSystem = _safe_import('windows_ai.hidden_markov_model', ["get_hidden_markov_model", "initialize_hidden_markov_model", "HiddenMarkovModelSystem"])
+get_gaussian_process, initialize_gaussian_process, GaussianProcessSystem = _safe_import('windows_ai.gaussian_process', ["get_gaussian_process", "initialize_gaussian_process", "GaussianProcessSystem"])
+get_ensemble_forecasting, initialize_ensemble_forecasting, EnsembleForecastingSystem = _safe_import('windows_ai.ensemble_forecasting', ["get_ensemble_forecasting", "initialize_ensemble_forecasting", "EnsembleForecastingSystem"])
+get_demand_forecasting, initialize_demand_forecasting, DemandForecastingSystem = _safe_import('windows_ai.demand_forecasting', ["get_demand_forecasting", "initialize_demand_forecasting", "DemandForecastingSystem"])
+get_smart_contract_analyzer, initialize_smart_contract_analyzer, SmartContractAnalyzerSystem = _safe_import('windows_ai.smart_contract_analyzer', ["get_smart_contract_analyzer", "initialize_smart_contract_analyzer", "SmartContractAnalyzerSystem"])
+get_crypto_price_predictor, initialize_crypto_price_predictor, CryptoPricePredictorSystem = _safe_import('windows_ai.crypto_price_predictor', ["get_crypto_price_predictor", "initialize_crypto_price_predictor", "CryptoPricePredictorSystem"])
+get_blockchain_analytics, initialize_blockchain_analytics, BlockchainAnalyticsSystem = _safe_import('windows_ai.blockchain_analytics', ["get_blockchain_analytics", "initialize_blockchain_analytics", "BlockchainAnalyticsSystem"])
+get_fraud_detection_crypto, initialize_fraud_detection_crypto, FraudDetectionCryptoSystem = _safe_import('windows_ai.fraud_detection_crypto', ["get_fraud_detection_crypto", "initialize_fraud_detection_crypto", "FraudDetectionCryptoSystem"])
+get_wallet_risk_assessment, initialize_wallet_risk_assessment, WalletRiskAssessmentSystem = _safe_import('windows_ai.wallet_risk_assessment', ["get_wallet_risk_assessment", "initialize_wallet_risk_assessment", "WalletRiskAssessmentSystem"])
+get_defi_optimizer, initialize_defi_optimizer, DeFiOptimizerSystem = _safe_import('windows_ai.defi_optimizer', ["get_defi_optimizer", "initialize_defi_optimizer", "DeFiOptimizerSystem"])
+get_nft_valuation, initialize_nft_valuation, NFTValuationSystem = _safe_import('windows_ai.nft_valuation', ["get_nft_valuation", "initialize_nft_valuation", "NFTValuationSystem"])
+get_token_sentiment, initialize_token_sentiment, TokenSentimentSystem = _safe_import('windows_ai.token_sentiment', ["get_token_sentiment", "initialize_token_sentiment", "TokenSentimentSystem"])
+get_market_manipulation_detector, initialize_market_manipulation_detector, MarketManipulationDetectorSystem = _safe_import('windows_ai.market_manipulation_detector', ["get_market_manipulation_detector", "initialize_market_manipulation_detector", "MarketManipulationDetectorSystem"])
+get_liquidity_analyzer, initialize_liquidity_analyzer, LiquidityAnalyzerSystem = _safe_import('windows_ai.liquidity_analyzer', ["get_liquidity_analyzer", "initialize_liquidity_analyzer", "LiquidityAnalyzerSystem"])
+get_gas_price_optimizer, initialize_gas_price_optimizer, GasPriceOptimizerSystem = _safe_import('windows_ai.gas_price_optimizer', ["get_gas_price_optimizer", "initialize_gas_price_optimizer", "GasPriceOptimizerSystem"])
+get_yield_farming_optimizer, initialize_yield_farming_optimizer, YieldFarmingOptimizerSystem = _safe_import('windows_ai.yield_farming_optimizer', ["get_yield_farming_optimizer", "initialize_yield_farming_optimizer", "YieldFarmingOptimizerSystem"])
+get_portfolio_rebalancer, initialize_portfolio_rebalancer, PortfolioRebalancerSystem = _safe_import('windows_ai.portfolio_rebalancer', ["get_portfolio_rebalancer", "initialize_portfolio_rebalancer", "PortfolioRebalancerSystem"])
+get_arbitrage_detector, initialize_arbitrage_detector, ArbitrageDetectorSystem = _safe_import('windows_ai.arbitrage_detector', ["get_arbitrage_detector", "initialize_arbitrage_detector", "ArbitrageDetectorSystem"])
+get_chain_analysis, initialize_chain_analysis, ChainAnalysisSystem = _safe_import('windows_ai.chain_analysis', ["get_chain_analysis", "initialize_chain_analysis", "ChainAnalysisSystem"])
+get_transaction_classifier, initialize_transaction_classifier, TransactionClassifierSystem = _safe_import('windows_ai.transaction_classifier', ["get_transaction_classifier", "initialize_transaction_classifier", "TransactionClassifierSystem"])
+get_whale_tracker, initialize_whale_tracker, WhaleTrackerSystem = _safe_import('windows_ai.whale_tracker', ["get_whale_tracker", "initialize_whale_tracker", "WhaleTrackerSystem"])
+get_consensus_simulator, initialize_consensus_simulator, ConsensusSimulatorSystem = _safe_import('windows_ai.consensus_simulator', ["get_consensus_simulator", "initialize_consensus_simulator", "ConsensusSimulatorSystem"])
+get_crypto_tax_optimizer, initialize_crypto_tax_optimizer, CryptoTaxOptimizerSystem = _safe_import('windows_ai.crypto_tax_optimizer', ["get_crypto_tax_optimizer", "initialize_crypto_tax_optimizer", "CryptoTaxOptimizerSystem"])
+get_dao_governance, initialize_dao_governance, DAOGovernanceSystem = _safe_import('windows_ai.dao_governance', ["get_dao_governance", "initialize_dao_governance", "DAOGovernanceSystem"])
+get_cognitive_builder, initialize_cognitive_builder, CognitiveModelBuilder = _safe_import('windows_ai.cognitive_model_builder', ["get_cognitive_builder", "initialize_cognitive_builder", "CognitiveModelBuilder"])
+get_digital_twin, initialize_digital_twin, DigitalTwinSystem = _safe_import('windows_ai.digital_twin_system', ["get_digital_twin", "initialize_digital_twin", "DigitalTwinSystem"])
+get_context_manager, initialize_context_manager, ContextPersistenceManager = _safe_import('windows_ai.context_persistence_manager', ["get_context_manager", "initialize_context_manager", "ContextPersistenceManager"])
+get_proactive_assistant, initialize_proactive_assistant, ProactiveAssistant = _safe_import('windows_ai.proactive_assistant', ["get_proactive_assistant", "initialize_proactive_assistant", "ProactiveAssistant"])
+get_application_monitor, initialize_application_monitor, ApplicationMonitor = _safe_import('windows_ai.application_monitor', ["get_application_monitor", "initialize_application_monitor", "ApplicationMonitor"])
+get_anomaly_detector_system, initialize_anomaly_detector_system, AnomalyDetectorSystem = _safe_import('windows_ai.anomaly_detector_system', ["get_anomaly_detector_system", "initialize_anomaly_detector_system", "AnomalyDetectorSystem"])
+get_self_healing_workflows, initialize_self_healing_workflows, SelfHealingWorkflows = _safe_import('windows_ai.self_healing_workflows', ["get_self_healing_workflows", "initialize_self_healing_workflows", "SelfHealingWorkflows"])
+get_reinforcement_feedback, initialize_reinforcement_feedback, ReinforcementFeedback = _safe_import('windows_ai.reinforcement_feedback', ["get_reinforcement_feedback", "initialize_reinforcement_feedback", "ReinforcementFeedback"])
+get_adaptive_workflow_engine, initialize_adaptive_workflow_engine, AdaptiveWorkflowEngine = _safe_import('windows_ai.adaptive_workflow_engine', ["get_adaptive_workflow_engine", "initialize_adaptive_workflow_engine", "AdaptiveWorkflowEngine"])
+get_causal_reasoning_engine, initialize_causal_reasoning_engine, CausalReasoningEngine = _safe_import('windows_ai.causal_reasoning_engine', ["get_causal_reasoning_engine", "initialize_causal_reasoning_engine", "CausalReasoningEngine"])
+get_hierarchical_task_planner, initialize_hierarchical_task_planner, HierarchicalTaskPlanner = _safe_import('windows_ai.hierarchical_task_planner', ["get_hierarchical_task_planner", "initialize_hierarchical_task_planner", "HierarchicalTaskPlanner"])
+get_multi_agent_coordinator, initialize_multi_agent_coordinator, MultiAgentCoordinator = _safe_import('windows_ai.multi_agent_coordinator', ["get_multi_agent_coordinator", "initialize_multi_agent_coordinator", "MultiAgentCoordinator"])
+get_online_learning_system, initialize_online_learning_system, OnlineLearningSystem = _safe_import('windows_ai.online_learning_system', ["get_online_learning_system", "initialize_online_learning_system", "OnlineLearningSystem"])
+get_active_learning_collector, initialize_active_learning_collector, ActiveLearningCollector = _safe_import('windows_ai.active_learning_collector', ["get_active_learning_collector", "initialize_active_learning_collector", "ActiveLearningCollector"])
+get_meta_learning_optimizer, initialize_meta_learning_optimizer, MetaLearningOptimizer = _safe_import('windows_ai.meta_learning_optimizer', ["get_meta_learning_optimizer", "initialize_meta_learning_optimizer", "MetaLearningOptimizer"])
+get_quantum_resistant_crypto, initialize_quantum_resistant_crypto, QuantumResistantCrypto = _safe_import('windows_ai.quantum_resistant_crypto', ["get_quantum_resistant_crypto", "initialize_quantum_resistant_crypto", "QuantumResistantCrypto"])
+get_threat_hunting_ai, initialize_threat_hunting_ai, ThreatHuntingAi = _safe_import('windows_ai.threat_hunting_ai', ["get_threat_hunting_ai", "initialize_threat_hunting_ai", "ThreatHuntingAi"])
+get_deception_network, initialize_deception_network, DeceptionNetwork = _safe_import('windows_ai.deception_network', ["get_deception_network", "initialize_deception_network", "DeceptionNetwork"])
+get_data_sovereignty_ledger, initialize_data_sovereignty_ledger, DataSovereigntyLedger = _safe_import('windows_ai.data_sovereignty_ledger', ["get_data_sovereignty_ledger", "initialize_data_sovereignty_ledger", "DataSovereigntyLedger"])
+get_autonomous_hardening, initialize_autonomous_hardening, AutonomousHardening = _safe_import('windows_ai.autonomous_hardening', ["get_autonomous_hardening", "initialize_autonomous_hardening", "AutonomousHardening"])
+get_homomorphic_encryption, initialize_homomorphic_encryption, HomomorphicEncryption = _safe_import('windows_ai.homomorphic_encryption', ["get_homomorphic_encryption", "initialize_homomorphic_encryption", "HomomorphicEncryption"])
+get_blockchain_integrity, initialize_blockchain_integrity, BlockchainIntegrity = _safe_import('windows_ai.blockchain_integrity', ["get_blockchain_integrity", "initialize_blockchain_integrity", "BlockchainIntegrity"])
+get_vulnerability_scanner_ai, initialize_vulnerability_scanner_ai, VulnerabilityScannerAi = _safe_import('windows_ai.vulnerability_scanner_ai', ["get_vulnerability_scanner_ai", "initialize_vulnerability_scanner_ai", "VulnerabilityScannerAi"])
+get_sandbox_executor, initialize_sandbox_executor, SandboxExecutor = _safe_import('windows_ai.sandbox_executor', ["get_sandbox_executor", "initialize_sandbox_executor", "SandboxExecutor"])
+get_zero_trust_enforcer, initialize_zero_trust_enforcer, ZeroTrustEnforcer = _safe_import('windows_ai.zero_trust_enforcer', ["get_zero_trust_enforcer", "initialize_zero_trust_enforcer", "ZeroTrustEnforcer"])
+get_secure_enclave_integration, initialize_secure_enclave_integration, SecureEnclaveIntegration = _safe_import('windows_ai.secure_enclave_integration', ["get_secure_enclave_integration", "initialize_secure_enclave_integration", "SecureEnclaveIntegration"])
+get_differential_privacy, initialize_differential_privacy, DifferentialPrivacy = _safe_import('windows_ai.differential_privacy', ["get_differential_privacy", "initialize_differential_privacy", "DifferentialPrivacy"])
+get_biometric_auth_system, initialize_biometric_auth_system, BiometricAuthSystem = _safe_import('windows_ai.biometric_auth_system', ["get_biometric_auth_system", "initialize_biometric_auth_system", "BiometricAuthSystem"])
+get_privacy_shield, initialize_privacy_shield, PrivacyShield = _safe_import('windows_ai.privacy_shield', ["get_privacy_shield", "initialize_privacy_shield", "PrivacyShield"])
+get_security_audit_ai, initialize_security_audit_ai, SecurityAuditAi = _safe_import('windows_ai.security_audit_ai', ["get_security_audit_ai", "initialize_security_audit_ai", "SecurityAuditAi"])
+get_firmware_ai_hooks, initialize_firmware_ai_hooks, FirmwareAiHooks = _safe_import('windows_ai.firmware_ai_hooks', ["get_firmware_ai_hooks", "initialize_firmware_ai_hooks", "FirmwareAiHooks"])
+get_silicon_accelerator, initialize_silicon_accelerator, SiliconAccelerator = _safe_import('windows_ai.silicon_accelerator', ["get_silicon_accelerator", "initialize_silicon_accelerator", "SiliconAccelerator"])
+get_biometric_sensor_hub, initialize_biometric_sensor_hub, BiometricSensorHub = _safe_import('windows_ai.biometric_sensor_hub', ["get_biometric_sensor_hub", "initialize_biometric_sensor_hub", "BiometricSensorHub"])
+get_universal_app_api, initialize_universal_app_api, UniversalAppApi = _safe_import('windows_ai.universal_app_api', ["get_universal_app_api", "initialize_universal_app_api", "UniversalAppApi"])
+get_cross_app_workflow, initialize_cross_app_workflow, CrossAppWorkflow = _safe_import('windows_ai.cross_app_workflow', ["get_cross_app_workflow", "initialize_cross_app_workflow", "CrossAppWorkflow"])
+get_swarm_intelligence_computing, initialize_swarm_intelligence_computing, SwarmIntelligenceComputing = _safe_import('windows_ai.swarm_intelligence_computing', ["get_swarm_intelligence_computing", "initialize_swarm_intelligence_computing", "SwarmIntelligenceComputing"])
+get_federated_edge_learning, initialize_federated_edge_learning, FederatedEdgeLearning = _safe_import('windows_ai.federated_edge_learning', ["get_federated_edge_learning", "initialize_federated_edge_learning", "FederatedEdgeLearning"])
+get_gpu_optimizer, initialize_gpu_optimizer, GpuOptimizer = _safe_import('windows_ai.gpu_optimizer', ["get_gpu_optimizer", "initialize_gpu_optimizer", "GpuOptimizer"])
+get_directml_integration, initialize_directml_integration, DirectmlIntegration = _safe_import('windows_ai.directml_integration', ["get_directml_integration", "initialize_directml_integration", "DirectmlIntegration"])
+get_resource_governor, initialize_resource_governor, ResourceGovernor = _safe_import('windows_ai.resource_governor', ["get_resource_governor", "initialize_resource_governor", "ResourceGovernor"])
+get_power_manager_ai, initialize_power_manager_ai, PowerManagerAi = _safe_import('windows_ai.power_manager_ai', ["get_power_manager_ai", "initialize_power_manager_ai", "PowerManagerAi"])
+get_os_patch_automation, initialize_os_patch_automation, OsPatchAutomation = _safe_import('windows_ai.os_patch_automation', ["get_os_patch_automation", "initialize_os_patch_automation", "OsPatchAutomation"])
+get_driver_manager_auto, initialize_driver_manager_auto, DriverManagerAuto = _safe_import('windows_ai.driver_manager_auto', ["get_driver_manager_auto", "initialize_driver_manager_auto", "DriverManagerAuto"])
+get_hardware_monitor, initialize_hardware_monitor, HardwareMonitor = _safe_import('windows_ai.hardware_monitor', ["get_hardware_monitor", "initialize_hardware_monitor", "HardwareMonitor"])
+get_thermal_optimizer, initialize_thermal_optimizer, ThermalOptimizer = _safe_import('windows_ai.thermal_optimizer', ["get_thermal_optimizer", "initialize_thermal_optimizer", "ThermalOptimizer"])
+get_plugin_sdk_manager, initialize_plugin_sdk_manager, PluginSdkManager = _safe_import('windows_ai.plugin_sdk_manager', ["get_plugin_sdk_manager", "initialize_plugin_sdk_manager", "PluginSdkManager"])
+get_api_monitor, initialize_api_monitor, ApiMonitor = _safe_import('windows_ai.api_monitor', ["get_api_monitor", "initialize_api_monitor", "ApiMonitor"])
+get_visual_plugin_builder, initialize_visual_plugin_builder, VisualPluginBuilder = _safe_import('windows_ai.visual_plugin_builder', ["get_visual_plugin_builder", "initialize_visual_plugin_builder", "VisualPluginBuilder"])
+get_hot_reload_system, initialize_hot_reload_system, HotReloadSystem = _safe_import('windows_ai.hot_reload_system', ["get_hot_reload_system", "initialize_hot_reload_system", "HotReloadSystem"])
+get_automated_plugin_tester, initialize_automated_plugin_tester, AutomatedPluginTester = _safe_import('windows_ai.automated_plugin_tester', ["get_automated_plugin_tester", "initialize_automated_plugin_tester", "AutomatedPluginTester"])
+get_model_fusion_engine, initialize_model_fusion_engine, ModelFusionEngine = _safe_import('windows_ai.model_fusion_engine', ["get_model_fusion_engine", "initialize_model_fusion_engine", "ModelFusionEngine"])
+get_decentralized_model_registry, initialize_decentralized_model_registry, DecentralizedModelRegistry = _safe_import('windows_ai.decentralized_model_registry', ["get_decentralized_model_registry", "initialize_decentralized_model_registry", "DecentralizedModelRegistry"])
+get_developer_xp_system, initialize_developer_xp_system, DeveloperXpSystem = _safe_import('windows_ai.developer_xp_system', ["get_developer_xp_system", "initialize_developer_xp_system", "DeveloperXpSystem"])
+get_ai_guided_learning, initialize_ai_guided_learning, AiGuidedLearning = _safe_import('windows_ai.ai_guided_learning', ["get_ai_guided_learning", "initialize_ai_guided_learning", "AiGuidedLearning"])
+get_code_generator_ai, initialize_code_generator_ai, CodeGeneratorAi = _safe_import('windows_ai.code_generator_ai', ["get_code_generator_ai", "initialize_code_generator_ai", "CodeGeneratorAi"])
+get_test_case_generator, initialize_test_case_generator, TestCaseGenerator = _safe_import('windows_ai.test_case_generator', ["get_test_case_generator", "initialize_test_case_generator", "TestCaseGenerator"])
+get_predictive_debugger, initialize_predictive_debugger, PredictiveDebugger = _safe_import('windows_ai.predictive_debugger', ["get_predictive_debugger", "initialize_predictive_debugger", "PredictiveDebugger"])
+get_self_modifying_code, initialize_self_modifying_code, SelfModifyingCode = _safe_import('windows_ai.self_modifying_code', ["get_self_modifying_code", "initialize_self_modifying_code", "SelfModifyingCode"])
+get_universal_plugin_adapter, initialize_universal_plugin_adapter, UniversalPluginAdapter = _safe_import('windows_ai.universal_plugin_adapter', ["get_universal_plugin_adapter", "initialize_universal_plugin_adapter", "UniversalPluginAdapter"])
+get_marketplace_integration, initialize_marketplace_integration, MarketplaceIntegration = _safe_import('windows_ai.marketplace_integration', ["get_marketplace_integration", "initialize_marketplace_integration", "MarketplaceIntegration"])
+get_eye_tracking_controller, initialize_eye_tracking_controller, EyeTrackingController = _safe_import('windows_ai.eye_tracking_controller', ["get_eye_tracking_controller", "initialize_eye_tracking_controller", "EyeTrackingController"])
+get_gesture_recognizer, initialize_gesture_recognizer, GestureRecognizer = _safe_import('windows_ai.gesture_recognizer', ["get_gesture_recognizer", "initialize_gesture_recognizer", "GestureRecognizer"])
+get_bci_interface, initialize_bci_interface, BciInterface = _safe_import('windows_ai.bci_interface', ["get_bci_interface", "initialize_bci_interface", "BciInterface"])
+get_switch_control_system, initialize_switch_control_system, SwitchControlSystem = _safe_import('windows_ai.switch_control_system', ["get_switch_control_system", "initialize_switch_control_system", "SwitchControlSystem"])
+get_screen_reader_ai, initialize_screen_reader_ai, ScreenReaderAi = _safe_import('windows_ai.screen_reader_ai', ["get_screen_reader_ai", "initialize_screen_reader_ai", "ScreenReaderAi"])
+get_haptic_feedback_system, initialize_haptic_feedback_system, HapticFeedbackSystem = _safe_import('windows_ai.haptic_feedback_system', ["get_haptic_feedback_system", "initialize_haptic_feedback_system", "HapticFeedbackSystem"])
+get_braille_display_adapter, initialize_braille_display_adapter, BrailleDisplayAdapter = _safe_import('windows_ai.braille_display_adapter', ["get_braille_display_adapter", "initialize_braille_display_adapter", "BrailleDisplayAdapter"])
+get_cognitive_simplifier, initialize_cognitive_simplifier, CognitiveSimplifier = _safe_import('windows_ai.cognitive_simplifier', ["get_cognitive_simplifier", "initialize_cognitive_simplifier", "CognitiveSimplifier"])
+get_distraction_reducer, initialize_distraction_reducer, DistractionReducer = _safe_import('windows_ai.distraction_reducer', ["get_distraction_reducer", "initialize_distraction_reducer", "DistractionReducer"])
+get_memory_assistant, initialize_memory_assistant, MemoryAssistant = _safe_import('windows_ai.memory_assistant', ["get_memory_assistant", "initialize_memory_assistant", "MemoryAssistant"])
+get_cultural_adapter, initialize_cultural_adapter, CulturalAdapter = _safe_import('windows_ai.cultural_adapter', ["get_cultural_adapter", "initialize_cultural_adapter", "CulturalAdapter"])
+get_multilingual_engine, initialize_multilingual_engine, MultilingualEngine = _safe_import('windows_ai.multilingual_engine', ["get_multilingual_engine", "initialize_multilingual_engine", "MultilingualEngine"])
+get_emotional_intelligence, initialize_emotional_intelligence, EmotionalIntelligence = _safe_import('windows_ai.emotional_intelligence', ["get_emotional_intelligence", "initialize_emotional_intelligence", "EmotionalIntelligence"])
+get_personalized_tts, initialize_personalized_tts, PersonalizedTts = _safe_import('windows_ai.personalized_tts', ["get_personalized_tts", "initialize_personalized_tts", "PersonalizedTts"])
+get_adaptive_ui_generator, initialize_adaptive_ui_generator, AdaptiveUiGenerator = _safe_import('windows_ai.adaptive_ui_generator', ["get_adaptive_ui_generator", "initialize_adaptive_ui_generator", "AdaptiveUiGenerator"])
+get_universal_clipboard, initialize_universal_clipboard, UniversalClipboard = _safe_import('windows_ai.universal_clipboard', ["get_universal_clipboard", "initialize_universal_clipboard", "UniversalClipboard"])
+get_smart_home_orchestrator, initialize_smart_home_orchestrator, SmartHomeOrchestrator = _safe_import('windows_ai.smart_home_orchestrator', ["get_smart_home_orchestrator", "initialize_smart_home_orchestrator", "SmartHomeOrchestrator"])
+get_cloud_sync_manager, initialize_cloud_sync_manager, CloudSyncManager = _safe_import('windows_ai.cloud_sync_manager', ["get_cloud_sync_manager", "initialize_cloud_sync_manager", "CloudSyncManager"])
+get_far_field_voice, initialize_far_field_voice, FarFieldVoice = _safe_import('windows_ai.far_field_voice', ["get_far_field_voice", "initialize_far_field_voice", "FarFieldVoice"])
+get_speaker_diarization, initialize_speaker_diarization, SpeakerDiarization = _safe_import('windows_ai.speaker_diarization', ["get_speaker_diarization", "initialize_speaker_diarization", "SpeakerDiarization"])
+get_spatial_audio_engine, initialize_spatial_audio_engine, SpatialAudioEngine = _safe_import('windows_ai.spatial_audio_engine', ["get_spatial_audio_engine", "initialize_spatial_audio_engine", "SpatialAudioEngine"])
+get_ar_overlay_system, initialize_ar_overlay_system, ArOverlaySystem = _safe_import('windows_ai.ar_overlay_system', ["get_ar_overlay_system", "initialize_ar_overlay_system", "ArOverlaySystem"])
+get_cross_device_sync, initialize_cross_device_sync, CrossDeviceSync = _safe_import('windows_ai.cross_device_sync', ["get_cross_device_sync", "initialize_cross_device_sync", "CrossDeviceSync"])
+get_iot_hub_integration, initialize_iot_hub_integration, IotHubIntegration = _safe_import('windows_ai.iot_hub_integration', ["get_iot_hub_integration", "initialize_iot_hub_integration", "IotHubIntegration"])
+get_edge_computing_orchestrator, initialize_edge_computing_orchestrator, EdgeComputingOrchestrator = _safe_import('windows_ai.edge_computing_orchestrator', ["get_edge_computing_orchestrator", "initialize_edge_computing_orchestrator", "EdgeComputingOrchestrator"])
+get_mesh_network_coordinator, initialize_mesh_network_coordinator, MeshNetworkCoordinator = _safe_import('windows_ai.mesh_network_coordinator', ["get_mesh_network_coordinator", "initialize_mesh_network_coordinator", "MeshNetworkCoordinator"])
+get_device_discovery, initialize_device_discovery, DeviceDiscovery = _safe_import('windows_ai.device_discovery', ["get_device_discovery", "initialize_device_discovery", "DeviceDiscovery"])
+get_protocol_adapter, initialize_protocol_adapter, ProtocolAdapter = _safe_import('windows_ai.protocol_adapter', ["get_protocol_adapter", "initialize_protocol_adapter", "ProtocolAdapter"])
+get_energy_optimizer_iot, initialize_energy_optimizer_iot, EnergyOptimizerIot = _safe_import('windows_ai.energy_optimizer_iot', ["get_energy_optimizer_iot", "initialize_energy_optimizer_iot", "EnergyOptimizerIot"])
+get_remote_control_system, initialize_remote_control_system, RemoteControlSystem = _safe_import('windows_ai.remote_control_system', ["get_remote_control_system", "initialize_remote_control_system", "RemoteControlSystem"])
 
 # Configure logging
 logging.basicConfig(
@@ -1909,32 +1453,36 @@ class ConfigManager:
 config_manager = ConfigManager()
 
 # Initialize automation systems
-folder_watcher_manager = FolderWatcherManager(WATCHERS_CONFIG_FILE)
-task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE)
+folder_watcher_manager = FolderWatcherManager(WATCHERS_CONFIG_FILE) if FolderWatcherManager else None
+task_scheduler = TaskScheduler(SCHEDULER_CONFIG_FILE) if TaskScheduler else None
 
 # Initialize plugin system
-plugin_registry = PluginRegistry(PLUGINS_DIR)
+plugin_registry = PluginRegistry(PLUGINS_DIR) if PluginRegistry else None
 
 # Bootstrap roadmap defaults for automation-heavy phases
-_phase_bootstrapper = PhaseBootstrapper(
-    folder_watcher_manager=folder_watcher_manager,
-    task_scheduler=task_scheduler,
-)
-_bootstrap_metrics = _phase_bootstrapper.ensure_defaults()
-if any(_bootstrap_metrics.values()):
-    logger.info("Phase bootstrapper seeded defaults: %s", _bootstrap_metrics)
+_bootstrap_metrics = {}
+if PhaseBootstrapper and folder_watcher_manager and task_scheduler:
+    _phase_bootstrapper = PhaseBootstrapper(
+        folder_watcher_manager=folder_watcher_manager,
+        task_scheduler=task_scheduler,
+    )
+    _bootstrap_metrics = _phase_bootstrapper.ensure_defaults()
+    if any(_bootstrap_metrics.values()):
+        logger.info("Phase bootstrapper seeded defaults: %s", _bootstrap_metrics)
 
 # Phase tracker exposes real-time completion telemetry
-phase_tracker = PhaseTracker(
-    repo_root=Path(__file__).resolve().parents[1],
-    data_dir=DATA_DIR,
-    folder_watcher_manager=folder_watcher_manager,
-    task_scheduler=task_scheduler,
-    plugin_dir=PLUGINS_DIR,
-)
+phase_tracker = None
+if PhaseTracker and folder_watcher_manager and task_scheduler:
+    phase_tracker = PhaseTracker(
+        repo_root=Path(__file__).resolve().parents[1],
+        data_dir=DATA_DIR,
+        folder_watcher_manager=folder_watcher_manager,
+        task_scheduler=task_scheduler,
+        plugin_dir=PLUGINS_DIR,
+    )
 
 # Initialize model manager
-model_manager = ModelManager()
+model_manager = ModelManager() if ModelManager else None
 
 # Initialize update client
 update_client = None  # Will be initialized on startup with config
@@ -2038,8 +1586,10 @@ async def handle_scheduled_task(task_id: str, task_name: str, action: str, promp
 
 
 # Set callbacks
-folder_watcher_manager.set_event_callback(handle_file_event)
-task_scheduler.set_task_callback(handle_scheduled_task)
+if folder_watcher_manager:
+    folder_watcher_manager.set_event_callback(handle_file_event)
+if task_scheduler:
+    task_scheduler.set_task_callback(handle_scheduled_task)
 
 # =====================================================================
 # LiteLLM Integration

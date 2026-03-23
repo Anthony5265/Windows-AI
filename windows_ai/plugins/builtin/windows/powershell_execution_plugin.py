@@ -10,7 +10,7 @@ import tempfile
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ class PowerShellExecutionPlugin(IntegrationPlugin):
             description="Comprehensive PowerShell script execution and management",
             version="2.0.0",
             author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
             tags=["powershell", "scripting", "automation", "windows", "remote"]
         )
         super().__init__(metadata)
@@ -87,6 +88,15 @@ class PowerShellExecutionPlugin(IntegrationPlugin):
         except Exception as e:
             logger.error(f"PowerShell execution failed: {e}")
             return {"success": False, "error": str(e)}
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
 
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
         """Execute PowerShell management actions."""
@@ -1019,3 +1029,6 @@ class PowerShellExecutionPlugin(IntegrationPlugin):
         }}
         '''
         return await self._run_powershell(ps_script, timeout=iterations * 60 + 60)
+
+
+plugin = PowerShellExecutionPlugin()

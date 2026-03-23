@@ -109,6 +109,15 @@ class NotificationsPlugin(IntegrationPlugin):
             logger.error(f"Failed to initialize Notifications plugin: {e}")
             return False
 
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute a notification action."""
         action = kwargs.get("action", "get_action_center_status")
@@ -1117,3 +1126,6 @@ Start-Process "ms-settings:notifications"
         """Cleanup plugin resources."""
         self._initialized = False
         logger.info("Windows Notifications plugin cleaned up")
+
+
+plugin = NotificationsPlugin()

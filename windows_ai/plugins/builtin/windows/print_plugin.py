@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +92,20 @@ class WindowsPrintPlugin(IntegrationPlugin):
             name="Windows Print Management",
             description="Printer and print job management",
             version="2.0.0",
-            author="Windows AI Team"
+            author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
     
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
+
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
         """Execute print management actions"""
         actions = {
@@ -1027,3 +1037,6 @@ $spoolFiles = Get-ChildItem $spool_path -ErrorAction SilentlyContinue
         except Exception as e:
             logger.error(f"PowerShell execution failed: {e}")
             raise
+
+
+plugin = WindowsPrintPlugin()

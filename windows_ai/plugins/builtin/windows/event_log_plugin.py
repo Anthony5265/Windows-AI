@@ -8,7 +8,7 @@ import logging
 import subprocess
 from typing import Any, Dict, Optional, List
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 
 class EventLogPlugin(IntegrationPlugin):
@@ -21,9 +21,7 @@ class EventLogPlugin(IntegrationPlugin):
             description="Read and manage Windows Event Logs",
             version="1.0.0",
             author="Windows AI Team",
-            category="system",
-            platforms=["windows"],
-            dependencies=[],
+            plugin_type=PluginType.INTEGRATION,
         )
         super().__init__(metadata)
         self.logger = logging.getLogger(__name__)
@@ -72,6 +70,15 @@ class EventLogPlugin(IntegrationPlugin):
     async def initialize(self) -> bool:
         """Initialize the plugin"""
         self.logger.info("Initializing Event Log plugin")
+        return True
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
         return True
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
@@ -415,3 +422,6 @@ class EventLogPlugin(IntegrationPlugin):
     async def cleanup(self) -> None:
         """Cleanup plugin resources"""
         self.logger.info("Event Log plugin cleaned up")
+
+
+plugin = EventLogPlugin()

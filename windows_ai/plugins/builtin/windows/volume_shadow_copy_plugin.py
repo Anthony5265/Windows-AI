@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class VolumeShadowCopyPlugin(IntegrationPlugin):
             description="Comprehensive VSS management for Windows backup and restore operations",
             version="2.0.0",
             author="Windows AI Team",
+            plugin_type=PluginType.INTEGRATION,
             tags=["vss", "backup", "restore", "snapshot", "shadow-copy", "windows"]
         )
         super().__init__(metadata)
@@ -109,6 +110,15 @@ class VolumeShadowCopyPlugin(IntegrationPlugin):
             return {"success": True, "data": output}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
 
     async def execute(self, action: str, **kwargs) -> Dict[str, Any]:
         """Execute VSS management actions."""
@@ -1162,3 +1172,6 @@ class VolumeShadowCopyPlugin(IntegrationPlugin):
         $checks
         '''
         return await self._run_powershell(script)
+
+
+plugin = VolumeShadowCopyPlugin()

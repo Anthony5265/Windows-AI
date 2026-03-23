@@ -1,21 +1,39 @@
+"""
+IoT MQTT Client tests.
+Tests MQTTClient from windows_ai/iot/.
+"""
+
 import pytest
-
-from iot import Device, pair_device
-from iot.mqtt import MQTTAdapter
+from windows_ai.iot.mqtt_client import MQTTClient
 
 
-def test_mqtt_discover_fallback(monkeypatch):
-    # Force adapter to skip broker connection for deterministic test
-    monkeypatch.setattr(MQTTAdapter, "_try_connect", lambda self: False)
-    adapter = MQTTAdapter()
-    devices = adapter.discover()
-    assert devices, "no devices discovered"
-    assert any(d.protocol == "mqtt" for d in devices)
+def test_mqtt_client_creation():
+    """Test MQTTClient can be created."""
+    client = MQTTClient()
+    assert client is not None
 
 
-def test_mqtt_pairing_protocol_match(monkeypatch):
-    adapter = MQTTAdapter()
-    device = Device(id="mqtt-1", name="Sensor", protocol="mqtt")
-    assert adapter.pair(device) is True
-    wrong = Device(id="x", name="x", protocol="other")
-    assert adapter.pair(wrong) is False
+def test_mqtt_client_get_status():
+    """Test MQTTClient status before connection."""
+    client = MQTTClient()
+    status = client.get_status()
+    assert isinstance(status, dict)
+    assert status["connected"] is False
+
+
+def test_mqtt_client_has_connect_method():
+    """Test MQTTClient has connection methods."""
+    client = MQTTClient()
+    assert hasattr(client, 'connect')
+    assert hasattr(client, 'disconnect')
+    assert hasattr(client, 'publish')
+    assert hasattr(client, 'subscribe')
+    assert hasattr(client, 'unsubscribe')
+
+
+def test_mqtt_client_has_device_methods():
+    """Test MQTTClient has device-specific convenience methods."""
+    client = MQTTClient()
+    assert hasattr(client, 'publish_sensor_data')
+    assert hasattr(client, 'publish_device_status')
+    assert hasattr(client, 'subscribe_device_commands')

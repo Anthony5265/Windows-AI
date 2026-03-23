@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata
+from windows_ai.plugins.base import IntegrationPlugin, PluginMetadata, PluginType
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,8 @@ class PowerShellBridgePlugin(IntegrationPlugin):
             description="Execute PowerShell scripts and commands with advanced session management",
             version="2.0.0",
             author="Windows AI Team",
-            category="windows",
+            plugin_type=PluginType.INTEGRATION,
             tags=["powershell", "scripting", "automation", "windows"],
-            requires_admin=False,
-            platforms=["windows"]
         )
         super().__init__(metadata)
         self._sessions: Dict[str, Dict[str, Any]] = {}
@@ -94,6 +92,15 @@ class PowerShellBridgePlugin(IntegrationPlugin):
             return {"success": False, "error": f"Command timed out after {timeout} seconds"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+
+    async def connect(self, credentials: Dict[str, str]) -> bool:
+        """Connect to the service"""
+        return True
+
+    async def disconnect(self) -> bool:
+        """Disconnect from the service"""
+        return True
 
     async def execute(self, action: str = "run_command", params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute PowerShell bridge actions"""
@@ -526,3 +533,6 @@ class PowerShellBridgePlugin(IntegrationPlugin):
         """Cleanup plugin resources"""
         self._sessions.clear()
         logger.info("PowerShell Bridge plugin cleaned up")
+
+
+plugin = PowerShellBridgePlugin()

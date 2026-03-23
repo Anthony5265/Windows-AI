@@ -16,9 +16,16 @@ import pytest
 import subprocess
 import time
 from pathlib import Path
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
 
 
+import sys
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only installer tests")
 class TestInstaller:
     """Tests for Windows AI installer"""
 
