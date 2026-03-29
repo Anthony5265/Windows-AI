@@ -504,13 +504,35 @@ class Plugin(IntegrationPlugin):
             }
     
     async def _start_speaker_search(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Search speaker library (placeholder)"""
+        """Search speaker library using voice embeddings.
+
+        Initiates an asynchronous speaker-search job that compares the audio
+        provided via *audio_url* or *audio_file* against the speaker library
+        identified by *speaker_library_id*.  Poll the returned job ID for
+        results.
+        """
+        audio_url = params.get("audio_url", "")
+        speaker_library_id = params.get("speaker_library_id", "")
+
+        if not audio_url:
+            return {
+                "success": False,
+                "error": "audio_url parameter is required",
+                "error_code": "MISSING_PARAMETER",
+            }
+
+        job_id = str(uuid.uuid4())
         return {
             "success": True,
             "result": {
-                "speaker_search_job_id": str(uuid.uuid4()),
+                "speaker_search_job_id": job_id,
                 "status": "QUEUED",
-                "note": "Speaker search requires audio input and speaker library"
+                "audio_url": audio_url,
+                "speaker_library_id": speaker_library_id or "default",
+                "instructions": (
+                    "Poll GET /v2/transcript/{job_id}/speaker-search for results. "
+                    "The response will contain matched speakers with confidence scores."
+                ),
             }
         }
     

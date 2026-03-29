@@ -247,25 +247,26 @@ class Plugin(IntegrationPlugin):
                     "vad_enabled": enable_vad
                 }
             else:
-                # Fallback stub when dependency not available
+                # Fallback when faster-whisper is not installed
                 result = {
-                    "text": "ONNX-optimized transcription result.",
+                    "text": "(faster-whisper not installed; install with: pip install faster-whisper)",
                     "segments": [
                         {
                             "id": 0,
                             "start": 0.0,
-                            "end": 3.5,
-                            "text": "Fast ONNX transcription (stub).",
-                            "confidence": 0.97
+                            "end": 0.0,
+                            "text": "(dependency not available)",
+                            "confidence": 0.0
                         }
                     ],
                     "language": language or "en",
                     "model": model_name,
                     "compute_type": self._compute_type,
                     "device": self._device,
-                    "inference_time_ms": 450,
-                    "real_time_factor": 18.0,
-                    "vad_enabled": enable_vad
+                    "inference_time_ms": 0,
+                    "real_time_factor": 0.0,
+                    "vad_enabled": enable_vad,
+                    "fallback": True
                 }
 
             self._cache[cache_key] = result
