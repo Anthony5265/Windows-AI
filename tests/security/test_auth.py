@@ -8,9 +8,33 @@ Tests for Windows AI security module authentication flows including:
 """
 
 import pytest
+import pytest_asyncio
 import json
 from unittest.mock import Mock, patch, AsyncMock
 from pathlib import Path
+
+
+# ============================================================================
+# Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_api_key():
+    """Provide a mock API key for testing"""
+    return "test-api-key-0123456789abcdef"
+
+
+@pytest_asyncio.fixture
+async def async_client():
+    """Create an async HTTP test client for the FastAPI app"""
+    try:
+        from httpx import AsyncClient, ASGITransport
+        from windows_ai.api.server import app
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+    except ImportError:
+        pytest.skip("httpx or FastAPI app not available for async client")
 
 
 # ============================================================================
@@ -24,7 +48,7 @@ def test_credential_manager_init():
         manager = CredentialManager()
         assert manager is not None
         assert hasattr(manager, 'get_credential')
-        assert hasattr(manager, 'set_credential')
+        assert hasattr(manager, 'store_credential')
     except ImportError:
         pytest.skip("CredentialManager not found")
 
@@ -46,15 +70,15 @@ async def test_credential_manager_get_credential():
 
 
 @pytest.mark.asyncio
-async def test_credential_manager_set_credential():
+async def test_credential_manager_store_credential():
     """Test storing credentials securely"""
     try:
         from windows_ai.core.credential_manager import CredentialManager
         manager = CredentialManager()
         
-        with patch.object(manager, 'set_credential', new_callable=AsyncMock) as mock_set:
+        with patch.object(manager, 'store_credential', new_callable=AsyncMock) as mock_set:
             mock_set.return_value = True
-            result = await manager.set_credential("openai", "api_key", "new_key_value")
+            result = await manager.store_credential("openai", "api_key", "new_key_value")
             assert result is True
             mock_set.assert_called_once()
     except ImportError:
