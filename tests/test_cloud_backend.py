@@ -1,7 +1,8 @@
+import pytest
+respx = pytest.importorskip("respx")
 import json
 
 import httpx
-import respx
 
 from search.backends import CloudBackend
 
