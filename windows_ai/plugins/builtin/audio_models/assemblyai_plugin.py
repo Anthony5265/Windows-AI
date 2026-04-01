@@ -576,13 +576,34 @@ class Plugin(IntegrationPlugin):
         }
     
     async def _stream_transcribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Stream transcription (placeholder)"""
+        """Stream real-time transcription via WebSocket.
+
+        Returns connection details for establishing a streaming session.
+        Callers should open a WebSocket to the returned URL and send
+        raw audio frames (PCM16, 16 kHz) to receive incremental transcripts.
+        """
+        sample_rate = params.get("sample_rate", 16000)
+        encoding = params.get("encoding", "pcm_s16le")
+        word_boost = params.get("word_boost", [])
+
+        ws_url = f"{self._ws_base}?sample_rate={sample_rate}"
+        if word_boost:
+            import json as _json
+            ws_url += f"&word_boost={_json.dumps(word_boost)}"
+
         return {
             "success": True,
             "result": {
-                "status": "streaming_enabled",
-                "ws_url": self._ws_base,
-                "note": "Streaming transcription requires WebSocket connection"
+                "status": "streaming_ready",
+                "ws_url": ws_url,
+                "sample_rate": sample_rate,
+                "encoding": encoding,
+                "protocol": "websocket",
+                "instructions": (
+                    "Open a WebSocket connection to ws_url with header "
+                    "'Authorization: <api_key>'. Send binary audio frames "
+                    "and receive JSON partial/final transcript messages."
+                ),
             }
         }
     

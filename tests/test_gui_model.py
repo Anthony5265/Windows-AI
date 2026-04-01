@@ -1,3 +1,5 @@
+import pytest
+tk = pytest.importorskip("tkinter")
 from gui.core import GuiCore
 from gui.simple_model import SimpleModel
 

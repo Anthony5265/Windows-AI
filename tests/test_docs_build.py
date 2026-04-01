@@ -1,5 +1,6 @@
+import pytest
+markdown = pytest.importorskip("markdown")
 import pathlib
-import markdown
 
 DOCS_DIR = pathlib.Path(__file__).resolve().parent.parent / "docs"
 

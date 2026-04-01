@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+croniter = pytest.importorskip("croniter")
 
 from windows_ai.phase_bootstrap import PhaseBootstrapper
 from windows_ai.phase_tracker import PhaseTracker

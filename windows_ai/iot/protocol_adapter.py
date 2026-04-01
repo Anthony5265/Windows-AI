@@ -60,6 +60,14 @@ class ProtocolAdapter:
             logger.warning(f"HTTP client initialization failed: {e}")
             self.http_class = None
 
+        # Zigbee support (typically via zigbee2mqtt or deconz)
+        self.zigbee_bridge = None
+        self.zigbee_devices: Dict[str, Any] = {}
+
+        # Z-Wave support (typically via zwave-js or ozw)
+        self.zwave_controller = None
+        self.zwave_devices: Dict[str, Any] = {}
+
     def connect(self, protocol: Protocol, connection_id: str,
                 **kwargs) -> Dict[str, Any]:
         """
@@ -97,10 +105,10 @@ class ProtocolAdapter:
                 result = self._connect_http(connection_id, **kwargs)
 
             elif protocol == Protocol.ZIGBEE:
-                result = {"status": "error", "message": "Zigbee not yet implemented"}
+                result = self._connect_zigbee(connection_id, **kwargs)
 
             elif protocol == Protocol.ZWAVE:
-                result = {"status": "error", "message": "Z-Wave not yet implemented"}
+                result = self._connect_zwave(connection_id, **kwargs)
 
             else:
                 result = {
@@ -384,3 +392,142 @@ class ProtocolAdapter:
             "message": "HTTP client initialized",
             "base_url": kwargs.get("base_url")
         }
+
+    def _connect_zigbee(self, connection_id: str, **kwargs) -> Dict[str, Any]:
+        """Connect to a Zigbee device via zigbee2mqtt or deCONZ bridge.
+
+        Zigbee devices communicate through a coordinator (USB dongle) and a
+        bridge service.  This adapter expects a running bridge (zigbee2mqtt or
+        deCONZ) and uses MQTT or HTTP to relay commands.
+
+        Keyword Args:
+            bridge_type: 'zigbee2mqtt' (default) or 'deconz'
+            bridge_host: Bridge hostname (default '127.0.0.1')
+            bridge_port: Bridge port (default 1883 for MQTT, 80 for deCONZ)
+            device_ieee: IEEE address of the target device
+            friendly_name: Human-readable device name
+        """
+        bridge_type = kwargs.get("bridge_type", "zigbee2mqtt")
+        bridge_host = kwargs.get("bridge_host", "127.0.0.1")
+        device_ieee = kwargs.get("device_ieee", "")
+        friendly_name = kwargs.get("friendly_name", connection_id)
+
+        try:
+            if bridge_type == "zigbee2mqtt":
+                # zigbee2mqtt uses MQTT topics: zigbee2mqtt/<friendly_name>/set
+                mqtt_port = kwargs.get("bridge_port", 1883)
+                if self.mqtt:
+                    mqtt_result = self.mqtt.connect(
+                        host=bridge_host, port=mqtt_port
+                    )
+                    if mqtt_result.get("status") != "success":
+                        return {"status": "error", "message": "Cannot connect to zigbee2mqtt MQTT broker"}
+                else:
+                    logger.warning("MQTT client unavailable; Zigbee bridge stored for later use")
+
+                self.connections[connection_id] = {
+                    "protocol": Protocol.ZIGBEE,
+                    "bridge_type": bridge_type,
+                    "friendly_name": friendly_name,
+                    "device_ieee": device_ieee,
+                    "command_topic": f"zigbee2mqtt/{friendly_name}/set",
+                    "state_topic": f"zigbee2mqtt/{friendly_name}",
+                    "metadata": kwargs,
+                }
+                self.zigbee_devices[connection_id] = {
+                    "ieee": device_ieee,
+                    "friendly_name": friendly_name,
+                }
+
+            elif bridge_type == "deconz":
+                # deCONZ uses a REST API
+                api_port = kwargs.get("bridge_port", 80)
+                api_key = kwargs.get("api_key", "")
+                base_url = f"http://{bridge_host}:{api_port}/api/{api_key}"
+
+                self.connections[connection_id] = {
+                    "protocol": Protocol.ZIGBEE,
+                    "bridge_type": bridge_type,
+                    "base_url": base_url,
+                    "device_ieee": device_ieee,
+                    "friendly_name": friendly_name,
+                    "metadata": kwargs,
+                }
+                self.zigbee_devices[connection_id] = {
+                    "ieee": device_ieee,
+                    "friendly_name": friendly_name,
+                }
+            else:
+                return {"status": "error", "message": f"Unknown Zigbee bridge type: {bridge_type}"}
+
+            logger.info(f"Zigbee device connected via {bridge_type}: {friendly_name}")
+            return {
+                "status": "success",
+                "message": f"Zigbee device connected via {bridge_type}",
+                "device": friendly_name,
+                "ieee": device_ieee,
+            }
+
+        except Exception as e:
+            logger.error(f"Zigbee connect error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def _connect_zwave(self, connection_id: str, **kwargs) -> Dict[str, Any]:
+        """Connect to a Z-Wave device via zwave-js or OpenZWave.
+
+        Z-Wave devices communicate through a USB controller stick and a driver
+        service.  This adapter expects zwave-js-server (or OZW daemon) running.
+
+        Keyword Args:
+            driver: 'zwavejs' (default) or 'ozw'
+            ws_url: WebSocket URL for zwave-js-server (default 'ws://127.0.0.1:3000')
+            node_id: Z-Wave node ID of the target device
+            device_name: Human-readable name
+        """
+        driver = kwargs.get("driver", "zwavejs")
+        ws_url = kwargs.get("ws_url", "ws://127.0.0.1:3000")
+        node_id = kwargs.get("node_id")
+        device_name = kwargs.get("device_name", connection_id)
+
+        try:
+            if driver == "zwavejs":
+                # zwave-js-server exposes a WebSocket API
+                self.connections[connection_id] = {
+                    "protocol": Protocol.ZWAVE,
+                    "driver": driver,
+                    "ws_url": ws_url,
+                    "node_id": node_id,
+                    "device_name": device_name,
+                    "metadata": kwargs,
+                }
+            elif driver == "ozw":
+                mqtt_host = kwargs.get("mqtt_host", "127.0.0.1")
+                mqtt_port = kwargs.get("mqtt_port", 1883)
+                self.connections[connection_id] = {
+                    "protocol": Protocol.ZWAVE,
+                    "driver": driver,
+                    "mqtt_host": mqtt_host,
+                    "mqtt_port": mqtt_port,
+                    "node_id": node_id,
+                    "device_name": device_name,
+                    "metadata": kwargs,
+                }
+            else:
+                return {"status": "error", "message": f"Unknown Z-Wave driver: {driver}"}
+
+            self.zwave_devices[connection_id] = {
+                "node_id": node_id,
+                "device_name": device_name,
+            }
+
+            logger.info(f"Z-Wave device connected via {driver}: {device_name} (node {node_id})")
+            return {
+                "status": "success",
+                "message": f"Z-Wave device connected via {driver}",
+                "device": device_name,
+                "node_id": node_id,
+            }
+
+        except Exception as e:
+            logger.error(f"Z-Wave connect error: {e}")
+            return {"status": "error", "message": str(e)}

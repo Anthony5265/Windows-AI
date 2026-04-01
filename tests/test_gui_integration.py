@@ -1,4 +1,5 @@
 import pytest
+tk = pytest.importorskip("tkinter")
 from windows_ai.gui.window import MainWindow
 from unittest.mock import Mock, patch
 

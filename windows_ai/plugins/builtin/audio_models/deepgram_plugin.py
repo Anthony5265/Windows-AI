@@ -341,14 +341,41 @@ class Plugin(IntegrationPlugin):
         }
     
     async def _stream_transcribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Real-time streaming transcription (placeholder)"""
+        """Real-time streaming transcription via WebSocket.
+
+        Returns connection details for establishing a Deepgram streaming
+        session.  The caller opens a WebSocket to the returned URL and sends
+        raw audio; partial and final transcript events arrive as JSON frames.
+        """
+        model = params.get("model", "nova-2")
+        language = params.get("language", "en")
+        sample_rate = params.get("sample_rate", 16000)
+        encoding = params.get("encoding", "linear16")
+        channels = params.get("channels", 1)
+        interim_results = params.get("interim_results", True)
+
+        qs = (
+            f"model={model}&language={language}&sample_rate={sample_rate}"
+            f"&encoding={encoding}&channels={channels}"
+            f"&interim_results={'true' if interim_results else 'false'}"
+        )
+        ws_url = f"wss://api.deepgram.com/v1/listen?{qs}"
+
         return {
             "success": True,
             "result": {
-                "status": "streaming_enabled",
-                "ws_url": "wss://api.deepgram.com/v1/listen",
-                "note": "Streaming transcription requires WebSocket connection",
-                "models": list(self.AVAILABLE_MODELS.keys())
+                "status": "streaming_ready",
+                "ws_url": ws_url,
+                "model": model,
+                "sample_rate": sample_rate,
+                "encoding": encoding,
+                "channels": channels,
+                "protocol": "websocket",
+                "available_models": list(self.AVAILABLE_MODELS.keys()),
+                "instructions": (
+                    "Connect to ws_url with header 'Authorization: Token <key>'. "
+                    "Send binary audio frames and receive JSON transcript events."
+                ),
             }
         }
     

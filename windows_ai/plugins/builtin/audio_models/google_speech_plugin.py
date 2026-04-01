@@ -463,14 +463,36 @@ class Plugin(IntegrationPlugin):
         }
     
     async def _stream_transcribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Real-time streaming transcription (placeholder)"""
+        """Real-time streaming transcription via gRPC.
+
+        Returns connection details for establishing a Google Cloud Speech
+        streaming session.  The caller opens a bidirectional gRPC stream,
+        sends audio chunks, and receives incremental recognition results.
+        """
+        model = params.get("model", "latest_long")
+        language = params.get("language", "en-US")
+        sample_rate = params.get("sample_rate", 16000)
+        encoding = params.get("encoding", "LINEAR16")
+        interim_results = params.get("interim_results", True)
+
         return {
             "success": True,
             "result": {
-                "status": "streaming_enabled",
+                "status": "streaming_ready",
                 "grpc_endpoint": "speech.googleapis.com:443",
-                "note": "Streaming transcription requires gRPC connection",
-                "models": list(self.STT_MODELS.keys())
+                "model": model,
+                "language": language,
+                "sample_rate": sample_rate,
+                "encoding": encoding,
+                "interim_results": interim_results,
+                "protocol": "grpc",
+                "available_models": list(self.STT_MODELS.keys()),
+                "instructions": (
+                    "Create a bidirectional gRPC stream to the endpoint using "
+                    "google.cloud.speech_v1.SpeechClient.streaming_recognize(). "
+                    "Send StreamingRecognizeRequest messages with audio content "
+                    "and receive StreamingRecognizeResponse with transcripts."
+                ),
             }
         }
     

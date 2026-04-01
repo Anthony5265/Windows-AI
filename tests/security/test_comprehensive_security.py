@@ -11,6 +11,7 @@ Coverage Target: 30% → 70% of windows_ai.security module
 import pytest
 import asyncio
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, Any
@@ -19,6 +20,7 @@ from typing import Dict, Any
 from windows_ai.security.sandbox import SandboxManager, SandboxLevel, SandboxConfig
 from windows_ai.security.permissions import PermissionManager
 from windows_ai.security.guardrails import GuardrailsManager, GuardrailLevel, GuardrailPolicy
+from windows_ai.security.advanced_rbac import PermissionLevel, ResourceType
 
 
 # ============================================================================
@@ -161,9 +163,14 @@ class TestSandboxRestrictions:
         manager = SandboxManager()
         await manager.initialize({"level": "standard"})
         
-        # Blocked paths (system directories)
-        assert manager.is_path_allowed("C:\\Windows\\System32") == False
-        assert manager.is_path_allowed("C:\\Program Files") == False
+        # Blocked paths (system directories) - use platform-appropriate paths
+        if sys.platform == "win32":
+            assert manager.is_path_allowed("C:\\Windows\\System32") == False
+            assert manager.is_path_allowed("C:\\Program Files") == False
+        else:
+            # On Linux, /etc and /var are in the blocked_paths list
+            assert manager.is_path_allowed("/etc/passwd") == False
+            assert manager.is_path_allowed("/var/log") == False
         
         # Allowed paths (user directories)
         temp_dir = tempfile.gettempdir()
@@ -210,119 +217,106 @@ class TestSandboxRestrictions:
 @pytest.mark.security
 @pytest.mark.asyncio
 class TestPermissionValidation:
-    """Test permission and authorization system"""
-    
-    async def test_permissions_default_roles_created(self):
-        """Test default roles are created on initialization"""
+    """Test permission and authorization system.
+
+    The actual PermissionManager is a lightweight, plugin-oriented permission
+    tracker with grant/has/revoke/require/save/load methods.
+    """
+
+    async def test_permissions_default_empty(self):
+        """Test permissions dict starts empty on fresh instance"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        # Check default roles exist
-        assert "guest" in manager.roles
-        assert "user" in manager.roles
-        assert "power_user" in manager.roles
-        assert "admin" in manager.roles
-    
-    async def test_permissions_guest_role_minimal(self):
-        """Test guest role has minimal permissions"""
+        assert isinstance(manager.permissions, dict)
+        assert len(manager.permissions) == 0
+
+    async def test_permissions_grant_and_has(self):
+        """Test granting a permission and checking it"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        guest_role = manager.roles["guest"]
-        assert "api:read" in guest_role.permissions
-        assert "model:use:basic" in guest_role.permissions
-        # Should NOT have write permissions
-        assert "api:write" not in guest_role.permissions
-    
-    async def test_permissions_user_role_standard(self):
-        """Test user role has standard permissions"""
+        manager.grant("my_plugin", "file:read")
+
+        assert manager.has("my_plugin", "file:read") is True
+        assert manager.has("my_plugin", "file:write") is False
+
+    async def test_permissions_grant_multiple(self):
+        """Test granting multiple permissions to a plugin"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        user_role = manager.roles["user"]
-        assert "api:read" in user_role.permissions
-        assert "api:write" in user_role.permissions
-        assert "model:use:*" in user_role.permissions
-        assert "plugin:use:*" in user_role.permissions
-    
-    async def test_permissions_admin_role_full_access(self):
-        """Test admin role has full system access"""
+        manager.grant("my_plugin", "file:read")
+        manager.grant("my_plugin", "file:write")
+        manager.grant("my_plugin", "network:access")
+
+        assert manager.has("my_plugin", "file:read")
+        assert manager.has("my_plugin", "file:write")
+        assert manager.has("my_plugin", "network:access")
+
+    async def test_permissions_admin_wildcard(self):
+        """Test granting broad permissions to an admin plugin"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        admin_role = manager.roles["admin"]
-        assert "system:*" in admin_role.permissions
-        assert "file:*" in admin_role.permissions
-        assert "api:*" in admin_role.permissions
-        assert "model:*" in admin_role.permissions
-    
-    async def test_permissions_role_assignment(self):
-        """Test assigning roles to users"""
+        manager.grant("admin_plugin", "system:*")
+        manager.grant("admin_plugin", "file:*")
+        manager.grant("admin_plugin", "api:*")
+        manager.grant("admin_plugin", "model:*")
+
+        assert manager.has("admin_plugin", "system:*")
+        assert manager.has("admin_plugin", "file:*")
+        assert manager.has("admin_plugin", "api:*")
+        assert manager.has("admin_plugin", "model:*")
+
+    async def test_permissions_grant_for_plugin(self):
+        """Test granting permissions registers the plugin"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        # Assign user role
-        manager.assign_role("user123", "user")
-        assert "user123" in manager.user_roles
-        assert "user" in manager.user_roles["user123"]
-    
-    async def test_permissions_role_revocation(self):
-        """Test revoking roles from users"""
+        manager.grant("plugin_a", "file:read")
+
+        assert "plugin_a" in manager.permissions
+        assert "file:read" in manager.permissions["plugin_a"]
+
+    async def test_permissions_revoke(self):
+        """Test revoking a permission"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        manager.assign_role("user123", "user")
-        assert "user" in manager.user_roles["user123"]
-        
-        manager.revoke_role("user123", "user")
-        assert "user" not in manager.user_roles["user123"]
-    
-    async def test_permissions_custom_role_creation(self):
-        """Test creating custom roles"""
+        manager.grant("plugin_a", "file:read")
+        assert manager.has("plugin_a", "file:read")
+
+        manager.revoke("plugin_a", "file:read")
+        assert not manager.has("plugin_a", "file:read")
+
+    async def test_permissions_require_raises(self):
+        """Test require raises PermissionError when permission is absent"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        custom_perms = {"model:use:gpt-4", "api:read"}
-        manager.create_role("custom_role", custom_perms)
-        
-        assert "custom_role" in manager.roles
-        assert manager.roles["custom_role"].permissions == custom_perms
-    
-    async def test_permissions_role_inheritance(self):
-        """Test role inheritance from parent roles"""
+        with pytest.raises(PermissionError):
+            manager.require("plugin_a", "file:write")
+
+    async def test_permissions_require_passes(self):
+        """Test require passes when permission is granted"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        # User inherits from guest
-        user_role = manager.roles["user"]
-        assert user_role.inherit_from == "guest"
-        
-        # Power user inherits from user
-        power_user_role = manager.roles["power_user"]
-        assert power_user_role.inherit_from == "user"
-    
-    async def test_permissions_get_user_permissions(self):
-        """Test retrieving all permissions for a user"""
+        manager.grant("plugin_a", "file:write")
+        manager.require("plugin_a", "file:write")  # should not raise
+
+    async def test_permissions_save_and_load(self):
+        """Test permissions can be persisted and reloaded"""
+        import tempfile as tf
         manager = PermissionManager()
-        await manager.initialize()
-        
-        manager.assign_role("user123", "user")
-        permissions = manager.get_user_permissions("user123")
-        
-        # Should include user role permissions
-        assert len(permissions) > 0
-        assert isinstance(permissions, set)
-    
-    async def test_permissions_multiple_roles_per_user(self):
-        """Test users can have multiple roles"""
+        manager.grant("plugin_a", "file:read")
+        manager.grant("plugin_b", "network:access")
+
+        with tf.TemporaryDirectory() as d:
+            path = Path(d) / "perms.json"
+            manager.save(path)
+            assert path.exists()
+
+            manager2 = PermissionManager()
+            manager2.load(path)
+            assert manager2.has("plugin_a", "file:read")
+            assert manager2.has("plugin_b", "network:access")
+
+    async def test_permissions_multiple_plugins(self):
+        """Test multiple plugins can each have independent permissions"""
         manager = PermissionManager()
-        await manager.initialize()
-        
-        manager.assign_role("user123", "user")
-        manager.assign_role("user123", "power_user")
-        
-        assert "user" in manager.user_roles["user123"]
-        assert "power_user" in manager.user_roles["user123"]
+        manager.grant("plugin_a", "file:read")
+        manager.grant("plugin_b", "network:access")
+
+        assert manager.has("plugin_a", "file:read")
+        assert not manager.has("plugin_a", "network:access")
+        assert manager.has("plugin_b", "network:access")
+        assert not manager.has("plugin_b", "file:read")
 
 
 # ============================================================================
@@ -553,9 +547,15 @@ class TestSandboxExecution:
         manager = SandboxManager()
         await manager.initialize({"level": "standard"})
         
+        # Use platform-appropriate blocked path
+        if sys.platform == "win32":
+            blocked_cwd = "C:\\Windows\\System32"
+        else:
+            blocked_cwd = "/etc"
+        
         result = await manager.execute_sandboxed(
             "echo test",
-            cwd="C:\\Windows\\System32"
+            cwd=blocked_cwd
         )
         assert result["success"] == False
         assert "blocked" in result["error"].lower()
@@ -590,53 +590,64 @@ class TestSandboxExecution:
 # ============================================================================
 
 @pytest.mark.security
+@pytest.mark.asyncio
 class TestResourceLimits:
-    """Test resource limit configuration"""
-    
-    def test_resource_limits_memory_configurable(self):
-        """Test memory limits can be configured"""
-        manager = SandboxManager()
-        
-        # Different levels have different memory limits
-        config_standard = SandboxConfig(level=SandboxLevel.STANDARD)
-        config_strict = SandboxConfig(level=SandboxLevel.STRICT)
-        config_max = SandboxConfig(level=SandboxLevel.MAXIMUM)
-        
-        # Standard should have more memory than strict
-        assert config_standard.max_memory_mb == 4096
-        assert config_strict.max_memory_mb == 2048
-        assert config_max.max_memory_mb == 1024
-    
-    def test_resource_limits_cpu_configurable(self):
+    """Test resource limit configuration.
+
+    SandboxConfig is a plain dataclass; level-specific defaults are only
+    applied when SandboxManager.initialize() calls _apply_level_defaults().
+    """
+
+    async def test_resource_limits_memory_configurable(self):
+        """Test memory limits differ by level"""
+        sm_standard = SandboxManager()
+        await sm_standard.initialize({"level": "standard"})
+        sm_strict = SandboxManager()
+        await sm_strict.initialize({"level": "strict"})
+        sm_max = SandboxManager()
+        await sm_max.initialize({"level": "maximum"})
+
+        assert sm_standard.config.max_memory_mb == 4096
+        assert sm_strict.config.max_memory_mb == 2048
+        assert sm_max.config.max_memory_mb == 1024
+
+    async def test_resource_limits_cpu_configurable(self):
         """Test CPU limits can be configured"""
-        config_standard = SandboxConfig(level=SandboxLevel.STANDARD)
-        config_max = SandboxConfig(level=SandboxLevel.MAXIMUM)
-        
-        assert config_standard.max_cpu_percent == 80
-        assert config_max.max_cpu_percent == 50
-    
-    def test_resource_limits_timeout_configurable(self):
+        sm_standard = SandboxManager()
+        await sm_standard.initialize({"level": "standard"})
+        sm_max = SandboxManager()
+        await sm_max.initialize({"level": "maximum"})
+
+        assert sm_standard.config.max_cpu_percent == 80
+        assert sm_max.config.max_cpu_percent == 50
+
+    async def test_resource_limits_timeout_configurable(self):
         """Test timeout limits can be configured"""
-        config_standard = SandboxConfig(level=SandboxLevel.STANDARD)
-        config_strict = SandboxConfig(level=SandboxLevel.STRICT)
-        config_max = SandboxConfig(level=SandboxLevel.MAXIMUM)
-        
-        assert config_standard.timeout_seconds == 300
-        assert config_strict.timeout_seconds == 60
-        assert config_max.timeout_seconds == 30
-    
-    def test_resource_limits_network_configurable(self):
+        sm_standard = SandboxManager()
+        await sm_standard.initialize({"level": "standard"})
+        sm_strict = SandboxManager()
+        await sm_strict.initialize({"level": "strict"})
+        sm_max = SandboxManager()
+        await sm_max.initialize({"level": "maximum"})
+
+        assert sm_standard.config.timeout_seconds == 300
+        assert sm_strict.config.timeout_seconds == 60
+        assert sm_max.config.timeout_seconds == 30
+
+    async def test_resource_limits_network_configurable(self):
         """Test network access can be limited"""
-        config_allowed = SandboxConfig(level=SandboxLevel.STANDARD)
-        config_blocked = SandboxConfig(level=SandboxLevel.MAXIMUM)
-        
-        assert config_allowed.network_access == True
-        assert config_blocked.network_access == False
-    
-    def test_resource_limits_default_values_safe(self):
+        sm_standard = SandboxManager()
+        await sm_standard.initialize({"level": "standard"})
+        sm_max = SandboxManager()
+        await sm_max.initialize({"level": "maximum"})
+
+        assert sm_standard.config.network_access == True
+        assert sm_max.config.network_access == False
+
+    async def test_resource_limits_default_values_safe(self):
         """Test default resource limits are safe"""
         config = SandboxConfig()  # Default STANDARD level
-        
+
         # Default should be STANDARD
         assert config.level == SandboxLevel.STANDARD
         # Should have reasonable limits
@@ -658,29 +669,29 @@ class TestPermissionTypes:
     """Test permission type enumerations"""
     
     def test_permission_level_enum_exists(self):
-        """Test PermissionLevel enum exists"""
-        assert PermissionLevel.NONE.value == 0
-        assert PermissionLevel.READ.value == 1
-        assert PermissionLevel.WRITE.value == 2
-        assert PermissionLevel.EXECUTE.value == 3
-        assert PermissionLevel.ADMIN.value == 4
+        """Test PermissionLevel enum exists with expected values"""
+        assert PermissionLevel.READ.value == "read"
+        assert PermissionLevel.WRITE.value == "write"
+        assert PermissionLevel.DELETE.value == "delete"
+        assert PermissionLevel.ADMIN.value == "admin"
     
     def test_resource_type_enum_exists(self):
-        """Test ResourceType enum exists"""
-        assert ResourceType.FILE.value == "file"
-        assert ResourceType.DIRECTORY.value == "directory"
-        assert ResourceType.API.value == "api"
-        assert ResourceType.MODEL.value == "model"
+        """Test ResourceType enum exists with expected values"""
+        assert ResourceType.QUERY.value == "query"
         assert ResourceType.PLUGIN.value == "plugin"
-        assert ResourceType.SYSTEM.value == "system"
-        assert ResourceType.NETWORK.value == "network"
+        assert ResourceType.DASHBOARD.value == "dashboard"
+        assert ResourceType.REPORT.value == "report"
+        assert ResourceType.CONFIGURATION.value == "configuration"
+        assert ResourceType.USER.value == "user"
+        assert ResourceType.ROLE.value == "role"
     
     def test_permission_levels_ordered(self):
-        """Test permission levels are properly ordered"""
-        assert PermissionLevel.NONE.value < PermissionLevel.READ.value
-        assert PermissionLevel.READ.value < PermissionLevel.WRITE.value
-        assert PermissionLevel.WRITE.value < PermissionLevel.EXECUTE.value
-        assert PermissionLevel.EXECUTE.value < PermissionLevel.ADMIN.value
+        """Test permission levels exist as distinct values"""
+        levels = [PermissionLevel.READ, PermissionLevel.WRITE,
+                  PermissionLevel.DELETE, PermissionLevel.ADMIN]
+        # All levels should be distinct
+        values = [l.value for l in levels]
+        assert len(values) == len(set(values))
     
     def test_sandbox_level_enum_exists(self):
         """Test SandboxLevel enum exists"""
@@ -715,11 +726,12 @@ class TestSecurityIntegration:
         guardrails = GuardrailsManager()
         
         await sandbox.initialize()
-        await permissions.initialize()
+        # PermissionManager is a dataclass, usable immediately
+        permissions.grant("test_plugin", "file:read")
         await guardrails.initialize()
         
         assert sandbox._initialized == True
-        assert permissions._initialized == True
+        assert isinstance(permissions.permissions, dict)
         assert guardrails._initialized == True
     
     async def test_integration_sandbox_and_permissions_compatible(self):
@@ -728,11 +740,11 @@ class TestSecurityIntegration:
         permissions = PermissionManager()
         
         await sandbox.initialize({"level": "standard"})
-        await permissions.initialize()
+        permissions.grant("my_plugin", "file:read")
         
         # Both should be active
         assert sandbox.config.level == SandboxLevel.STANDARD
-        assert len(permissions.roles) > 0
+        assert len(permissions.permissions) > 0
     
     async def test_integration_guardrails_and_sandbox_compatible(self):
         """Test guardrails and sandbox work together"""
@@ -753,7 +765,7 @@ class TestSecurityIntegration:
         
         # Initialize all in strict mode
         await sandbox.initialize({"level": "strict"})
-        await permissions.initialize()
+        permissions.grant("test_plugin", "file:read")
         await guardrails.initialize({"level": "strict"})
         
         # Verify strict restrictions
@@ -769,7 +781,7 @@ class TestSecurityIntegration:
         
         # Initialize all in standard mode
         await sandbox.initialize({"level": "standard"})
-        await permissions.initialize()
+        permissions.grant("test_plugin", "file:read")
         await guardrails.initialize({"level": "standard"})
         
         # Verify balanced restrictions
@@ -778,19 +790,19 @@ class TestSecurityIntegration:
         assert guardrails.level == GuardrailLevel.STANDARD
     
     async def test_integration_permission_role_with_sandbox(self):
-        """Test permission roles work with sandbox"""
+        """Test permission grants work alongside sandbox"""
         sandbox = SandboxManager()
         permissions = PermissionManager()
         
         await sandbox.initialize()
-        await permissions.initialize()
         
-        # Assign user role
-        permissions.assign_role("test_user", "user")
-        user_perms = permissions.get_user_permissions("test_user")
+        # Grant permissions to a plugin
+        permissions.grant("test_plugin", "file:read")
+        permissions.grant("test_plugin", "network:access")
         
-        # User should have permissions even with sandbox
-        assert len(user_perms) > 0
+        # Plugin should have permissions even with sandbox active
+        assert permissions.has("test_plugin", "file:read")
+        assert permissions.has("test_plugin", "network:access")
     
     async def test_integration_multi_level_security_config(self):
         """Test different security levels across managers"""
@@ -812,12 +824,12 @@ class TestSecurityIntegration:
         sandbox = SandboxManager()
         
         await guardrails.initialize()
-        await permissions.initialize()
+        permissions.grant("test_plugin", "file:read")
         await sandbox.initialize()
         
         # All should work
         assert guardrails._initialized == True
-        assert permissions._initialized == True
+        assert permissions.has("test_plugin", "file:read")
         assert sandbox._initialized == True
     
     async def test_integration_security_reconfiguration(self):
@@ -839,13 +851,13 @@ class TestSecurityIntegration:
         
         # Initialize with no config (use defaults)
         await sandbox.initialize()
-        await permissions.initialize()
+        permissions.grant("test_plugin", "file:read")
         await guardrails.initialize()
         
         # Defaults should be STANDARD (balanced security)
         assert sandbox.config.level == SandboxLevel.STANDARD
         assert guardrails.level == GuardrailLevel.STANDARD
-        assert len(permissions.roles) > 0  # Default roles created
+        assert len(permissions.permissions) > 0  # Has granted permissions
 
 
 # ============================================================================
