@@ -1043,6 +1043,190 @@ footer {
 }
 
 /* ==========================================
+   Agents Tab
+   ========================================== */
+
+.agents-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.agents-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.agents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.agents-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.agents-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.agents-panel h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.agents-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.agents-form input,
+.agents-form textarea,
+.agents-form select {
+  width: 100%;
+  background: var(--background);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.agents-list-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.agents-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+}
+
+.agents-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0.75rem;
+}
+
+.agent-card {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+.agent-card h4 {
+  margin: 0;
+}
+
+.agent-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+}
+
+.agent-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
+.agent-chip {
+  background: var(--surface-hover);
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.agent-actions button {
+  flex: 1;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--surface-hover);
+}
+
+.status-pill.idle {
+  color: var(--success);
+}
+
+.status-pill.busy {
+  color: #f59e0b;
+}
+
+.agent-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.agent-task-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.7rem;
+  align-items: center;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+.agent-task-main h4 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.agent-task-meta {
+  margin-top: 0.3rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.agent-task-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* ==========================================
    Plugins Tab
    ========================================== */
 
@@ -1080,6 +1264,11 @@ footer {
 .stat-badge.active {
   background: rgba(16, 185, 129, 0.1);
   color: var(--success);
+}
+
+.stat-badge.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
 }
 
 .plugins-filter select {
