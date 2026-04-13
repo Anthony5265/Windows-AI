@@ -139,7 +139,7 @@ Windows AI is a **comprehensive, locally-runnable AI platform for Windows** that
 ### 2.1 GUI Enhancements
 - [x] Electron renderer: markdown rendering for assistant messages (done in previous session)
 - [ ] Plugin marketplace browser in GUI
-- [ ] Agent creation/management wizard
+- [x] Agent creation/management wizard — added Agents tab UI in Electron renderer with create/delete agent flows, task dispatch form, and live stats/list integration
 - [ ] Multi-agent task flow visualization (graph/timeline)
 - [ ] Accessibility improvements (screen reader support, keyboard nav)
 - [ ] Windows Hello biometric login integration

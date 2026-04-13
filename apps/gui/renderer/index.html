@@ -36,6 +36,15 @@
         </svg>
         Automation
       </button>
+      <button class="nav-btn" data-tab="agents">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M17 11a4 4 0 1 0 0-8"/>
+          <path d="M3 21v-2a6 6 0 0 1 12 0v2"/>
+          <path d="M16 21v-2a5 5 0 0 0-2-4"/>
+        </svg>
+        Agents
+      </button>
       <button class="nav-btn" data-tab="plugins">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/><path d="m15.4 17.4 3.2 3.2m-3.2-13.2 3.2-3.2M2.6 10.6 5.8 7.4m13.2 13.2-3.2-3.2M10.6 2.6 7.4 5.8m13.2 13.2-3.2-3.2M2.6 17.4l3.2-3.2"/>
@@ -690,6 +699,109 @@
     </div>
   </section>
 
+  <!-- Agents Tab -->
+  <section id="agents" class="tab">
+    <div class="agents-container">
+      <h2>🧠 Agent Management</h2>
+      <p class="agents-subtitle">Create, monitor, and dispatch tasks to specialized agents.</p>
+
+      <div class="agents-header">
+        <div class="agents-stats">
+          <span id="agentsTotal" class="stat-badge">0 agents</span>
+          <span id="agentsIdle" class="stat-badge active">0 idle</span>
+          <span id="agentsBusy" class="stat-badge warning">0 busy</span>
+          <span id="agentsTasks" class="stat-badge">0 tasks</span>
+        </div>
+        <button id="refreshAgentsBtn" class="toolbar-btn" title="Refresh Agents">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="agents-grid">
+        <div class="agents-panel">
+          <h3>Create Agent</h3>
+          <form id="createAgentForm" class="agents-form">
+            <label for="agentNameInput">Name</label>
+            <input id="agentNameInput" type="text" maxlength="100" required placeholder="e.g. Research Assistant" />
+
+            <label for="agentCapabilitiesInput">Capabilities (comma-separated)</label>
+            <input id="agentCapabilitiesInput" type="text" placeholder="search, summarize, code" />
+
+            <label for="agentAuthTokenInput">Auth Token (optional)</label>
+            <input id="agentAuthTokenInput" type="password" placeholder="Leave blank for default auth flow" />
+
+            <button type="submit" class="btn-primary">Create Agent</button>
+          </form>
+        </div>
+
+        <div class="agents-panel">
+          <h3>Dispatch Task</h3>
+          <form id="createTaskForm" class="agents-form">
+            <label for="taskAgentSelect">Assign To</label>
+            <select id="taskAgentSelect">
+              <option value="">Auto-assign</option>
+            </select>
+
+            <label for="taskDescriptionInput">Task Description</label>
+            <textarea id="taskDescriptionInput" rows="4" required placeholder="Describe the task to execute"></textarea>
+
+            <label for="taskPrioritySelect">Priority</label>
+            <select id="taskPrioritySelect">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+
+            <button type="submit" class="btn-secondary">Create Task</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="agents-list-panel">
+        <div class="agents-list-header">
+          <h3>Active Agents</h3>
+          <input id="agentSearchInput" type="text" class="plugin-search-input" placeholder="Search agents..." />
+        </div>
+        <div id="agentsList" class="agents-list">
+          <div class="loading-indicator">
+            <svg class="spinner" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <p>Loading agents...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="agents-list-panel">
+        <div class="agents-list-header">
+          <h3>Task Queue</h3>
+          <div class="plugins-actions">
+            <select id="agentTaskStatusFilter" class="plugin-filter-select">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button id="refreshAgentTasksBtn" class="toolbar-btn" title="Refresh Task Queue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="agentTasksList" class="agent-tasks-list">
+          <div class="empty-state">
+            <p>No tasks loaded yet</p>
+            <p class="hint">Create a task to populate the queue.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Plugins Tab -->
   <section id="plugins" class="tab">
     <div class="plugins-container">
@@ -700,6 +812,7 @@
         <div class="plugins-stats">
           <span id="pluginsCount" class="stat-badge">0 plugins</span>
           <span id="pluginsActive" class="stat-badge active">0 active</span>
+          <span id="pluginsVisible" class="stat-badge">0 shown</span>
           <span id="pluginsUpdates" class="stat-badge warning" style="display:none;">0 updates</span>
         </div>
         <div class="plugins-actions">
@@ -710,6 +823,12 @@
             <option value="tool">Tools</option>
             <option value="integration">Integrations</option>
             <option value="automation">Automation</option>
+          </select>
+          <select id="pluginSortFilter" class="plugin-filter-select" aria-label="Sort plugins">
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+            <option value="enabled_first">Enabled First</option>
+            <option value="newest">Newest Version</option>
           </select>
           <button id="refreshPluginsBtn" class="toolbar-btn" title="Refresh Plugins">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

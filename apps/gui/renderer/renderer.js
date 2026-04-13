@@ -1475,8 +1475,366 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 // Plugin Marketplace
 // =====================================================================
 
+// =====================================================================
+// Agent Management
+// =====================================================================
+
+let agentRecords = [];
+let agentSearch = '';
+let agentTaskRecords = [];
+let agentTaskStatusFilter = '';
+
+async function fetchAgentStats() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/stats`);
+    if (!response.ok) {
+      return;
+    }
+
+    const stats = await response.json();
+    document.getElementById('agentsTotal').textContent = `${stats.total_agents ?? 0} agents`;
+    document.getElementById('agentsIdle').textContent = `${stats.idle_agents ?? 0} idle`;
+    document.getElementById('agentsBusy').textContent = `${stats.busy_agents ?? 0} busy`;
+    document.getElementById('agentsTasks').textContent = `${stats.total_tasks ?? 0} tasks`;
+  } catch (error) {
+    console.error('Failed to fetch agent stats:', error);
+  }
+}
+
+function filterAgents() {
+  if (!agentSearch) {
+    return agentRecords;
+  }
+
+  const query = agentSearch.toLowerCase();
+  return agentRecords.filter((agent) => {
+    const capabilities = (agent.capabilities || []).join(' ');
+    return [agent.name, agent.id, agent.status, capabilities]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(query);
+  });
+}
+
+function updateTaskAgentSelect() {
+  const select = document.getElementById('taskAgentSelect');
+  if (!select) return;
+
+  const currentValue = select.value;
+  const options = ['<option value="">Auto-assign</option>'].concat(
+    agentRecords.map((agent) => `<option value="${agent.id}">${agent.name} (${agent.id})</option>`)
+  );
+
+  select.innerHTML = options.join('');
+  if (currentValue && agentRecords.some((a) => a.id === currentValue)) {
+    select.value = currentValue;
+  }
+}
+
+function renderAgents() {
+  const container = document.getElementById('agentsList');
+  if (!container) return;
+
+  const filtered = filterAgents();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>No agents found</p>
+        <p class="hint">Create a new agent or adjust your search query.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map((agent) => {
+    const capabilities = (agent.capabilities || [])
+      .slice(0, 6)
+      .map((cap) => `<span class="agent-chip">${cap}</span>`)
+      .join('');
+
+    return `
+      <div class="agent-card">
+        <h4>${agent.name || agent.id}</h4>
+        <div class="agent-meta">
+          <span>${agent.id}</span>
+          <span class="status-pill ${agent.status === 'busy' ? 'busy' : 'idle'}">${agent.status || 'idle'}</span>
+        </div>
+        <div class="agent-capabilities">${capabilities || '<span class="hint">No capabilities</span>'}</div>
+        <div class="agent-meta">
+          <span>Tasks: ${agent.tasks_completed ?? 0}</span>
+          <span>${agent.created_at ? new Date(agent.created_at).toLocaleString() : 'N/A'}</span>
+        </div>
+        <div class="agent-actions">
+          <button class="btn-secondary" onclick="quickAssignTask('${agent.id}')">Assign Task</button>
+          <button class="btn-danger" onclick="removeAgent('${agent.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getTaskBadgeClass(status) {
+  if (status === 'completed') return 'idle';
+  if (status === 'in_progress') return 'busy';
+  if (status === 'failed') return 'busy';
+  return '';
+}
+
+function renderAgentTasks() {
+  const container = document.getElementById('agentTasksList');
+  if (!container) return;
+
+  const filtered = agentTaskStatusFilter
+    ? agentTaskRecords.filter((task) => task.status === agentTaskStatusFilter)
+    : [...agentTaskRecords];
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>No tasks found</p>
+        <p class="hint">Try another filter or create a new task.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.slice(0, 50).map((task) => `
+    <div class="agent-task-item">
+      <div class="agent-task-main">
+        <h4>${task.description || task.id}</h4>
+        <div class="agent-task-meta">
+          <span>ID: ${task.id}</span>
+          <span>Priority: ${task.priority || 'normal'}</span>
+          <span>Agent: ${task.assigned_agent || 'auto'}</span>
+          <span class="status-pill ${getTaskBadgeClass(task.status)}">${task.status || 'pending'}</span>
+        </div>
+      </div>
+      <div class="agent-task-actions">
+        <button class="btn-secondary" onclick="rerunAgentTask('${task.id}')">Run</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadAgentTasks() {
+  const container = document.getElementById('agentTasksList');
+  if (container) {
+    container.innerHTML = `
+      <div class="loading-indicator">
+        <svg class="spinner" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        <p>Loading tasks...</p>
+      </div>
+    `;
+  }
+
+  try {
+    const query = agentTaskStatusFilter ? `?status=${encodeURIComponent(agentTaskStatusFilter)}` : '';
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/tasks${query}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load tasks (${response.status})`);
+    }
+    const data = await response.json();
+    agentTaskRecords = Array.isArray(data) ? data : [];
+    renderAgentTasks();
+  } catch (error) {
+    console.error('Error loading agent tasks:', error);
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>Failed to load tasks</p>
+          <p class="hint">Verify backend auth and task routes.</p>
+        </div>
+      `;
+    }
+  }
+}
+
+async function loadAgents() {
+  const container = document.getElementById('agentsList');
+  if (container) {
+    container.innerHTML = `
+      <div class="loading-indicator">
+        <svg class="spinner" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        <p>Loading agents...</p>
+      </div>
+    `;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/`);
+    if (!response.ok) {
+      throw new Error(`Failed to load agents (${response.status})`);
+    }
+
+    const data = await response.json();
+    agentRecords = Array.isArray(data) ? data : [];
+    updateTaskAgentSelect();
+    renderAgents();
+    fetchAgentStats();
+    loadAgentTasks();
+  } catch (error) {
+    console.error('Error loading agents:', error);
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>Failed to load agents</p>
+          <p class="hint">Ensure backend auth and agent routes are available.</p>
+        </div>
+      `;
+    }
+  }
+}
+
+async function createAgent(event) {
+  event.preventDefault();
+  const name = document.getElementById('agentNameInput')?.value.trim();
+  if (!name) return;
+
+  const capabilitiesRaw = document.getElementById('agentCapabilitiesInput')?.value || '';
+  const authToken = document.getElementById('agentAuthTokenInput')?.value.trim();
+  const capabilities = capabilitiesRaw
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const payload = { name, capabilities: capabilities.length > 0 ? capabilities : undefined };
+  if (authToken) {
+    payload.auth_token = authToken;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to create agent (${response.status})`);
+    }
+
+    updateStatus('Agent created successfully');
+    document.getElementById('createAgentForm')?.reset();
+    await loadAgents();
+  } catch (error) {
+    console.error('Error creating agent:', error);
+    updateStatus(`Agent creation failed: ${error.message}`);
+  }
+}
+
+async function createAgentTask(event) {
+  event.preventDefault();
+  const description = document.getElementById('taskDescriptionInput')?.value.trim();
+  if (!description) return;
+
+  const agentId = document.getElementById('taskAgentSelect')?.value || undefined;
+  const priority = document.getElementById('taskPrioritySelect')?.value || 'normal';
+
+  const payload = {
+    description,
+    priority
+  };
+
+  if (agentId) {
+    payload.agent_id = agentId;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/tasks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to create task (${response.status})`);
+    }
+
+    updateStatus('Task created successfully');
+    document.getElementById('createTaskForm')?.reset();
+    await fetchAgentStats();
+    await loadAgentTasks();
+  } catch (error) {
+    console.error('Error creating task:', error);
+    updateStatus(`Task creation failed: ${error.message}`);
+  }
+}
+
+window.quickAssignTask = function quickAssignTask(agentId) {
+  const select = document.getElementById('taskAgentSelect');
+  if (!select) return;
+  select.value = agentId;
+  document.getElementById('taskDescriptionInput')?.focus();
+};
+
+window.removeAgent = async function removeAgent(agentId) {
+  const confirmed = confirm(`Delete agent ${agentId}?`);
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/${agentId}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to delete agent (${response.status})`);
+    }
+    updateStatus(`Deleted agent ${agentId}`);
+    await loadAgents();
+  } catch (error) {
+    console.error('Error deleting agent:', error);
+    updateStatus(`Delete failed: ${error.message}`);
+  }
+};
+
+window.rerunAgentTask = async function rerunAgentTask(taskId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/agents/tasks/${taskId}/execute`, {
+      method: 'POST'
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to execute task (${response.status})`);
+    }
+    updateStatus(`Executed task ${taskId}`);
+    await loadAgentTasks();
+    await fetchAgentStats();
+  } catch (error) {
+    console.error('Error executing task:', error);
+    updateStatus(`Task execution failed: ${error.message}`);
+  }
+};
+
+document.getElementById('refreshAgentsBtn')?.addEventListener('click', loadAgents);
+document.getElementById('createAgentForm')?.addEventListener('submit', createAgent);
+document.getElementById('createTaskForm')?.addEventListener('submit', createAgentTask);
+document.getElementById('agentSearchInput')?.addEventListener('input', (event) => {
+  agentSearch = event.target.value.trim();
+  renderAgents();
+});
+document.getElementById('refreshAgentTasksBtn')?.addEventListener('click', loadAgentTasks);
+document.getElementById('agentTaskStatusFilter')?.addEventListener('change', (event) => {
+  agentTaskStatusFilter = event.target.value;
+  loadAgentTasks();
+});
+
+document.querySelector('[data-tab="agents"]')?.addEventListener('click', () => {
+  loadAgents();
+});
+
 let allPlugins = [];
 let currentPluginFilter = 'all';
+let currentPluginTab = 'all';
+let currentPluginSearch = '';
+let currentPluginSort = 'name_asc';
 
 // Load plugins from backend
 async function loadPlugins() {
@@ -1510,10 +1868,14 @@ async function loadPlugins() {
 function displayPlugins() {
   const pluginsList = document.getElementById('pluginsList');
 
-  // Filter plugins
-  let filtered = allPlugins;
-  if (currentPluginFilter !== 'all') {
-    filtered = allPlugins.filter(p => p.type === currentPluginFilter);
+  let filtered = allPlugins.filter(pluginMatchesTab);
+  filtered = filtered.filter(pluginMatchesTypeFilter);
+  filtered = filtered.filter(pluginMatchesSearchFilter);
+  filtered = sortPlugins(filtered);
+
+  const visibleBadge = document.getElementById('pluginsVisible');
+  if (visibleBadge) {
+    visibleBadge.textContent = `${filtered.length} shown`;
   }
 
   if (filtered.length === 0) {
@@ -1532,10 +1894,10 @@ function displayPlugins() {
   pluginsList.innerHTML = filtered.map(plugin => `
     <div class="plugin-card ${plugin.enabled ? 'enabled' : 'disabled'}">
       <div class="plugin-card-header">
-        <div class="plugin-icon">${getPluginIcon(plugin.type)}</div>
+        <div class="plugin-icon">${getPluginIcon(getPluginType(plugin))}</div>
         <div class="plugin-info">
           <h3 class="plugin-name">${plugin.name || plugin.id}</h3>
-          <span class="plugin-type">${plugin.type}</span>
+          <span class="plugin-type">${getPluginType(plugin)}</span>
         </div>
         <div class="plugin-toggle">
           <label class="toggle-switch">
@@ -1559,6 +1921,63 @@ function displayPlugins() {
       </div>
     </div>
   `).join('');
+}
+
+function getPluginType(plugin) {
+  return plugin.type || plugin.plugin_type || 'unknown';
+}
+
+function pluginMatchesTab(plugin) {
+  if (currentPluginTab === 'installed') {
+    return Boolean(plugin.enabled);
+  }
+  if (currentPluginTab === 'featured') {
+    const tags = plugin.tags || [];
+    return tags.includes('featured') || tags.includes('recommended');
+  }
+  return true;
+}
+
+function pluginMatchesTypeFilter(plugin) {
+  if (currentPluginFilter === 'all') {
+    return true;
+  }
+  return getPluginType(plugin) === currentPluginFilter;
+}
+
+function pluginMatchesSearchFilter(plugin) {
+  if (!currentPluginSearch) {
+    return true;
+  }
+
+  const query = currentPluginSearch.toLowerCase();
+  const searchable = [
+    plugin.name,
+    plugin.id,
+    plugin.description,
+    plugin.author,
+    getPluginType(plugin),
+    ...(plugin.tags || [])
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return searchable.includes(query);
+}
+
+function sortPlugins(plugins) {
+  const sorted = [...plugins];
+  if (currentPluginSort === 'name_desc') {
+    sorted.sort((a, b) => (b.name || b.id || '').localeCompare(a.name || a.id || ''));
+  } else if (currentPluginSort === 'enabled_first') {
+    sorted.sort((a, b) => Number(Boolean(b.enabled)) - Number(Boolean(a.enabled)));
+  } else if (currentPluginSort === 'newest') {
+    sorted.sort((a, b) => (b.version || '0').localeCompare(a.version || '0', undefined, { numeric: true }));
+  } else {
+    sorted.sort((a, b) => (a.name || a.id || '').localeCompare(b.name || b.id || ''));
+  }
+  return sorted;
 }
 
 // Get icon for plugin type
@@ -1676,6 +2095,29 @@ window.executePlugin = async function(pluginId) {
 document.getElementById('pluginTypeFilter')?.addEventListener('change', (e) => {
   currentPluginFilter = e.target.value;
   displayPlugins();
+});
+
+document.getElementById('pluginSortFilter')?.addEventListener('change', (e) => {
+  currentPluginSort = e.target.value;
+  displayPlugins();
+});
+
+document.getElementById('pluginSearchInput')?.addEventListener('input', (e) => {
+  currentPluginSearch = e.target.value.trim();
+  displayPlugins();
+});
+
+document.getElementById('refreshPluginsBtn')?.addEventListener('click', () => {
+  loadPlugins();
+});
+
+document.querySelectorAll('.plugin-tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.plugin-tab-btn').forEach((tabBtn) => tabBtn.classList.remove('active'));
+    btn.classList.add('active');
+    currentPluginTab = btn.dataset.pluginTab || 'all';
+    displayPlugins();
+  });
 });
 
 // Load plugins when tab is opened
@@ -2499,8 +2941,8 @@ document.getElementById('exportBtn')?.addEventListener('click', () => {
 // Model Management
 // =====================================================================
 
-let allModels = [];
-let installedModels = [];
+let catalogModels = [];
+let localInstalledModels = [];
 let downloadSocket = null;
 let currentFilter = 'all';
 
@@ -2511,14 +2953,14 @@ async function loadModels() {
     const availableResponse = await fetch(`${BACKEND_URL}/models/available`);
     if (availableResponse.ok) {
       const data = await availableResponse.json();
-      allModels = data.models || [];
+      catalogModels = data.models || [];
     }
 
     // Load installed models
     const installedResponse = await fetch(`${BACKEND_URL}/models/installed`);
     if (installedResponse.ok) {
       const data = await installedResponse.json();
-      installedModels = data.models || [];
+      localInstalledModels = data.models || [];
     }
 
     // Load system specs and recommendations
@@ -2553,11 +2995,11 @@ function updateModelStats() {
   const installedCount = document.getElementById('modelsInstalled');
 
   if (availableCount) {
-    availableCount.textContent = `${allModels.length} available`;
+    availableCount.textContent = `${catalogModels.length} available`;
   }
 
   if (installedCount) {
-    const installed = allModels.filter(m => m.installed).length;
+    const installed = catalogModels.filter(m => m.installed).length;
     installedCount.textContent = `${installed} installed`;
   }
 }
@@ -2588,12 +3030,12 @@ function renderModels() {
   const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
 
   // Filter models
-  let filteredModels = allModels;
+  let filteredModels = catalogModels;
   if (selectedCategory !== 'all') {
     if (selectedCategory === 'recommended') {
-      filteredModels = allModels.filter(m => m.recommended);
+      filteredModels = catalogModels.filter(m => m.recommended);
     } else {
-      filteredModels = allModels.filter(m => m.category === selectedCategory);
+      filteredModels = catalogModels.filter(m => m.category === selectedCategory);
     }
   }
 
@@ -2742,7 +3184,7 @@ async function downloadModel(modelId) {
   if (!downloadModal) return;
 
   // Find model info
-  const model = allModels.find(m => m.id === modelId);
+  const model = catalogModels.find(m => m.id === modelId);
   if (model) {
     downloadModelName.textContent = model.name;
   }
@@ -2878,7 +3320,7 @@ if (modelsTab) {
   modelsTab.addEventListener('click', () => {
     // Delay loading to ensure tab is visible
     setTimeout(() => {
-      if (!allModels.length) {
+      if (!catalogModels.length) {
         loadModels();
       }
     }, 100);
