@@ -4,6 +4,8 @@
  */
 
 const BACKEND_URL = 'http://127.0.0.1:8010';
+const GITHUB_RELEASE_MANIFEST_URL = 'https://github.com/Anthony5265/Windows-AI/releases/latest/download/latest-release.json';
+const FALLBACK_CURRENT_VERSION = '0.5.0';
 
 class UpdateManager {
   constructor() {
@@ -19,15 +21,12 @@ class UpdateManager {
     console.log('[Updater] Initializing update system...');
 
     try {
-      // Get update preferences
       const prefs = await this.getPreferences();
       console.log('[Updater] Preferences:', prefs);
 
-      // Check for updates on startup
       if (prefs.auto_check !== false) {
-        setTimeout(() => this.checkForUpdates(), 5000); // Check after 5 seconds
+        setTimeout(() => this.checkForUpdates(), 5000);
 
-        // Set up periodic checking if enabled
         if (prefs.auto_check && prefs.check_interval_hours) {
           const intervalMs = prefs.check_interval_hours * 60 * 60 * 1000;
           this.checkInterval = setInterval(() => {
@@ -37,9 +36,7 @@ class UpdateManager {
         }
       }
 
-      // Check current update status
       await this.getStatus();
-
     } catch (error) {
       console.error('[Updater] Initialization error:', error);
     }
@@ -51,13 +48,23 @@ class UpdateManager {
   async getStatus() {
     try {
       const response = await fetch(`${BACKEND_URL}/updates/status`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const status = await response.json();
       this.updateStatus = status;
       console.log('[Updater] Status:', status);
       return status;
     } catch (error) {
-      console.error('[Updater] Error getting status:', error);
-      return null;
+      console.warn('[Updater] Error getting backend status, using fallback status:', error);
+      const fallback = {
+        status: 'fallback',
+        current_version: FALLBACK_CURRENT_VERSION,
+        channel: 'stable',
+        source: 'github-release-manifest'
+      };
+      this.updateStatus = fallback;
+      return fallback;
     }
   }
 
@@ -80,7 +87,6 @@ class UpdateManager {
       console.log('[Updater] Check result:', data);
 
       if (data.update_available && data.update_info) {
-        // Update available!
         this.updateStatus = data;
         this.showUpdateNotification(data.update_info);
       } else if (showNoUpdateMessage) {
@@ -88,11 +94,113 @@ class UpdateManager {
       }
 
       return data;
-
     } catch (error) {
-      console.error('[Updater] Error checking for updates:', error);
+      console.warn('[Updater] Backend update check failed, trying GitHub release manifest:', error);
+      const fallbackData = await this.checkForUpdatesFromReleaseManifest(showNoUpdateMessage);
+      if (fallbackData) {
+        return fallbackData;
+      }
       throw error;
     }
+  }
+
+  async checkForUpdatesFromReleaseManifest(showNoUpdateMessage = false) {
+    try {
+      const response = await fetch(GITHUB_RELEASE_MANIFEST_URL, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Manifest HTTP ${response.status}`);
+      }
+
+      const manifest = await response.json();
+      console.log('[Updater] GitHub manifest result:', manifest);
+
+      const latest = manifest.latest || manifest;
+      const currentVersion = this.getCurrentVersion();
+      const latestVersion = latest.current_version || latest.version;
+
+      if (!latestVersion) {
+        throw new Error('Release manifest missing version');
+      }
+
+      if (this.isVersionNewer(latestVersion, currentVersion)) {
+        const updateInfo = this.normalizeManifestUpdateInfo(latest, currentVersion);
+        const data = {
+          update_available: true,
+          update_info: updateInfo,
+          status: 'available',
+          source: 'github-release-manifest'
+        };
+        this.updateStatus = data;
+        this.showUpdateNotification(updateInfo);
+        return data;
+      }
+
+      if (showNoUpdateMessage) {
+        this.showNoUpdateMessage();
+      }
+
+      return {
+        update_available: false,
+        update_info: null,
+        status: 'up_to_date',
+        source: 'github-release-manifest'
+      };
+    } catch (error) {
+      console.error('[Updater] Error checking GitHub release manifest:', error);
+      return null;
+    }
+  }
+
+  normalizeManifestUpdateInfo(latest, currentVersion) {
+    const releaseNotes = latest.release_notes || latest.releaseNotes || `Latest release: ${latest.version}`;
+    const downloadUrl = latest.downloadUrl || latest.download_url || '';
+
+    return {
+      version: latest.version,
+      current_version: currentVersion,
+      release_date: latest.releaseDate || latest.release_date || latest.generated_at || new Date().toISOString(),
+      size: Number(latest.size || 0),
+      download_url: downloadUrl,
+      sha256: latest.sha256 || '',
+      critical: Boolean(latest.critical),
+      requires_restart: latest.requiresRestart !== false,
+      changelog: latest.changelog || {
+        added: [],
+        changed: [],
+        fixed: []
+      },
+      release_notes: releaseNotes,
+      release_url: latest.releaseUrl || latest.release_url || downloadUrl
+    };
+  }
+
+  getCurrentVersion() {
+    return this.updateStatus?.current_version || this.updateStatus?.currentVersion || FALLBACK_CURRENT_VERSION;
+  }
+
+  isVersionNewer(candidate, current) {
+    const parse = (version) => String(version || '0')
+      .replace(/^v/i, '')
+      .split('.')
+      .map((part) => Number.parseInt(part, 10) || 0);
+
+    const a = parse(candidate);
+    const b = parse(current);
+    const maxLength = Math.max(a.length, b.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+      const left = a[index] || 0;
+      const right = b[index] || 0;
+      if (left > right) return true;
+      if (left < right) return false;
+    }
+
+    return false;
   }
 
   /**
@@ -100,6 +208,19 @@ class UpdateManager {
    */
   async downloadUpdate() {
     console.log('[Updater] Downloading update...');
+
+    const updateInfo = this.updateStatus?.update_info;
+    if (this.updateStatus?.source === 'github-release-manifest' && updateInfo?.download_url) {
+      window.open(updateInfo.download_url, '_blank', 'noopener,noreferrer');
+      this.updateDownloadProgress(100);
+      this.showInstallPrompt(true);
+      return {
+        success: true,
+        status: 'download_redirected',
+        source: 'github-release-manifest',
+        download_url: updateInfo.download_url
+      };
+    }
 
     try {
       const response = await fetch(`${BACKEND_URL}/updates/download`, {
@@ -115,7 +236,6 @@ class UpdateManager {
       }
 
       return data;
-
     } catch (error) {
       console.error('[Updater] Error downloading update:', error);
       throw error;
@@ -128,6 +248,19 @@ class UpdateManager {
   async installUpdate() {
     console.log('[Updater] Installing update...');
 
+    if (this.updateStatus?.source === 'github-release-manifest') {
+      const releaseUrl = this.updateStatus?.update_info?.release_url || this.updateStatus?.update_info?.download_url;
+      if (releaseUrl) {
+        window.open(releaseUrl, '_blank', 'noopener,noreferrer');
+        this.showInstallingMessage('Open the downloaded installer to complete the update.');
+        return {
+          success: true,
+          status: 'manual_install_required',
+          source: 'github-release-manifest'
+        };
+      }
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/updates/install`, {
         method: 'POST'
@@ -137,12 +270,10 @@ class UpdateManager {
       console.log('[Updater] Install result:', data);
 
       if (data.success) {
-        // Installation started, application will close
         this.showInstallingMessage();
       }
 
       return data;
-
     } catch (error) {
       console.error('[Updater] Error installing update:', error);
       throw error;
@@ -155,6 +286,9 @@ class UpdateManager {
   async getPreferences() {
     try {
       const response = await fetch(`${BACKEND_URL}/updates/preferences`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       return await response.json();
     } catch (error) {
       console.error('[Updater] Error getting preferences:', error);
@@ -198,7 +332,6 @@ class UpdateManager {
       return;
     }
 
-    // Populate notification details
     const versionEl = notification.querySelector('.update-version');
     const changelogEl = notification.querySelector('.update-changelog');
     const sizeEl = notification.querySelector('.update-size');
@@ -207,30 +340,32 @@ class UpdateManager {
       versionEl.textContent = `Version ${updateInfo.version}`;
     }
 
-    if (changelogEl && updateInfo.changelog) {
-      const changes = [];
-      if (updateInfo.changelog.added && updateInfo.changelog.added.length > 0) {
-        changes.push('<strong>New:</strong> ' + updateInfo.changelog.added[0]);
+    if (changelogEl) {
+      if (updateInfo.changelog) {
+        const changes = [];
+        if (updateInfo.changelog.added && updateInfo.changelog.added.length > 0) {
+          changes.push('<strong>New:</strong> ' + updateInfo.changelog.added[0]);
+        }
+        if (updateInfo.changelog.changed && updateInfo.changelog.changed.length > 0) {
+          changes.push('<strong>Changed:</strong> ' + updateInfo.changelog.changed[0]);
+        }
+        if (updateInfo.changelog.fixed && updateInfo.changelog.fixed.length > 0) {
+          changes.push('<strong>Fixed:</strong> ' + updateInfo.changelog.fixed[0]);
+        }
+        changelogEl.innerHTML = changes.length ? changes.join('<br>') : this.escapeHtml(updateInfo.release_notes || 'A new release is available.');
+      } else {
+        changelogEl.textContent = updateInfo.release_notes || 'A new release is available.';
       }
-      if (updateInfo.changelog.changed && updateInfo.changelog.changed.length > 0) {
-        changes.push('<strong>Changed:</strong> ' + updateInfo.changelog.changed[0]);
-      }
-      if (updateInfo.changelog.fixed && updateInfo.changelog.fixed.length > 0) {
-        changes.push('<strong>Fixed:</strong> ' + updateInfo.changelog.fixed[0]);
-      }
-      changelogEl.innerHTML = changes.join('<br>');
     }
 
     if (sizeEl) {
-      const sizeMB = (updateInfo.size / (1024 * 1024)).toFixed(1);
-      sizeEl.textContent = `${sizeMB} MB`;
+      const sizeMB = updateInfo.size ? (updateInfo.size / (1024 * 1024)).toFixed(1) : null;
+      sizeEl.textContent = sizeMB ? `${sizeMB} MB` : 'Size unavailable';
     }
 
-    // Show notification
     notification.style.display = 'block';
     this.isNotificationVisible = true;
 
-    // Set up event handlers
     const installBtn = notification.querySelector('.update-install-btn');
     const dismissBtn = notification.querySelector('.update-dismiss-btn');
     const detailsBtn = notification.querySelector('.update-details-btn');
@@ -238,7 +373,7 @@ class UpdateManager {
     if (installBtn) {
       installBtn.onclick = async () => {
         installBtn.disabled = true;
-        installBtn.textContent = 'Downloading...';
+        installBtn.textContent = this.updateStatus?.source === 'github-release-manifest' ? 'Open Download' : 'Downloading...';
         try {
           await this.downloadUpdate();
         } catch (error) {
@@ -256,7 +391,7 @@ class UpdateManager {
       };
     }
 
-    if (detailsBtn && updateInfo.release_notes) {
+    if (detailsBtn) {
       detailsBtn.onclick = () => {
         this.showReleaseNotes(updateInfo);
       };
@@ -297,16 +432,18 @@ class UpdateManager {
   /**
    * Show install prompt after download
    */
-  showInstallPrompt() {
+  showInstallPrompt(isManualDownload = false) {
     const notification = document.getElementById('updateNotification');
     if (!notification) return;
 
     const installBtn = notification.querySelector('.update-install-btn');
     if (installBtn) {
-      installBtn.textContent = 'Install & Restart';
+      installBtn.textContent = isManualDownload ? 'Open Release Page' : 'Install & Restart';
       installBtn.disabled = false;
       installBtn.onclick = async () => {
-        if (confirm('Install update and restart Windows AI?')) {
+        if (confirm(isManualDownload
+          ? 'Open the release page and run the downloaded installer?' 
+          : 'Install update and restart Windows AI?')) {
           await this.installUpdate();
         }
       };
@@ -316,7 +453,7 @@ class UpdateManager {
   /**
    * Show "installing" message
    */
-  showInstallingMessage() {
+  showInstallingMessage(message = 'Windows AI will restart automatically.') {
     const notification = document.getElementById('updateNotification');
     if (!notification) return;
 
@@ -324,7 +461,7 @@ class UpdateManager {
     if (content) {
       content.innerHTML = `
         <h3>Installing Update...</h3>
-        <p>Windows AI will restart automatically.</p>
+        <p>${this.escapeHtml(message)}</p>
         <div class="spinner"></div>
       `;
     }
@@ -334,17 +471,16 @@ class UpdateManager {
    * Show release notes modal
    */
   showReleaseNotes(updateInfo) {
-    // Create modal (or use existing modal system)
     const modal = document.createElement('div');
     modal.className = 'modal update-modal';
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Release Notes - Version ${updateInfo.version}</h2>
+          <h2>Release Notes - Version ${this.escapeHtml(updateInfo.version)}</h2>
           <button class="modal-close">&times;</button>
         </div>
         <div class="modal-body">
-          <pre>${updateInfo.release_notes}</pre>
+          <pre>${this.escapeHtml(updateInfo.release_notes || 'No release notes available.')}</pre>
         </div>
         <div class="modal-footer">
           <button class="btn btn-primary modal-close">Close</button>
@@ -354,7 +490,6 @@ class UpdateManager {
 
     document.body.appendChild(modal);
 
-    // Close handlers
     modal.querySelectorAll('.modal-close').forEach(btn => {
       btn.onclick = () => modal.remove();
     });
@@ -362,6 +497,15 @@ class UpdateManager {
     modal.onclick = (e) => {
       if (e.target === modal) modal.remove();
     };
+  }
+
+  escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -375,10 +519,8 @@ class UpdateManager {
   }
 }
 
-// Export singleton instance
 const updateManager = new UpdateManager();
 
-// Initialize when DOM is ready
 if (typeof window !== 'undefined') {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -389,7 +531,6 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Export for Node.js if available (not used in browser context)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = updateManager;
 }
