@@ -79,7 +79,6 @@ if (-not $SkipTests) {
 
     Push-Location $RootDir
     try {
-        # Check if pytest is available
         $pytestAvailable = $null -ne (Get-Command pytest -ErrorAction SilentlyContinue)
 
         if ($pytestAvailable) {
@@ -120,8 +119,28 @@ foreach ($dir in $CleanDirs) {
     Get-ChildItem -Path $RootDir -Filter $dir -Recurse -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# Re-create required output directories after cleanup
+New-Item -ItemType Directory -Force -Path $RuntimesDir | Out-Null
+New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
+
 Write-Host "  Build directory cleaned" -ForegroundColor Green
 Write-Host ""
+
+function Install-NodeDependencies {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory
+    )
+
+    $lockFile = Join-Path $WorkingDirectory "package-lock.json"
+    if (Test-Path $lockFile) {
+        Write-Host "  Installing dependencies with npm ci..." -ForegroundColor Gray
+        npm ci
+    } else {
+        Write-Host "  package-lock.json not found, falling back to npm install..." -ForegroundColor Yellow
+        npm install
+    }
+}
 
 # =====================================================================
 # Step 4: Build GUI Application
@@ -131,11 +150,15 @@ Write-Host "[4/6] Building GUI application..." -ForegroundColor Yellow
 
 Push-Location (Join-Path $RootDir "apps\gui")
 try {
-    Write-Host "  Installing dependencies..." -ForegroundColor Gray
-    npm install
+    Install-NodeDependencies -WorkingDirectory (Get-Location)
 
     Write-Host "  Building Electron app..." -ForegroundColor Gray
     npm run build
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  GUI build failed!" -ForegroundColor Red
+        exit 1
+    }
 
     Write-Host "  GUI application built" -ForegroundColor Green
 } finally {
@@ -151,11 +174,15 @@ Write-Host "[5/6] Building tray application..." -ForegroundColor Yellow
 
 Push-Location (Join-Path $RootDir "windows-ai-tray")
 try {
-    Write-Host "  Installing dependencies..." -ForegroundColor Gray
-    npm install
+    Install-NodeDependencies -WorkingDirectory (Get-Location)
 
     Write-Host "  Building Electron app..." -ForegroundColor Gray
     npm run build
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Tray build failed!" -ForegroundColor Red
+        exit 1
+    }
 
     Write-Host "  Tray application built" -ForegroundColor Green
 } finally {
@@ -169,7 +196,6 @@ Write-Host ""
 
 Write-Host "[6/6] Building NSIS installer..." -ForegroundColor Yellow
 
-# Check if NSIS is installed
 $nsisPath = "C:\Program Files (x86)\NSIS\makensis.exe"
 if (-not (Test-Path $nsisPath)) {
     Write-Host "  ERROR: NSIS not found at $nsisPath" -ForegroundColor Red
@@ -177,7 +203,6 @@ if (-not (Test-Path $nsisPath)) {
     exit 1
 }
 
-# Build installer
 $installerScript = Join-Path $InstallDir "installer.nsi"
 Write-Host "  Compiling installer..." -ForegroundColor Gray
 
@@ -188,9 +213,12 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Installer built successfully!" -ForegroundColor Green
 
-        # Move installer to output directory
         $installerFile = "WindowsAI-Setup-$Version.exe"
         if (Test-Path $installerFile) {
+            if (-not (Test-Path $OutputDir)) {
+                New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
+            }
+
             Move-Item $installerFile $OutputDir -Force
             Write-Host ""
             Write-Host "================================================" -ForegroundColor Green
@@ -200,6 +228,9 @@ try {
             Write-Host "  Installer: $OutputDir\$installerFile" -ForegroundColor Cyan
             Write-Host "  Size: $([math]::Round((Get-Item "$OutputDir\$installerFile").Length / 1MB, 2)) MB" -ForegroundColor Cyan
             Write-Host ""
+        } else {
+            Write-Host "  Expected installer output not found: $installerFile" -ForegroundColor Red
+            exit 1
         }
     } else {
         Write-Host "  Installer build failed!" -ForegroundColor Red
