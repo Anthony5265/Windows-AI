@@ -256,7 +256,6 @@ class SettingsPanel {
     }
     
     renderSystemConfig() {
-        // Model configuration
         const modelSelect = document.getElementById('defaultModelSelect');
         if (modelSelect && this.systemConfig.available_models) {
             modelSelect.innerHTML = this.systemConfig.available_models.map(model => `
@@ -266,7 +265,6 @@ class SettingsPanel {
             `).join('');
         }
         
-        // System preferences
         if (this.systemConfig.preferences) {
             const prefs = this.systemConfig.preferences;
             
@@ -470,8 +468,272 @@ class SettingsPanel {
     }
 }
 
-// Initialize settings panel when loaded
 let settingsPanel;
 document.addEventListener('DOMContentLoaded', () => {
     settingsPanel = new SettingsPanel();
 });
+
+class AgentFlowVisualizer {
+    constructor() {
+        this.apiEndpoint = 'http://127.0.0.1:8010';
+        this.tasks = [];
+        this.agents = [];
+        this.viewMode = 'timeline';
+        this.refreshInterval = null;
+        this.init();
+    }
+
+    init() {
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewModeSelect = document.getElementById('agentFlowViewMode');
+            const refreshBtn = document.getElementById('refreshAgentFlowBtn');
+            const agentsTab = document.querySelector('[data-tab="agents"]');
+
+            viewModeSelect?.addEventListener('change', (event) => {
+                this.viewMode = event.target.value;
+                this.render();
+            });
+
+            refreshBtn?.addEventListener('click', () => {
+                this.loadAndRender();
+            });
+
+            agentsTab?.addEventListener('click', () => {
+                this.loadAndRender();
+                this.startPolling();
+            });
+
+            document.querySelectorAll('.nav-btn').forEach((btn) => {
+                if (btn.dataset.tab !== 'agents') {
+                    btn.addEventListener('click', () => this.stopPolling());
+                }
+            });
+
+            if (document.getElementById('agents')?.classList.contains('active')) {
+                this.loadAndRender();
+                this.startPolling();
+            }
+        });
+    }
+
+    startPolling() {
+        this.stopPolling();
+        this.refreshInterval = setInterval(() => {
+            if (document.getElementById('agents')?.classList.contains('active')) {
+                this.loadAndRender(false);
+            }
+        }, 10000);
+    }
+
+    stopPolling() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+
+    async loadAndRender(showLoading = true) {
+        const canvas = document.getElementById('agentFlowCanvas');
+        if (!canvas) return;
+
+        if (showLoading) {
+            canvas.innerHTML = '<div class="loading-indicator"><p>Loading task flow...</p></div>';
+        }
+
+        try {
+            const [tasksResponse, agentsResponse] = await Promise.all([
+                fetch(`${this.apiEndpoint}/api/v1/agents/tasks`),
+                fetch(`${this.apiEndpoint}/api/v1/agents/`)
+            ]);
+
+            if (!tasksResponse.ok) {
+                throw new Error(`Failed to load tasks (${tasksResponse.status})`);
+            }
+
+            this.tasks = await tasksResponse.json();
+            this.agents = agentsResponse.ok ? await agentsResponse.json() : [];
+            this.render();
+        } catch (error) {
+            console.error('Failed to load agent flow:', error);
+            canvas.innerHTML = `
+                <div class="empty-state">
+                    <p>Unable to load task flow</p>
+                    <p class="hint">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    render() {
+        this.renderSummary();
+        if (this.viewMode === 'agent') {
+            this.renderGroupedByAgent();
+        } else if (this.viewMode === 'status') {
+            this.renderGroupedByStatus();
+        } else {
+            this.renderTimeline();
+        }
+    }
+
+    renderSummary() {
+        const summary = document.getElementById('agentFlowSummary');
+        if (!summary) return;
+
+        const total = this.tasks.length;
+        const pending = this.tasks.filter(task => task.status === 'pending').length;
+        const inProgress = this.tasks.filter(task => task.status === 'in_progress').length;
+        const completed = this.tasks.filter(task => task.status === 'completed').length;
+        const failed = this.tasks.filter(task => task.status === 'failed').length;
+        const assigned = this.tasks.filter(task => task.assigned_agent).length;
+
+        summary.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Visible Tasks</div></div>
+                <div class="stat-card"><div class="stat-value">${assigned}</div><div class="stat-label">Assigned</div></div>
+                <div class="stat-card"><div class="stat-value">${inProgress}</div><div class="stat-label">In Progress</div></div>
+                <div class="stat-card"><div class="stat-value">${completed}</div><div class="stat-label">Completed</div></div>
+                <div class="stat-card"><div class="stat-value">${failed}</div><div class="stat-label">Failed</div></div>
+                <div class="stat-card"><div class="stat-value">${pending}</div><div class="stat-label">Pending</div></div>
+            </div>
+        `;
+    }
+
+    renderTimeline() {
+        const canvas = document.getElementById('agentFlowCanvas');
+        if (!canvas) return;
+
+        const tasks = [...this.tasks].sort((a, b) => this.getTaskDate(b) - this.getTaskDate(a));
+        if (!tasks.length) {
+            canvas.innerHTML = '<div class="empty-state"><p>No task flow data yet</p><p class="hint">Create or load tasks to visualize agent activity.</p></div>';
+            return;
+        }
+
+        canvas.innerHTML = `
+            <div class="agent-flow-timeline">
+                ${tasks.slice(0, 50).map((task) => `
+                    <div class="agent-flow-item ${this.getStatusClass(task.status)}">
+                        <div class="agent-flow-marker"></div>
+                        <div class="agent-flow-card">
+                            <div class="agent-flow-header">
+                                <strong>${this.escape(task.description || task.id)}</strong>
+                                <span class="status-pill ${this.getStatusClass(task.status)}">${this.escape(task.status || 'pending')}</span>
+                            </div>
+                            <div class="agent-flow-meta">
+                                <span>Agent: ${this.escape(task.assigned_agent || 'auto')}</span>
+                                <span>Priority: ${this.escape(task.priority || 'normal')}</span>
+                                <span>${this.formatDate(this.getTaskDate(task))}</span>
+                            </div>
+                            ${task.error ? `<div class="history-message">${this.escape(task.error)}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderGroupedByAgent() {
+        const canvas = document.getElementById('agentFlowCanvas');
+        if (!canvas) return;
+
+        const groups = new Map();
+        this.tasks.forEach((task) => {
+            const key = task.assigned_agent || 'unassigned';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(task);
+        });
+
+        if (!groups.size) {
+            canvas.innerHTML = '<div class="empty-state"><p>No agent flow data yet</p></div>';
+            return;
+        }
+
+        canvas.innerHTML = `
+            <div class="agent-flow-groups">
+                ${Array.from(groups.entries()).map(([agentId, tasks]) => `
+                    <div class="agent-flow-group">
+                        <div class="agents-list-header">
+                            <h4>${this.escape(this.getAgentName(agentId))}</h4>
+                            <span class="stat-badge">${tasks.length} tasks</span>
+                        </div>
+                        <div class="agent-flow-lanes">
+                            ${tasks.sort((a, b) => this.getTaskDate(b) - this.getTaskDate(a)).slice(0, 20).map((task) => this.renderTaskChip(task)).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderGroupedByStatus() {
+        const canvas = document.getElementById('agentFlowCanvas');
+        if (!canvas) return;
+
+        const statuses = ['pending', 'in_progress', 'completed', 'failed'];
+        canvas.innerHTML = `
+            <div class="agent-flow-groups status-view">
+                ${statuses.map((status) => {
+                    const tasks = this.tasks.filter((task) => (task.status || 'pending') === status);
+                    return `
+                        <div class="agent-flow-group">
+                            <div class="agents-list-header">
+                                <h4>${this.escape(status.replace('_', ' '))}</h4>
+                                <span class="stat-badge">${tasks.length} tasks</span>
+                            </div>
+                            <div class="agent-flow-lanes">
+                                ${tasks.length ? tasks.sort((a, b) => this.getTaskDate(b) - this.getTaskDate(a)).slice(0, 20).map((task) => this.renderTaskChip(task)).join('') : '<div class="empty-state"><p>No tasks</p></div>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    renderTaskChip(task) {
+        return `
+            <div class="agent-flow-chip ${this.getStatusClass(task.status)}">
+                <div class="agent-flow-chip-title">${this.escape(task.description || task.id)}</div>
+                <div class="agent-flow-chip-meta">
+                    <span>${this.escape(task.assigned_agent || 'auto')}</span>
+                    <span>${this.formatDate(this.getTaskDate(task))}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    getTaskDate(task) {
+        return new Date(task.created_at || task.updated_at || Date.now());
+    }
+
+    getStatusClass(status) {
+        if (status === 'completed') return 'idle';
+        if (status === 'in_progress') return 'busy';
+        if (status === 'failed') return 'warning';
+        return '';
+    }
+
+    getAgentName(agentId) {
+        if (!agentId || agentId === 'unassigned') return 'Unassigned';
+        const match = this.agents.find((agent) => agent.id === agentId);
+        return match?.name ? `${match.name} (${agentId})` : agentId;
+    }
+
+    formatDate(date) {
+        try {
+            return new Date(date).toLocaleString();
+        } catch {
+            return 'Unknown time';
+        }
+    }
+
+    escape(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+}
+
+const agentFlowVisualizer = new AgentFlowVisualizer();
