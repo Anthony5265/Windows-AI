@@ -761,6 +761,31 @@
 
       <div class="agents-list-panel">
         <div class="agents-list-header">
+          <h3>Task Flow Visualization</h3>
+          <div class="plugins-actions">
+            <select id="agentFlowViewMode" class="plugin-filter-select" aria-label="Agent flow view mode">
+              <option value="timeline">Timeline</option>
+              <option value="agent">By Agent</option>
+              <option value="status">By Status</option>
+            </select>
+            <button id="refreshAgentFlowBtn" class="toolbar-btn" title="Refresh Task Flow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="agentFlowSummary" class="agents-flow-summary"></div>
+        <div id="agentFlowCanvas" class="agent-flow-canvas">
+          <div class="empty-state">
+            <p>No task flow data yet</p>
+            <p class="hint">Create or load tasks to visualize agent activity.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="agents-list-panel">
+        <div class="agents-list-header">
           <h3>Active Agents</h3>
           <input id="agentSearchInput" type="text" class="plugin-search-input" placeholder="Search agents..." />
         </div>
