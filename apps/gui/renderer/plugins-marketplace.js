@@ -1,50 +1,42 @@
 /**
  * Windows AI - Plugin Marketplace
- * Handles plugin discovery, installation, and management in the GUI
+ * GUI integration for the backend marketplace API.
  */
 
-// =====================================================================
-// Plugin Marketplace State
-// =====================================================================
-
-let allPlugins = [];
-let filteredPlugins = [];
+let marketplacePlugins = [];
+let filteredMarketplacePlugins = [];
+let marketplaceCategories = [];
 let currentPluginTab = 'all';
 let currentPluginFilter = 'all';
 let currentSearchQuery = '';
+let currentPluginSort = 'name_asc';
 let selectedPlugin = null;
+let pluginMarketplaceInitialized = false;
 
-// =====================================================================
-// Plugin Marketplace Initialization
-// =====================================================================
-
-/**
- * Initialize plugin marketplace when plugins tab is opened
- */
-async function initPluginMarketplace() {
-  console.log('Initializing plugin marketplace...');
-
-  // Setup event listeners
-  setupPluginEventListeners();
-
-  // Load plugins
-  await loadPlugins();
+function getMarketplaceBaseUrl() {
+  return `${BACKEND_URL}/api/marketplace`;
 }
 
-/**
- * Setup all event listeners for plugin marketplace
- */
+async function initPluginMarketplace() {
+  if (pluginMarketplaceInitialized) {
+    await Promise.all([loadMarketplaceCategories(), loadPlugins()]);
+    return;
+  }
+
+  pluginMarketplaceInitialized = true;
+  setupPluginEventListeners();
+  await Promise.all([loadMarketplaceCategories(), loadPlugins()]);
+}
+
 function setupPluginEventListeners() {
-  // Search input
   const searchInput = document.getElementById('pluginSearchInput');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      currentSearchQuery = e.target.value;
+      currentSearchQuery = e.target.value.trim();
       filterAndDisplayPlugins();
     });
   }
 
-  // Type filter
   const typeFilter = document.getElementById('pluginTypeFilter');
   if (typeFilter) {
     typeFilter.addEventListener('change', (e) => {
@@ -53,481 +45,518 @@ function setupPluginEventListeners() {
     });
   }
 
-  // Refresh button
-  const refreshBtn = document.getElementById('refreshPluginsBtn');
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', loadPlugins);
+  const sortFilter = document.getElementById('pluginSortFilter');
+  if (sortFilter) {
+    sortFilter.addEventListener('change', (e) => {
+      currentPluginSort = e.target.value;
+      filterAndDisplayPlugins();
+    });
   }
 
-  // Tab buttons
-  const tabButtons = document.querySelectorAll('.plugin-tab-btn');
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      tabButtons.forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      currentPluginTab = e.target.dataset.pluginTab;
+  const refreshBtn = document.getElementById('refreshPluginsBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      await Promise.all([loadMarketplaceCategories(), loadPlugins()]);
+    });
+  }
+
+  document.querySelectorAll('.plugin-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      document.querySelectorAll('.plugin-tab-btn').forEach((tabBtn) => tabBtn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      currentPluginTab = event.currentTarget.dataset.pluginTab || 'all';
       filterAndDisplayPlugins();
     });
   });
 
-  // Modal close
   const closeModal = document.getElementById('closePluginModal');
   if (closeModal) {
     closeModal.addEventListener('click', closePluginDetailModal);
   }
 
-  // Plugin actions in modal
-  const enableBtn = document.getElementById('pluginEnableBtn');
-  const disableBtn = document.getElementById('pluginDisableBtn');
-
-  if (enableBtn) {
-    enableBtn.addEventListener('click', () => {
-      if (selectedPlugin) {
-        enablePlugin(selectedPlugin.id);
-      }
-    });
-  }
-
-  if (disableBtn) {
-    disableBtn.addEventListener('click', () => {
-      if (selectedPlugin) {
-        disablePlugin(selectedPlugin.id);
-      }
-    });
-  }
-
-  // Close modal when clicking outside
   const modal = document.getElementById('pluginDetailModal');
   if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
         closePluginDetailModal();
       }
     });
   }
+
+  const primaryActionBtn = document.getElementById('pluginEnableBtn');
+  const secondaryActionBtn = document.getElementById('pluginDisableBtn');
+
+  if (primaryActionBtn) {
+    primaryActionBtn.addEventListener('click', async () => {
+      if (!selectedPlugin) return;
+      await installPlugin(selectedPlugin.id);
+    });
+  }
+
+  if (secondaryActionBtn) {
+    secondaryActionBtn.addEventListener('click', async () => {
+      if (!selectedPlugin) return;
+      await uninstallPlugin(selectedPlugin.id);
+    });
+  }
 }
 
-// =====================================================================
-// Plugin Loading and Display
-// =====================================================================
+async function loadMarketplaceCategories() {
+  try {
+    const response = await fetch(`${getMarketplaceBaseUrl()}/categories`);
+    if (!response.ok) {
+      throw new Error(`Failed to load categories (${response.status})`);
+    }
 
-/**
- * Load all plugins from backend
- */
+    const data = await response.json();
+    marketplaceCategories = Array.isArray(data.categories) ? data.categories : [];
+    populateCategoryFilter();
+  } catch (error) {
+    console.error('Error loading marketplace categories:', error);
+  }
+}
+
+function populateCategoryFilter() {
+  const filter = document.getElementById('pluginTypeFilter');
+  if (!filter) return;
+
+  const currentValue = currentPluginFilter;
+  filter.innerHTML = [
+    '<option value="all">All Categories</option>',
+    ...marketplaceCategories.map((category) => {
+      const label = `${formatCategoryName(category.name)} (${category.count})`;
+      return `<option value="${escapeHtml(category.name)}">${escapeHtml(label)}</option>`;
+    })
+  ].join('');
+
+  if ([ 'all', ...marketplaceCategories.map((category) => category.name) ].includes(currentValue)) {
+    filter.value = currentValue;
+  } else {
+    currentPluginFilter = 'all';
+    filter.value = 'all';
+  }
+}
+
 async function loadPlugins() {
   try {
-    updateStatus('Loading plugins...');
+    updateStatus('Loading plugin marketplace...');
 
-    const response = await fetch(`${BACKEND_URL}/plugins`);
-
-    if (response.ok) {
-      const data = await response.json();
-      allPlugins = data.plugins || [];
-
-      console.log(`Loaded ${allPlugins.length} plugins`);
-
-      // Update stats
-      updatePluginStats();
-
-      // Display plugins
-      filterAndDisplayPlugins();
-
-      updateStatus(`Loaded ${allPlugins.length} plugins`);
-    } else {
-      throw new Error('Failed to load plugins');
+    const response = await fetch(`${getMarketplaceBaseUrl()}/?page=1&per_page=500`);
+    if (!response.ok) {
+      throw new Error(`Failed to load plugins (${response.status})`);
     }
+
+    const data = await response.json();
+    marketplacePlugins = Array.isArray(data) ? data : [];
+    updatePluginStats();
+    filterAndDisplayPlugins();
+    updateStatus(`Loaded ${marketplacePlugins.length} marketplace plugins`);
   } catch (error) {
     console.error('Error loading plugins:', error);
-    updateStatus('Error loading plugins', 'error');
-    showPluginError('Failed to load plugins. Make sure the backend is running.');
+    updateStatus('Error loading plugin marketplace');
+    showPluginError('Failed to load plugin marketplace. Make sure the backend is running.');
   }
 }
 
-/**
- * Filter and display plugins based on current filters
- */
 function filterAndDisplayPlugins() {
-  // Start with all plugins
-  let plugins = [...allPlugins];
+  let plugins = [...marketplacePlugins];
 
-  // Apply tab filter
   if (currentPluginTab === 'installed') {
-    plugins = plugins.filter(p => p.enabled);
+    plugins = plugins.filter((plugin) => Boolean(plugin.installed));
   } else if (currentPluginTab === 'featured') {
-    // Featured plugins - could be based on tags or specific IDs
-    plugins = plugins.filter(p =>
-      p.tags && (p.tags.includes('featured') || p.tags.includes('recommended'))
-    );
+    plugins = plugins.filter((plugin) => {
+      const tags = plugin.tags || [];
+      return (
+        tags.includes('featured') ||
+        tags.includes('recommended') ||
+        plugin.rating >= 4.5 ||
+        plugin.downloads >= 100
+      );
+    });
   }
 
-  // Apply type filter
   if (currentPluginFilter !== 'all') {
-    plugins = plugins.filter(p => p.plugin_type === currentPluginFilter);
+    plugins = plugins.filter((plugin) => plugin.category === currentPluginFilter);
   }
 
-  // Apply search filter
   if (currentSearchQuery) {
     const query = currentSearchQuery.toLowerCase();
-    plugins = plugins.filter(p =>
-      p.name.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query) ||
-      (p.tags && p.tags.some(tag => tag.toLowerCase().includes(query)))
-    );
+    plugins = plugins.filter((plugin) => {
+      const searchable = [
+        plugin.name,
+        plugin.id,
+        plugin.description,
+        plugin.author,
+        plugin.category,
+        ...(plugin.tags || [])
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return searchable.includes(query);
+    });
   }
 
-  filteredPlugins = plugins;
-  displayPlugins(filteredPlugins);
+  filteredMarketplacePlugins = sortPlugins(plugins);
+  displayPlugins(filteredMarketplacePlugins);
 }
 
-/**
- * Display plugins in the grid
- */
+function sortPlugins(plugins) {
+  const sorted = [...plugins];
+
+  switch (currentPluginSort) {
+    case 'name_desc':
+      sorted.sort((a, b) => safeLabel(b).localeCompare(safeLabel(a)));
+      break;
+    case 'enabled_first':
+      sorted.sort((a, b) => Number(Boolean(b.installed)) - Number(Boolean(a.installed)) || safeLabel(a).localeCompare(safeLabel(b)));
+      break;
+    case 'newest':
+      sorted.sort((a, b) => (b.version || '0').localeCompare(a.version || '0', undefined, { numeric: true }));
+      break;
+    default:
+      sorted.sort((a, b) => safeLabel(a).localeCompare(safeLabel(b)));
+      break;
+  }
+
+  return sorted;
+}
+
 function displayPlugins(plugins) {
   const pluginsList = document.getElementById('pluginsList');
+  if (!pluginsList) return;
 
-  if (!plugins || plugins.length === 0) {
+  const visibleBadge = document.getElementById('pluginsVisible');
+  if (visibleBadge) {
+    visibleBadge.textContent = `${plugins.length} shown`;
+  }
+
+  if (!plugins.length) {
     pluginsList.innerHTML = `
       <div class="no-plugins">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <p>No plugins found</p>
-        <button onclick="loadPlugins()" class="btn-secondary">Refresh</button>
+        <button class="btn-secondary" id="retryMarketplaceLoadBtn">Refresh</button>
       </div>
     `;
+
+    const retryBtn = document.getElementById('retryMarketplaceLoadBtn');
+    retryBtn?.addEventListener('click', loadPlugins);
     return;
   }
 
-  // Generate plugin cards
-  pluginsList.innerHTML = plugins.map(plugin => createPluginCard(plugin)).join('');
+  pluginsList.innerHTML = plugins.map(createPluginCard).join('');
 
-  // Add click handlers
-  document.querySelectorAll('.plugin-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      // Don't open detail if clicking toggle
-      if (e.target.closest('.plugin-toggle')) {
-        return;
-      }
+  document.querySelectorAll('.plugin-card').forEach((card) => {
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.plugin-action-btn')) return;
       const pluginId = card.dataset.pluginId;
-      const plugin = allPlugins.find(p => p.id === pluginId);
+      const plugin = marketplacePlugins.find((item) => item.id === pluginId);
       if (plugin) {
         showPluginDetail(plugin);
       }
     });
   });
 
-  // Add toggle handlers
-  document.querySelectorAll('.plugin-toggle').forEach(toggle => {
-    toggle.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const pluginId = toggle.dataset.pluginId;
-      const enabled = toggle.checked;
+  document.querySelectorAll('.plugin-primary-action').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      const pluginId = button.dataset.pluginId;
+      const plugin = marketplacePlugins.find((item) => item.id === pluginId);
+      if (!plugin) return;
 
-      if (enabled) {
-        await enablePlugin(pluginId);
+      if (plugin.installed) {
+        await uninstallPlugin(pluginId);
       } else {
-        await disablePlugin(pluginId);
+        await installPlugin(pluginId);
       }
+    });
+  });
+
+  document.querySelectorAll('.plugin-secondary-action').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      const pluginId = button.dataset.pluginId;
+      const plugin = marketplacePlugins.find((item) => item.id === pluginId);
+      if (!plugin) return;
+      showPluginDetail(plugin);
     });
   });
 }
 
-/**
- * Create HTML for a plugin card
- */
 function createPluginCard(plugin) {
-  const icon = plugin.icon || '🔌';
-  const statusClass = plugin.enabled ? 'enabled' : 'disabled';
-  const statusText = plugin.enabled ? 'Enabled' : 'Disabled';
-  const initializedBadge = plugin.initialized ?
-    '<span class="plugin-badge success">Initialized</span>' : '';
-
-  const tags = plugin.tags && plugin.tags.length > 0 ?
-    plugin.tags.slice(0, 3).map(tag =>
-      `<span class="plugin-tag">${tag}</span>`
-    ).join('') : '';
+  const icon = getPluginIcon(plugin.category);
+  const statusClass = plugin.installed ? 'enabled' : 'disabled';
+  const statusText = plugin.installed ? 'Installed' : 'Available';
+  const primaryActionLabel = plugin.installed ? 'Remove' : 'Install';
+  const topTags = (plugin.tags || []).slice(0, 3);
 
   return `
-    <div class="plugin-card ${statusClass}" data-plugin-id="${plugin.id}">
+    <div class="plugin-card ${statusClass}" data-plugin-id="${escapeHtml(plugin.id)}">
       <div class="plugin-card-header">
         <div class="plugin-icon">${icon}</div>
         <div class="plugin-toggle-wrapper">
-          <label class="toggle-switch">
-            <input
-              type="checkbox"
-              class="plugin-toggle"
-              data-plugin-id="${plugin.id}"
-              ${plugin.enabled ? 'checked' : ''}
-            />
-            <span class="toggle-slider"></span>
-          </label>
+          <button class="btn-small ${plugin.installed ? 'btn-secondary' : 'btn-primary'} plugin-action-btn plugin-primary-action" data-plugin-id="${escapeHtml(plugin.id)}">
+            ${primaryActionLabel}
+          </button>
         </div>
       </div>
       <div class="plugin-card-body">
-        <h3 class="plugin-name">${plugin.name}</h3>
-        <p class="plugin-description">${truncate(plugin.description, 100)}</p>
+        <h3 class="plugin-name">${escapeHtml(plugin.name || plugin.id)}</h3>
+        <p class="plugin-description">${escapeHtml(truncate(plugin.description || 'No description available', 120))}</p>
         <div class="plugin-meta">
-          <span class="plugin-type">${plugin.plugin_type}</span>
-          <span class="plugin-version">v${plugin.version}</span>
+          <span class="plugin-type">${escapeHtml(formatCategoryName(plugin.category || 'general'))}</span>
+          <span class="plugin-version">v${escapeHtml(plugin.version || '1.0.0')}</span>
         </div>
-        ${tags ? `<div class="plugin-tags-preview">${tags}</div>` : ''}
+        <div class="plugin-meta">
+          <span>⬇ ${Number(plugin.downloads || 0).toLocaleString()}</span>
+          <span>★ ${formatRating(plugin.rating)}</span>
+        </div>
+        ${topTags.length ? `<div class="plugin-tags-preview">${topTags.map((tag) => `<span class="plugin-tag">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
         <div class="plugin-status">
           <span class="status-dot ${statusClass}"></span>
           <span class="status-text">${statusText}</span>
-          ${initializedBadge}
+        </div>
+        <div class="plugin-actions">
+          <button class="btn-secondary plugin-action-btn plugin-secondary-action" data-plugin-id="${escapeHtml(plugin.id)}">Details</button>
         </div>
       </div>
     </div>
   `;
 }
 
-/**
- * Update plugin statistics
- */
 function updatePluginStats() {
-  const totalCount = allPlugins.length;
-  const activeCount = allPlugins.filter(p => p.enabled).length;
+  const totalCount = marketplacePlugins.length;
+  const installedCount = marketplacePlugins.filter((plugin) => Boolean(plugin.installed)).length;
 
-  document.getElementById('pluginsCount').textContent = `${totalCount} plugins`;
-  document.getElementById('pluginsActive').textContent = `${activeCount} active`;
+  const totalEl = document.getElementById('pluginsCount');
+  const activeEl = document.getElementById('pluginsActive');
+  const visibleEl = document.getElementById('pluginsVisible');
+
+  if (totalEl) totalEl.textContent = `${totalCount} plugins`;
+  if (activeEl) activeEl.textContent = `${installedCount} installed`;
+  if (visibleEl) visibleEl.textContent = `${filteredMarketplacePlugins.length || totalCount} shown`;
 }
 
-// =====================================================================
-// Plugin Detail Modal
-// =====================================================================
-
-/**
- * Show plugin detail modal
- */
 function showPluginDetail(plugin) {
   selectedPlugin = plugin;
 
-  // Update modal content
-  document.getElementById('pluginDetailIcon').textContent = plugin.icon || '🔌';
-  document.getElementById('pluginDetailName').textContent = plugin.name;
-  document.getElementById('pluginDetailAuthor').textContent = plugin.author || 'Unknown';
-  document.getElementById('pluginDetailVersion').textContent = `v${plugin.version}`;
-  document.getElementById('pluginDetailType').textContent = plugin.plugin_type;
-  document.getElementById('pluginDetailDescription').textContent = plugin.description;
+  document.getElementById('pluginDetailIcon').textContent = getPluginIcon(plugin.category);
+  document.getElementById('pluginDetailName').textContent = plugin.name || plugin.id;
+  document.getElementById('pluginDetailAuthor').textContent = plugin.author || 'Windows AI Team';
+  document.getElementById('pluginDetailVersion').textContent = `v${plugin.version || '1.0.0'}`;
+  document.getElementById('pluginDetailType').textContent = formatCategoryName(plugin.category || 'general');
+  document.getElementById('pluginDetailDescription').textContent = plugin.description || 'No description available.';
 
-  // Update status
   const statusEl = document.getElementById('pluginDetailStatus');
-  const statusClass = plugin.enabled ? 'enabled' : 'disabled';
-  const statusText = plugin.enabled ? 'Enabled' : 'Disabled';
-  statusEl.className = `plugin-detail-status ${statusClass}`;
-  statusEl.querySelector('.status-text').textContent = statusText;
+  const installed = Boolean(plugin.installed);
+  statusEl.className = `plugin-detail-status ${installed ? 'enabled' : 'disabled'}`;
+  statusEl.querySelector('.status-text').textContent = installed ? 'Installed' : 'Available';
 
-  // Update action buttons
   const enableBtn = document.getElementById('pluginEnableBtn');
   const disableBtn = document.getElementById('pluginDisableBtn');
-
-  if (plugin.enabled) {
-    enableBtn.style.display = 'none';
-    disableBtn.style.display = 'block';
-  } else {
-    enableBtn.style.display = 'block';
-    disableBtn.style.display = 'none';
+  if (enableBtn) {
+    enableBtn.style.display = installed ? 'none' : 'inline-flex';
+    enableBtn.textContent = 'Install';
+  }
+  if (disableBtn) {
+    disableBtn.style.display = installed ? 'inline-flex' : 'none';
+    disableBtn.textContent = 'Remove';
   }
 
-  // Features (extract from description or use predefined)
   const featuresEl = document.getElementById('pluginDetailFeatures');
-  featuresEl.innerHTML = '<li>Advanced functionality</li><li>Easy to use</li><li>Reliable performance</li>';
+  featuresEl.innerHTML = [
+    `<li>Category: ${escapeHtml(formatCategoryName(plugin.category || 'general'))}</li>`,
+    `<li>Author: ${escapeHtml(plugin.author || 'Windows AI Team')}</li>`,
+    `<li>Downloads: ${Number(plugin.downloads || 0).toLocaleString()}</li>`,
+    `<li>Rating: ${formatRating(plugin.rating)}</li>`
+  ].join('');
 
-  // Requirements
-  if (plugin.requirements && plugin.requirements.length > 0) {
-    document.getElementById('pluginDetailRequirementsSection').style.display = 'block';
-    document.getElementById('pluginDetailRequirements').innerHTML =
-      plugin.requirements.map(req => `<div class="requirement-item">${req}</div>`).join('');
+  const requirementsSection = document.getElementById('pluginDetailRequirementsSection');
+  const requirementsEl = document.getElementById('pluginDetailRequirements');
+  requirementsSection.style.display = 'block';
+  requirementsEl.innerHTML = `
+    <div class="requirement-item">Windows AI backend running</div>
+    <div class="requirement-item">Marketplace API available</div>
+    <div class="requirement-item">Plugin id: ${escapeHtml(plugin.id)}</div>
+  `;
+
+  const tagsSection = document.getElementById('pluginDetailTagsSection');
+  const tagsEl = document.getElementById('pluginDetailTags');
+  const tags = plugin.tags || [];
+  if (tags.length) {
+    tagsSection.style.display = 'block';
+    tagsEl.innerHTML = tags.map((tag) => `<span class="plugin-tag">${escapeHtml(tag)}</span>`).join('');
   } else {
-    document.getElementById('pluginDetailRequirementsSection').style.display = 'none';
+    tagsSection.style.display = 'none';
+    tagsEl.innerHTML = '';
   }
 
-  // Tags
-  if (plugin.tags && plugin.tags.length > 0) {
-    document.getElementById('pluginDetailTagsSection').style.display = 'block';
-    document.getElementById('pluginDetailTags').innerHTML =
-      plugin.tags.map(tag => `<span class="plugin-tag">${tag}</span>`).join('');
-  } else {
-    document.getElementById('pluginDetailTagsSection').style.display = 'none';
-  }
-
-  // Show modal
   document.getElementById('pluginDetailModal').style.display = 'flex';
 }
 
-/**
- * Close plugin detail modal
- */
 function closePluginDetailModal() {
-  document.getElementById('pluginDetailModal').style.display = 'none';
+  const modal = document.getElementById('pluginDetailModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
   selectedPlugin = null;
 }
 
-// =====================================================================
-// Plugin Actions
-// =====================================================================
-
-/**
- * Enable a plugin
- */
-async function enablePlugin(pluginId) {
+async function installPlugin(pluginId) {
   try {
-    updateStatus(`Enabling plugin...`);
-
-    const response = await fetch(`${BACKEND_URL}/plugins/${pluginId}/enable`, {
-      method: 'POST'
+    updateStatus(`Installing ${pluginId}...`);
+    const response = await fetch(`${getMarketplaceBaseUrl()}/install`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plugin_id: pluginId })
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      updateStatus(`Plugin enabled: ${pluginId}`);
-
-      // Refresh plugins
-      await loadPlugins();
-
-      // Update modal if showing this plugin
-      if (selectedPlugin && selectedPlugin.id === pluginId) {
-        const updatedPlugin = allPlugins.find(p => p.id === pluginId);
-        if (updatedPlugin) {
-          showPluginDetail(updatedPlugin);
-        }
-      }
-
-      showNotification('Plugin enabled successfully', 'success');
-    } else {
-      throw new Error('Failed to enable plugin');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to install plugin (${response.status})`);
     }
+
+    showNotification('Plugin installed successfully', 'success');
+    await loadPlugins();
+    const updatedPlugin = marketplacePlugins.find((plugin) => plugin.id === pluginId);
+    if (selectedPlugin && updatedPlugin) {
+      showPluginDetail(updatedPlugin);
+    }
+    updateStatus(`Installed ${pluginId}`);
   } catch (error) {
-    console.error('Error enabling plugin:', error);
-    updateStatus('Error enabling plugin', 'error');
-    showNotification('Failed to enable plugin', 'error');
+    console.error('Error installing plugin:', error);
+    updateStatus('Plugin install failed');
+    showNotification(error.message || 'Failed to install plugin', 'error');
   }
 }
 
-/**
- * Disable a plugin
- */
-async function disablePlugin(pluginId) {
+async function uninstallPlugin(pluginId) {
   try {
-    updateStatus(`Disabling plugin...`);
-
-    const response = await fetch(`${BACKEND_URL}/plugins/${pluginId}/disable`, {
+    updateStatus(`Removing ${pluginId}...`);
+    const response = await fetch(`${getMarketplaceBaseUrl()}/uninstall/${encodeURIComponent(pluginId)}`, {
       method: 'POST'
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      updateStatus(`Plugin disabled: ${pluginId}`);
-
-      // Refresh plugins
-      await loadPlugins();
-
-      // Update modal if showing this plugin
-      if (selectedPlugin && selectedPlugin.id === pluginId) {
-        const updatedPlugin = allPlugins.find(p => p.id === pluginId);
-        if (updatedPlugin) {
-          showPluginDetail(updatedPlugin);
-        }
-      }
-
-      showNotification('Plugin disabled successfully', 'success');
-    } else {
-      throw new Error('Failed to disable plugin');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to remove plugin (${response.status})`);
     }
+
+    const result = await response.json().catch(() => ({}));
+    const isInfo = result.status === 'info';
+    showNotification(result.message || (isInfo ? 'Plugin cannot be removed' : 'Plugin removed successfully'), isInfo ? 'info' : 'success');
+    await loadPlugins();
+    const updatedPlugin = marketplacePlugins.find((plugin) => plugin.id === pluginId);
+    if (selectedPlugin && updatedPlugin) {
+      showPluginDetail(updatedPlugin);
+    }
+    updateStatus(result.message || `Removed ${pluginId}`);
   } catch (error) {
-    console.error('Error disabling plugin:', error);
-    updateStatus('Error disabling plugin', 'error');
-    showNotification('Failed to disable plugin', 'error');
+    console.error('Error removing plugin:', error);
+    updateStatus('Plugin removal failed');
+    showNotification(error.message || 'Failed to remove plugin', 'error');
   }
 }
 
-// =====================================================================
-// Utilities
-// =====================================================================
+function getPluginIcon(category) {
+  const icons = {
+    windows: '🪟',
+    windows_os: '🖥️',
+    audio_models: '🎵',
+    vision_models: '👁️',
+    code_models: '💻',
+    cloud: '☁️',
+    creative: '🎨',
+    finance: '💹',
+    gaming: '🎮',
+    health: '🩺',
+    general: '🔌'
+  };
+  return icons[category] || '🔌';
+}
 
-/**
- * Truncate text to specified length
- */
+function formatCategoryName(category) {
+  return String(category || 'general')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatRating(rating) {
+  const value = Number(rating || 0);
+  return value > 0 ? value.toFixed(1) : 'New';
+}
+
+function safeLabel(plugin) {
+  return plugin.name || plugin.id || 'Unnamed Plugin';
+}
+
 function truncate(text, length) {
   if (!text) return '';
-  if (text.length <= length) return text;
-  return text.substring(0, length) + '...';
+  return text.length <= length ? text : `${text.slice(0, length)}...`;
 }
 
-/**
- * Show error message in plugins list
- */
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function showPluginError(message) {
   const pluginsList = document.getElementById('pluginsList');
+  if (!pluginsList) return;
   pluginsList.innerHTML = `
     <div class="error-message">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
-      <p>${message}</p>
-      <button onclick="loadPlugins()" class="btn-primary">Retry</button>
+      <p>${escapeHtml(message)}</p>
+      <button class="btn-primary" id="retryMarketplaceErrorBtn">Retry</button>
     </div>
   `;
+
+  const retryBtn = document.getElementById('retryMarketplaceErrorBtn');
+  retryBtn?.addEventListener('click', loadPlugins);
 }
 
-/**
- * Show notification toast
- */
 function showNotification(message, type = 'info') {
-  // Create notification element
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.textContent = message;
-
-  // Add to page
   document.body.appendChild(notification);
 
-  // Show notification
-  setTimeout(() => {
-    notification.classList.add('show');
-  }, 100);
-
-  // Remove notification after 3 seconds
+  requestAnimationFrame(() => notification.classList.add('show'));
   setTimeout(() => {
     notification.classList.remove('show');
-    setTimeout(() => {
-      notification.remove();
-    }, 300);
+    setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
 
-// =====================================================================
-// Initialize when plugins tab is activated
-// =====================================================================
-
-// Watch for plugins tab activation
 document.addEventListener('DOMContentLoaded', () => {
   const pluginsTab = document.querySelector('[data-tab="plugins"]');
-  if (pluginsTab) {
-    pluginsTab.addEventListener('click', () => {
-      // Only initialize once
-      if (allPlugins.length === 0) {
-        initPluginMarketplace();
-      }
-    });
-  }
+  pluginsTab?.addEventListener('click', () => {
+    initPluginMarketplace();
+  });
 
-  // Initialize immediately if plugins tab is active
-  if (document.getElementById('plugins').classList.contains('active')) {
+  if (document.getElementById('plugins')?.classList.contains('active')) {
     initPluginMarketplace();
   }
 });
 
-// Export functions for use in renderer.js
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     initPluginMarketplace,
     loadPlugins,
-    enablePlugin,
-    disablePlugin
+    installPlugin,
+    uninstallPlugin
   };
 }
