@@ -22,6 +22,11 @@ from .version_manager import VersionManager, Version
 
 
 logger = logging.getLogger(__name__)
+DEFAULT_GITHUB_RELEASES_BASE_URL = "https://github.com/Anthony5265/Windows-AI/releases/latest/download"
+PLACEHOLDER_UPDATE_HOSTS = {
+    "https://updates.windows-ai.example.com",
+    "http://updates.windows-ai.example.com",
+}
 
 
 class UpdateStatus(Enum):
@@ -71,6 +76,23 @@ class UpdateInfo:
             release_notes=release.get("releaseNotes", "")
         )
 
+    @classmethod
+    def from_latest_release_manifest(cls, manifest: dict, current_version: str) -> "UpdateInfo":
+        """Create from latest-release.json style manifest."""
+        latest = manifest.get("latest", manifest)
+        return cls(
+            version=latest["version"],
+            current_version=current_version,
+            release_date=latest.get("releaseDate") or latest.get("release_date") or manifest.get("generated_at") or datetime.utcnow().isoformat() + "Z",
+            size=int(latest.get("size", 0)),
+            download_url=latest.get("downloadUrl") or latest.get("download_url") or "",
+            sha256=latest.get("sha256", ""),
+            critical=bool(latest.get("critical", False)),
+            requires_restart=latest.get("requiresRestart", True),
+            changelog=latest.get("changelog", {}),
+            release_notes=latest.get("releaseNotes") or latest.get("release_notes") or ""
+        )
+
 
 class UpdateClient:
     """
@@ -97,8 +119,12 @@ class UpdateClient:
             channel: Release channel (stable, beta, alpha)
             auto_download: Automatically download updates when found
         """
+        normalized_url = (update_server_url or "").rstrip('/')
+        if not normalized_url or normalized_url in PLACEHOLDER_UPDATE_HOSTS:
+            normalized_url = DEFAULT_GITHUB_RELEASES_BASE_URL
+
         self.current_version = current_version
-        self.update_server_url = update_server_url.rstrip('/')
+        self.update_server_url = normalized_url
         self.download_dir = download_dir or Path.home() / "AppData" / "Local" / "WindowsAI" / "updates"
         self.check_interval = timedelta(hours=check_interval_hours)
         self.channel = channel
@@ -120,7 +146,7 @@ class UpdateClient:
         # Ensure download directory exists
         self.download_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"UpdateClient initialized - version={current_version}, channel={channel}")
+        logger.info(f"UpdateClient initialized - version={current_version}, channel={channel}, source={self.update_server_url}")
 
     def _set_status(self, status: UpdateStatus):
         """Update status and notify callback"""
@@ -156,13 +182,11 @@ class UpdateClient:
         self._set_status(UpdateStatus.CHECKING)
 
         try:
-            # Fetch manifest
             manifest = await self._fetch_manifest()
             if not manifest:
                 self._set_error("Failed to fetch update manifest")
                 return None
 
-            # Find latest version in channel
             latest_release = self._find_latest_release(manifest)
             if not latest_release:
                 logger.info(f"No releases found in {self.channel} channel")
@@ -172,11 +196,10 @@ class UpdateClient:
 
             latest_version = latest_release["version"]
 
-            # Compare versions
             if VersionManager.is_newer(latest_version, self.current_version):
                 logger.info(f"Update available: {self.current_version} -> {latest_version}")
 
-                update_info = UpdateInfo.from_release(latest_release, self.current_version)
+                update_info = self._build_update_info(latest_release, manifest)
                 self.available_update = update_info
                 self._set_status(UpdateStatus.AVAILABLE)
 
@@ -186,18 +209,16 @@ class UpdateClient:
                     except Exception as e:
                         logger.error(f"Error in update available callback: {e}")
 
-                # Auto-download if enabled
                 if self.auto_download:
                     await self.download_update(update_info)
 
                 self.last_check = datetime.now()
                 return update_info
 
-            else:
-                logger.info(f"No updates available (current: {self.current_version}, latest: {latest_version})")
-                self._set_status(UpdateStatus.UP_TO_DATE)
-                self.last_check = datetime.now()
-                return None
+            logger.info(f"No updates available (current: {self.current_version}, latest: {latest_version})")
+            self._set_status(UpdateStatus.UP_TO_DATE)
+            self.last_check = datetime.now()
+            return None
 
         except Exception as e:
             self._set_error(f"Error checking for updates: {str(e)}")
@@ -205,39 +226,117 @@ class UpdateClient:
             return None
 
     async def _fetch_manifest(self) -> Optional[dict]:
-        """Fetch update manifest from server"""
-        manifest_url = f"{self.update_server_url}/manifest.json"
+        """Fetch update manifest from server or GitHub release metadata."""
+        candidate_urls = self._get_manifest_urls()
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(manifest_url, timeout=30) as response:
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        logger.error(f"Failed to fetch manifest: HTTP {response.status}")
-                        return None
+                for manifest_url in candidate_urls:
+                    try:
+                        async with session.get(manifest_url, timeout=30) as response:
+                            if response.status != 200:
+                                logger.warning(f"Failed to fetch manifest from {manifest_url}: HTTP {response.status}")
+                                continue
 
-        except asyncio.TimeoutError:
-            logger.error("Timeout fetching manifest")
+                            payload = await response.json()
+                            normalized = self._normalize_manifest_payload(payload)
+                            if normalized:
+                                logger.info(f"Loaded update manifest from {manifest_url}")
+                                return normalized
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Timeout fetching manifest from {manifest_url}")
+                    except Exception as e:
+                        logger.warning(f"Error fetching manifest from {manifest_url}: {e}")
+
             return None
         except Exception as e:
             logger.error(f"Error fetching manifest: {e}")
             return None
 
+    def _get_manifest_urls(self) -> list[str]:
+        base = self.update_server_url.rstrip('/')
+        urls = []
+
+        if base.endswith("latest-release.json"):
+            urls.append(base)
+        else:
+            urls.append(f"{base}/manifest.json")
+            urls.append(f"{base}/latest-release.json")
+
+        if base != DEFAULT_GITHUB_RELEASES_BASE_URL:
+            urls.append(f"{DEFAULT_GITHUB_RELEASES_BASE_URL}/latest-release.json")
+
+        # preserve order while removing duplicates
+        seen = set()
+        ordered = []
+        for url in urls:
+          if url not in seen:
+            seen.add(url)
+            ordered.append(url)
+        return ordered
+
+    def _normalize_manifest_payload(self, payload: dict) -> Optional[dict]:
+        if not payload:
+            return None
+
+        if isinstance(payload.get("releases"), list):
+            return payload
+
+        latest = payload.get("latest", payload)
+        version = latest.get("version")
+        download_url = latest.get("downloadUrl") or latest.get("download_url")
+        if not version or not download_url:
+            return None
+
+        release_entry = {
+            "version": version,
+            "channel": latest.get("channel", "stable"),
+            "releaseDate": latest.get("releaseDate") or latest.get("release_date") or payload.get("generated_at") or datetime.utcnow().isoformat() + "Z",
+            "critical": latest.get("critical", False),
+            "requiresRestart": latest.get("requiresRestart", True),
+            "changelog": latest.get("changelog", {}),
+            "releaseNotes": latest.get("releaseNotes") or latest.get("release_notes") or "",
+            "files": {
+                "installer": {
+                    "url": download_url,
+                    "size": int(latest.get("size", 0)),
+                    "sha256": latest.get("sha256", "")
+                }
+            }
+        }
+        return {"releases": [release_entry], "source": "latest-release.json"}
+
+    def _build_update_info(self, latest_release: dict, manifest: dict) -> UpdateInfo:
+        if manifest.get("source") == "latest-release.json":
+            return UpdateInfo.from_latest_release_manifest({"latest": {
+                "version": latest_release["version"],
+                "releaseDate": latest_release.get("releaseDate"),
+                "downloadUrl": latest_release.get("files", {}).get("installer", {}).get("url"),
+                "size": latest_release.get("files", {}).get("installer", {}).get("size", 0),
+                "sha256": latest_release.get("files", {}).get("installer", {}).get("sha256", ""),
+                "critical": latest_release.get("critical", False),
+                "requiresRestart": latest_release.get("requiresRestart", True),
+                "changelog": latest_release.get("changelog", {}),
+                "releaseNotes": latest_release.get("releaseNotes", "")
+            }}, self.current_version)
+
+        return UpdateInfo.from_release(latest_release, self.current_version)
+
     def _find_latest_release(self, manifest: dict) -> Optional[dict]:
         """Find latest release in configured channel"""
         releases = manifest.get("releases", [])
 
-        # Filter by channel
         channel_releases = [
             r for r in releases
             if r.get("channel", "stable") == self.channel
         ]
 
+        if not channel_releases and self.channel == "stable":
+            channel_releases = releases
+
         if not channel_releases:
             return None
 
-        # Sort by version and get latest
         channel_releases.sort(
             key=lambda r: VersionManager.parse(r["version"]),
             reverse=True
@@ -267,12 +366,10 @@ class UpdateClient:
         self.download_progress = 0.0
 
         try:
-            # Determine download URL
             download_url = update_info.download_url
             if not download_url.startswith('http'):
                 download_url = f"{self.update_server_url}{download_url}"
 
-            # Download file
             output_path = self.download_dir / f"WindowsAI-Setup-{update_info.version}.exe"
 
             downloaded_size = 0
@@ -284,13 +381,11 @@ class UpdateClient:
                         self._set_error(f"Download failed: HTTP {response.status}")
                         return None
 
-                    # Download with progress tracking
                     async with aiofiles.open(output_path, 'wb') as f:
                         async for chunk in response.content.iter_chunked(8192):
                             await f.write(chunk)
                             downloaded_size += len(chunk)
 
-                            # Update progress
                             if total_size > 0:
                                 progress = (downloaded_size / total_size) * 100
                                 self.download_progress = progress
@@ -301,9 +396,8 @@ class UpdateClient:
                                     except Exception as e:
                                         logger.error(f"Error in progress callback: {e}")
 
-            # Verify checksum
             logger.info("Verifying download integrity...")
-            if not await self._verify_checksum(output_path, update_info.sha256):
+            if update_info.sha256 and not await self._verify_checksum(output_path, update_info.sha256):
                 self._set_error("Download verification failed - checksum mismatch")
                 output_path.unlink(missing_ok=True)
                 return None
@@ -364,24 +458,19 @@ class UpdateClient:
         self._set_status(UpdateStatus.INSTALLING)
 
         try:
-            # Launch installer
-            # Use silent install mode
             import subprocess
 
             process = await asyncio.create_subprocess_exec(
                 str(installer_path),
-                "/S",  # Silent install
+                "/S",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
 
-            # Wait for installer to start
             await asyncio.sleep(2)
 
             logger.info("Installer launched successfully")
             self._set_status(UpdateStatus.INSTALLED)
-
-            # Note: The application will be closed/restarted by the installer
             return True
 
         except Exception as e:
@@ -400,16 +489,14 @@ class UpdateClient:
 
         while True:
             try:
-                # Check if it's time to check for updates
                 if self.last_check is None or datetime.now() - self.last_check >= self.check_interval:
                     await self.check_for_updates()
 
-                # Sleep for 1 hour before checking again
                 await asyncio.sleep(3600)
 
             except Exception as e:
                 logger.error(f"Error in background update checker: {e}")
-                await asyncio.sleep(3600)  # Sleep and retry
+                await asyncio.sleep(3600)
 
     def get_status_info(self) -> dict:
         """
@@ -426,7 +513,8 @@ class UpdateClient:
             "available_update": self.available_update.to_dict() if self.available_update else None,
             "download_progress": self.download_progress,
             "error_message": self.error_message,
-            "auto_download": self.auto_download
+            "auto_download": self.auto_download,
+            "update_server_url": self.update_server_url,
         }
 
     def clear_downloaded_updates(self):
