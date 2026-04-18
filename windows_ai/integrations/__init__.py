@@ -677,3 +677,62 @@ async def initialize_integrations() -> None:
     this function just logs that the integration layer is ready.
     """
     _logger.info("Integration layer ready (%d managers registered)", len(__all__))
+
+
+# Provider/CLI setup endpoints piggyback on the integrations router so the
+# installer and GUI can discover third-party CLIs and local runtime options.
+try:
+    from windows_ai.provider_cli_registry import provider_cli_registry
+
+    @router.get("/providers/definitions")
+    async def list_provider_definitions():
+        return {
+            "status": "success",
+            "providers": provider_cli_registry.list_provider_definitions(),
+            "count": len(provider_cli_registry.providers),
+        }
+
+    @router.get("/providers/detect")
+    async def detect_provider_clis():
+        results = [item.to_dict() for item in provider_cli_registry.detect_all()]
+        return {
+            "status": "success",
+            "providers": results,
+            "count": len(results),
+        }
+
+    @router.get("/providers/detect/{provider_id}")
+    async def detect_single_provider(provider_id: str):
+        if provider_id not in provider_cli_registry.providers:
+            return {
+                "status": "error",
+                "message": f"Unknown provider: {provider_id}",
+            }
+        return {
+            "status": "success",
+            "provider": provider_cli_registry.detect_provider(provider_id).to_dict(),
+        }
+
+    @router.get("/providers/hardware")
+    async def get_provider_hardware_profile():
+        return {
+            "status": "success",
+            "hardware": provider_cli_registry.get_hardware_profile().to_dict(),
+        }
+
+    @router.get("/providers/ollama/recommendations")
+    async def get_ollama_recommendations():
+        recommendations = provider_cli_registry.recommend_ollama_models()
+        return {
+            "status": "success",
+            **recommendations,
+        }
+
+    @router.get("/providers/setup-plan")
+    async def get_provider_setup_plan():
+        return {
+            "status": "success",
+            **provider_cli_registry.get_setup_plan(),
+        }
+except Exception as exc:  # pragma: no cover - graceful degradation
+    _logger.warning("Provider CLI registry routes unavailable: %s", exc)
