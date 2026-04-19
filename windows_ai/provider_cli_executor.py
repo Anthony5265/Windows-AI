@@ -75,14 +75,19 @@ class ProviderCLIExecutor:
                 yield chunk
             return
 
-        result = await self.execute_chat(
-            target_model=target_model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        if result.content:
-            yield result.content
+        if target_model.startswith("cli:"):
+            provider_id = target_model.split(":", 1)[1]
+            async for chunk in self._stream_cli_chat(
+                provider_id=provider_id,
+                target_model=target_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            ):
+                yield chunk
+            return
+
+        raise ProviderCLIExecutionError(f"Unsupported provider target: {target_model}")
 
     async def _execute_ollama_chat(
         self,
@@ -166,6 +171,138 @@ class ProviderCLIExecutor:
 
         if not yielded:
             raise ProviderCLIExecutionError(f"Ollama streaming returned no output for model {model_name}")
+
+    async def _stream_cli_chat(
+        self,
+        provider_id: str,
+        target_model: str,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: Optional[int],
+    ) -> AsyncIterator[str]:
+        detection = provider_cli_registry.detect_provider(provider_id)
+        if not detection.detected or not detection.executable_path:
+            raise ProviderCLIExecutionError(f"Provider CLI not detected: {provider_id}")
+
+        prompt = self._messages_to_prompt(messages)
+        executable = Path(detection.executable_path)
+        command_candidates = self._build_cli_command_candidates(
+            provider_id,
+            executable,
+            prompt,
+            temperature,
+            max_tokens,
+        )
+
+        last_error = "No provider command attempted"
+        for command, inline_prompt in command_candidates:
+            yielded_any = False
+            stdout_chunks: List[str] = []
+            stderr_chunks: List[str] = []
+            returncode: Optional[int] = None
+
+            try:
+                async for event_type, chunk in self._run_cli_command_stream(
+                    command=command,
+                    prompt=prompt,
+                    inline_prompt=inline_prompt,
+                ):
+                    if event_type == "stdout":
+                        stdout_chunks.append(chunk)
+                        normalized = self._normalize_stream_chunk(chunk)
+                        if normalized.strip():
+                            yielded_any = True
+                            yield normalized
+                    elif event_type == "stderr":
+                        stderr_chunks.append(chunk)
+                    elif event_type == "returncode":
+                        returncode = int(chunk)
+            except asyncio.TimeoutError:
+                last_error = f"Timed out after {self.timeout_seconds}s"
+                continue
+            except Exception as exc:  # pragma: no cover - defensive runtime guard
+                last_error = str(exc)
+                continue
+
+            if returncode not in (0, None):
+                last_error = ("".join(stderr_chunks) or "".join(stdout_chunks) or "").strip() or f"exit {returncode}"
+                continue
+
+            if yielded_any:
+                return
+
+            combined_output = ("".join(stdout_chunks) or "".join(stderr_chunks)).strip()
+            if combined_output:
+                normalized_output = self._normalize_cli_output(combined_output)
+                if normalized_output:
+                    yield normalized_output
+                    return
+
+            last_error = "CLI returned no output"
+
+        raise ProviderCLIExecutionError(
+            f"{provider_id} CLI streaming failed after {len(command_candidates)} attempt(s): {last_error[:500]}"
+        )
+
+    async def _run_cli_command_stream(
+        self,
+        command: Sequence[str],
+        prompt: str,
+        inline_prompt: bool,
+    ) -> AsyncIterator[Tuple[str, str]]:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        if process.stdin is not None:
+            if inline_prompt:
+                process.stdin.close()
+            else:
+                process.stdin.write(prompt.encode("utf-8"))
+                await process.stdin.drain()
+                process.stdin.close()
+
+        stdout_task = None if process.stdout is None else asyncio.create_task(process.stdout.readline())
+        stderr_task = None if process.stderr is None else asyncio.create_task(process.stderr.readline())
+
+        try:
+            while stdout_task is not None or stderr_task is not None:
+                active_tasks = [task for task in (stdout_task, stderr_task) if task is not None]
+                done, _pending = await asyncio.wait(
+                    active_tasks,
+                    return_when=asyncio.FIRST_COMPLETED,
+                    timeout=self.timeout_seconds,
+                )
+                if not done:
+                    process.kill()
+                    await process.wait()
+                    raise asyncio.TimeoutError()
+
+                if stdout_task in done:
+                    raw_stdout = stdout_task.result()
+                    if raw_stdout:
+                        yield ("stdout", raw_stdout.decode("utf-8", errors="replace"))
+                        stdout_task = asyncio.create_task(process.stdout.readline()) if process.stdout else None
+                    else:
+                        stdout_task = None
+
+                if stderr_task in done:
+                    raw_stderr = stderr_task.result()
+                    if raw_stderr:
+                        yield ("stderr", raw_stderr.decode("utf-8", errors="replace"))
+                        stderr_task = asyncio.create_task(process.stderr.readline()) if process.stderr else None
+                    else:
+                        stderr_task = None
+
+            returncode = await asyncio.wait_for(process.wait(), timeout=self.timeout_seconds)
+            yield ("returncode", str(returncode))
+        finally:
+            for task in (stdout_task, stderr_task):
+                if task is not None and not task.done():
+                    task.cancel()
 
     async def _execute_cli_chat(
         self,
@@ -337,6 +474,19 @@ class ProviderCLIExecutor:
             return json.dumps(parsed_dict, indent=2)
 
         return output
+
+    def _normalize_stream_chunk(self, chunk: str) -> str:
+        text = chunk.strip()
+        if not text:
+            return ""
+
+        parsed_dict = self._parse_json_like_output(text)
+        if isinstance(parsed_dict, dict):
+            direct = self._extract_text_from_dict(parsed_dict)
+            if direct:
+                return direct
+
+        return chunk
 
     def _parse_json_like_output(self, output: str) -> Optional[Dict[str, Any]]:
         try:
