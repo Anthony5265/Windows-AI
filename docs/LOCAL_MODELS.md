@@ -373,8 +373,9 @@ sudo chown -R $USER ~/.ollama
 
 - **Ollama Documentation**: https://github.com/ollama/ollama
 - **Ollama Model Library**: https://ollama.ai/library
-- **Windows-AI Documentation**: See `OLLAMA_INTEGRATION.md`
-- **Community Support**: [Windows-AI GitHub Issues](https://github.com/yourorg/Windows-AI/issues)
+- **Provider Integrations API**: [api/PROVIDER_INTEGRATIONS.md](api/PROVIDER_INTEGRATIONS.md)
+- **Provider Chat Examples**: [examples/provider-chat.md](examples/provider-chat.md)
+- **Community Support**: [Windows-AI GitHub Issues](https://github.com/Anthony5265/Windows-AI/issues)
 
 ## FAQ
 
