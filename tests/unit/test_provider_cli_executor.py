@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 
 from windows_ai.provider_cli_executor import ProviderCLIExecutor, ProviderCLIExecutionError
@@ -75,11 +76,35 @@ def test_normalize_cli_output_falls_back_to_plain_text():
     assert executor._normalize_cli_output(output) == "Plain text response"
 
 
+def test_normalize_stream_chunk_extracts_nested_message_content():
+    executor = ProviderCLIExecutor()
+    chunk = '{"message": {"content": "Hello from streamed json"}}\n'
+    assert executor._normalize_stream_chunk(chunk) == "Hello from streamed json"
+
+
+def test_normalize_stream_chunk_falls_back_to_plain_text():
+    executor = ProviderCLIExecutor()
+    chunk = "Hello from streamed text\n"
+    assert executor._normalize_stream_chunk(chunk) == "Hello from streamed text\n"
+
+
 async def _collect_stream(executor, target_model, messages):
     chunks = []
     async for chunk in executor.execute_chat_stream(target_model=target_model, messages=messages):
         chunks.append(chunk)
     return chunks
+
+
+def test_execute_chat_stream_uses_cli_stream_path(monkeypatch):
+    executor = ProviderCLIExecutor()
+
+    async def fake_stream_cli_chat(*args, **kwargs):
+        yield "chunk one"
+        yield "chunk two"
+
+    monkeypatch.setattr(executor, "_stream_cli_chat", fake_stream_cli_chat)
+    chunks = asyncio.run(_collect_stream(executor, "cli:codex", [{"role": "user", "content": "hi"}]))
+    assert chunks == ["chunk one", "chunk two"]
 
 
 def test_execute_chat_stream_uses_non_ollama_fallback(monkeypatch):
@@ -91,7 +116,13 @@ def test_execute_chat_stream_uses_non_ollama_fallback(monkeypatch):
         return _Result()
 
     monkeypatch.setattr(executor, "execute_chat", fake_execute_chat)
-    chunks = __import__("asyncio").run(_collect_stream(executor, "cli:codex", [{"role": "user", "content": "hi"}]))
+
+    async def fake_stream_cli_chat(*args, **kwargs):
+        result = await executor.execute_chat(target_model="cli:codex", messages=[{"role": "user", "content": "hi"}])
+        yield result.content
+
+    monkeypatch.setattr(executor, "_stream_cli_chat", fake_stream_cli_chat)
+    chunks = asyncio.run(_collect_stream(executor, "cli:codex", [{"role": "user", "content": "hi"}]))
     assert chunks == ["fallback streamed content"]
 
 
