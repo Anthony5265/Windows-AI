@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 import asyncio
 import json
 import os
@@ -119,8 +119,64 @@ class ProviderCLIExecutor:
 
         prompt = self._messages_to_prompt(messages)
         executable = Path(detection.executable_path)
-        command = self._build_cli_command(provider_id, executable, prompt, temperature, max_tokens)
+        command_candidates = self._build_cli_command_candidates(
+            provider_id,
+            executable,
+            prompt,
+            temperature,
+            max_tokens,
+        )
 
+        last_error = "No provider command attempted"
+        for command, inline_prompt in command_candidates:
+            try:
+                stdout, stderr, returncode = await self._run_cli_command(
+                    command=command,
+                    prompt=prompt,
+                    inline_prompt=inline_prompt,
+                )
+                if returncode != 0:
+                    last_error = (stderr or stdout or "").strip() or f"exit {returncode}"
+                    continue
+
+                output = (stdout or "").strip() or (stderr or "").strip()
+                if not output:
+                    last_error = "CLI returned no output"
+                    continue
+
+                normalized_output = self._normalize_cli_output(output)
+                if not normalized_output:
+                    last_error = "CLI output could not be normalized"
+                    continue
+
+                return ProviderChatResult(
+                    model=target_model,
+                    provider_id=provider_id,
+                    content=normalized_output,
+                    backend="provider-cli",
+                    metadata={
+                        "command": [str(part) for part in command],
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "auth_configured": detection.auth_configured,
+                        "attempt_count": len(command_candidates),
+                    },
+                )
+            except asyncio.TimeoutError:
+                last_error = f"Timed out after {self.timeout_seconds}s"
+            except Exception as exc:  # pragma: no cover - defensive runtime guard
+                last_error = str(exc)
+
+        raise ProviderCLIExecutionError(
+            f"{provider_id} CLI execution failed after {len(command_candidates)} attempt(s): {last_error[:500]}"
+        )
+
+    async def _run_cli_command(
+        self,
+        command: Sequence[str],
+        prompt: str,
+        inline_prompt: bool,
+    ) -> Tuple[str, str, int]:
         process = await asyncio.create_subprocess_exec(
             *command,
             stdin=asyncio.subprocess.PIPE,
@@ -128,76 +184,75 @@ class ProviderCLIExecutor:
             stderr=asyncio.subprocess.PIPE,
         )
 
-        stdin_payload = None if self._command_accepts_inline_prompt(provider_id) else prompt.encode("utf-8")
+        stdin_payload = None if inline_prompt else prompt.encode("utf-8")
         stdout, stderr = await asyncio.wait_for(
             process.communicate(stdin_payload),
             timeout=self.timeout_seconds,
         )
-
-        if process.returncode != 0:
-            error_text = (stderr or stdout or b"").decode("utf-8", errors="replace").strip()
-            raise ProviderCLIExecutionError(
-                f"{provider_id} CLI execution failed (exit {process.returncode}): {error_text[:500]}"
-            )
-
-        output = (stdout or b"").decode("utf-8", errors="replace").strip()
-        if not output:
-            output = (stderr or b"").decode("utf-8", errors="replace").strip()
-        if not output:
-            raise ProviderCLIExecutionError(f"{provider_id} CLI returned no output")
-
-        normalized_output = self._normalize_cli_output(output)
-        return ProviderChatResult(
-            model=target_model,
-            provider_id=provider_id,
-            content=normalized_output,
-            backend="provider-cli",
-            metadata={
-                "command": [str(part) for part in command],
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-                "auth_configured": detection.auth_configured,
-            },
+        return (
+            (stdout or b"").decode("utf-8", errors="replace"),
+            (stderr or b"").decode("utf-8", errors="replace"),
+            process.returncode,
         )
 
-    def _build_cli_command(
+    def _build_cli_command_candidates(
         self,
         provider_id: str,
         executable: Path,
         prompt: str,
         temperature: float,
         max_tokens: Optional[int],
-    ) -> List[str]:
-        """Best-effort command templates per provider.
+    ) -> List[Tuple[List[str], bool]]:
+        """Return ordered provider-specific command candidates.
 
-        These are intentionally generic. Providers with richer official CLIs may need
-        refinement later, but this gives Windows AI a concrete execution path now.
+        The first item in the tuple is the command argv list. The second item
+        indicates whether the prompt is already included inline and should not be
+        sent over stdin.
         """
-        prompt_arg_map = {
-            "gemini": [str(executable), "prompt", prompt],
-            "codex": [str(executable), "chat", "--prompt", prompt],
-            "claude": [str(executable), "chat", "--prompt", prompt],
-            "grok": [str(executable), "chat", "--prompt", prompt],
-        }
-        stdin_map = {
-            "gemini": [str(executable)],
-            "codex": [str(executable), "chat"],
-            "claude": [str(executable), "chat"],
-            "grok": [str(executable), "chat"],
+        exe = str(executable)
+        base_candidates: Dict[str, List[Tuple[List[str], bool]]] = {
+            "gemini": [
+                ([exe, "prompt", prompt], True),
+                ([exe, "chat", "--prompt", prompt], True),
+                ([exe], False),
+            ],
+            "codex": [
+                ([exe, "chat", "--prompt", prompt], True),
+                ([exe, "prompt", prompt], True),
+                ([exe, "chat"], False),
+                ([exe], False),
+            ],
+            "claude": [
+                ([exe, "chat", "--prompt", prompt], True),
+                ([exe, "prompt", prompt], True),
+                ([exe, "chat"], False),
+                ([exe], False),
+            ],
+            "grok": [
+                ([exe, "chat", "--prompt", prompt], True),
+                ([exe, "prompt", prompt], True),
+                ([exe, "chat"], False),
+                ([exe], False),
+            ],
         }
 
-        command = prompt_arg_map.get(provider_id) or stdin_map.get(provider_id)
-        if not command:
+        if provider_id not in base_candidates:
             raise ProviderCLIExecutionError(f"No command template configured for {provider_id}")
 
-        if max_tokens:
-            command += ["--max-tokens", str(max_tokens)]
-        if temperature is not None:
-            command += ["--temperature", str(temperature)]
-        return command
-
-    def _command_accepts_inline_prompt(self, provider_id: str) -> bool:
-        return provider_id in {"gemini", "codex", "claude", "grok"}
+        finalized: List[Tuple[List[str], bool]] = []
+        seen: set[Tuple[str, ...]] = set()
+        for command, inline_prompt in base_candidates[provider_id]:
+            cmd = list(command)
+            if max_tokens:
+                cmd += ["--max-tokens", str(max_tokens)]
+            if temperature is not None:
+                cmd += ["--temperature", str(temperature)]
+            signature = tuple(cmd)
+            if signature in seen:
+                continue
+            seen.add(signature)
+            finalized.append((cmd, inline_prompt))
+        return finalized
 
     def _messages_to_prompt(self, messages: List[Dict[str, str]]) -> str:
         parts: List[str] = []
@@ -212,18 +267,53 @@ class ProviderCLIExecutor:
         if not output:
             return output
 
+        parsed_dict = self._parse_json_like_output(output)
+        if isinstance(parsed_dict, dict):
+            direct = self._extract_text_from_dict(parsed_dict)
+            if direct:
+                return direct
+            return json.dumps(parsed_dict, indent=2)
+
+        return output
+
+    def _parse_json_like_output(self, output: str) -> Optional[Dict[str, Any]]:
         try:
             parsed = json.loads(output)
-            if isinstance(parsed, dict):
-                for key in ("content", "text", "response", "message"):
-                    value = parsed.get(key)
-                    if isinstance(value, str) and value.strip():
-                        return value.strip()
-                return json.dumps(parsed, indent=2)
+            return parsed if isinstance(parsed, dict) else None
         except Exception:
             pass
 
-        return output
+        for line in reversed(output.splitlines()):
+            candidate = line.strip()
+            if not candidate.startswith("{"):
+                continue
+            try:
+                parsed = json.loads(candidate)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                continue
+        return None
+
+    def _extract_text_from_dict(self, parsed: Dict[str, Any]) -> Optional[str]:
+        for key in ("content", "text", "response", "message", "output"):
+            value = parsed.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if isinstance(value, dict):
+                nested = self._extract_text_from_dict(value)
+                if nested:
+                    return nested
+
+        choices = parsed.get("choices")
+        if isinstance(choices, list):
+            for choice in choices:
+                if isinstance(choice, dict):
+                    nested = self._extract_text_from_dict(choice)
+                    if nested:
+                        return nested
+
+        return None
 
 
 provider_cli_executor = ProviderCLIExecutor()
