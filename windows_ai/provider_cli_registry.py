@@ -348,6 +348,9 @@ def _register_provider_chat_route() -> None:
 
         @router.post("/providers/chat")
         async def provider_target_chat(request: ProviderChatRequest):
+            if request.stream:
+                return await provider_target_chat_stream(request)
+
             messages = _build_messages(request)
 
             try:
