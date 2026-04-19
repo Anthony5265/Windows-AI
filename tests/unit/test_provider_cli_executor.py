@@ -248,3 +248,33 @@ def test_provider_chat_stream_route_emits_error_event(monkeypatch):
     assert [event["type"] for event in events] == ["start", "error"]
     assert events[1]["error"] == "stream failed"
     assert events[1]["conversation_id"] == "conv-error"
+
+
+def test_provider_registry_marks_ollama_ready_without_cloud_auth(monkeypatch):
+    registry = provider_cli_registry_module.ProviderCLIRegistry()
+
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    monkeypatch.setattr(registry, "_locate_executable", lambda provider_id, executable_names: pathlib.Path("/tmp/ollama"))
+    monkeypatch.setattr(registry, "_get_version", lambda executable_path: "ollama 0.6.0")
+
+    result = registry.detect_provider("ollama")
+
+    assert result.detected is True
+    assert result.auth_configured is True
+    assert result.recommended_action == "ready"
+    assert result.version == "ollama 0.6.0"
+
+
+def test_provider_registry_marks_detected_cloud_cli_for_auth_when_key_missing(monkeypatch):
+    registry = provider_cli_registry_module.ProviderCLIRegistry()
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(registry, "_locate_executable", lambda provider_id, executable_names: pathlib.Path("/tmp/codex"))
+    monkeypatch.setattr(registry, "_get_version", lambda executable_path: "codex 1.2.3")
+
+    result = registry.detect_provider("codex")
+
+    assert result.detected is True
+    assert result.auth_configured is False
+    assert result.recommended_action == "authenticate"
+    assert result.version == "codex 1.2.3"
