@@ -252,6 +252,42 @@ def test_provider_chat_route_returns_error_payload_on_execution_failure(monkeypa
     assert body["error"] == "provider unavailable"
 
 
+def test_provider_chat_route_honors_stream_flag(monkeypatch):
+    registry_module, client = _build_provider_chat_client(monkeypatch)
+
+    async def fail_execute_chat(*, target_model, messages, temperature, max_tokens):
+        raise AssertionError("execute_chat should not be called when stream=true")
+
+    async def fake_execute_chat_stream(*, target_model, messages, temperature, max_tokens):
+        assert target_model == "cli:codex"
+        assert messages == [{"role": "user", "content": "stream on main route"}]
+        assert temperature == 0.7
+        assert max_tokens is None
+        yield "chunk a"
+        yield "chunk b"
+
+    monkeypatch.setattr(registry_module.provider_cli_executor, "execute_chat", fail_execute_chat)
+    monkeypatch.setattr(registry_module.provider_cli_executor, "execute_chat_stream", fake_execute_chat_stream)
+
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "stream on main route",
+            "conversation_id": "conv-main-stream",
+            "model": "cli:codex",
+            "stream": true,
+        },
+    )
+
+    assert response.status_code == 200
+    events = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert [event["type"] for event in events] == ["start", "chunk", "chunk", "complete"]
+    assert events[0]["conversation_id"] == "conv-main-stream"
+    assert events[1]["content"] == "chunk a"
+    assert events[2]["content"] == "chunk b"
+    assert events[3]["content"] == "chunk achunk b"
+
+
 def test_provider_chat_stream_route_returns_ndjson_events(monkeypatch):
     registry_module, client = _build_provider_chat_client(monkeypatch)
 
