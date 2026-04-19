@@ -21,13 +21,10 @@ class SetupWizard {
      * Initialize the setup wizard
      */
     async init() {
-        // Check if setup is needed
         const setupNeeded = await this.checkSetupRequired();
-        
         if (setupNeeded) {
             this.show();
         }
-        
         this.initialized = true;
         return setupNeeded;
     }
@@ -40,12 +37,10 @@ class SetupWizard {
             const response = await fetch(`${this.apiEndpoint}/api/setup/status`);
             if (response.ok) {
                 const status = await response.json();
-                // Backend returns is_complete field
                 return !status.is_complete;
             }
         } catch (error) {
             console.error('Failed to check setup status:', error);
-            // If backend is not available, might still need setup
             return true;
         }
         return true;
@@ -55,15 +50,12 @@ class SetupWizard {
      * Show the setup wizard
      */
     show() {
-        // Create wizard overlay if it doesn't exist
         if (!document.getElementById('setupWizardOverlay')) {
             this.createWizardUI();
         }
 
         const overlay = document.getElementById('setupWizardOverlay');
         overlay.style.display = 'flex';
-        
-        // Show first step
         this.goToStep(1);
     }
 
@@ -84,7 +76,7 @@ class SetupWizard {
         const overlay = document.createElement('div');
         overlay.id = 'setupWizardOverlay';
         overlay.className = 'setup-wizard-overlay';
-        
+
         overlay.innerHTML = `
             <div class="setup-wizard">
                 <div class="wizard-header">
@@ -104,7 +96,6 @@ class SetupWizard {
                 </div>
 
                 <div class="wizard-content">
-                    <!-- Step 1: Welcome -->
                     <div class="wizard-step active" data-step="1">
                         <div class="step-icon">👋</div>
                         <h3>Welcome!</h3>
@@ -129,7 +120,6 @@ class SetupWizard {
                         </div>
                     </div>
 
-                    <!-- Step 2: Provider Detection -->
                     <div class="wizard-step" data-step="2">
                         <div class="step-icon">🧩</div>
                         <h3>Connect AI Providers and Local Runtimes</h3>
@@ -149,12 +139,11 @@ class SetupWizard {
                         </div>
                     </div>
 
-                    <!-- Step 3: API Keys -->
                     <div class="wizard-step" data-step="3">
                         <div class="step-icon">🔑</div>
                         <h3>Configure API Keys</h3>
                         <p>Add your AI provider API keys to enable AI features. You can skip this and add them later.</p>
-                        
+
                         <div class="api-key-forms">
                             <div class="api-key-form">
                                 <label>
@@ -164,7 +153,7 @@ class SetupWizard {
                                 <input type="password" id="wizardOpenAIKey" placeholder="sk-..." class="wizard-input"/>
                                 <a href="https://platform.openai.com/api-keys" target="_blank" class="get-key-link">Get API Key →</a>
                             </div>
-                            
+
                             <div class="api-key-form">
                                 <label>
                                     <span class="provider-name">Anthropic</span>
@@ -173,7 +162,7 @@ class SetupWizard {
                                 <input type="password" id="wizardAnthropicKey" placeholder="sk-ant-..." class="wizard-input"/>
                                 <a href="https://console.anthropic.com/settings/keys" target="_blank" class="get-key-link">Get API Key →</a>
                             </div>
-                            
+
                             <div class="api-key-form">
                                 <label>
                                     <span class="provider-name">Google AI</span>
@@ -183,22 +172,19 @@ class SetupWizard {
                                 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="get-key-link">Get API Key →</a>
                             </div>
                         </div>
-                        
+
                         <div class="wizard-note">
                             <span class="note-icon">ℹ️</span>
                             <span>API keys are stored securely and never leave your device.</span>
                         </div>
                     </div>
 
-                    <!-- Step 4: Model Selection & Complete -->
                     <div class="wizard-step" data-step="4">
                         <div class="step-icon">✅</div>
                         <h3>Pick Your Default Model and Finish</h3>
                         <p>Select the AI model you'd like to use by default. You can change this anytime.</p>
-                        
-                        <div class="model-selection-grid" id="wizardModelGrid">
-                            <!-- Model options will be loaded dynamically -->
-                        </div>
+
+                        <div class="model-selection-grid" id="wizardModelGrid"></div>
 
                         <div class="quick-tips">
                             <div class="tip-card">
@@ -217,7 +203,7 @@ class SetupWizard {
                                 <p>Customize your experience in Settings</p>
                             </div>
                         </div>
-                        
+
                         <div class="setup-summary" id="setupSummary">
                             <h4>Setup Summary</h4>
                             <ul id="setupSummaryList">
@@ -238,7 +224,6 @@ class SetupWizard {
         `;
 
         document.body.appendChild(overlay);
-        // Load dynamic data and attach event listeners
         this.loadProviderSetup();
         this.loadModelOptions();
         this.attachEventListeners();
@@ -248,18 +233,36 @@ class SetupWizard {
      * Attach event listeners
      */
     attachEventListeners() {
-        // Navigation buttons
         document.getElementById('wizardNextBtn').addEventListener('click', () => this.nextStep());
         document.getElementById('wizardBackBtn').addEventListener('click', () => this.prevStep());
         document.getElementById('wizardSkipBtn').addEventListener('click', () => this.skipSetup());
 
-        // Model selection - delegate to dynamic content
         document.getElementById('wizardModelGrid')?.addEventListener('click', (e) => {
             const option = e.target.closest('.model-option');
             if (!option) return;
             document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
             option.classList.add('selected');
             this.setupData.selectedModel = option.dataset.model;
+        });
+
+        document.getElementById('providerDetectionList')?.addEventListener('click', async (e) => {
+            const actionBtn = e.target.closest('[data-provider-action]');
+            if (!actionBtn) return;
+
+            const action = actionBtn.dataset.providerAction;
+            const providerId = actionBtn.dataset.providerId;
+            const provider = this.setupData.providerSetup?.providers?.find((item) => item.provider_id === providerId);
+            if (!provider) return;
+
+            if (action === 'open-link') {
+                await this.openExternalUrl(provider.install_url);
+            }
+
+            if (action === 'copy-auth') {
+                const authText = `${provider.display_name || provider.provider_id}: ${provider.auth_hint || 'Authentication required.'}`;
+                await this.copyToClipboard(authText);
+                this.showInlineProviderMessage(`${provider.display_name || provider.provider_id} auth guidance copied to clipboard.`);
+            }
         });
     }
 
@@ -282,13 +285,14 @@ class SetupWizard {
 
             const data = await response.json();
             this.setupData.providerSetup = data;
+            await this.persistProviderSetupToConfig();
 
             const providers = data.providers || [];
             const hardware = data.ollama?.hardware_profile || data.hardware || null;
             const recommendedModels = data.ollama?.recommended_models || [];
 
             statusEl.textContent = providers.length
-                ? `Detected ${providers.filter(p => p.detected).length} installed provider(s)`
+                ? `Detected ${providers.filter((p) => p.detected).length} installed provider(s)`
                 : 'No provider data found';
 
             listEl.innerHTML = providers.map((provider) => this.renderProviderCard(provider)).join('');
@@ -326,6 +330,10 @@ class SetupWizard {
             : provider.recommended_action === 'authenticate'
                 ? 'Installed, but authentication is still needed'
                 : 'Not detected. Use the install link to set it up';
+        const primaryActionLabel = provider.recommended_action === 'authenticate' ? 'Open Auth / Install' : 'Open Install / Learn More';
+        const secondaryAction = provider.recommended_action === 'authenticate'
+            ? `<button type="button" class="wizard-btn secondary" data-provider-action="copy-auth" data-provider-id="${this.escapeHtml(provider.provider_id)}">Copy Auth Guidance</button>`
+            : '';
 
         return `
             <div class="feature-item provider-detection-card ${this.escapeHtml(provider.recommended_action)}">
@@ -336,7 +344,10 @@ class SetupWizard {
                     ${versionLine}
                     ${pathLine}
                     <span class="provider-hint-line">${this.escapeHtml(provider.auth_hint || '')}</span>
-                    <a href="${this.escapeHtml(provider.install_url || '#')}" target="_blank" class="get-key-link">Install / Learn More →</a>
+                    <div class="provider-action-row">
+                        <button type="button" class="wizard-btn secondary" data-provider-action="open-link" data-provider-id="${this.escapeHtml(provider.provider_id)}">${primaryActionLabel}</button>
+                        ${secondaryAction}
+                    </div>
                 </span>
             </div>
         `;
@@ -392,31 +403,27 @@ class SetupWizard {
      */
     goToStep(stepNumber) {
         this.currentStep = stepNumber;
-        
-        // Update step visibility
-        document.querySelectorAll('.wizard-step').forEach(step => {
-            step.classList.toggle('active', parseInt(step.dataset.step) === stepNumber);
+
+        document.querySelectorAll('.wizard-step').forEach((step) => {
+            step.classList.toggle('active', parseInt(step.dataset.step, 10) === stepNumber);
         });
 
-        // Update progress
         const progress = (stepNumber / this.totalSteps) * 100;
         document.getElementById('wizardProgressFill').style.width = `${progress}%`;
-        
-        // Update step indicators
-        document.querySelectorAll('.step-indicator').forEach(indicator => {
-            const step = parseInt(indicator.dataset.step);
+
+        document.querySelectorAll('.step-indicator').forEach((indicator) => {
+            const step = parseInt(indicator.dataset.step, 10);
             indicator.classList.toggle('active', step === stepNumber);
             indicator.classList.toggle('completed', step < stepNumber);
         });
 
-        // Update buttons
         const backBtn = document.getElementById('wizardBackBtn');
         const nextBtn = document.getElementById('wizardNextBtn');
         const skipBtn = document.getElementById('wizardSkipBtn');
 
         backBtn.style.display = stepNumber > 1 ? 'block' : 'none';
         skipBtn.style.display = stepNumber < this.totalSteps ? 'block' : 'none';
-        
+
         if (stepNumber === this.totalSteps) {
             nextBtn.textContent = 'Start Using Windows AI';
             this.generateSummary();
@@ -431,13 +438,10 @@ class SetupWizard {
      * Go to next step
      */
     async nextStep() {
-        // Save data for current step
         await this.saveStepData();
-        
         if (this.currentStep < this.totalSteps) {
             this.goToStep(this.currentStep + 1);
         } else {
-            // Complete setup
             await this.completeSetup();
         }
     }
@@ -456,7 +460,6 @@ class SetupWizard {
      */
     async saveStepData() {
         if (this.currentStep === 3) {
-            // Collect API keys
             const openaiKey = document.getElementById('wizardOpenAIKey').value.trim();
             const anthropicKey = document.getElementById('wizardAnthropicKey').value.trim();
             const googleKey = document.getElementById('wizardGoogleKey').value.trim();
@@ -465,7 +468,6 @@ class SetupWizard {
             if (anthropicKey) this.setupData.apiKeys.anthropic = anthropicKey;
             if (googleKey) this.setupData.apiKeys.google = googleKey;
 
-            // Save API keys to backend
             await this.saveApiKeys();
         }
     }
@@ -480,8 +482,8 @@ class SetupWizard {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        provider: provider,
-                        api_key: key
+                        provider,
+                        api_key: key,
                     })
                 });
             } catch (error) {
@@ -500,10 +502,14 @@ class SetupWizard {
         const providerSetup = this.setupData.providerSetup;
         const readyProviders = providerSetup?.providers?.filter((item) => item.recommended_action === 'ready').length || 0;
         const missingProviders = providerSetup?.providers?.filter((item) => item.recommended_action === 'install').length || 0;
+        const authProviders = providerSetup?.providers?.filter((item) => item.recommended_action === 'authenticate').length || 0;
         if (providerSetup?.providers?.length) {
             items.push(`✓ ${readyProviders} provider(s) detected and ready`);
+            if (authProviders > 0) {
+                items.push(`○ ${authProviders} provider(s) still need authentication`);
+            }
             if (missingProviders > 0) {
-                items.push(`○ ${missingProviders} provider(s) can be installed later from the setup links`);
+                items.push(`○ ${missingProviders} provider(s) can be installed later from setup links or Settings`);
             }
         }
 
@@ -516,18 +522,15 @@ class SetupWizard {
 
         if (this.setupData.selectedModel) {
             let selectedName = this.setupData.selectedModel;
-            // Try to read from the selected card's title in the grid
             const selectedEl = document.querySelector('.model-option.selected');
             if (selectedEl) {
                 const titleEl = selectedEl.querySelector('h4');
                 if (titleEl) selectedName = titleEl.textContent;
             } else {
-                // As fallback, try to fetch model metadata from backend
                 try {
                     const res = await fetch(`${this.apiEndpoint}/models/${this.setupData.selectedModel}`);
                     if (res.ok) {
                         const json = await res.json();
-                        // Backend returns { status, model } in main endpoints
                         const modelObj = json.model || json;
                         selectedName = modelObj.name || modelObj.display_name || selectedName;
                     }
@@ -540,7 +543,7 @@ class SetupWizard {
             items.push('○ Using default model (GPT-3.5 Turbo)');
         }
 
-        summaryList.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+        summaryList.innerHTML = items.map((item) => `<li>${item}</li>`).join('');
     }
 
     /**
@@ -548,18 +551,18 @@ class SetupWizard {
      */
     async completeSetup() {
         try {
-            // Save selected model preference
             if (this.setupData.selectedModel) {
                 await fetch(`${this.apiEndpoint}/api/settings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        default_model: this.setupData.selectedModel
+                        default_model: this.setupData.selectedModel,
                     })
                 });
             }
 
-            // Mark setup as complete
+            await this.persistProviderSetupToConfig();
+
             await fetch(`${this.apiEndpoint}/api/setup/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -570,20 +573,16 @@ class SetupWizard {
                 })
             });
 
-            // Hide wizard
             this.hide();
-            
-            // Trigger a refresh of the main UI
+
             if (typeof loadConversations === 'function') {
                 loadConversations();
             }
             if (typeof loadAvailableModels === 'function') {
                 loadAvailableModels();
             }
-
         } catch (error) {
             console.error('Failed to complete setup:', error);
-            // Still hide wizard on error - user can configure in settings
             this.hide();
         }
     }
@@ -593,14 +592,14 @@ class SetupWizard {
      */
     async skipSetup() {
         try {
-            // Mark setup as skipped
+            await this.persistProviderSetupToConfig();
             await fetch(`${this.apiEndpoint}/api/setup/complete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     completed: true,
                     skipped: true,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
                 })
             });
         } catch (error) {
@@ -608,6 +607,64 @@ class SetupWizard {
         }
 
         this.hide();
+    }
+
+    async persistProviderSetupToConfig() {
+        if (!window.winAI?.readConfig || !window.winAI?.writeConfig || !this.setupData.providerSetup) {
+            return;
+        }
+
+        try {
+            const currentConfig = await window.winAI.readConfig();
+            const nextConfig = {
+                ...(currentConfig || {}),
+                detectedProviders: this.setupData.providerSetup.providers || [],
+                providerSetupPlan: this.setupData.providerSetup,
+                ollamaRecommendations: this.setupData.providerSetup.ollama || null,
+                providerSetupUpdatedAt: new Date().toISOString(),
+            };
+            await window.winAI.writeConfig(nextConfig);
+        } catch (error) {
+            console.warn('Failed to persist provider setup state to local config:', error);
+        }
+    }
+
+    async openExternalUrl(url) {
+        if (!url) return;
+        try {
+            if (window.winAI?.openExternal) {
+                await window.winAI.openExternal(url);
+                return;
+            }
+        } catch (error) {
+            console.warn('Electron external open failed, falling back to window.open:', error);
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    async copyToClipboard(text) {
+        if (!text) return;
+        try {
+            if (window.winAI?.copyToClipboard) {
+                await window.winAI.copyToClipboard(text);
+                return;
+            }
+        } catch (error) {
+            console.warn('Electron clipboard write failed, falling back to browser clipboard:', error);
+        }
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+        }
+    }
+
+    showInlineProviderMessage(message) {
+        const statusEl = document.getElementById('providerSetupStatus');
+        if (!statusEl) return;
+        const original = statusEl.textContent;
+        statusEl.textContent = message;
+        setTimeout(() => {
+            statusEl.textContent = original;
+        }, 2500);
     }
 
     escapeHtml(value) {
@@ -620,15 +677,13 @@ class SetupWizard {
     }
 }
 
-// Initialize setup wizard when DOM is ready
 let setupWizard = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     setupWizard = new SetupWizard();
-    
-    // Check if this is first run after a short delay to let backend start
+
     setTimeout(() => {
-        setupWizard.init().then(needed => {
+        setupWizard.init().then((needed) => {
             if (needed) {
                 console.log('First-run setup wizard displayed');
             }
@@ -636,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 });
 
-// Export for use by other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { SetupWizard };
 }
