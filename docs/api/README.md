@@ -7,6 +7,10 @@ This directory contains the primary REST API references for Windows AI.
 - [General API Reference](./API_REFERENCE.md)
 - [Provider Integrations API](./PROVIDER_INTEGRATIONS.md)
 
+## Examples
+
+- [Provider Chat Examples](../examples/provider-chat.md)
+
 ## What to use
 
 Use the general API reference for the core application surface, including health,
