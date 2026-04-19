@@ -29,7 +29,6 @@ class ChatInterface {
     }
     
     setupEventListeners() {
-        // Send message
         const sendBtn = this.getSendButton();
         const messageInput = this.getMessageInput();
         
@@ -41,17 +40,14 @@ class ChatInterface {
             }
         });
         
-        // New conversation
         document.getElementById('newChatBtn')?.addEventListener('click', () => {
             this.createNewConversation();
         });
         
-        // Model selector
         this.getModelSelector()?.addEventListener('change', (e) => {
             this.selectedModel = e.target.value;
         });
         
-        // Stop streaming
         this.getStopStreamingButton()?.addEventListener('click', () => {
             this.stopStreaming();
         });
@@ -71,6 +67,10 @@ class ChatInterface {
 
     getStopStreamingButton() {
         return document.getElementById('stopStreamingBtn');
+    }
+
+    isProviderExecutionTarget(model) {
+        return typeof model === 'string' && (model.startsWith('cli:') || model.startsWith('ollama:'));
     }
 
     async loadModelSelectorOptions() {
@@ -331,6 +331,16 @@ class ChatInterface {
             content: `Error: ${message.error}`
         });
     }
+
+    getProviderHistory(limit = 10) {
+        return (this.messageHistory || [])
+            .filter((message) => message && message.role && typeof message.content === 'string')
+            .slice(-limit)
+            .map((message) => ({
+                role: message.role,
+                content: message.content,
+            }));
+    }
     
     async sendMessage() {
         const input = this.getMessageInput();
@@ -358,6 +368,11 @@ class ChatInterface {
             content: content,
             timestamp: new Date().toISOString()
         });
+
+        if (this.isProviderExecutionTarget(this.selectedModel)) {
+            await this.sendProviderTargetMessage(content);
+            return;
+        }
         
         if (this.chatSocket?.readyState === WebSocket.OPEN) {
             this.chatSocket.send(JSON.stringify({
@@ -368,6 +383,64 @@ class ChatInterface {
             }));
         } else {
             await this.sendMessageREST(content);
+        }
+    }
+
+    async sendProviderTargetMessage(content) {
+        try {
+            this.isStreaming = true;
+            this.updateStreamingUI(true);
+
+            const messageId = `msg_${Date.now()}`;
+            this.appendMessage({
+                role: 'assistant',
+                content: '',
+                id: messageId,
+                streaming: true
+            });
+
+            const response = await fetch(`${this.apiEndpoint}/integrations/providers/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversation_id: this.currentConversationId,
+                    message: content,
+                    model: this.selectedModel,
+                    stream: false,
+                    history: this.getProviderHistory(10),
+                })
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.status === 'error') {
+                throw new Error(payload.error || payload.detail || 'Provider chat request failed');
+            }
+
+            const assistantContent = payload?.message?.content || payload?.provider_result?.content || '';
+            const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageEl) {
+                messageEl.classList.remove('streaming');
+                const contentEl = messageEl.querySelector('.message-content');
+                if (contentEl) {
+                    contentEl.innerHTML = this.formatMessage(assistantContent);
+                }
+            }
+
+            this.messageHistory.push({
+                role: 'assistant',
+                content: assistantContent,
+                timestamp: new Date().toISOString(),
+                model: this.selectedModel,
+            });
+        } catch (error) {
+            console.error('Provider chat error:', error);
+            this.appendMessage({
+                role: 'error',
+                content: `Failed to send provider request: ${error.message}`
+            });
+        } finally {
+            this.isStreaming = false;
+            this.updateStreamingUI(false);
         }
     }
     
