@@ -278,12 +278,14 @@ class ProviderCLIRegistry:
         return None
 
     def _detect_auth(self, provider_id: str) -> bool:
+        if provider_id == "ollama":
+            return True
+
         env_checks = {
             "gemini": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
             "codex": ["OPENAI_API_KEY"],
             "claude": ["ANTHROPIC_API_KEY"],
             "grok": ["XAI_API_KEY", "GROK_API_KEY"],
-            "ollama": ["OLLAMA_HOST"],
         }
         return any(os.getenv(key) for key in env_checks.get(provider_id, []))
 
@@ -326,7 +328,7 @@ def _register_provider_chat_route() -> None:
             return
 
         from fastapi.responses import StreamingResponse
-        from pydantic import BaseModel
+        from pydantic import BaseModel, Field
         from windows_ai.provider_cli_executor import ProviderCLIExecutionError, provider_cli_executor
 
         class ProviderChatRequest(BaseModel):
@@ -336,7 +338,7 @@ def _register_provider_chat_route() -> None:
             stream: bool = False
             temperature: float = 0.7
             max_tokens: Optional[int] = None
-            history: List[Dict[str, str]] = []
+            history: List[Dict[str, str]] = Field(default_factory=list)
 
         def _build_messages(request: ProviderChatRequest) -> List[Dict[str, str]]:
             messages = list(request.history or [])
