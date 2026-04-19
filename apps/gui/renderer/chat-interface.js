@@ -387,11 +387,11 @@ class ChatInterface {
     }
 
     async sendProviderTargetMessage(content) {
+        const messageId = `msg_${Date.now()}`;
         try {
             this.isStreaming = true;
             this.updateStreamingUI(true);
 
-            const messageId = `msg_${Date.now()}`;
             this.appendMessage({
                 role: 'assistant',
                 content: '',
@@ -399,49 +399,126 @@ class ChatInterface {
                 streaming: true
             });
 
-            const response = await fetch(`${this.apiEndpoint}/integrations/providers/chat`, {
+            const response = await fetch(`${this.apiEndpoint}/integrations/providers/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     conversation_id: this.currentConversationId,
                     message: content,
                     model: this.selectedModel,
-                    stream: false,
+                    stream: true,
                     history: this.getProviderHistory(10),
                 })
             });
 
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok || payload.status === 'error') {
-                throw new Error(payload.error || payload.detail || 'Provider chat request failed');
+            if (!response.ok || !response.body) {
+                throw new Error(`Provider stream request failed (${response.status})`);
             }
 
-            const assistantContent = payload?.message?.content || payload?.provider_result?.content || '';
-            const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-            if (messageEl) {
-                messageEl.classList.remove('streaming');
-                const contentEl = messageEl.querySelector('.message-content');
-                if (contentEl) {
-                    contentEl.innerHTML = this.formatMessage(assistantContent);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let fullContent = '';
+            let completed = false;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+                    const event = JSON.parse(trimmed);
+                    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+                    const contentEl = messageEl?.querySelector('.message-content');
+
+                    if (event.type === 'chunk') {
+                        fullContent += event.content || '';
+                        if (contentEl) {
+                            contentEl.textContent = fullContent;
+                            this.scrollToBottom();
+                        }
+                    } else if (event.type === 'complete') {
+                        completed = true;
+                        fullContent = event.content || fullContent;
+                        if (messageEl) {
+                            messageEl.classList.remove('streaming');
+                        }
+                        if (contentEl) {
+                            contentEl.innerHTML = this.formatMessage(fullContent);
+                        }
+                    } else if (event.type === 'error') {
+                        throw new Error(event.error || 'Provider streaming failed');
+                    }
                 }
+            }
+
+            if (!completed) {
+                const fallbackPayload = await this.sendProviderTargetMessageFallback(content, messageId);
+                fullContent = fallbackPayload;
             }
 
             this.messageHistory.push({
                 role: 'assistant',
-                content: assistantContent,
+                content: fullContent,
                 timestamp: new Date().toISOString(),
                 model: this.selectedModel,
             });
         } catch (error) {
             console.error('Provider chat error:', error);
-            this.appendMessage({
-                role: 'error',
-                content: `Failed to send provider request: ${error.message}`
-            });
+            try {
+                const fallbackContent = await this.sendProviderTargetMessageFallback(content, messageId);
+                this.messageHistory.push({
+                    role: 'assistant',
+                    content: fallbackContent,
+                    timestamp: new Date().toISOString(),
+                    model: this.selectedModel,
+                });
+            } catch (fallbackError) {
+                console.error('Provider chat fallback failed:', fallbackError);
+                this.appendMessage({
+                    role: 'error',
+                    content: `Failed to send provider request: ${fallbackError.message || error.message}`
+                });
+            }
         } finally {
             this.isStreaming = false;
             this.updateStreamingUI(false);
         }
+    }
+
+    async sendProviderTargetMessageFallback(content, messageId) {
+        const response = await fetch(`${this.apiEndpoint}/integrations/providers/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversation_id: this.currentConversationId,
+                message: content,
+                model: this.selectedModel,
+                stream: false,
+                history: this.getProviderHistory(10),
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.status === 'error') {
+            throw new Error(payload.error || payload.detail || 'Provider chat request failed');
+        }
+
+        const assistantContent = payload?.message?.content || payload?.provider_result?.content || '';
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (messageEl) {
+            messageEl.classList.remove('streaming');
+            const contentEl = messageEl.querySelector('.message-content');
+            if (contentEl) {
+                contentEl.innerHTML = this.formatMessage(assistantContent);
+            }
+        }
+        return assistantContent;
     }
     
     async sendMessageREST(content) {
