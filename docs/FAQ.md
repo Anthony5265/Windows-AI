@@ -301,7 +301,7 @@ Yes:
 ### Is the app open source?
 
 Yes! Source code available on GitHub:
-https://github.com/yourorg/Windows-AI
+https://github.com/Anthony5265/Windows-AI
 
 ### Are plugins safe?
 
@@ -432,7 +432,7 @@ No, only one instance can run at a time (backend uses port 8010).
 
 ### Where can I get help?
 
-- **Documentation**: [USER_GUIDE.md](USER_GUIDE.md)
+- **Documentation**: [User Guide](USER_GUIDE.md)
 - **Troubleshooting**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - **GitHub Issues**: Report bugs
 - **GitHub Discussions**: Ask questions
@@ -450,7 +450,7 @@ No, only one instance can run at a time (backend uses port 8010).
 - Create plugins
 - Improve documentation
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### I found a bug!
 
@@ -470,10 +470,10 @@ Please report it:
 
 ## More Questions?
 
-- **User Guide**: [USER_GUIDE.md](USER_GUIDE.md) - Complete feature documentation
+- **User Guide**: [User Guide](USER_GUIDE.md) - Complete feature documentation
 - **Troubleshooting**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Detailed problem solving
 - **API Docs**: [API_REFERENCE.md](API_REFERENCE.md) - For developers
-- **GitHub**: https://github.com/yourorg/Windows-AI
+- **GitHub**: https://github.com/Anthony5265/Windows-AI
 
 Can't find your answer? Ask on GitHub Discussions!
 
