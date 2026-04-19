@@ -11,7 +11,8 @@ class SetupWizard {
         this.setupData = {
             apiKeys: {},
             selectedModel: null,
-            preferences: {}
+            preferences: {},
+            providerSetup: null,
         };
         this.initialized = false;
     }
@@ -128,8 +129,28 @@ class SetupWizard {
                         </div>
                     </div>
 
-                    <!-- Step 2: API Keys -->
+                    <!-- Step 2: Provider Detection -->
                     <div class="wizard-step" data-step="2">
+                        <div class="step-icon">🧩</div>
+                        <h3>Connect AI Providers and Local Runtimes</h3>
+                        <p>Windows AI can detect installed CLIs and recommend local models for Ollama based on your hardware.</p>
+
+                        <div class="wizard-note">
+                            <span class="note-icon">ℹ️</span>
+                            <span>Installed providers are shown as ready. Missing providers include install and authentication guidance.</span>
+                        </div>
+
+                        <div id="providerSetupStatus" class="wizard-inline-status">Detecting providers and hardware…</div>
+                        <div id="providerDetectionList" class="feature-list"></div>
+
+                        <div class="setup-summary" id="ollamaRecommendationSection" style="display:none;">
+                            <h4>Recommended Ollama Models</h4>
+                            <ul id="ollamaRecommendationList"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: API Keys -->
+                    <div class="wizard-step" data-step="3">
                         <div class="step-icon">🔑</div>
                         <h3>Configure API Keys</h3>
                         <p>Add your AI provider API keys to enable AI features. You can skip this and add them later.</p>
@@ -169,23 +190,16 @@ class SetupWizard {
                         </div>
                     </div>
 
-                    <!-- Step 3: Model Selection -->
-                    <div class="wizard-step" data-step="3">
-                        <div class="step-icon">🤖</div>
-                        <h3>Choose Your Default Model</h3>
+                    <!-- Step 4: Model Selection & Complete -->
+                    <div class="wizard-step" data-step="4">
+                        <div class="step-icon">✅</div>
+                        <h3>Pick Your Default Model and Finish</h3>
                         <p>Select the AI model you'd like to use by default. You can change this anytime.</p>
                         
                         <div class="model-selection-grid" id="wizardModelGrid">
                             <!-- Model options will be loaded dynamically -->
                         </div>
-                    </div>
 
-                    <!-- Step 4: Complete -->
-                    <div class="wizard-step" data-step="4">
-                        <div class="step-icon">✅</div>
-                        <h3>You're All Set!</h3>
-                        <p>Windows AI is ready to use. Here's a quick overview of what you can do:</p>
-                        
                         <div class="quick-tips">
                             <div class="tip-card">
                                 <div class="tip-icon">💬</div>
@@ -194,8 +208,8 @@ class SetupWizard {
                             </div>
                             <div class="tip-card">
                                 <div class="tip-icon">🔌</div>
-                                <h4>Plugins</h4>
-                                <p>Explore and install plugins to add features</p>
+                                <h4>Providers</h4>
+                                <p>Use detected CLIs and local runtimes in one interface</p>
                             </div>
                             <div class="tip-card">
                                 <div class="tip-icon">⚙️</div>
@@ -224,7 +238,8 @@ class SetupWizard {
         `;
 
         document.body.appendChild(overlay);
-        // Load dynamic model list and attach event listeners
+        // Load dynamic data and attach event listeners
+        this.loadProviderSetup();
         this.loadModelOptions();
         this.attachEventListeners();
     }
@@ -246,6 +261,85 @@ class SetupWizard {
             option.classList.add('selected');
             this.setupData.selectedModel = option.dataset.model;
         });
+    }
+
+    async loadProviderSetup() {
+        const statusEl = document.getElementById('providerSetupStatus');
+        const listEl = document.getElementById('providerDetectionList');
+        const ollamaSection = document.getElementById('ollamaRecommendationSection');
+        const ollamaList = document.getElementById('ollamaRecommendationList');
+
+        if (!statusEl || !listEl) return;
+
+        statusEl.textContent = 'Detecting providers and hardware…';
+        listEl.innerHTML = '';
+
+        try {
+            const response = await fetch(`${this.apiEndpoint}/integrations/providers/setup-plan`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.setupData.providerSetup = data;
+
+            const providers = data.providers || [];
+            const hardware = data.ollama?.hardware_profile || data.hardware || null;
+            const recommendedModels = data.ollama?.recommended_models || [];
+
+            statusEl.textContent = providers.length
+                ? `Detected ${providers.filter(p => p.detected).length} installed provider(s)`
+                : 'No provider data found';
+
+            listEl.innerHTML = providers.map((provider) => this.renderProviderCard(provider)).join('');
+
+            if (recommendedModels.length) {
+                ollamaSection.style.display = 'block';
+                const hardwareLabel = hardware
+                    ? `${hardware.platform || 'Windows'} • ${hardware.cpu_count || '?'} CPU threads • ${hardware.total_memory_gb || '?'} GB RAM${hardware.gpu_hint ? ` • ${hardware.gpu_hint}` : ''}`
+                    : 'Hardware profile unavailable';
+                ollamaList.innerHTML = [
+                    `<li><strong>Detected hardware:</strong> ${this.escapeHtml(hardwareLabel)}</li>`,
+                    ...recommendedModels.map((model) => `<li><strong>${this.escapeHtml(model.id)}</strong> — ${this.escapeHtml(model.reason)}</li>`)
+                ].join('');
+            } else {
+                ollamaSection.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Failed to load provider setup plan:', error);
+            statusEl.textContent = 'Provider detection unavailable right now';
+            listEl.innerHTML = '<div class="empty-state">Detection failed. You can still configure providers later in Settings.</div>';
+            if (ollamaSection) ollamaSection.style.display = 'none';
+        }
+    }
+
+    renderProviderCard(provider) {
+        const statusIcon = provider.recommended_action === 'ready'
+            ? '✅'
+            : provider.recommended_action === 'authenticate'
+                ? '🔐'
+                : '⬇️';
+        const versionLine = provider.version ? `<div class="provider-hint-line">Version: ${this.escapeHtml(provider.version)}</div>` : '';
+        const pathLine = provider.executable_path ? `<div class="provider-hint-line">Path: ${this.escapeHtml(provider.executable_path)}</div>` : '';
+        const actionText = provider.recommended_action === 'ready'
+            ? 'Ready to use in Windows AI'
+            : provider.recommended_action === 'authenticate'
+                ? 'Installed, but authentication is still needed'
+                : 'Not detected. Use the install link to set it up';
+
+        return `
+            <div class="feature-item provider-detection-card ${this.escapeHtml(provider.recommended_action)}">
+                <span class="feature-icon">${statusIcon}</span>
+                <span>
+                    <strong>${this.escapeHtml(provider.display_name || provider.provider_id)}</strong><br>
+                    ${this.escapeHtml(actionText)}<br>
+                    ${versionLine}
+                    ${pathLine}
+                    <span class="provider-hint-line">${this.escapeHtml(provider.auth_hint || '')}</span>
+                    <a href="${this.escapeHtml(provider.install_url || '#')}" target="_blank" class="get-key-link">Install / Learn More →</a>
+                </span>
+            </div>
+        `;
     }
 
     async loadModelOptions() {
@@ -361,7 +455,7 @@ class SetupWizard {
      * Save current step data
      */
     async saveStepData() {
-        if (this.currentStep === 2) {
+        if (this.currentStep === 3) {
             // Collect API keys
             const openaiKey = document.getElementById('wizardOpenAIKey').value.trim();
             const anthropicKey = document.getElementById('wizardAnthropicKey').value.trim();
@@ -402,6 +496,16 @@ class SetupWizard {
     async generateSummary() {
         const summaryList = document.getElementById('setupSummaryList');
         const items = [];
+
+        const providerSetup = this.setupData.providerSetup;
+        const readyProviders = providerSetup?.providers?.filter((item) => item.recommended_action === 'ready').length || 0;
+        const missingProviders = providerSetup?.providers?.filter((item) => item.recommended_action === 'install').length || 0;
+        if (providerSetup?.providers?.length) {
+            items.push(`✓ ${readyProviders} provider(s) detected and ready`);
+            if (missingProviders > 0) {
+                items.push(`○ ${missingProviders} provider(s) can be installed later from the setup links`);
+            }
+        }
 
         const keyCount = Object.keys(this.setupData.apiKeys).length;
         if (keyCount > 0) {
@@ -461,7 +565,8 @@ class SetupWizard {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     completed: true,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    provider_setup: this.setupData.providerSetup,
                 })
             });
 
@@ -503,6 +608,15 @@ class SetupWizard {
         }
 
         this.hide();
+    }
+
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 }
 
