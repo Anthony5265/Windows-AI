@@ -737,3 +737,222 @@ class AgentFlowVisualizer {
 }
 
 const agentFlowVisualizer = new AgentFlowVisualizer();
+
+class ProviderSetupSurface {
+    constructor() {
+        this.apiEndpoint = 'http://127.0.0.1:8010';
+        this.providerSetup = null;
+        this.init();
+    }
+
+    init() {
+        document.addEventListener('DOMContentLoaded', () => {
+            this.ensureContainers();
+            this.load();
+        });
+    }
+
+    ensureContainers() {
+        const settingsSystem = document.getElementById('settings-system');
+        if (settingsSystem && !document.getElementById('providerSetupSettingsGroup')) {
+            const group = document.createElement('div');
+            group.className = 'settings-group';
+            group.id = 'providerSetupSettingsGroup';
+            group.innerHTML = `
+                <h3>🧩 AI Provider Runtime Detection</h3>
+                <p class="settings-description">Windows AI can use detected third-party CLIs and local runtimes such as Ollama.</p>
+                <div class="setting-item">
+                    <div>
+                        <strong>Detected Providers</strong>
+                        <p class="setting-hint">Installed providers become available to Windows AI after setup.</p>
+                    </div>
+                    <button id="refreshProviderSetupBtn" class="btn-secondary btn-small">Refresh Detection</button>
+                </div>
+                <div id="providerSetupSettingsStatus" class="storage-info">Loading provider setup…</div>
+                <div id="providerSetupSettingsList" class="automation-list"></div>
+            `;
+            settingsSystem.prepend(group);
+        }
+
+        const settingsModels = document.getElementById('settings-models');
+        if (settingsModels && !document.getElementById('ollamaRecommendationsGroup')) {
+            const group = document.createElement('div');
+            group.className = 'settings-group';
+            group.id = 'ollamaRecommendationsGroup';
+            group.innerHTML = `
+                <h3>🦙 Ollama Recommendations</h3>
+                <p class="settings-description">Suggested local models based on detected hardware.</p>
+                <div id="ollamaRecommendationsStatus" class="storage-info">Loading recommendations…</div>
+                <div id="ollamaRecommendationsList" class="automation-list"></div>
+            `;
+            settingsModels.prepend(group);
+        }
+
+        document.getElementById('refreshProviderSetupBtn')?.addEventListener('click', () => this.load(true));
+        document.getElementById('providerSetupSettingsList')?.addEventListener('click', (event) => this.handleAction(event));
+        document.getElementById('ollamaRecommendationsList')?.addEventListener('click', (event) => this.handleAction(event));
+    }
+
+    async load(forceRefresh = false) {
+        const statusEl = document.getElementById('providerSetupSettingsStatus');
+        const ollamaStatusEl = document.getElementById('ollamaRecommendationsStatus');
+        if (statusEl) statusEl.textContent = 'Loading provider setup…';
+        if (ollamaStatusEl) ollamaStatusEl.textContent = 'Loading recommendations…';
+
+        try {
+            let providerSetup = null;
+            if (!forceRefresh && window.winAI?.readConfig) {
+                const config = await window.winAI.readConfig();
+                providerSetup = config?.providerSetupPlan || null;
+            }
+
+            if (!providerSetup) {
+                const response = await fetch(`${this.apiEndpoint}/integrations/providers/setup-plan`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                providerSetup = await response.json();
+                if (window.winAI?.readConfig && window.winAI?.writeConfig) {
+                    const currentConfig = await window.winAI.readConfig();
+                    await window.winAI.writeConfig({
+                        ...(currentConfig || {}),
+                        providerSetupPlan: providerSetup,
+                        detectedProviders: providerSetup.providers || [],
+                        ollamaRecommendations: providerSetup.ollama || null,
+                        providerSetupUpdatedAt: new Date().toISOString(),
+                    });
+                }
+            }
+
+            this.providerSetup = providerSetup;
+            this.render();
+        } catch (error) {
+            console.error('Failed to load provider setup surface:', error);
+            if (statusEl) statusEl.textContent = 'Provider detection unavailable';
+            if (ollamaStatusEl) ollamaStatusEl.textContent = 'Recommendation data unavailable';
+            const listEl = document.getElementById('providerSetupSettingsList');
+            const ollamaListEl = document.getElementById('ollamaRecommendationsList');
+            if (listEl) listEl.innerHTML = '<div class="empty-state"><p>Detection failed. Run setup again later or ensure the backend is available.</p></div>';
+            if (ollamaListEl) ollamaListEl.innerHTML = '<div class="empty-state"><p>No recommendations available.</p></div>';
+        }
+    }
+
+    render() {
+        const providers = this.providerSetup?.providers || [];
+        const listEl = document.getElementById('providerSetupSettingsList');
+        const statusEl = document.getElementById('providerSetupSettingsStatus');
+        const ollamaListEl = document.getElementById('ollamaRecommendationsList');
+        const ollamaStatusEl = document.getElementById('ollamaRecommendationsStatus');
+
+        if (statusEl) {
+            statusEl.textContent = providers.length
+                ? `${providers.filter((item) => item.detected).length} detected • ${providers.filter((item) => item.recommended_action === 'ready').length} ready • updated ${new Date().toLocaleString()}`
+                : 'No provider data available';
+        }
+
+        if (listEl) {
+            listEl.innerHTML = providers.length
+                ? providers.map((provider) => this.renderProviderCard(provider)).join('')
+                : '<div class="empty-state"><p>No providers detected yet.</p></div>';
+        }
+
+        const ollama = this.providerSetup?.ollama || null;
+        const recommendedModels = ollama?.recommended_models || [];
+        const hardware = ollama?.hardware_profile || this.providerSetup?.hardware || null;
+
+        if (ollamaStatusEl) {
+            ollamaStatusEl.textContent = hardware
+                ? `${hardware.platform || 'Windows'} • ${hardware.cpu_count || '?'} CPU threads • ${hardware.total_memory_gb || '?'} GB RAM${hardware.gpu_hint ? ` • ${hardware.gpu_hint}` : ''}`
+                : 'Hardware profile unavailable';
+        }
+
+        if (ollamaListEl) {
+            ollamaListEl.innerHTML = recommendedModels.length
+                ? recommendedModels.map((model) => `
+                    <div class="automation-card">
+                        <div class="automation-card-content">
+                            <div class="automation-card-title">🦙 ${this.escapeHtml(model.id)}</div>
+                            <div class="automation-card-description">${this.escapeHtml(model.reason)}</div>
+                        </div>
+                        <div class="automation-card-actions">
+                            <button class="btn-secondary btn-small" data-provider-action="open-link" data-url="https://ollama.com/library/${this.escapeHtml(model.id.split(':')[0])}">Open Model</button>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="empty-state"><p>No Ollama recommendations available.</p></div>';
+        }
+    }
+
+    renderProviderCard(provider) {
+        const actionText = provider.recommended_action === 'ready'
+            ? 'Ready to use in Windows AI'
+            : provider.recommended_action === 'authenticate'
+                ? 'Installed, but authentication is still needed'
+                : 'Not detected. Install to enable this provider in Windows AI';
+        const secondaryAction = provider.recommended_action === 'authenticate'
+            ? `<button class="btn-secondary btn-small" data-provider-action="copy-auth" data-provider-id="${this.escapeHtml(provider.provider_id)}">Copy Auth Guidance</button>`
+            : '';
+
+        return `
+            <div class="automation-card">
+                <div class="automation-card-content">
+                    <div class="automation-card-title">
+                        ${this.escapeHtml(provider.display_name || provider.provider_id)}
+                        <span class="status-badge ${provider.recommended_action === 'ready' ? 'active' : 'inactive'}">${this.escapeHtml(provider.recommended_action)}</span>
+                    </div>
+                    <div class="automation-card-description">${this.escapeHtml(actionText)}</div>
+                    <div class="automation-card-meta">
+                        <span>${this.escapeHtml(provider.version || 'Version unknown')}</span>
+                        <span>${this.escapeHtml(provider.executable_path || 'Not detected')}</span>
+                    </div>
+                    <div class="automation-card-description">${this.escapeHtml(provider.auth_hint || '')}</div>
+                </div>
+                <div class="automation-card-actions">
+                    <button class="btn-secondary btn-small" data-provider-action="open-link" data-url="${this.escapeHtml(provider.install_url || '#')}">${provider.recommended_action === 'authenticate' ? 'Open Auth / Install' : 'Open Install'}</button>
+                    ${secondaryAction}
+                </div>
+            </div>
+        `;
+    }
+
+    async handleAction(event) {
+        const button = event.target.closest('[data-provider-action]');
+        if (!button) return;
+
+        const action = button.dataset.providerAction;
+        if (action === 'open-link') {
+            const url = button.dataset.url;
+            if (!url) return;
+            if (window.winAI?.openExternal) {
+                await window.winAI.openExternal(url);
+            } else {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+            return;
+        }
+
+        if (action === 'copy-auth') {
+            const providerId = button.dataset.providerId;
+            const provider = this.providerSetup?.providers?.find((item) => item.provider_id === providerId);
+            if (!provider) return;
+            const guidance = `${provider.display_name || provider.provider_id}: ${provider.auth_hint || 'Authentication required.'}`;
+            if (window.winAI?.copyToClipboard) {
+                await window.winAI.copyToClipboard(guidance);
+            } else if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(guidance);
+            }
+            settingsPanel?.showSuccess?.(`${provider.display_name || provider.provider_id} auth guidance copied.`);
+        }
+    }
+
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+}
+
+const providerSetupSurface = new ProviderSetupSurface();
