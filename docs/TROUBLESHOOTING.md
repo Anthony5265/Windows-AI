@@ -1048,7 +1048,7 @@ Logs will be much more verbose
 - This troubleshooting guide
 
 **2. Search Existing Issues**
-- GitHub Issues: https://github.com/yourorg/Windows-AI/issues
+- GitHub Issues: https://github.com/Anthony5265/Windows-AI/issues
 - Check if your problem already reported
 
 **3. Gather Information**
