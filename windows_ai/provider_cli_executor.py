@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Sequence, Tuple
 import asyncio
 import json
 import os
@@ -63,6 +63,27 @@ class ProviderCLIExecutor:
             return await self._execute_cli_chat(provider_id, target_model, messages, temperature, max_tokens)
         raise ProviderCLIExecutionError(f"Unsupported provider target: {target_model}")
 
+    async def execute_chat_stream(
+        self,
+        target_model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+    ) -> AsyncIterator[str]:
+        if target_model.startswith("ollama:"):
+            async for chunk in self._stream_ollama_chat(target_model, messages, temperature):
+                yield chunk
+            return
+
+        result = await self.execute_chat(
+            target_model=target_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        if result.content:
+            yield result.content
+
     async def _execute_ollama_chat(
         self,
         target_model: str,
@@ -104,6 +125,47 @@ class ProviderCLIExecutor:
                 "total_duration": data.get("total_duration"),
             },
         )
+
+    async def _stream_ollama_chat(
+        self,
+        target_model: str,
+        messages: List[Dict[str, str]],
+        temperature: float,
+    ) -> AsyncIterator[str]:
+        model_name = target_model.split(":", 1)[1]
+        url = f"{self.ollama_base_url}/api/chat"
+        payload = {
+            "model": model_name,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": temperature,
+            },
+        }
+
+        yielded = False
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            async with client.stream("POST", url, json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+
+                    chunk = (
+                        data.get("message", {}).get("content")
+                        or data.get("response")
+                        or ""
+                    )
+                    if chunk:
+                        yielded = True
+                        yield chunk
+
+        if not yielded:
+            raise ProviderCLIExecutionError(f"Ollama streaming returned no output for model {model_name}")
 
     async def _execute_cli_chat(
         self,
