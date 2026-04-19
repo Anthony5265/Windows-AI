@@ -73,3 +73,29 @@ def test_normalize_cli_output_falls_back_to_plain_text():
     executor = ProviderCLIExecutor()
     output = "Plain text response"
     assert executor._normalize_cli_output(output) == "Plain text response"
+
+
+async def _collect_stream(executor, target_model, messages):
+    chunks = []
+    async for chunk in executor.execute_chat_stream(target_model=target_model, messages=messages):
+        chunks.append(chunk)
+    return chunks
+
+
+def test_execute_chat_stream_uses_non_ollama_fallback(monkeypatch):
+    executor = ProviderCLIExecutor()
+
+    async def fake_execute_chat(*args, **kwargs):
+        class _Result:
+            content = "fallback streamed content"
+        return _Result()
+
+    monkeypatch.setattr(executor, "execute_chat", fake_execute_chat)
+    chunks = __import__("asyncio").run(_collect_stream(executor, "cli:codex", [{"role": "user", "content": "hi"}]))
+    assert chunks == ["fallback streamed content"]
+
+
+def test_extract_text_from_dict_supports_output_key():
+    executor = ProviderCLIExecutor()
+    parsed = {"output": "Hello from output key"}
+    assert executor._extract_text_from_dict(parsed) == "Hello from output key"
