@@ -20,7 +20,7 @@ Please **do not** create a public GitHub issue for security vulnerabilities.
 ### 2. Use GitHub Security Advisories
 
 Report via GitHub Security Advisories:
-https://github.com/yourorg/Windows-AI/security/advisories/new
+https://github.com/Anthony5265/Windows-AI/security/advisories/new
 
 Or email: **security@windows-ai.example.com**
 
@@ -145,7 +145,7 @@ def safe_file_access(user_path):
 
 ## Security Contact
 
-- **GitHub Security Advisories**: https://github.com/yourorg/Windows-AI/security/advisories
+- **GitHub Security Advisories**: https://github.com/Anthony5265/Windows-AI/security/advisories
 - **Email:** security@windows-ai.example.com
 
 ## Hall of Fame
