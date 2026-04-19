@@ -11,9 +11,14 @@ Complete documentation for Windows AI - your comprehensive AI platform for Windo
 - [Quick Start](QUICK_START.md) - Get running in 5 minutes
 - [User Guide](USER_GUIDE.md) - Complete feature documentation
 
+### API & Provider Docs
+- [API Docs Index](api/README.md) - API documentation landing page
+- [API Reference](api/API_REFERENCE.md) - Complete API documentation
+- [Provider Integrations API](api/PROVIDER_INTEGRATIONS.md) - Provider detection, setup, and provider-backed chat routes
+- [Provider Chat Examples](examples/provider-chat.md) - Copy-paste examples for sync and streaming usage
+
 ### Developer Documentation
 - [Plugin Development](PLUGIN_DEVELOPMENT.md) - Create plugins
-- [API Reference](api/API_REFERENCE.md) - Complete API documentation
 - [Architecture Overview](architecture/OVERVIEW.md) - System design
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute
 
@@ -23,7 +28,7 @@ Complete documentation for Windows AI - your comprehensive AI platform for Windo
 - [Security](security/SECURITY.md) - Security best practices
 
 ### Support
-- [FAQ](FAQ.md) - Frequently Asked Questions
+- [FAQ](FAQ.md) - Frequently asked questions
 - [Troubleshooting](TROUBLESHOOTING.md) - Problem solving
 
 ---
@@ -32,4 +37,6 @@ Complete documentation for Windows AI - your comprehensive AI platform for Windo
 
 All documentation is organized in the `docs/` directory with cross-linked references for easy navigation.
 
-**Last Updated**: 2026-01-15 | **Version**: 2.0.0-alpha
+Key top-level guides currently live directly under `docs/`, while specialized references live under subdirectories such as `docs/api/`, `docs/examples/`, `docs/architecture/`, and `docs/deployment/`.
+
+**Last Updated**: 2026-04-19 | **Version**: 2.0.0-alpha
