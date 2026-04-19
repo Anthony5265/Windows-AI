@@ -194,6 +194,64 @@ def test_provider_chat_route_returns_provider_result(monkeypatch):
     assert captured["max_tokens"] == 64
 
 
+def test_provider_chat_route_avoids_duplicate_final_user_message(monkeypatch):
+    registry_module, client = _build_provider_chat_client(monkeypatch)
+    captured = {}
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        captured["messages"] = messages
+        return ProviderChatResult(
+            model=target_model,
+            provider_id="codex",
+            content="history respected",
+            backend="provider-cli",
+            metadata={},
+        )
+
+    monkeypatch.setattr(registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    history = [
+        {"role": "assistant", "content": "Earlier summary"},
+        {"role": "user", "content": "repeat this"},
+    ]
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "repeat this",
+            "model": "cli:codex",
+            "history": history,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["messages"] == history
+    assert response.json()["message"]["content"] == "history respected"
+
+
+def test_provider_chat_route_returns_error_payload_on_execution_failure(monkeypatch):
+    registry_module, client = _build_provider_chat_client(monkeypatch)
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        raise ProviderCLIExecutionError("provider unavailable")
+
+    monkeypatch.setattr(registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "hi there",
+            "conversation_id": "conv-err",
+            "model": "cli:codex",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "error"
+    assert body["conversation_id"] == "conv-err"
+    assert body["error"] == "provider unavailable"
+
+
 def test_provider_chat_stream_route_returns_ndjson_events(monkeypatch):
     registry_module, client = _build_provider_chat_client(monkeypatch)
 
