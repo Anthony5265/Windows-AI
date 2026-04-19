@@ -14,20 +14,24 @@ class ChatInterface {
         this.messageHistory = [];
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        this.selectedModel = 'default';
+        this.providerSetup = null;
+        this.availableModels = [];
         
         this.init();
     }
     
     async init() {
         this.setupEventListeners();
+        await this.loadModelSelectorOptions();
         await this.loadConversations();
         this.connectWebSocket();
     }
     
     setupEventListeners() {
         // Send message
-        const sendBtn = document.getElementById('sendMessageBtn');
-        const messageInput = document.getElementById('messageInput');
+        const sendBtn = this.getSendButton();
+        const messageInput = this.getMessageInput();
         
         sendBtn?.addEventListener('click', () => this.sendMessage());
         messageInput?.addEventListener('keydown', (e) => {
@@ -43,14 +47,166 @@ class ChatInterface {
         });
         
         // Model selector
-        document.getElementById('modelSelector')?.addEventListener('change', (e) => {
+        this.getModelSelector()?.addEventListener('change', (e) => {
             this.selectedModel = e.target.value;
         });
         
         // Stop streaming
-        document.getElementById('stopStreamingBtn')?.addEventListener('click', () => {
+        this.getStopStreamingButton()?.addEventListener('click', () => {
             this.stopStreaming();
         });
+    }
+
+    getSendButton() {
+        return document.getElementById('sendMessageBtn') || document.getElementById('sendBtn');
+    }
+
+    getMessageInput() {
+        return document.getElementById('messageInput') || document.getElementById('chatInput');
+    }
+
+    getModelSelector() {
+        return document.getElementById('modelSelector') || document.getElementById('modelSelect');
+    }
+
+    getStopStreamingButton() {
+        return document.getElementById('stopStreamingBtn');
+    }
+
+    async loadModelSelectorOptions() {
+        const selector = this.getModelSelector();
+        if (!selector) return;
+
+        try {
+            const [models, providerSetup] = await Promise.all([
+                this.fetchBackendModels(),
+                this.fetchProviderSetup(),
+            ]);
+
+            this.availableModels = models;
+            this.providerSetup = providerSetup;
+
+            const currentValue = selector.value || this.selectedModel || 'default';
+            selector.innerHTML = this.buildModelOptionsHtml(models, providerSetup);
+
+            const optionValues = Array.from(selector.options).map((option) => option.value);
+            this.selectedModel = optionValues.includes(currentValue) ? currentValue : (selector.options[0]?.value || 'default');
+            selector.value = this.selectedModel;
+        } catch (error) {
+            console.error('Failed to load provider-aware model selector options:', error);
+        }
+    }
+
+    async fetchBackendModels() {
+        try {
+            const response = await fetch(`${this.apiEndpoint}/models`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const json = await response.json();
+            const models = json.models || json;
+            return Array.isArray(models) ? models : [];
+        } catch (error) {
+            console.warn('Failed to fetch backend models for chat selector:', error);
+            return [];
+        }
+    }
+
+    async fetchProviderSetup() {
+        try {
+            if (window.winAI?.readConfig) {
+                const config = await window.winAI.readConfig();
+                if (config?.providerSetupPlan) {
+                    return config.providerSetupPlan;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to read provider setup from local config:', error);
+        }
+
+        try {
+            const response = await fetch(`${this.apiEndpoint}/integrations/providers/setup-plan`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.warn('Failed to fetch provider setup plan for chat selector:', error);
+            return null;
+        }
+    }
+
+    buildModelOptionsHtml(models, providerSetup) {
+        const providerTargets = this.buildProviderTargets(providerSetup);
+        const optionGroups = [];
+
+        if (models.length) {
+            optionGroups.push(`
+                <optgroup label="Built-in Models">
+                    ${models.map((model) => {
+                        const value = this.escapeAttr(model.id || model.model || model.name || 'default');
+                        const label = this.escapeHtml(model.name || model.model || model.id || 'Model');
+                        const provider = this.escapeHtml(model.provider || 'Windows AI');
+                        return `<option value="${value}">${label} — ${provider}</option>`;
+                    }).join('')}
+                </optgroup>
+            `);
+        }
+
+        if (providerTargets.ready.length) {
+            optionGroups.push(`
+                <optgroup label="Detected CLI / Runtime Targets">
+                    ${providerTargets.ready.map((target) => `<option value="${this.escapeAttr(target.value)}">${this.escapeHtml(target.label)}</option>`).join('')}
+                </optgroup>
+            `);
+        }
+
+        if (providerTargets.installable.length) {
+            optionGroups.push(`
+                <optgroup label="Install or Authenticate to Enable">
+                    ${providerTargets.installable.map((target) => `<option value="${this.escapeAttr(target.value)}">${this.escapeHtml(target.label)}</option>`).join('')}
+                </optgroup>
+            `);
+        }
+
+        if (!optionGroups.length) {
+            return '<option value="default">Default</option>';
+        }
+
+        return optionGroups.join('');
+    }
+
+    buildProviderTargets(providerSetup) {
+        const ready = [];
+        const installable = [];
+        const providers = providerSetup?.providers || [];
+        const ollamaModels = providerSetup?.ollama?.recommended_models || [];
+
+        for (const provider of providers) {
+            if (provider.provider_id === 'ollama' && provider.detected && ollamaModels.length) {
+                for (const model of ollamaModels.slice(0, 3)) {
+                    ready.push({
+                        value: `ollama:${model.id}`,
+                        label: `Ollama — ${model.id}`,
+                    });
+                }
+                continue;
+            }
+
+            if (provider.recommended_action === 'ready') {
+                ready.push({
+                    value: `cli:${provider.provider_id}`,
+                    label: `${provider.display_name || provider.provider_id} — Detected CLI`,
+                });
+            } else {
+                installable.push({
+                    value: `unavailable:${provider.provider_id}`,
+                    label: `${provider.display_name || provider.provider_id} — ${provider.recommended_action}`,
+                });
+            }
+        }
+
+        return { ready, installable };
     }
     
     connectWebSocket() {
@@ -117,7 +273,6 @@ class ChatInterface {
                 this.handleChatError(message);
                 break;
             case 'pong':
-                // Heartbeat response
                 break;
             default:
                 console.log('Unknown message type:', message.type);
@@ -128,7 +283,6 @@ class ChatInterface {
         this.isStreaming = true;
         this.updateStreamingUI(true);
         
-        // Create assistant message container
         this.appendMessage({
             role: 'assistant',
             content: '',
@@ -138,7 +292,6 @@ class ChatInterface {
     }
     
     handleChatChunk(message) {
-        // Append chunk to current streaming message
         const messageEl = document.querySelector(`[data-message-id="${message.message_id}"]`);
         if (messageEl) {
             const contentEl = messageEl.querySelector('.message-content');
@@ -153,7 +306,6 @@ class ChatInterface {
         this.isStreaming = false;
         this.updateStreamingUI(false);
         
-        // Update message to final state
         const messageEl = document.querySelector(`[data-message-id="${message.message_id}"]`);
         if (messageEl) {
             messageEl.classList.remove('streaming');
@@ -163,7 +315,6 @@ class ChatInterface {
             }
         }
         
-        // Save to history
         this.messageHistory.push({
             role: 'assistant',
             content: message.content,
@@ -182,28 +333,32 @@ class ChatInterface {
     }
     
     async sendMessage() {
-        const input = document.getElementById('messageInput');
+        const input = this.getMessageInput();
         const content = input?.value.trim();
         
         if (!content || this.isStreaming) return;
         
-        // Clear input
+        if (this.selectedModel?.startsWith('unavailable:')) {
+            this.appendMessage({
+                role: 'error',
+                content: 'That provider is not ready yet. Open Settings or rerun setup to install or authenticate it first.'
+            });
+            return;
+        }
+        
         input.value = '';
         
-        // Add user message to UI
         this.appendMessage({
             role: 'user',
             content: content
         });
         
-        // Save to history
         this.messageHistory.push({
             role: 'user',
             content: content,
             timestamp: new Date().toISOString()
         });
         
-        // Send via WebSocket or REST API
         if (this.chatSocket?.readyState === WebSocket.OPEN) {
             this.chatSocket.send(JSON.stringify({
                 type: 'chat_message',
@@ -212,7 +367,6 @@ class ChatInterface {
                 model: this.selectedModel || 'default'
             }));
         } else {
-            // Fallback to REST API with SSE
             await this.sendMessageREST(content);
         }
     }
@@ -222,7 +376,6 @@ class ChatInterface {
             this.isStreaming = true;
             this.updateStreamingUI(true);
             
-            // Create assistant message container
             const messageId = `msg_${Date.now()}`;
             this.appendMessage({
                 role: 'assistant',
@@ -244,7 +397,6 @@ class ChatInterface {
             
             if (!response.ok) throw new Error('Chat request failed');
             
-            // Read streaming response
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullContent = '';
@@ -256,7 +408,6 @@ class ChatInterface {
                 const chunk = decoder.decode(value);
                 fullContent += chunk;
                 
-                // Update UI
                 const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
                 if (messageEl) {
                     const contentEl = messageEl.querySelector('.message-content');
@@ -267,7 +418,6 @@ class ChatInterface {
                 }
             }
             
-            // Finalize
             this.isStreaming = false;
             this.updateStreamingUI(false);
             
@@ -354,28 +504,19 @@ class ChatInterface {
     formatMessage(content) {
         if (!content) return '';
         
-        // Escape HTML
         let formatted = content
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         
-        // Code blocks
         formatted = formatted.replace(
             /```(\w*)\n([\s\S]*?)```/g,
             '<pre><code class="language-$1">$2</code></pre>'
         );
         
-        // Inline code
         formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
-        // Bold
         formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic
         formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        
-        // Line breaks
         formatted = formatted.replace(/\n/g, '<br>');
         
         return formatted;
@@ -389,9 +530,9 @@ class ChatInterface {
     }
     
     updateStreamingUI(isStreaming) {
-        const sendBtn = document.getElementById('sendMessageBtn');
-        const stopBtn = document.getElementById('stopStreamingBtn');
-        const input = document.getElementById('messageInput');
+        const sendBtn = this.getSendButton();
+        const stopBtn = this.getStopStreamingButton();
+        const input = this.getMessageInput();
         
         if (sendBtn) sendBtn.disabled = isStreaming;
         if (stopBtn) stopBtn.style.display = isStreaming ? 'flex' : 'none';
@@ -435,7 +576,6 @@ class ChatInterface {
             </div>
         `).join('');
         
-        // Add click handlers
         listContainer.querySelectorAll('.conversation-item').forEach(item => {
             item.addEventListener('click', () => {
                 this.loadConversation(item.dataset.conversationId);
@@ -452,7 +592,6 @@ class ChatInterface {
             this.currentConversationId = conversationId;
             this.messageHistory = conversation.messages || [];
             
-            // Clear and render messages
             const messagesContainer = document.getElementById('chatMessages');
             if (messagesContainer) {
                 messagesContainer.innerHTML = '';
@@ -464,7 +603,6 @@ class ChatInterface {
                 });
             }
             
-            // Update conversation list selection
             document.querySelectorAll('.conversation-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.conversationId === conversationId);
             });
@@ -490,7 +628,6 @@ class ChatInterface {
             this.currentConversationId = conversation.id;
             this.messageHistory = [];
             
-            // Clear messages
             const messagesContainer = document.getElementById('chatMessages');
             if (messagesContainer) {
                 messagesContainer.innerHTML = `
@@ -501,16 +638,25 @@ class ChatInterface {
                 `;
             }
             
-            // Reload conversation list
             await this.loadConversations();
             
         } catch (error) {
             console.error('Failed to create conversation:', error);
         }
     }
+
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    escapeAttr(value) {
+        return this.escapeHtml(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 }
 
-// Initialize chat interface when DOM is ready
 let chatInterface;
 document.addEventListener('DOMContentLoaded', () => {
     chatInterface = new ChatInterface();
