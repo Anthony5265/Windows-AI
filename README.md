@@ -9,9 +9,9 @@ Transform your Windows PC into an AI powerhouse with local and cloud AI capabili
 ## Quick Links
 
 - [Installation Guide](docs/getting-started/INSTALLATION.md)
-- [Quick Start](docs/getting-started/QUICK_START.md)
-- [User Guide](docs/guides/USER_GUIDE.md)
-- [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md)
+- [Quick Start](docs/QUICK_START.md)
+- [User Guide](docs/USER_GUIDE.md)
+- [Plugin Development](docs/PLUGIN_DEVELOPMENT.md)
 - [API Docs Index](docs/api/README.md)
 - [API Reference](docs/api/API_REFERENCE.md)
 - [Provider Integrations API](docs/api/PROVIDER_INTEGRATIONS.md)
@@ -145,7 +145,7 @@ curl -X POST http://localhost:8765/api/chat \
   -d '{"message": "Hello AI!"}'
 ```
 
-For more examples, see the [Quick Start Guide](docs/getting-started/QUICK_START.md) and [Provider Chat Examples](docs/examples/provider-chat.md).
+For more examples, see the [Quick Start Guide](docs/QUICK_START.md) and [Provider Chat Examples](docs/examples/provider-chat.md).
 
 ---
 
@@ -217,7 +217,7 @@ Windows AI includes 2200+ production plugins across these categories:
 - Data analysis
 - And many more...
 
-For plugin documentation, see the [Plugin Guide](docs/guides/PLUGIN_GUIDE.md).
+For plugin documentation, see the [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md).
 
 ---
 
@@ -250,7 +250,7 @@ class MyPlugin(ActionPlugin):
         }
 ```
 
-For complete plugin development documentation, see the [Plugin Development Guide](docs/development/PLUGIN_DEVELOPMENT.md).
+For complete plugin development documentation, see the [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md).
 
 ---
 
@@ -259,9 +259,9 @@ For complete plugin development documentation, see the [Plugin Development Guide
 ### User Documentation
 
 - [Installation Guide](docs/getting-started/INSTALLATION.md) - Step-by-step installation
-- [Quick Start](docs/getting-started/QUICK_START.md) - Get started in 5 minutes
-- [User Guide](docs/guides/USER_GUIDE.md) - Complete feature documentation
-- [Plugin Guide](docs/guides/PLUGIN_GUIDE.md) - Using plugins effectively
+- [Quick Start](docs/QUICK_START.md) - Get started in 5 minutes
+- [User Guide](docs/USER_GUIDE.md) - Complete feature documentation
+- [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT.md) - Build and extend plugins
 - [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
 - [FAQ](docs/FAQ.md) - Frequently asked questions
 
@@ -271,7 +271,7 @@ For complete plugin development documentation, see the [Plugin Development Guide
 - [API Docs Index](docs/api/README.md) - API documentation landing page
 - [API Reference](docs/api/API_REFERENCE.md) - Complete API documentation
 - [Provider Integrations API](docs/api/PROVIDER_INTEGRATIONS.md) - Provider detection, setup, and chat routes
-- [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md) - Build plugins
+- [Plugin Development](docs/PLUGIN_DEVELOPMENT.md) - Build plugins
 - [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute
 - [Code Style Guide](docs/development/CODE_STYLE.md) - Coding standards
 
