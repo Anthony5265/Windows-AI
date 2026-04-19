@@ -12,7 +12,9 @@ Transform your Windows PC into an AI powerhouse with local and cloud AI capabili
 - [Quick Start](docs/getting-started/QUICK_START.md)
 - [User Guide](docs/guides/USER_GUIDE.md)
 - [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md)
+- [API Docs Index](docs/api/README.md)
 - [API Reference](docs/api/API_REFERENCE.md)
+- [Provider Integrations API](docs/api/PROVIDER_INTEGRATIONS.md)
 - [FAQ](docs/FAQ.md)
 
 ---
@@ -143,7 +145,7 @@ curl -X POST http://localhost:8765/api/chat \
   -d '{"message": "Hello AI!"}'
 ```
 
-For more examples, see the [Quick Start Guide](docs/getting-started/QUICK_START.md).
+For more examples, see the [Quick Start Guide](docs/getting-started/QUICK_START.md) and [Provider Chat Examples](docs/examples/provider-chat.md).
 
 ---
 
@@ -266,7 +268,9 @@ For complete plugin development documentation, see the [Plugin Development Guide
 ### Developer Documentation
 
 - [Architecture Overview](docs/architecture/OVERVIEW.md) - System architecture
+- [API Docs Index](docs/api/README.md) - API documentation landing page
 - [API Reference](docs/api/API_REFERENCE.md) - Complete API documentation
+- [Provider Integrations API](docs/api/PROVIDER_INTEGRATIONS.md) - Provider detection, setup, and chat routes
 - [Plugin Development](docs/development/PLUGIN_DEVELOPMENT.md) - Build plugins
 - [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute
 - [Code Style Guide](docs/development/CODE_STYLE.md) - Coding standards
@@ -301,6 +305,7 @@ For complete plugin development documentation, see the [Plugin Development Guide
 8. [Audio Transcription Service](docs/examples/audio-transcription.md)
 9. [RAG Knowledge Base](docs/examples/rag-knowledge-base.md)
 10. [System Automation](docs/examples/system-automation.md)
+11. [Provider Chat](docs/examples/provider-chat.md)
 
 ### Tutorials
 
