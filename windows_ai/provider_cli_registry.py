@@ -16,6 +16,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from shutil import which
 from typing import Any, Dict, List, Optional
+import json
 import os
 import platform
 import subprocess
@@ -324,6 +325,7 @@ def _register_provider_chat_route() -> None:
         if router is None or getattr(router, "_windows_ai_provider_chat_registered", False):
             return
 
+        from fastapi.responses import StreamingResponse
         from pydantic import BaseModel
         from windows_ai.provider_cli_executor import ProviderCLIExecutionError, provider_cli_executor
 
@@ -336,11 +338,15 @@ def _register_provider_chat_route() -> None:
             max_tokens: Optional[int] = None
             history: List[Dict[str, str]] = []
 
-        @router.post("/providers/chat")
-        async def provider_target_chat(request: ProviderChatRequest):
+        def _build_messages(request: ProviderChatRequest) -> List[Dict[str, str]]:
             messages = list(request.history or [])
             if not messages or messages[-1].get("content") != request.message:
                 messages.append({"role": "user", "content": request.message})
+            return messages
+
+        @router.post("/providers/chat")
+        async def provider_target_chat(request: ProviderChatRequest):
+            messages = _build_messages(request)
 
             try:
                 result = await provider_cli_executor.execute_chat(
@@ -365,6 +371,44 @@ def _register_provider_chat_route() -> None:
                     "conversation_id": request.conversation_id,
                     "error": str(exc),
                 }
+
+        @router.post("/providers/chat/stream")
+        async def provider_target_chat_stream(request: ProviderChatRequest):
+            messages = _build_messages(request)
+
+            async def event_stream():
+                aggregate: List[str] = []
+                yield json.dumps({
+                    "type": "start",
+                    "model": request.model,
+                    "conversation_id": request.conversation_id,
+                }) + "\n"
+                try:
+                    async for chunk in provider_cli_executor.execute_chat_stream(
+                        target_model=request.model,
+                        messages=messages,
+                        temperature=request.temperature,
+                        max_tokens=request.max_tokens,
+                    ):
+                        if not chunk:
+                            continue
+                        aggregate.append(chunk)
+                        yield json.dumps({"type": "chunk", "content": chunk}) + "\n"
+
+                    yield json.dumps({
+                        "type": "complete",
+                        "content": "".join(aggregate),
+                        "model": request.model,
+                        "conversation_id": request.conversation_id,
+                    }) + "\n"
+                except ProviderCLIExecutionError as exc:
+                    yield json.dumps({
+                        "type": "error",
+                        "error": str(exc),
+                        "conversation_id": request.conversation_id,
+                    }) + "\n"
+
+            return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
         setattr(router, "_windows_ai_provider_chat_registered", True)
     except Exception:
