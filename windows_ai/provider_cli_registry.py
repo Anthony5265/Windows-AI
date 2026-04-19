@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 import os
 import platform
 import subprocess
+import sys
 
 
 DEFAULT_WINDOWS_INSTALL_PATHS = {
@@ -308,3 +309,66 @@ class ProviderCLIRegistry:
 
 
 provider_cli_registry = ProviderCLIRegistry()
+
+
+def _register_provider_chat_route() -> None:
+    """Register provider-backed chat execution on the integrations router.
+
+    This avoids broad edits to the large integrations module. Because
+    `windows_ai.integrations` imports this registry during router setup, we can
+    attach the route here once the router object exists.
+    """
+    try:
+        integrations_module = sys.modules.get("windows_ai.integrations")
+        router = getattr(integrations_module, "router", None) if integrations_module else None
+        if router is None or getattr(router, "_windows_ai_provider_chat_registered", False):
+            return
+
+        from pydantic import BaseModel
+        from windows_ai.provider_cli_executor import ProviderCLIExecutionError, provider_cli_executor
+
+        class ProviderChatRequest(BaseModel):
+            message: str
+            conversation_id: Optional[str] = None
+            model: str
+            stream: bool = False
+            temperature: float = 0.7
+            max_tokens: Optional[int] = None
+            history: List[Dict[str, str]] = []
+
+        @router.post("/providers/chat")
+        async def provider_target_chat(request: ProviderChatRequest):
+            messages = list(request.history or [])
+            if not messages or messages[-1].get("content") != request.message:
+                messages.append({"role": "user", "content": request.message})
+
+            try:
+                result = await provider_cli_executor.execute_chat(
+                    target_model=request.model,
+                    messages=messages,
+                    temperature=request.temperature,
+                    max_tokens=request.max_tokens,
+                )
+                return {
+                    "status": "success",
+                    "conversation_id": request.conversation_id,
+                    "provider_result": result.to_dict(),
+                    "message": {
+                        "role": "assistant",
+                        "content": result.content,
+                        "model": result.model,
+                    },
+                }
+            except ProviderCLIExecutionError as exc:
+                return {
+                    "status": "error",
+                    "conversation_id": request.conversation_id,
+                    "error": str(exc),
+                }
+
+        setattr(router, "_windows_ai_provider_chat_registered", True)
+    except Exception:
+        return
+
+
+_register_provider_chat_route()
