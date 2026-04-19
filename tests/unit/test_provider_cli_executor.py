@@ -275,7 +275,7 @@ def test_provider_chat_route_honors_stream_flag(monkeypatch):
             "message": "stream on main route",
             "conversation_id": "conv-main-stream",
             "model": "cli:codex",
-            "stream": true,
+            "stream": True,
         },
     )
 
