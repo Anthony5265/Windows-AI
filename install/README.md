@@ -363,6 +363,6 @@ See LICENSE file in root directory.
 ## Support
 
 For installer issues:
-- GitHub Issues: https://github.com/yourorg/Windows-AI/issues
-- Documentation: https://docs.windows-ai.example.com
-- Email: support@windows-ai.example.com
+- GitHub Issues: https://github.com/Anthony5265/Windows-AI/issues
+- Documentation: ../docs/README.md
+- API docs: ../docs/api/README.md
