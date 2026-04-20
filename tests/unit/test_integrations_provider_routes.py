@@ -264,6 +264,79 @@ def test_integrations_provider_chat_route_returns_provider_result(monkeypatch):
     assert captured["max_tokens"] == 32
 
 
+def test_integrations_provider_chat_route_does_not_leak_history_between_requests(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+    captured_messages = []
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        captured_messages.append(messages)
+        return ProviderChatResult(
+            model=target_model,
+            provider_id="codex",
+            content="ok",
+            backend="provider-cli",
+            metadata={},
+        )
+
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    first_response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "first request",
+            "model": "cli:codex",
+        },
+    )
+    second_response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "second request",
+            "model": "cli:codex",
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert captured_messages == [
+        [{"role": "user", "content": "first request"}],
+        [{"role": "user", "content": "second request"}],
+    ]
+
+
+def test_integrations_provider_chat_route_avoids_duplicate_final_user_message(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+    captured = {}
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        captured["messages"] = messages
+        return ProviderChatResult(
+            model=target_model,
+            provider_id="codex",
+            content="history respected",
+            backend="provider-cli",
+            metadata={},
+        )
+
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    history = [
+        {"role": "assistant", "content": "Earlier summary"},
+        {"role": "user", "content": "repeat this"},
+    ]
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "repeat this",
+            "model": "cli:codex",
+            "history": history,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["messages"] == history
+    assert response.json()["message"]["content"] == "history respected"
+
+
 def test_integrations_provider_chat_route_returns_error_payload(monkeypatch):
     _integrations_module, client = _build_integrations_client(monkeypatch)
 
