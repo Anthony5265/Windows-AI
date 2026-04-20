@@ -397,8 +397,8 @@ This includes:
 
 ## More Information
 
-- Documentation: https://github.com/yourorg/Windows-AI/tree/main/docs
-- Issues: https://github.com/yourorg/Windows-AI/issues
+- Documentation: https://github.com/Anthony5265/Windows-AI/tree/main/docs
+- Issues: https://github.com/Anthony5265/Windows-AI/issues
 
 ---
 
