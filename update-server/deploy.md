@@ -185,7 +185,7 @@ sudo apt install -y python3.11 python3-pip nginx certbot
 
 3. **Clone repository**
 ```bash
-git clone https://github.com/yourorg/Windows-AI.git
+git clone https://github.com/Anthony5265/Windows-AI.git
 cd Windows-AI
 pip install -r requirements.txt
 ```
@@ -493,8 +493,8 @@ curl -X POST https://updates.windows-ai.example.com/manifest/reload
 For deployment issues:
 - Check deployment logs
 - Review this documentation
-- Open GitHub issue
-- Contact support
+- Open GitHub issue: https://github.com/Anthony5265/Windows-AI/issues
+- Review the main docs hub: ../docs/README.md
 
 ---
 
