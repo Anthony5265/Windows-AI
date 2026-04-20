@@ -12,6 +12,7 @@
 
 - [Health & Status](#health--status)
 - [Chat](#chat)
+- [Provider Integrations](#provider-integrations)
 - [Plugins](#plugins)
 - [Plugin Management (v1)](#plugin-management-v1)
 - [Agents](#agents)
@@ -134,6 +135,24 @@ Send a chat message and get AI response.
 Stream chat response using Server-Sent Events.
 
 Same request body as `/chat`. Response is an SSE stream.
+
+---
+
+## Provider Integrations
+
+Provider-backed discovery, setup planning, local hardware recommendations, direct
+provider chat execution, and NDJSON streaming are documented separately here:
+
+- [Provider Integrations API](PROVIDER_INTEGRATIONS.md)
+- [Provider Chat Examples](../examples/provider-chat.md)
+
+Use that reference for:
+
+- `/integrations/providers/definitions`
+- `/integrations/providers/detect`
+- `/integrations/providers/setup-plan`
+- `/integrations/providers/chat`
+- `/integrations/providers/chat/stream`
 
 ---
 
