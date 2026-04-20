@@ -24,7 +24,9 @@ Welcome to the Windows AI documentation hub.
 - [Architecture Overview](./architecture/OVERVIEW.md)
 - [Security Policy](./security/SECURITY.md)
 
-## Examples
+## Examples and Tutorials
 
 - [Examples Index](./examples/README.md)
 - [Provider Chat Example](./examples/provider-chat.md)
+- [Tutorials Index](./tutorials/README.md)
+- [Building Your First Plugin](./tutorials/first-plugin.md)
