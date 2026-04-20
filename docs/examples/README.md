@@ -1,16 +1,27 @@
 # Examples
 
-This directory contains practical examples for common Windows AI workflows.
+This directory contains practical examples and compatibility pages for common Windows AI workflows.
 
-## API and Provider Examples
+## Current Example Pages
 
 - [Provider Chat](./provider-chat.md) — Detect providers, get Ollama recommendations, run sync provider chat, and stream NDJSON responses.
+- [Automated Document Processing](./document-processing.md)
+- [Smart File Organization](./file-organization.md)
+- [Code Review Automation](./code-review.md)
+- [Content Generation Pipeline](./content-generation.md)
+- [Multi-Agent Example](./multi-agent.md)
+- [Chatbot Example](./chatbot.md)
+- [Image Analysis Example](./image-analysis.md)
+- [Audio Transcription Example](./audio-transcription.md)
+- [RAG Knowledge Base Example](./rag-knowledge-base.md)
+- [System Automation Example](./system-automation.md)
 
-## Suggested Example Areas
+## Notes
 
-The main README also references example workflows such as document processing,
-file organization, code review, content generation, multi-agent flows, chatbots,
-image analysis, audio transcription, RAG knowledge bases, and system automation.
+Several of these pages currently exist as lightweight compatibility pages for older
+links that were previously advertised from the main README. They point readers to
+current working entry points such as the user guide, API docs, provider integrations
+reference, and provider chat example.
 
-As those guides are expanded, this index can serve as the central navigation page
-for copy-pasteable example usage.
+This index is intended to be a stable landing page for examples as the documentation
+continues to evolve.
