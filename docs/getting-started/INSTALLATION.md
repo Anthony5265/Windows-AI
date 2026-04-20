@@ -632,10 +632,10 @@ rmdir /s "%PROGRAMFILES%\Windows AI"
 
 After installation:
 
-1. **Read the [Quick Start Guide](QUICK_START.md)** - Get started in 5 minutes
-2. **Explore [Examples](../examples/)** - See what Windows AI can do
-3. **Check [User Guide](../guides/USER_GUIDE.md)** - Learn all features
-4. **Join [Community](#)** - Get help and share ideas
+1. **Read the [Quick Start Guide](../QUICK_START.md)** - Get started in 5 minutes
+2. **Explore [Examples](../examples/README.md)** - See what Windows AI can do
+3. **Check the [User Guide](../USER_GUIDE.md)** - Learn all features
+4. **Browse the [API docs](../api/README.md)** - Explore API and provider routes
 
 ---
 
@@ -670,4 +670,4 @@ A: Yes. By default, everything runs locally. Cloud providers are optional and on
 
 ---
 
-**Installation complete!** Ready to get started? Continue to the [Quick Start Guide](QUICK_START.md).
+**Installation complete!** Ready to get started? Continue to the [Quick Start Guide](../QUICK_START.md).
