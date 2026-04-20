@@ -56,7 +56,7 @@ Windows AI is an intelligent assistant that helps you automate tasks, manage fil
 
 1. **Download Installer**
    ```
-   Visit: https://github.com/yourorg/Windows-AI/releases
+   Visit: https://github.com/Anthony5265/Windows-AI/releases
    Download: WindowsAI-Setup-v0.5.0.exe
    ```
 
