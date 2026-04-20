@@ -1,10 +1,12 @@
 import importlib
+import json
 import sys
 import types
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from windows_ai.provider_cli_executor import ProviderChatResult
 import windows_ai.provider_cli_registry as provider_cli_registry_module
 
 
@@ -210,3 +212,89 @@ def test_provider_hardware_recommendations_and_setup_plan_routes(monkeypatch):
     assert setup_body["status"] == "success"
     assert setup_body["providers"][0]["provider_id"] == "ollama"
     assert setup_body["installer_actions"][0]["action"] == "ready"
+
+
+def test_integrations_router_exposes_provider_chat_routes(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+    route_paths = {route.path for route in client.app.routes}
+
+    assert "/integrations/providers/chat" in route_paths
+    assert "/integrations/providers/chat/stream" in route_paths
+
+
+def test_integrations_provider_chat_route_returns_provider_result(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+    captured = {}
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        captured["target_model"] = target_model
+        captured["messages"] = messages
+        captured["temperature"] = temperature
+        captured["max_tokens"] = max_tokens
+        return ProviderChatResult(
+            model=target_model,
+            provider_id="codex",
+            content="hello from integrations router",
+            backend="provider-cli",
+            metadata={"source": "test"},
+        )
+
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "hi from integrations",
+            "conversation_id": "conv-int",
+            "model": "cli:codex",
+            "temperature": 0.4,
+            "max_tokens": 32,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "success"
+    assert body["conversation_id"] == "conv-int"
+    assert body["message"]["content"] == "hello from integrations router"
+    assert body["provider_result"]["provider_id"] == "codex"
+    assert captured["target_model"] == "cli:codex"
+    assert captured["messages"] == [{"role": "user", "content": "hi from integrations"}]
+    assert captured["temperature"] == 0.4
+    assert captured["max_tokens"] == 32
+
+
+def test_integrations_provider_chat_route_honors_stream_flag(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+
+    async def fail_execute_chat(*, target_model, messages, temperature, max_tokens):
+        raise AssertionError("execute_chat should not be called when stream=true")
+
+    async def fake_execute_chat_stream(*, target_model, messages, temperature, max_tokens):
+        assert target_model == "cli:codex"
+        assert messages == [{"role": "user", "content": "stream from integrations"}]
+        assert temperature == 0.7
+        assert max_tokens is None
+        yield "part one "
+        yield "part two"
+
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat", fail_execute_chat)
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat_stream", fake_execute_chat_stream)
+
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "stream from integrations",
+            "conversation_id": "conv-int-stream",
+            "model": "cli:codex",
+            "stream": True,
+        },
+    )
+
+    assert response.status_code == 200
+    events = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert [event["type"] for event in events] == ["start", "chunk", "chunk", "complete"]
+    assert events[0]["conversation_id"] == "conv-int-stream"
+    assert events[1]["content"] == "part one "
+    assert events[2]["content"] == "part two"
+    assert events[3]["content"] == "part one part two"
