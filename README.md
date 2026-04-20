@@ -293,28 +293,13 @@ For complete plugin development documentation, see the [Plugin Development Guide
 
 ## Examples & Tutorials
 
-### Example Use Cases
+Windows AI’s documented examples and provider workflows are collected here:
 
-1. [Automated Document Processing](docs/examples/document-processing.md)
-2. [Smart File Organization](docs/examples/file-organization.md)
-3. [Code Review Automation](docs/examples/code-review.md)
-4. [Content Generation Pipeline](docs/examples/content-generation.md)
-5. [Multi-Agent Workflows](docs/examples/multi-agent.md)
-6. [Custom Chatbot](docs/examples/chatbot.md)
-7. [Image Analysis Pipeline](docs/examples/image-analysis.md)
-8. [Audio Transcription Service](docs/examples/audio-transcription.md)
-9. [RAG Knowledge Base](docs/examples/rag-knowledge-base.md)
-10. [System Automation](docs/examples/system-automation.md)
-11. [Provider Chat](docs/examples/provider-chat.md)
-
-### Tutorials
-
-- [Building Your First Plugin](docs/tutorials/first-plugin.md)
-- [Creating a Custom Integration](docs/tutorials/custom-integration.md)
-- [Setting Up Multi-Agent Workflows](docs/tutorials/multi-agent-setup.md)
-- [Deploying Windows AI in Production](docs/tutorials/production-deployment.md)
-
-For more examples, see the [Examples Directory](docs/examples/).
+- [Examples Index](docs/examples/README.md)
+- [Provider Chat Example](docs/examples/provider-chat.md)
+- [API Docs Index](docs/api/README.md)
+- [Quick Start](docs/QUICK_START.md)
+- [User Guide](docs/USER_GUIDE.md)
 
 ---
 
