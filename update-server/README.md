@@ -250,8 +250,8 @@ pytest --cov=windows_ai/updater tests/
 ## Support
 
 - **Documentation**: [deploy.md](deploy.md)
-- **Issues**: https://github.com/yourorg/Windows-AI/issues
-- **Discussions**: https://github.com/yourorg/Windows-AI/discussions
+- **Issues**: https://github.com/Anthony5265/Windows-AI/issues
+- **Discussions**: https://github.com/Anthony5265/Windows-AI/discussions
 
 ## License
 
