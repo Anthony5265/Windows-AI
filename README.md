@@ -296,6 +296,7 @@ For complete plugin development documentation, see the [Plugin Development Guide
 Windows AI’s documented examples and provider workflows are collected here:
 
 - [Examples Index](docs/examples/README.md)
+- [Tutorials Index](docs/tutorials/README.md)
 - [Provider Chat Example](docs/examples/provider-chat.md)
 - [API Docs Index](docs/api/README.md)
 - [Quick Start](docs/QUICK_START.md)
