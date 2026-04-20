@@ -6,7 +6,7 @@ import types
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from windows_ai.provider_cli_executor import ProviderChatResult
+from windows_ai.provider_cli_executor import ProviderChatResult, ProviderCLIExecutionError
 import windows_ai.provider_cli_registry as provider_cli_registry_module
 
 
@@ -298,3 +298,28 @@ def test_integrations_provider_chat_route_honors_stream_flag(monkeypatch):
     assert events[1]["content"] == "part one "
     assert events[2]["content"] == "part two"
     assert events[3]["content"] == "part one part two"
+
+
+def test_integrations_provider_chat_stream_route_emits_error_event(monkeypatch):
+    _integrations_module, client = _build_integrations_client(monkeypatch)
+
+    async def fake_execute_chat_stream(*, target_model, messages, temperature, max_tokens):
+        raise ProviderCLIExecutionError("stream failed from integrations")
+        yield "unreachable"
+
+    monkeypatch.setattr(provider_cli_registry_module.provider_cli_executor, "execute_chat_stream", fake_execute_chat_stream)
+
+    response = client.post(
+        "/integrations/providers/chat/stream",
+        json={
+            "message": "stream from integrations",
+            "conversation_id": "conv-int-error",
+            "model": "cli:codex",
+        },
+    )
+
+    assert response.status_code == 200
+    events = [json.loads(line) for line in response.text.strip().splitlines()]
+    assert [event["type"] for event in events] == ["start", "error"]
+    assert events[1]["error"] == "stream failed from integrations"
+    assert events[1]["conversation_id"] == "conv-int-error"
