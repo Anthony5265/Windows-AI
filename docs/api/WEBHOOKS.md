@@ -468,4 +468,6 @@ curl http://localhost:8000/api/v1/webhooks/wh-123/deliveries \
 ## Support
 
 - [GitHub Issues](https://github.com/Anthony5265/Windows-AI/issues)
-- [Documentation](https://windows-ai.readthedocs.io)
+- [Documentation Hub](../README.md)
+- [API Docs Index](./README.md)
+- [Examples Index](../examples/README.md)
