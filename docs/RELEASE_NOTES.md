@@ -86,8 +86,9 @@ The following features are in the roadmap for v2.1:
 
 ### Support & Contribution
 - **Report Issues**: https://github.com/Anthony5265/Windows-AI/issues
-- **Documentation**: Check README.md and docs/ folder
-- **Contributing**: See CONTRIBUTING.md (coming soon)
+- **Documentation Hub**: ./README.md
+- **API Docs**: ./api/README.md
+- **Contributing**: ./CONTRIBUTING.md
 
 ### License
 See LICENSE file in repository
