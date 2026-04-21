@@ -101,6 +101,11 @@ class ProviderCLIRegistry:
                 install_url="https://ai.google.dev/",
                 auth_hint="Sign in with your Google AI credentials or configure an API key.",
                 supports_vision=True,
+                metadata={
+                    "target_format": "cli:gemini",
+                    "example_targets": ["cli:gemini"],
+                    "installer_strategy": "detect_or_install_cli",
+                },
             ),
             "codex": ProviderDefinition(
                 id="codex",
@@ -110,6 +115,11 @@ class ProviderCLIRegistry:
                 install_url="https://platform.openai.com/",
                 auth_hint="Authenticate with your OpenAI account or API key.",
                 supports_code=True,
+                metadata={
+                    "target_format": "cli:codex",
+                    "example_targets": ["cli:codex"],
+                    "installer_strategy": "detect_or_install_cli",
+                },
             ),
             "claude": ProviderDefinition(
                 id="claude",
@@ -120,6 +130,11 @@ class ProviderCLIRegistry:
                 auth_hint="Authenticate with Anthropic credentials or API key.",
                 supports_code=True,
                 supports_vision=True,
+                metadata={
+                    "target_format": "cli:claude",
+                    "example_targets": ["cli:claude"],
+                    "installer_strategy": "detect_or_install_cli",
+                },
             ),
             "grok": ProviderDefinition(
                 id="grok",
@@ -129,6 +144,11 @@ class ProviderCLIRegistry:
                 install_url="https://x.ai/",
                 auth_hint="Authenticate with your xAI account or API key.",
                 supports_code=True,
+                metadata={
+                    "target_format": "cli:grok",
+                    "example_targets": ["cli:grok"],
+                    "installer_strategy": "detect_or_install_cli",
+                },
             ),
             "ollama": ProviderDefinition(
                 id="ollama",
@@ -139,6 +159,11 @@ class ProviderCLIRegistry:
                 auth_hint="No cloud auth required. Download a model to begin.",
                 supports_local_models=True,
                 supports_code=True,
+                metadata={
+                    "target_format": "ollama:<model>",
+                    "example_targets": ["ollama:llama3.1:8b", "ollama:phi3:mini"],
+                    "installer_strategy": "detect_or_install_runtime",
+                },
             ),
         }
 
@@ -149,6 +174,9 @@ class ProviderCLIRegistry:
         return [self.detect_provider(provider_id) for provider_id in self.providers]
 
     def detect_provider(self, provider_id: str) -> ProviderDetectionResult:
+        if provider_id not in self.providers:
+            raise ValueError(f"Unknown provider: {provider_id}")
+
         provider = self.providers[provider_id]
         executable_path = self._locate_executable(provider_id, provider.executable_names)
         version = self._get_version(executable_path) if executable_path else None
