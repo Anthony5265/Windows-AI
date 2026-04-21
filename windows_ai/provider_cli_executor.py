@@ -57,7 +57,7 @@ class ProviderCLIExecutor:
         max_tokens: Optional[int] = None,
     ) -> ProviderChatResult:
         if target_model.startswith("ollama:"):
-            return await self._execute_ollama_chat(target_model, messages, temperature)
+            return await self._execute_ollama_chat(target_model, messages, temperature, max_tokens)
         if target_model.startswith("cli:"):
             provider_id = target_model.split(":", 1)[1]
             return await self._execute_cli_chat(provider_id, target_model, messages, temperature, max_tokens)
@@ -71,7 +71,7 @@ class ProviderCLIExecutor:
         max_tokens: Optional[int] = None,
     ) -> AsyncIterator[str]:
         if target_model.startswith("ollama:"):
-            async for chunk in self._stream_ollama_chat(target_model, messages, temperature):
+            async for chunk in self._stream_ollama_chat(target_model, messages, temperature, max_tokens):
                 yield chunk
             return
 
@@ -94,17 +94,17 @@ class ProviderCLIExecutor:
         target_model: str,
         messages: List[Dict[str, str]],
         temperature: float,
+        max_tokens: Optional[int],
     ) -> ProviderChatResult:
         model_name = target_model.split(":", 1)[1]
         url = f"{self.ollama_base_url}/api/chat"
-        payload = {
-            "model": model_name,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-            },
-        }
+        payload = self._build_ollama_chat_payload(
+            model_name=model_name,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=False,
+        )
 
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             response = await client.post(url, json=payload)
@@ -128,6 +128,7 @@ class ProviderCLIExecutor:
                 "ollama_model": model_name,
                 "done": data.get("done", True),
                 "total_duration": data.get("total_duration"),
+                "max_tokens": max_tokens,
             },
         )
 
@@ -136,17 +137,17 @@ class ProviderCLIExecutor:
         target_model: str,
         messages: List[Dict[str, str]],
         temperature: float,
+        max_tokens: Optional[int],
     ) -> AsyncIterator[str]:
         model_name = target_model.split(":", 1)[1]
         url = f"{self.ollama_base_url}/api/chat"
-        payload = {
-            "model": model_name,
-            "messages": messages,
-            "stream": True,
-            "options": {
-                "temperature": temperature,
-            },
-        }
+        payload = self._build_ollama_chat_payload(
+            model_name=model_name,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
 
         yielded = False
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
@@ -171,6 +172,27 @@ class ProviderCLIExecutor:
 
         if not yielded:
             raise ProviderCLIExecutionError(f"Ollama streaming returned no output for model {model_name}")
+
+    def _build_ollama_chat_payload(
+        self,
+        model_name: str,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: Optional[int],
+        stream: bool,
+    ) -> Dict[str, Any]:
+        options: Dict[str, Any] = {
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
+        return {
+            "model": model_name,
+            "messages": messages,
+            "stream": stream,
+            "options": options,
+        }
 
     async def _stream_cli_chat(
         self,
