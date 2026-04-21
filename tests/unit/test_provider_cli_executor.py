@@ -267,6 +267,42 @@ def test_provider_chat_route_avoids_duplicate_final_user_message(monkeypatch):
     assert response.json()["message"]["content"] == "history respected"
 
 
+def test_provider_chat_route_appends_user_message_when_last_history_message_is_assistant_with_same_content(monkeypatch):
+    registry_module, client = _build_provider_chat_client(monkeypatch)
+    captured = {}
+
+    async def fake_execute_chat(*, target_model, messages, temperature, max_tokens):
+        captured["messages"] = messages
+        return ProviderChatResult(
+            model=target_model,
+            provider_id="codex",
+            content="assistant collision handled",
+            backend="provider-cli",
+            metadata={},
+        )
+
+    monkeypatch.setattr(registry_module.provider_cli_executor, "execute_chat", fake_execute_chat)
+
+    history = [
+        {"role": "assistant", "content": "same text"},
+    ]
+    response = client.post(
+        "/integrations/providers/chat",
+        json={
+            "message": "same text",
+            "model": "cli:codex",
+            "history": history,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["messages"] == [
+        {"role": "assistant", "content": "same text"},
+        {"role": "user", "content": "same text"},
+    ]
+    assert response.json()["message"]["content"] == "assistant collision handled"
+
+
 def test_provider_chat_route_returns_error_payload_on_execution_failure(monkeypatch):
     registry_module, client = _build_provider_chat_client(monkeypatch)
 
