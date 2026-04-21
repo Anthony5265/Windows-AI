@@ -16,6 +16,12 @@ This directory contains practical examples and compatibility pages for common Wi
 - [RAG Knowledge Base Example](./rag-knowledge-base.md)
 - [System Automation Example](./system-automation.md)
 
+## Related Navigation
+
+- [Tutorials Index](../tutorials/README.md)
+- [Documentation Hub](../README.md)
+- [API Docs Index](../api/README.md)
+
 ## Notes
 
 Several of these pages currently exist as lightweight compatibility pages for older
