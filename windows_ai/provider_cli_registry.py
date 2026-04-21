@@ -342,7 +342,14 @@ def _register_provider_chat_route() -> None:
 
         def _build_messages(request: ProviderChatRequest) -> List[Dict[str, str]]:
             messages = list(request.history or [])
-            if not messages or messages[-1].get("content") != request.message:
+            if not messages:
+                messages.append({"role": "user", "content": request.message})
+                return messages
+
+            last_message = messages[-1]
+            last_role = (last_message.get("role") or "").lower()
+            last_content = last_message.get("content")
+            if last_role != "user" or last_content != request.message:
                 messages.append({"role": "user", "content": request.message})
             return messages
 
