@@ -493,8 +493,9 @@ except AuthenticationError:
 ## Support
 
 - [GitHub Issues](https://github.com/Anthony5265/Windows-AI/issues)
-- [Documentation](https://windows-ai.readthedocs.io)
-- [Examples](https://github.com/Anthony5265/Windows-AI/tree/main/examples)
+- [Documentation Hub](../README.md)
+- [API Docs Index](./README.md)
+- [Examples Index](../examples/README.md)
 
 ## License
 
