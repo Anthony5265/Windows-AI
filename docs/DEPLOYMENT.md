@@ -362,6 +362,8 @@ docker cp windows-ai:/tmp/app-backup.tar.gz ./
 ## Support & Resources
 
 - [Troubleshooting Guide](./TROUBLESHOOTING.md)
-- [API Documentation](./docs/api/REST_API.md)
-- [Configuration Options](./docs/CONFIGURATION.md)
-- [Performance Tuning](./docs/PERFORMANCE.md)
+- [API Docs Index](./api/README.md)
+- [API Reference](./api/API_REFERENCE.md)
+- [Configuration Guide](./deployment/CONFIGURATION.md)
+- [Documentation Hub](./README.md)
+
