@@ -19,7 +19,39 @@ Windows AI currently supports these provider-backed target formats:
 ## Discovery and setup endpoints
 
 ### `GET /integrations/providers/definitions`
-Returns the known provider definitions, including install URLs, auth hints, and capability flags.
+Returns the known provider definitions, including install URLs, auth hints, capability flags,
+and target metadata that the GUI can use to build valid model targets.
+
+Example response excerpt:
+
+```json
+{
+  "status": "success",
+  "count": 5,
+  "providers": [
+    {
+      "id": "codex",
+      "display_name": "Codex CLI",
+      "category": "cloud_cli",
+      "metadata": {
+        "target_format": "cli:codex",
+        "example_targets": ["cli:codex"],
+        "installer_strategy": "detect_or_install_cli"
+      }
+    },
+    {
+      "id": "ollama",
+      "display_name": "Ollama",
+      "category": "local_runtime",
+      "metadata": {
+        "target_format": "ollama:<model>",
+        "example_targets": ["ollama:llama3.1:8b", "ollama:phi3:mini"],
+        "installer_strategy": "detect_or_install_runtime"
+      }
+    }
+  ]
+}
+```
 
 ### `GET /integrations/providers/detect`
 Detects all supported provider CLIs and local runtimes on the current machine.
