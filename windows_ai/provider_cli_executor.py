@@ -464,7 +464,7 @@ class ProviderCLIExecutor:
         seen: set[Tuple[str, ...]] = set()
         for command, inline_prompt in base_candidates[provider_id]:
             cmd = list(command)
-            if max_tokens:
+            if max_tokens is not None:
                 cmd += ["--max-tokens", str(max_tokens)]
             if temperature is not None:
                 cmd += ["--temperature", str(temperature)]
