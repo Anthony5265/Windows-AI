@@ -260,6 +260,7 @@ class ProviderCLIRegistry:
     def get_setup_plan(self) -> Dict[str, Any]:
         detections = self.detect_all()
         return {
+            "definitions": self.list_provider_definitions(),
             "providers": [item.to_dict() for item in detections],
             "ollama": self.recommend_ollama_models(),
             "installer_actions": [
