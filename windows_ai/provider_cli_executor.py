@@ -202,7 +202,10 @@ class ProviderCLIExecutor:
         temperature: float,
         max_tokens: Optional[int],
     ) -> AsyncIterator[str]:
-        detection = provider_cli_registry.detect_provider(provider_id)
+        try:
+            detection = provider_cli_registry.detect_provider(provider_id)
+        except ValueError as exc:
+            raise ProviderCLIExecutionError(str(exc)) from exc
         if not detection.detected or not detection.executable_path:
             raise ProviderCLIExecutionError(f"Provider CLI not detected: {provider_id}")
 
@@ -334,7 +337,10 @@ class ProviderCLIExecutor:
         temperature: float,
         max_tokens: Optional[int],
     ) -> ProviderChatResult:
-        detection = provider_cli_registry.detect_provider(provider_id)
+        try:
+            detection = provider_cli_registry.detect_provider(provider_id)
+        except ValueError as exc:
+            raise ProviderCLIExecutionError(str(exc)) from exc
         if not detection.detected or not detection.executable_path:
             raise ProviderCLIExecutionError(f"Provider CLI not detected: {provider_id}")
 
