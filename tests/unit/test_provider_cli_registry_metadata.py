@@ -1,6 +1,6 @@
 import pytest
 
-from windows_ai.provider_cli_registry import ProviderCLIRegistry
+from windows_ai.provider_cli_registry import HardwareProfile, ProviderCLIRegistry
 
 
 def test_provider_definitions_include_target_examples():
@@ -11,6 +11,27 @@ def test_provider_definitions_include_target_examples():
     assert definitions["codex"]["metadata"]["example_targets"] == ["cli:codex"]
     assert definitions["ollama"]["metadata"]["target_format"] == "ollama:<model>"
     assert "ollama:llama3.1:8b" in definitions["ollama"]["metadata"]["example_targets"]
+
+
+def test_ollama_recommendations_include_direct_target_strings(monkeypatch):
+    registry = ProviderCLIRegistry()
+    monkeypatch.setattr(
+        registry,
+        "get_hardware_profile",
+        lambda: HardwareProfile(
+            platform="Windows",
+            architecture="AMD64",
+            cpu_count=16,
+            total_memory_gb=16.0,
+            gpu_hint="NVIDIA GeForce RTX 4070",
+        ),
+    )
+
+    recommendations = registry.recommend_ollama_models()
+
+    assert recommendations["recommended_models"]
+    first_model = recommendations["recommended_models"][0]
+    assert first_model["target"] == f"ollama:{first_model['id']}"
 
 
 def test_setup_plan_includes_provider_definitions_and_actions(monkeypatch):
