@@ -251,10 +251,18 @@ class ProviderCLIRegistry:
                 {"id": "tinyllama", "reason": "Very lightweight fallback"},
             ]
 
+        normalized_models = [
+            {
+                **model,
+                "target": f"ollama:{model['id']}",
+            }
+            for model in models
+        ]
+
         return {
             "hardware_profile": profile.to_dict(),
             "has_gpu_hint": has_gpu,
-            "recommended_models": models,
+            "recommended_models": normalized_models,
         }
 
     def get_setup_plan(self) -> Dict[str, Any]:
