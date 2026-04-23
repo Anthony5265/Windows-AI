@@ -66,7 +66,38 @@ Returns a lightweight hardware profile used for local model recommendations.
 Returns recommended Ollama models based on detected hardware.
 
 ### `GET /integrations/providers/setup-plan`
-Returns a combined setup plan including detection results and installer actions.
+Returns a combined setup plan including provider definitions, detection results, Ollama recommendations,
+and installer actions.
+
+Example response excerpt:
+
+```json
+{
+  "definitions": [
+    {
+      "id": "codex",
+      "metadata": {
+        "target_format": "cli:codex",
+        "example_targets": ["cli:codex"]
+      }
+    }
+  ],
+  "providers": [
+    {
+      "provider_id": "codex",
+      "detected": true,
+      "recommended_action": "authenticate"
+    }
+  ],
+  "installer_actions": [
+    {
+      "provider_id": "codex",
+      "action": "authenticate",
+      "detected": true
+    }
+  ]
+}
+```
 
 ## Provider-backed chat
 
