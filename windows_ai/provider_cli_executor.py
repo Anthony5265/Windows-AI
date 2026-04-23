@@ -469,16 +469,23 @@ class ProviderCLIExecutor:
         finalized: List[Tuple[List[str], bool]] = []
         seen: set[Tuple[str, ...]] = set()
         for command, inline_prompt in base_candidates[provider_id]:
-            cmd = list(command)
+            variants: List[List[str]] = []
+            with_optional_flags = list(command)
             if max_tokens is not None:
-                cmd += ["--max-tokens", str(max_tokens)]
+                with_optional_flags += ["--max-tokens", str(max_tokens)]
             if temperature is not None:
-                cmd += ["--temperature", str(temperature)]
-            signature = tuple(cmd)
-            if signature in seen:
-                continue
-            seen.add(signature)
-            finalized.append((cmd, inline_prompt))
+                with_optional_flags += ["--temperature", str(temperature)]
+            variants.append(with_optional_flags)
+
+            if with_optional_flags != list(command):
+                variants.append(list(command))
+
+            for cmd in variants:
+                signature = tuple(cmd)
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                finalized.append((cmd, inline_prompt))
         return finalized
 
     def _messages_to_prompt(self, messages: List[Dict[str, str]]) -> str:
