@@ -52,8 +52,13 @@ function Get-CommandVersion {
 
 function Test-AuthConfigured {
     param([string[]]$EnvVars)
+
+    if (-not $EnvVars -or $EnvVars.Count -eq 0) {
+        return $true
+    }
+
     foreach ($envVar in $EnvVars) {
-        if ($env:$envVar) {
+        if ([Environment]::GetEnvironmentVariable($envVar)) {
             return $true
         }
     }
@@ -69,6 +74,8 @@ function Get-ProviderRecord {
         [string[]]$AuthEnvVars,
         [string]$InstallUrl,
         [string]$AuthHint,
+        [string]$Category = "cloud_cli",
+        [hashtable]$Metadata = @{},
         [bool]$SupportsLocalModels = $false,
         [bool]$SupportsCode = $false,
         [bool]$SupportsVision = $false
@@ -89,6 +96,7 @@ function Get-ProviderRecord {
     return [ordered]@{
         provider_id = $Id
         display_name = $DisplayName
+        category = $Category
         detected = [bool]$exePath
         executable_path = $exePath
         version = $version
@@ -102,6 +110,112 @@ function Get-ProviderRecord {
             supports_code = $SupportsCode
             supports_vision = $SupportsVision
         }
+        metadata = [ordered]@{
+            target_format = $Metadata.target_format
+            example_targets = @($Metadata.example_targets)
+            installer_strategy = $Metadata.installer_strategy
+        }
+    }
+}
+
+function New-ProviderTargetCatalog {
+    param(
+        [array]$Providers,
+        [array]$RecommendedModels,
+        [string]$DefaultTarget
+    )
+
+    $availableTargets = @()
+    $setupRequiredTargets = @()
+
+    foreach ($provider in $Providers) {
+        $targets = @()
+
+        if ($provider.provider_id -eq "ollama") {
+            if ($RecommendedModels -and $RecommendedModels.Count -gt 0) {
+                foreach ($model in $RecommendedModels) {
+                    $targets += [ordered]@{
+                        target = $model.target
+                        model_id = $model.id
+                        reason = $model.reason
+                        source = "ollama"
+                        type = "local_model"
+                        is_default = ($model.target -eq $DefaultTarget)
+                    }
+                }
+            } else {
+                $targets += [ordered]@{
+                    target = $provider.metadata.target_format
+                    model_id = $null
+                    reason = "Install Ollama and download a local model to enable this target."
+                    source = "ollama"
+                    type = "local_runtime"
+                    is_default = $false
+                }
+            }
+        } else {
+            foreach ($target in @($provider.metadata.example_targets)) {
+                if ($target) {
+                    $targets += [ordered]@{
+                        target = $target
+                        model_id = $null
+                        reason = $null
+                        source = "provider_cli"
+                        type = "cloud_cli"
+                        is_default = $false
+                    }
+                }
+            }
+        }
+
+        foreach ($targetInfo in $targets) {
+            $entry = [ordered]@{
+                provider_id = $provider.provider_id
+                provider_name = $provider.display_name
+                category = $provider.category
+                detected = $provider.detected
+                auth_configured = $provider.auth_configured
+                recommended_action = $provider.recommended_action
+                install_url = $provider.install_url
+                auth_hint = $provider.auth_hint
+                capabilities = $provider.capabilities
+                metadata = $provider.metadata
+                target = $targetInfo.target
+                target_format = $provider.metadata.target_format
+                source = $targetInfo.source
+                type = $targetInfo.type
+                model_id = $targetInfo.model_id
+                reason = $targetInfo.reason
+                is_default = $targetInfo.is_default
+            }
+
+            if ($provider.recommended_action -eq "ready") {
+                $availableTargets += $entry
+            } else {
+                $setupRequiredTargets += $entry
+            }
+        }
+    }
+
+    $allTargets = @($availableTargets + $setupRequiredTargets)
+    $catalogDefault = if ($DefaultTarget) {
+        $DefaultTarget
+    } elseif ($availableTargets.Count -gt 0) {
+        $availableTargets[0].target
+    } else {
+        $null
+    }
+
+    return [ordered]@{
+        default_target = $catalogDefault
+        available_targets = $availableTargets
+        setup_required_targets = $setupRequiredTargets
+        all_targets = $allTargets
+        counts = [ordered]@{
+            available = $availableTargets.Count
+            setup_required = $setupRequiredTargets.Count
+            total = $allTargets.Count
+        }
     }
 }
 
@@ -114,27 +228,27 @@ $providers = @(
         "$localAppData\Programs\GeminiCLI\gemini.exe",
         "$programFiles\GeminiCLI\gemini.exe",
         "$programFilesX86\GeminiCLI\gemini.exe"
-    ) -AuthEnvVars @("GEMINI_API_KEY", "GOOGLE_API_KEY") -InstallUrl "https://ai.google.dev/" -AuthHint "Sign in with your Google AI credentials or configure an API key." -SupportsVision $true),
+    ) -AuthEnvVars @("GEMINI_API_KEY", "GOOGLE_API_KEY") -InstallUrl "https://ai.google.dev/" -AuthHint "Sign in with your Google AI credentials or configure an API key." -Category "cloud_cli" -Metadata @{ target_format = "cli:gemini"; example_targets = @("cli:gemini"); installer_strategy = "detect_or_install_cli" } -SupportsVision $true),
     (Get-ProviderRecord -Id "codex" -DisplayName "Codex CLI" -ExecutableNames @("codex", "codex.exe") -CandidatePaths @(
         "$localAppData\Programs\CodexCLI\codex.exe",
         "$programFiles\CodexCLI\codex.exe",
         "$programFilesX86\CodexCLI\codex.exe"
-    ) -AuthEnvVars @("OPENAI_API_KEY") -InstallUrl "https://platform.openai.com/" -AuthHint "Authenticate with your OpenAI account or API key." -SupportsCode $true),
+    ) -AuthEnvVars @("OPENAI_API_KEY") -InstallUrl "https://platform.openai.com/" -AuthHint "Authenticate with your OpenAI account or API key." -Category "cloud_cli" -Metadata @{ target_format = "cli:codex"; example_targets = @("cli:codex"); installer_strategy = "detect_or_install_cli" } -SupportsCode $true),
     (Get-ProviderRecord -Id "claude" -DisplayName "Claude CLI" -ExecutableNames @("claude", "claude.exe") -CandidatePaths @(
         "$localAppData\Programs\ClaudeCLI\claude.exe",
         "$programFiles\ClaudeCLI\claude.exe",
         "$programFilesX86\ClaudeCLI\claude.exe"
-    ) -AuthEnvVars @("ANTHROPIC_API_KEY") -InstallUrl "https://console.anthropic.com/" -AuthHint "Authenticate with Anthropic credentials or API key." -SupportsCode $true -SupportsVision $true),
+    ) -AuthEnvVars @("ANTHROPIC_API_KEY") -InstallUrl "https://console.anthropic.com/" -AuthHint "Authenticate with Anthropic credentials or API key." -Category "cloud_cli" -Metadata @{ target_format = "cli:claude"; example_targets = @("cli:claude"); installer_strategy = "detect_or_install_cli" } -SupportsCode $true -SupportsVision $true),
     (Get-ProviderRecord -Id "grok" -DisplayName "Grok CLI" -ExecutableNames @("grok", "grok.exe") -CandidatePaths @(
         "$localAppData\Programs\GrokCLI\grok.exe",
         "$programFiles\GrokCLI\grok.exe",
         "$programFilesX86\GrokCLI\grok.exe"
-    ) -AuthEnvVars @("XAI_API_KEY", "GROK_API_KEY") -InstallUrl "https://x.ai/" -AuthHint "Authenticate with your xAI account or API key." -SupportsCode $true),
+    ) -AuthEnvVars @("XAI_API_KEY", "GROK_API_KEY") -InstallUrl "https://x.ai/" -AuthHint "Authenticate with your xAI account or API key." -Category "cloud_cli" -Metadata @{ target_format = "cli:grok"; example_targets = @("cli:grok"); installer_strategy = "detect_or_install_cli" } -SupportsCode $true),
     (Get-ProviderRecord -Id "ollama" -DisplayName "Ollama" -ExecutableNames @("ollama", "ollama.exe") -CandidatePaths @(
         "$localAppData\Programs\Ollama\ollama.exe",
         "$programFiles\Ollama\ollama.exe",
         "$programFilesX86\Ollama\ollama.exe"
-    ) -AuthEnvVars @("OLLAMA_HOST") -InstallUrl "https://ollama.com/download" -AuthHint "No cloud auth required. Download a model to begin." -SupportsLocalModels $true -SupportsCode $true)
+    ) -AuthEnvVars @() -InstallUrl "https://ollama.com/download" -AuthHint "No cloud auth required. Download a model to begin." -Category "local_runtime" -Metadata @{ target_format = "ollama:<model>"; example_targets = @("ollama:llama3.1:8b", "ollama:phi3:mini"); installer_strategy = "detect_or_install_runtime" } -SupportsLocalModels $true -SupportsCode $true)
 )
 
 $memoryGB = $null
@@ -175,6 +289,18 @@ if (($memoryGB -as [double]) -ge 32) {
     )
 }
 
+$recommendedModels = @($recommendedModels | ForEach-Object {
+    [ordered]@{
+        id = $_.id
+        reason = $_.reason
+        target = "ollama:$($_.id)"
+    }
+})
+
+$defaultModelId = if ($recommendedModels.Count -gt 0) { $recommendedModels[0].id } else { $null }
+$defaultTarget = if ($recommendedModels.Count -gt 0) { $recommendedModels[0].target } else { $null }
+$targetCatalog = New-ProviderTargetCatalog -Providers $providers -RecommendedModels $recommendedModels -DefaultTarget $defaultTarget
+
 $setupPlan = [ordered]@{
     generated_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     providers = $providers
@@ -186,8 +312,11 @@ $setupPlan = [ordered]@{
         gpu_hint = $gpuHint
     }
     ollama = [ordered]@{
+        default_model_id = $defaultModelId
+        default_target = $defaultTarget
         recommended_models = $recommendedModels
     }
+    target_catalog = $targetCatalog
     installer_actions = @($providers | ForEach-Object {
         [ordered]@{
             provider_id = $_.provider_id
