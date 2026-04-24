@@ -54,7 +54,28 @@ Example response excerpt:
 ```
 
 ### `GET /integrations/providers/detect`
-Detects all supported provider CLIs and local runtimes on the current machine.
+Detects all supported provider CLIs and local runtimes on the current machine. Detection results also
+include provider metadata so a client can derive valid target strings without making a second call.
+
+Example response excerpt:
+
+```json
+{
+  "status": "success",
+  "providers": [
+    {
+      "provider_id": "codex",
+      "detected": true,
+      "recommended_action": "authenticate",
+      "metadata": {
+        "target_format": "cli:codex",
+        "example_targets": ["cli:codex"],
+        "installer_strategy": "detect_or_install_cli"
+      }
+    }
+  ]
+}
+```
 
 ### `GET /integrations/providers/detect/{provider_id}`
 Detects a single provider. Valid ids are `gemini`, `codex`, `claude`, `grok`, and `ollama`.
@@ -103,7 +124,10 @@ Example response excerpt:
     {
       "provider_id": "codex",
       "detected": true,
-      "recommended_action": "authenticate"
+      "recommended_action": "authenticate",
+      "metadata": {
+        "target_format": "cli:codex"
+      }
     }
   ],
   "ollama": {
