@@ -261,9 +261,14 @@ class ProviderCLIRegistry:
             for model in models
         ]
 
+        default_model_id = normalized_models[0]["id"] if normalized_models else None
+        default_target = normalized_models[0]["target"] if normalized_models else None
+
         return {
             "hardware_profile": profile.to_dict(),
             "has_gpu_hint": has_gpu,
+            "default_model_id": default_model_id,
+            "default_target": default_target,
             "recommended_models": normalized_models,
         }
 
