@@ -1,0 +1,57 @@
+name: Provider Setup Contract
+
+on:
+  push:
+    paths:
+      - "install/detect-ai-providers.ps1"
+      - "install/validate-provider-setup.ps1"
+      - "install/provider-setup.schema.json"
+      - "windows_ai/provider_cli_registry.py"
+      - "tests/unit/test_provider_cli_registry_metadata.py"
+      - "tests/unit/test_installer_provider_setup_contract.py"
+      - ".github/workflows/provider-setup-contract.yml"
+  pull_request:
+    paths:
+      - "install/detect-ai-providers.ps1"
+      - "install/validate-provider-setup.ps1"
+      - "install/provider-setup.schema.json"
+      - "windows_ai/provider_cli_registry.py"
+      - "tests/unit/test_provider_cli_registry_metadata.py"
+      - "tests/unit/test_installer_provider_setup_contract.py"
+      - ".github/workflows/provider-setup-contract.yml"
+  workflow_dispatch:
+
+jobs:
+  provider-setup-contract:
+    name: Validate provider setup contract
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest psutil
+
+      - name: Generate provider setup plan
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP "provider-setup.json"
+          ./install/detect-ai-providers.ps1 -OutputPath $output
+          Get-Content $output
+
+      - name: Validate provider setup plan
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP "provider-setup.json"
+          ./install/validate-provider-setup.ps1 -SetupPlanPath $output
+
+      - name: Run provider setup unit tests
+        run: python -m pytest tests/unit/test_provider_cli_registry_metadata.py tests/unit/test_installer_provider_setup_contract.py -q
