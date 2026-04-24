@@ -105,7 +105,11 @@ Example response excerpt:
 
 ### `GET /integrations/providers/setup-plan`
 Returns a combined setup plan including provider definitions, detection results, Ollama recommendations,
-and installer actions.
+a normalized target catalog, and installer actions.
+
+The `target_catalog` object is the preferred payload for installers and GUI model pickers. It groups
+ready-to-run targets separately from providers that still need install or authentication work, and it
+includes a `default_target` hint for first-run selection.
 
 Example response excerpt:
 
@@ -131,12 +135,41 @@ Example response excerpt:
     }
   ],
   "ollama": {
+    "default_model_id": "phi3:mini",
+    "default_target": "ollama:phi3:mini",
     "recommended_models": [
       {
         "id": "phi3:mini",
         "target": "ollama:phi3:mini"
       }
     ]
+  },
+  "target_catalog": {
+    "default_target": "ollama:phi3:mini",
+    "available_targets": [
+      {
+        "provider_id": "ollama",
+        "provider_name": "Ollama",
+        "target": "ollama:phi3:mini",
+        "model_id": "phi3:mini",
+        "type": "local_model",
+        "is_default": true
+      }
+    ],
+    "setup_required_targets": [
+      {
+        "provider_id": "codex",
+        "provider_name": "Codex CLI",
+        "target": "cli:codex",
+        "recommended_action": "authenticate",
+        "type": "cloud_cli"
+      }
+    ],
+    "counts": {
+      "available": 1,
+      "setup_required": 1,
+      "total": 2
+    }
   },
   "installer_actions": [
     {
@@ -147,6 +180,19 @@ Example response excerpt:
   ]
 }
 ```
+
+## Target catalog contract
+
+Clients should prefer `target_catalog` when rendering provider choices:
+
+- `available_targets` are immediately selectable chat targets.
+- `setup_required_targets` are known targets that require install or authentication first.
+- `default_target` is the recommended first selection for onboarding.
+- each target includes provider identity, action state, metadata, and a direct `target` string.
+
+This same shape is emitted by the installer preflight script at `install/detect-ai-providers.ps1`, so
+first-run setup can consume either backend API data or installer-generated JSON without remapping
+provider-specific target names.
 
 ## Provider-backed chat
 
