@@ -17,7 +17,7 @@ def test_cli_command_candidates_preserve_zero_max_tokens():
     assert "0" in first_command
 
 
-def test_cli_command_candidates_include_flag_free_fallback_variant():
+def test_cli_command_candidates_include_optional_flag_fallback_variants():
     candidates = ProviderCLIExecutor()._build_cli_command_candidates(
         provider_id="codex",
         executable=pathlib.Path("C:/Tools/codex.exe"),
@@ -28,4 +28,6 @@ def test_cli_command_candidates_include_flag_free_fallback_variant():
 
     command_argvs = [candidate[0] for candidate in candidates]
     assert ["C:/Tools/codex.exe", "chat", "--prompt", "hello"] in command_argvs
+    assert ["C:/Tools/codex.exe", "chat", "--prompt", "hello", "--max-tokens", "64"] in command_argvs
+    assert ["C:/Tools/codex.exe", "chat", "--prompt", "hello", "--temperature", "0.4"] in command_argvs
     assert ["C:/Tools/codex.exe", "chat", "--prompt", "hello", "--max-tokens", "64", "--temperature", "0.4"] in command_argvs
