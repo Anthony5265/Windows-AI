@@ -63,7 +63,24 @@ Detects a single provider. Valid ids are `gemini`, `codex`, `claude`, `grok`, an
 Returns a lightweight hardware profile used for local model recommendations.
 
 ### `GET /integrations/providers/ollama/recommendations`
-Returns recommended Ollama models based on detected hardware.
+Returns recommended Ollama models based on detected hardware. Each recommended model also includes a
+ready-to-use `target` field such as `ollama:llama3.1:8b` that can be sent directly to the provider
+chat endpoints.
+
+Example response excerpt:
+
+```json
+{
+  "has_gpu_hint": true,
+  "recommended_models": [
+    {
+      "id": "llama3.1:8b",
+      "target": "ollama:llama3.1:8b",
+      "reason": "Balanced default for midrange systems"
+    }
+  ]
+}
+```
 
 ### `GET /integrations/providers/setup-plan`
 Returns a combined setup plan including provider definitions, detection results, Ollama recommendations,
@@ -89,6 +106,14 @@ Example response excerpt:
       "recommended_action": "authenticate"
     }
   ],
+  "ollama": {
+    "recommended_models": [
+      {
+        "id": "phi3:mini",
+        "target": "ollama:phi3:mini"
+      }
+    ]
+  },
   "installer_actions": [
     {
       "provider_id": "codex",
