@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Anthony5265/Windows-AI/install/provider-setup.schema.json",
+  "title": "Windows AI Provider Setup Plan",
+  "type": "object",
+  "required": ["providers", "ollama", "installer_actions"],
+  "properties": {
+    "generated_at": { "type": "string" },
+    "providers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/provider" }
+    },
+    "hardware": {
+      "type": "object",
+      "properties": {
+        "platform": { "type": "string" },
+        "architecture": { "type": ["string", "null"] },
+        "cpu_count": { "type": ["integer", "null"], "minimum": 1 },
+        "total_memory_gb": { "type": ["number", "null"], "minimum": 0 },
+        "gpu_hint": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "ollama": {
+      "type": "object",
+      "required": ["recommended_models"],
+      "properties": {
+        "default_model_id": { "type": ["string", "null"] },
+        "default_target": { "type": ["string", "null"], "pattern": "^ollama:.+" },
+        "recommended_models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ollamaModel" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "target_catalog": {
+      "type": "object",
+      "properties": {
+        "default_target": { "type": ["string", "null"] },
+        "available_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/providerTarget" }
+        },
+        "setup_required_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/providerTarget" }
+        },
+        "all_targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/providerTarget" }
+        },
+        "counts": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "integer", "minimum": 0 },
+            "setup_required": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "installer_actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/installerAction" }
+    }
+  },
+  "$defs": {
+    "provider": {
+      "type": "object",
+      "required": ["provider_id", "detected", "recommended_action", "install_url", "auth_hint"],
+      "properties": {
+        "provider_id": { "type": "string", "enum": ["gemini", "codex", "claude", "grok", "ollama"] },
+        "display_name": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"] },
+        "detected": { "type": "boolean" },
+        "executable_path": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "auth_configured": { "type": "boolean" },
+        "recommended_action": { "type": "string", "enum": ["ready", "authenticate", "install"] },
+        "install_url": { "type": "string" },
+        "auth_hint": { "type": "string" },
+        "capabilities": { "type": "object" },
+        "metadata": { "$ref": "#/$defs/providerMetadata" }
+      },
+      "additionalProperties": true
+    },
+    "providerMetadata": {
+      "type": "object",
+      "properties": {
+        "target_format": { "type": ["string", "null"] },
+        "example_targets": { "type": "array", "items": { "type": "string" } },
+        "installer_strategy": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "ollamaModel": {
+      "type": "object",
+      "required": ["id", "target"],
+      "properties": {
+        "id": { "type": "string" },
+        "target": { "type": "string", "pattern": "^ollama:.+" },
+        "reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "providerTarget": {
+      "type": "object",
+      "required": ["provider_id", "target", "recommended_action"],
+      "properties": {
+        "provider_id": { "type": "string" },
+        "provider_name": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"] },
+        "detected": { "type": "boolean" },
+        "auth_configured": { "type": "boolean" },
+        "recommended_action": { "type": "string", "enum": ["ready", "authenticate", "install"] },
+        "target": { "type": "string" },
+        "target_format": { "type": ["string", "null"] },
+        "source": { "type": ["string", "null"] },
+        "type": { "type": ["string", "null"] },
+        "model_id": { "type": ["string", "null"] },
+        "reason": { "type": ["string", "null"] },
+        "is_default": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "installerAction": {
+      "type": "object",
+      "required": ["provider_id", "action", "detected"],
+      "properties": {
+        "provider_id": { "type": "string" },
+        "action": { "type": "string", "enum": ["ready", "authenticate", "install"] },
+        "detected": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
