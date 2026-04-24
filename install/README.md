@@ -15,6 +15,7 @@ The Windows AI installer is a production-grade NSIS installer that bundles:
 - ✅ System tray application
 - ✅ Windows service for auto-start
 - ✅ First-run wizard
+- ✅ Provider CLI/runtime preflight and Ollama model recommendations
 - ✅ Documentation
 
 ## Features
@@ -121,21 +122,26 @@ The build script performs these steps:
    - Integration tests
    - Validates all components
 
-3. **Clean Build Directory**
+3. **Validate Provider Setup Preflight**
+   - Scans Gemini CLI, Codex CLI, Claude CLI, Grok CLI, and Ollama availability
+   - Generates a provider setup JSON plan
+   - Validates the plan contract before installer packaging
+
+4. **Clean Build Directory**
    - Removes old build artifacts
    - Cleans `__pycache__`, `node_modules`, etc.
 
-4. **Build GUI Application**
+5. **Build GUI Application**
    - Installs npm dependencies
    - Builds Electron app with electron-builder
    - Creates executable
 
-5. **Build Tray Application**
+6. **Build Tray Application**
    - Installs npm dependencies
    - Builds Electron app
    - Creates tray executable
 
-6. **Build NSIS Installer**
+7. **Build NSIS Installer**
    - Compiles installer.nsi
    - Bundles all components
    - Creates `WindowsAI-Setup-{version}.exe`
@@ -186,6 +192,36 @@ npm run build
 # Using NSIS
 "C:\Program Files (x86)\NSIS\makensis.exe" install\installer.nsi
 ```
+
+## Provider Setup Preflight
+
+The installer can generate and validate provider setup data before first launch. This gives the first-run wizard a ready-made view of installed AI CLIs, missing authentication, Ollama availability, and hardware-aware local model suggestions.
+
+```powershell
+# Generate and validate provider setup JSON
+.\install\run-provider-preflight.ps1
+
+# Custom output path
+.\install\run-provider-preflight.ps1 -OutputPath "$env:TEMP\windows-ai-provider-setup.json"
+
+# Validate an existing provider setup plan
+.\install\validate-provider-setup.ps1 -SetupPlanPath "$env:TEMP\windows-ai-provider-setup.json"
+```
+
+The generated JSON includes:
+
+- `providers` — detection results for Gemini CLI, Codex CLI, Claude CLI, Grok CLI, and Ollama
+- `hardware` — Windows hardware profile used for local model recommendations
+- `ollama` — recommended models plus `default_model_id` and `default_target`
+- `target_catalog` — normalized ready/setup-required chat targets for the GUI model picker
+- `installer_actions` — simple install/auth/ready states for the installer UI
+
+Related files:
+
+- `install/PROVIDER_SETUP.md`
+- `install/provider-setup.schema.json`
+- `install/detect-ai-providers.ps1`
+- `install/validate-provider-setup.ps1`
 
 ## Installation Options
 
@@ -265,6 +301,18 @@ Ensure it's in C:\Program Files (x86)\NSIS\
 Start-Process powershell -Verb RunAs
 ```
 
+**Provider preflight validation fails**
+```powershell
+# Re-run detection and validation manually
+.\install\run-provider-preflight.ps1 -OutputPath "$env:TEMP\windows-ai-provider-setup.json"
+.\install\validate-provider-setup.ps1 -SetupPlanPath "$env:TEMP\windows-ai-provider-setup.json"
+
+# Inspect generated setup data
+Get-Content "$env:TEMP\windows-ai-provider-setup.json"
+```
+
+If validation fails, check provider paths, environment variables for cloud CLIs, and the `target_catalog` entries in the generated JSON. Ollama should not require cloud authentication.
+
 ### Installation Issues
 
 **Service fails to install**
@@ -317,6 +365,8 @@ signtool sign /f certificate.pfx /p password /t http://timestamp.digicert.com Wi
 ```
 
 ## CI/CD Integration
+
+The repository also includes a dedicated `Provider Setup Contract` workflow that runs on Windows and validates the provider setup JSON contract.
 
 ### GitHub Actions Example
 
