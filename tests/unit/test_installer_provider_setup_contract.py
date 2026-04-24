@@ -25,6 +25,7 @@ def test_installer_ollama_recommendations_are_directly_runnable_targets():
 
     assert 'target = "ollama:$($_.id)"' in script
     assert "default_model_id = $defaultModelId" in script
+    assert "default_target = $DefaultTarget" not in script
     assert "default_target = $defaultTarget" in script
 
 
@@ -33,12 +34,14 @@ def test_installer_treats_ollama_as_local_runtime_without_cloud_auth():
 
     assert '-Id "ollama"' in script
     assert '-AuthEnvVars @()' in script
+    assert '-AuthEnvVars @("OLLAMA_HOST")' not in script
     assert 'target_format = "ollama:<model>"' in script
     assert 'installer_strategy = "detect_or_install_runtime"' in script
 
 
 def test_installer_uses_safe_dynamic_environment_lookup():
     script = _script_text()
+    legacy_dynamic_env_lookup = "$" + "env:" + "$envVar"
 
     assert "[Environment]::GetEnvironmentVariable($envVar)" in script
-    assert "$env:$ not in script" not in script
+    assert legacy_dynamic_env_lookup not in script
