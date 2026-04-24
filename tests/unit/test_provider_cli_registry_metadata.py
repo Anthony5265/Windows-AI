@@ -13,6 +13,16 @@ def test_provider_definitions_include_target_examples():
     assert "ollama:llama3.1:8b" in definitions["ollama"]["metadata"]["example_targets"]
 
 
+def test_detect_provider_includes_target_metadata(monkeypatch):
+    registry = ProviderCLIRegistry()
+    monkeypatch.setattr(registry, "_locate_executable", lambda provider_id, executable_names: None)
+
+    detection = registry.detect_provider("codex")
+
+    assert detection.metadata["target_format"] == "cli:codex"
+    assert detection.metadata["example_targets"] == ["cli:codex"]
+
+
 def test_ollama_recommendations_include_direct_target_strings(monkeypatch):
     registry = ProviderCLIRegistry()
     monkeypatch.setattr(
