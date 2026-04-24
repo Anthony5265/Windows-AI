@@ -470,15 +470,24 @@ class ProviderCLIExecutor:
         seen: set[Tuple[str, ...]] = set()
         for command, inline_prompt in base_candidates[provider_id]:
             variants: List[List[str]] = []
-            with_optional_flags = list(command)
-            if max_tokens is not None:
-                with_optional_flags += ["--max-tokens", str(max_tokens)]
-            if temperature is not None:
-                with_optional_flags += ["--temperature", str(temperature)]
-            variants.append(with_optional_flags)
 
-            if with_optional_flags != list(command):
-                variants.append(list(command))
+            if max_tokens is not None or temperature is not None:
+                with_all_optional_flags = list(command)
+                if max_tokens is not None:
+                    with_all_optional_flags += ["--max-tokens", str(max_tokens)]
+                if temperature is not None:
+                    with_all_optional_flags += ["--temperature", str(temperature)]
+                variants.append(with_all_optional_flags)
+
+            if max_tokens is not None:
+                with_max_tokens_only = list(command) + ["--max-tokens", str(max_tokens)]
+                variants.append(with_max_tokens_only)
+
+            if temperature is not None:
+                with_temperature_only = list(command) + ["--temperature", str(temperature)]
+                variants.append(with_temperature_only)
+
+            variants.append(list(command))
 
             for cmd in variants:
                 signature = tuple(cmd)
