@@ -73,6 +73,7 @@ class ProviderDetectionResult:
     install_url: str
     auth_hint: str
     capabilities: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -204,6 +205,7 @@ class ProviderCLIRegistry:
                 "supports_code": provider.supports_code,
                 "supports_vision": provider.supports_vision,
             },
+            metadata=dict(provider.metadata),
         )
 
     def get_hardware_profile(self) -> HardwareProfile:
