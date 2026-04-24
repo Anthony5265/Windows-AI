@@ -1,6 +1,21 @@
 import pytest
 
-from windows_ai.provider_cli_registry import HardwareProfile, ProviderCLIRegistry
+from windows_ai.provider_cli_registry import HardwareProfile, ProviderCLIRegistry, ProviderDetectionResult
+
+
+def _detection(provider_id, action="ready", detected=True):
+    return ProviderDetectionResult(
+        provider_id=provider_id,
+        detected=detected,
+        executable_path=f"C:/Tools/{provider_id}.exe" if detected else None,
+        version="1.0.0" if detected else None,
+        auth_configured=action == "ready",
+        recommended_action=action,
+        install_url="https://example.invalid/install",
+        auth_hint="Authenticate this provider",
+        capabilities={"supports_chat": True},
+        metadata={"target_format": f"cli:{provider_id}", "example_targets": [f"cli:{provider_id}"]},
+    )
 
 
 def test_provider_definitions_include_target_examples():
@@ -60,6 +75,59 @@ def test_setup_plan_includes_provider_definitions_and_actions(monkeypatch):
     assert {item["id"] for item in setup_plan["definitions"]} == {"gemini", "codex", "claude", "grok", "ollama"}
     assert setup_plan["providers"] == []
     assert setup_plan["installer_actions"] == []
+
+
+def test_target_catalog_groups_ready_and_setup_required_targets():
+    registry = ProviderCLIRegistry()
+    detections = [
+        _detection("codex", action="ready", detected=True),
+        _detection("gemini", action="authenticate", detected=True),
+        _detection("ollama", action="ready", detected=True),
+    ]
+    ollama = {
+        "default_target": "ollama:phi3:mini",
+        "recommended_models": [
+            {"id": "phi3:mini", "target": "ollama:phi3:mini", "reason": "Fast local default"},
+        ],
+    }
+
+    catalog = registry.get_target_catalog(detections=detections, ollama_recommendations=ollama)
+
+    ready_targets = {item["target"] for item in catalog["available_targets"]}
+    setup_targets = {item["target"] for item in catalog["setup_required_targets"]}
+    assert "cli:codex" in ready_targets
+    assert "ollama:phi3:mini" in ready_targets
+    assert "cli:gemini" in setup_targets
+    assert catalog["default_target"] == "ollama:phi3:mini"
+    assert catalog["counts"] == {"available": 2, "setup_required": 1, "total": 3}
+
+
+def test_setup_plan_includes_target_catalog(monkeypatch):
+    registry = ProviderCLIRegistry()
+    monkeypatch.setattr(
+        registry,
+        "detect_all",
+        lambda: [_detection("codex", action="ready", detected=True)],
+    )
+    monkeypatch.setattr(
+        registry,
+        "recommend_ollama_models",
+        lambda: {
+            "hardware_profile": {},
+            "has_gpu_hint": False,
+            "default_model_id": "phi3:mini",
+            "default_target": "ollama:phi3:mini",
+            "recommended_models": [
+                {"id": "phi3:mini", "target": "ollama:phi3:mini", "reason": "Fast local default"},
+            ],
+        },
+    )
+
+    setup_plan = registry.get_setup_plan()
+
+    assert "target_catalog" in setup_plan
+    assert setup_plan["target_catalog"]["available_targets"][0]["target"] == "cli:codex"
+    assert setup_plan["target_catalog"]["default_target"] == "ollama:phi3:mini"
 
 
 def test_detect_provider_raises_value_error_for_unknown_provider():

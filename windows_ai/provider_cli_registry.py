@@ -272,12 +272,135 @@ class ProviderCLIRegistry:
             "recommended_models": normalized_models,
         }
 
+    def get_target_catalog(
+        self,
+        detections: Optional[List[ProviderDetectionResult]] = None,
+        ollama_recommendations: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Build a GUI/installer-ready catalog of runnable provider targets.
+
+        The detection endpoints answer "what is installed?" while definitions answer
+        "what can exist?" This catalog combines both into direct chat targets so
+        clients can render ready, authenticate, and install states without
+        re-implementing provider-specific target naming rules.
+        """
+        detections = detections if detections is not None else self.detect_all()
+        ollama_recommendations = (
+            ollama_recommendations
+            if ollama_recommendations is not None
+            else self.recommend_ollama_models()
+        )
+
+        detections_by_provider = {item.provider_id: item for item in detections}
+        available_targets: List[Dict[str, Any]] = []
+        setup_required_targets: List[Dict[str, Any]] = []
+
+        def add_entry(entry: Dict[str, Any], action: str) -> None:
+            if action == "ready":
+                available_targets.append(entry)
+            else:
+                setup_required_targets.append(entry)
+
+        for provider in self.providers.values():
+            detection = detections_by_provider.get(provider.id)
+            if detection is None:
+                continue
+
+            base_entry = {
+                "provider_id": provider.id,
+                "provider_name": provider.display_name,
+                "category": provider.category,
+                "detected": detection.detected,
+                "auth_configured": detection.auth_configured,
+                "recommended_action": detection.recommended_action,
+                "install_url": provider.install_url,
+                "auth_hint": provider.auth_hint,
+                "capabilities": dict(detection.capabilities),
+                "metadata": dict(provider.metadata),
+            }
+
+            if provider.id == "ollama":
+                recommended_models = ollama_recommendations.get("recommended_models") or []
+                default_target = ollama_recommendations.get("default_target")
+                if recommended_models:
+                    for model in recommended_models:
+                        target = model.get("target") or f"ollama:{model.get('id')}"
+                        add_entry(
+                            {
+                                **base_entry,
+                                "target": target,
+                                "target_format": provider.metadata.get("target_format"),
+                                "source": "ollama",
+                                "type": "local_model",
+                                "model_id": model.get("id"),
+                                "reason": model.get("reason"),
+                                "is_default": target == default_target,
+                            },
+                            detection.recommended_action,
+                        )
+                else:
+                    add_entry(
+                        {
+                            **base_entry,
+                            "target": provider.metadata.get("target_format"),
+                            "target_format": provider.metadata.get("target_format"),
+                            "source": "ollama",
+                            "type": "local_runtime",
+                            "model_id": None,
+                            "reason": "Install Ollama and download a local model to enable this target.",
+                            "is_default": False,
+                        },
+                        detection.recommended_action,
+                    )
+                continue
+
+            targets = provider.metadata.get("example_targets") or [provider.metadata.get("target_format")]
+            for target in targets:
+                if not target:
+                    continue
+                add_entry(
+                    {
+                        **base_entry,
+                        "target": target,
+                        "target_format": provider.metadata.get("target_format"),
+                        "source": "provider_cli",
+                        "type": "cloud_cli",
+                        "model_id": None,
+                        "reason": None,
+                        "is_default": False,
+                    },
+                    detection.recommended_action,
+                )
+
+        all_targets = available_targets + setup_required_targets
+        default_target = (
+            ollama_recommendations.get("default_target")
+            or (available_targets[0]["target"] if available_targets else None)
+        )
+
+        return {
+            "default_target": default_target,
+            "available_targets": available_targets,
+            "setup_required_targets": setup_required_targets,
+            "all_targets": all_targets,
+            "counts": {
+                "available": len(available_targets),
+                "setup_required": len(setup_required_targets),
+                "total": len(all_targets),
+            },
+        }
+
     def get_setup_plan(self) -> Dict[str, Any]:
         detections = self.detect_all()
+        ollama = self.recommend_ollama_models()
         return {
             "definitions": self.list_provider_definitions(),
             "providers": [item.to_dict() for item in detections],
-            "ollama": self.recommend_ollama_models(),
+            "ollama": ollama,
+            "target_catalog": self.get_target_catalog(
+                detections=detections,
+                ollama_recommendations=ollama,
+            ),
             "installer_actions": [
                 {
                     "provider_id": item.provider_id,
