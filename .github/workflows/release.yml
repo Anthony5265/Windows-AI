@@ -60,6 +60,14 @@ jobs:
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "Release version: $version"
 
+      - name: Validate provider setup preflight
+        shell: pwsh
+        run: |
+          $providerSetupPath = Join-Path $env:RUNNER_TEMP "provider-setup.json"
+          .\install\run-provider-preflight.ps1 -OutputPath $providerSetupPath
+          .\install\validate-provider-setup.ps1 -SetupPlanPath $providerSetupPath
+          Write-Host "Provider setup preflight validated: $providerSetupPath"
+
       - name: Build installer
         shell: pwsh
         run: |
@@ -153,6 +161,8 @@ jobs:
           - Enhanced security with digital signatures
           - Improved update experience
           - Better error handling and recovery
+          - Provider setup preflight validation for CLI and Ollama detection
+          - Hardware-aware Ollama target catalog for first-run setup
 
           ### Installation
           Download and run the installer. No additional dependencies required.

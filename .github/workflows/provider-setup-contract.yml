@@ -9,10 +9,12 @@ on:
       - "install/provider-setup.schema.json"
       - "install/PROVIDER_SETUP.md"
       - "windows_ai/provider_cli_registry.py"
+      - ".github/workflows/release.yml"
       - "tests/unit/test_provider_cli_registry_metadata.py"
       - "tests/unit/test_installer_provider_setup_contract.py"
       - "tests/unit/test_provider_setup_preflight_runner.py"
       - "tests/unit/test_provider_setup_schema_contract.py"
+      - "tests/unit/test_release_provider_preflight_workflow.py"
       - ".github/workflows/provider-setup-contract.yml"
   pull_request:
     paths:
@@ -22,10 +24,12 @@ on:
       - "install/provider-setup.schema.json"
       - "install/PROVIDER_SETUP.md"
       - "windows_ai/provider_cli_registry.py"
+      - ".github/workflows/release.yml"
       - "tests/unit/test_provider_cli_registry_metadata.py"
       - "tests/unit/test_installer_provider_setup_contract.py"
       - "tests/unit/test_provider_setup_preflight_runner.py"
       - "tests/unit/test_provider_setup_schema_contract.py"
+      - "tests/unit/test_release_provider_preflight_workflow.py"
       - ".github/workflows/provider-setup-contract.yml"
   workflow_dispatch:
 
@@ -62,4 +66,4 @@ jobs:
           ./install/validate-provider-setup.ps1 -SetupPlanPath $output
 
       - name: Run provider setup unit tests
-        run: python -m pytest tests/unit/test_provider_cli_registry_metadata.py tests/unit/test_installer_provider_setup_contract.py tests/unit/test_provider_setup_preflight_runner.py tests/unit/test_provider_setup_schema_contract.py -q
+        run: python -m pytest tests/unit/test_provider_cli_registry_metadata.py tests/unit/test_installer_provider_setup_contract.py tests/unit/test_provider_setup_preflight_runner.py tests/unit/test_provider_setup_schema_contract.py tests/unit/test_release_provider_preflight_workflow.py -q
