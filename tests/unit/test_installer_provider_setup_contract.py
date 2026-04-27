@@ -27,6 +27,8 @@ def test_installer_ollama_recommendations_are_directly_runnable_targets():
     assert "default_model_id = $defaultModelId" in script
     assert "default_target = $DefaultTarget" not in script
     assert "default_target = $defaultTarget" in script
+    assert '$defaultModelId = if ($recommendedModels.Count -gt 0) { $recommendedModels[0].id } else { $null }' in script
+    assert '$defaultTarget = if ($recommendedModels.Count -gt 0) { $recommendedModels[0].target } else { $null }' in script
 
 
 def test_installer_treats_ollama_as_local_runtime_without_cloud_auth():
