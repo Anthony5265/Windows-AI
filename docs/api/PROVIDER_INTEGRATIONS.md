@@ -86,13 +86,16 @@ Returns a lightweight hardware profile used for local model recommendations.
 ### `GET /integrations/providers/ollama/recommendations`
 Returns recommended Ollama models based on detected hardware. Each recommended model also includes a
 ready-to-use `target` field such as `ollama:llama3.1:8b` that can be sent directly to the provider
-chat endpoints.
+chat endpoints. The payload also exposes `default_model_id` and `default_target` so clients can
+preselect a sensible first local model without re-ranking the recommendations themselves.
 
 Example response excerpt:
 
 ```json
 {
   "has_gpu_hint": true,
+  "default_model_id": "llama3.1:8b",
+  "default_target": "ollama:llama3.1:8b",
   "recommended_models": [
     {
       "id": "llama3.1:8b",
