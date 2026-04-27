@@ -374,8 +374,9 @@ class ProviderCLIRegistry:
 
         all_targets = available_targets + setup_required_targets
         default_target = (
-            ollama_recommendations.get("default_target")
-            or (available_targets[0]["target"] if available_targets else None)
+            (available_targets[0]["target"] if available_targets else None)
+            or ollama_recommendations.get("default_target")
+            or (setup_required_targets[0]["target"] if setup_required_targets else None)
         )
 
         return {
