@@ -38,7 +38,7 @@ def test_detect_provider_includes_target_metadata(monkeypatch):
     assert detection.metadata["example_targets"] == ["cli:codex"]
 
 
-def test_ollama_recommendations_include_direct_target_strings(monkeypatch):
+def test_ollama_recommendations_include_direct_target_strings_and_default_hint(monkeypatch):
     registry = ProviderCLIRegistry()
     monkeypatch.setattr(
         registry,
@@ -57,6 +57,8 @@ def test_ollama_recommendations_include_direct_target_strings(monkeypatch):
     assert recommendations["recommended_models"]
     first_model = recommendations["recommended_models"][0]
     assert first_model["target"] == f"ollama:{first_model['id']}"
+    assert recommendations["default_model_id"] == first_model["id"]
+    assert recommendations["default_target"] == first_model["target"]
 
 
 def test_setup_plan_includes_provider_definitions_and_actions(monkeypatch):
@@ -66,7 +68,13 @@ def test_setup_plan_includes_provider_definitions_and_actions(monkeypatch):
     monkeypatch.setattr(
         registry,
         "recommend_ollama_models",
-        lambda: {"hardware_profile": {}, "has_gpu_hint": False, "recommended_models": []},
+        lambda: {
+            "hardware_profile": {},
+            "has_gpu_hint": False,
+            "default_model_id": None,
+            "default_target": None,
+            "recommended_models": [],
+        },
     )
 
     setup_plan = registry.get_setup_plan()
