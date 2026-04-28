@@ -106,6 +106,37 @@ Example response excerpt:
 }
 ```
 
+### `GET /integrations/providers/targets`
+Returns the normalized provider target catalog directly, without the rest of the setup-plan payload.
+This is the lightest endpoint for GUI target pickers and onboarding flows that only need selectable
+provider targets plus the default target recommendation.
+
+Example response excerpt:
+
+```json
+{
+  "status": "success",
+  "default_target": "cli:codex",
+  "available_targets": [
+    {
+      "provider_id": "codex",
+      "target": "cli:codex"
+    }
+  ],
+  "setup_required_targets": [
+    {
+      "provider_id": "ollama",
+      "target": "ollama:phi3:mini"
+    }
+  ],
+  "counts": {
+    "available": 1,
+    "setup_required": 1,
+    "total": 2
+  }
+}
+```
+
 ### `GET /integrations/providers/setup-plan`
 Returns a combined setup plan including provider definitions, detection results, Ollama recommendations,
 a normalized target catalog, and installer actions.
