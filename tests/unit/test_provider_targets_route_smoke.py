@@ -79,9 +79,12 @@ def test_provider_targets_route_smoke(monkeypatch):
         lambda: {
             "default_target": "cli:codex",
             "available_targets": [{"provider_id": "codex", "target": "cli:codex"}],
-            "setup_required_targets": [],
-            "all_targets": [{"provider_id": "codex", "target": "cli:codex"}],
-            "counts": {"available": 1, "setup_required": 0, "total": 1},
+            "setup_required_targets": [{"provider_id": "ollama", "target": "ollama:phi3:mini"}],
+            "all_targets": [
+                {"provider_id": "codex", "target": "cli:codex"},
+                {"provider_id": "ollama", "target": "ollama:phi3:mini"},
+            ],
+            "counts": {"available": 1, "setup_required": 1, "total": 2},
         },
     )
 
@@ -92,3 +95,12 @@ def test_provider_targets_route_smoke(monkeypatch):
     assert body["status"] == "success"
     assert body["default_target"] == "cli:codex"
     assert body["available_targets"][0]["target"] == "cli:codex"
+    assert body["setup_required_targets"][0]["target"] == "ollama:phi3:mini"
+    assert body["counts"] == {"available": 1, "setup_required": 1, "total": 2}
+
+
+def test_provider_targets_route_is_registered(monkeypatch):
+    _integrations_module, client = _build_client(monkeypatch)
+    route_paths = {route.path for route in client.app.routes}
+
+    assert "/integrations/providers/targets" in route_paths
