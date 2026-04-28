@@ -221,7 +221,7 @@ Clients should prefer `target_catalog` when rendering provider choices:
 
 - `available_targets` are immediately selectable chat targets.
 - `setup_required_targets` are known targets that require install or authentication first.
-- `default_target` is the recommended first selection for onboarding.
+- `default_target` is the recommended first selection for onboarding and prefers a ready target when one exists.
 - each target includes provider identity, action state, metadata, and a direct `target` string.
 
 This same shape is emitted by the installer preflight script at `install/detect-ai-providers.ps1`, so
