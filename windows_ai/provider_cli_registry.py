@@ -521,6 +521,14 @@ def _register_provider_chat_route() -> None:
                 messages.append({"role": "user", "content": request.message})
             return messages
 
+        @router.get("/providers/targets")
+        async def provider_targets_catalog():
+            catalog = provider_cli_registry.get_target_catalog()
+            return {
+                "status": "success",
+                **catalog,
+            }
+
         @router.post("/providers/chat")
         async def provider_target_chat(request: ProviderChatRequest):
             if request.stream:
