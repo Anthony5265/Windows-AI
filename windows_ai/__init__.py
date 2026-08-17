@@ -1,30 +1,21 @@
 """
 Windows AI - Unified AI Platform
-2500+ AI capabilities in one simple package
 
-Quick Start:
-    >>> import asyncio
-    >>> from windows_ai import quick_start
-    >>>
-    >>> async def main():
-    >>>     ai = await quick_start()
-    >>>     response = await ai.chat("Hello!")
-    >>>     print(response)
-    >>>
-    >>> asyncio.run(main())
+The package exposes the existing application APIs plus the canonical agent/tool runtime.
 """
 
 __version__ = "2.0.0a1"
 
-# Core functionality
 from windows_ai.core import WindowsAI, get_windows_ai, quick_start
+from windows_ai.agent_runtime import AgentDefinition, AgentRuntime, AgentSession
+from windows_ai.tools import (
+    ToolCall, ToolDefinition, ToolPermission, ToolRegistry, ToolResult, ToolRouter,
+    create_default_registry, create_default_router,
+)
 
 __all__ = [
-    # Core
-    "WindowsAI",
-    "get_windows_ai",
-    "quick_start",
-
-    # Metadata
-    "__version__"
+    "WindowsAI", "get_windows_ai", "quick_start", "__version__",
+    "AgentDefinition", "AgentRuntime", "AgentSession",
+    "ToolCall", "ToolDefinition", "ToolPermission", "ToolRegistry", "ToolResult", "ToolRouter",
+    "create_default_registry", "create_default_router",
 ]

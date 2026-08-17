@@ -1,4 +1,4 @@
-"""Production agent runtime built around the canonical tool/action layer."""
+"""Agent orchestration built on Windows-AI's unified tool/action layer."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -12,10 +12,8 @@ ModelInvoker = Callable[[str, list[dict[str, Any]], list[dict[str, Any]]], Any |
 
 @dataclass(frozen=True)
 class AgentDefinition:
-    """Declarative identity and policy for an agent."""
-
     name: str
-    description: str = ""
+    description: str
     system_prompt: str = ""
     allowed_tools: frozenset[str] = frozenset()
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -23,88 +21,69 @@ class AgentDefinition:
 
 @dataclass
 class AgentSession:
-    """Mutable conversation/task state owned by one agent session."""
-
-    session_id: str = field(default_factory=lambda: uuid4().hex)
+    agent: AgentDefinition
+    session_id: str = field(default_factory=lambda: str(uuid4()))
     messages: list[dict[str, Any]] = field(default_factory=list)
-    state: dict[str, Any] = field(default_factory=dict)
 
 
 class AgentRuntime:
-    """Coordinates model turns and tool calls without bypassing ToolRouter."""
+    """Coordinates agent conversations and tool execution without owning a model provider."""
 
-    def __init__(self, registry: ToolRegistry, router: ToolRouter, invoker: ModelInvoker | None = None) -> None:
+    def __init__(self, registry: ToolRegistry, router: ToolRouter, model_invoker: ModelInvoker | None = None) -> None:
         self.registry = registry
         self.router = router
-        self.invoker = invoker
-        self.agents: dict[str, AgentDefinition] = {}
-        self.sessions: dict[str, AgentSession] = {}
+        self.model_invoker = model_invoker
+        self._agents: dict[str, AgentDefinition] = {}
 
-    def register(self, agent: AgentDefinition, *, replace: bool = False) -> AgentDefinition:
-        if not agent.name.strip():
+    def register_agent(self, agent: AgentDefinition, *, replace: bool = False) -> AgentDefinition:
+        key = agent.name.strip()
+        if not key:
             raise ValueError("Agent name cannot be empty")
-        if agent.name in self.agents and not replace:
-            raise ValueError(f"Agent already registered: {agent.name}")
-        self.agents[agent.name] = agent
+        if key in self._agents and not replace:
+            raise ValueError(f"Agent already registered: {key}")
+        self._agents[key] = agent
         return agent
 
-    def session(self) -> AgentSession:
-        session = AgentSession()
-        self.sessions[session.session_id] = session
+    def get_agent(self, name: str) -> AgentDefinition | None:
+        return self._agents.get(name)
+
+    def list_agents(self) -> list[AgentDefinition]:
+        return [self._agents[name] for name in sorted(self._agents)]
+
+    def create_session(self, agent_name: str) -> AgentSession:
+        agent = self.get_agent(agent_name)
+        if agent is None:
+            raise KeyError(f"Unknown agent: {agent_name}")
+        session = AgentSession(agent)
+        if agent.system_prompt:
+            session.messages.append({"role": "system", "content": agent.system_prompt})
         return session
 
-    def available_tools(self, agent_name: str) -> list[dict[str, Any]]:
-        agent = self._agent(agent_name)
+    def tool_schemas(self, agent_name: str) -> list[dict[str, Any]]:
+        agent = self.get_agent(agent_name)
+        if agent is None:
+            raise KeyError(f"Unknown agent: {agent_name}")
         schemas = self.registry.schemas()
         if not agent.allowed_tools:
             return schemas
         return [schema for schema in schemas if schema["name"] in agent.allowed_tools]
 
-    async def run_turn(
-        self,
-        agent_name: str,
-        prompt: str,
-        *,
-        session_id: str | None = None,
-        model: str = "default",
-    ) -> Any:
-        """Run one model turn. Model responses may request tools using the normalized contract."""
-        if self.invoker is None:
-            raise RuntimeError("No model invoker is configured")
-        agent = self._agent(agent_name)
-        session = self.sessions.get(session_id) if session_id else self.session()
-        if session_id and session is None:
-            raise KeyError(f"Unknown session: {session_id}")
+    async def execute_tool(self, session: AgentSession, tool_name: str, arguments: Mapping[str, Any] | None = None) -> ToolResult:
+        if session.agent.allowed_tools and tool_name not in session.agent.allowed_tools:
+            return ToolResult.fail(ToolCall(tool_name, request_id=session.session_id), "Agent is not permitted to use this tool")
+        call = ToolCall(tool_name, arguments or {}, actor=session.agent.name, request_id=session.session_id)
+        return await self.router.execute(call)
 
-        session.messages.append({"role": "user", "content": prompt})
-        tools = self.available_tools(agent_name)
-        result = self.invoker(model, session.messages, tools)
-        if hasattr(result, "__await__"):
-            result = await result
-
-        # Providers can return a final message or a normalized tool call.
-        if isinstance(result, Mapping) and result.get("tool_name"):
-            tool_name = str(result["tool_name"])
-            if agent.allowed_tools and tool_name not in agent.allowed_tools:
-                return ToolResult.fail(ToolCall(tool_name, request_id=session.session_id), "Agent is not permitted to use this tool")
-            call = ToolCall(
-                tool_name=tool_name,
-                arguments=result.get("arguments", {}),
-                actor=agent.name,
-                request_id=session.session_id,
-            )
-            tool_result = await self.router.execute(call)
-            session.messages.append({"role": "tool", "name": tool_name, "content": tool_result.output if tool_result.success else tool_result.error})
-            return tool_result
-
-        session.messages.append({"role": "assistant", "content": result})
-        return result
-
-    def _agent(self, name: str) -> AgentDefinition:
-        try:
-            return self.agents[name]
-        except KeyError as exc:
-            raise KeyError(f"Unknown agent: {name}") from exc
+    async def run(self, session: AgentSession, user_message: str) -> Any:
+        session.messages.append({"role": "user", "content": user_message})
+        if self.model_invoker is None:
+            return {"session_id": session.session_id, "message": user_message, "tools": self.tool_schemas(session.agent.name)}
+        tools = self.tool_schemas(session.agent.name)
+        response = self.model_invoker(session.agent.name, list(session.messages), tools)
+        if hasattr(response, "__await__"):
+            response = await response
+        session.messages.append({"role": "assistant", "content": response})
+        return response
 
 
 __all__ = ["AgentDefinition", "AgentSession", "AgentRuntime"]
