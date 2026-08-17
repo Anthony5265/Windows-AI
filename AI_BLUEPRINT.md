@@ -1,147 +1,261 @@
 # Windows-AI — Canonical AI Development Blueprint
 
-> **THIS IS THE SINGLE SOURCE OF TRUTH FOR DEVELOPING WINDOWS-AI.**
->
-> Every AI coding agent, assistant, or developer working on this repository must discover and follow this document before making changes.
->
-> Canonical path: `/AI_BLUEPRINT.md`
->
-> Do not create, maintain, or treat another roadmap/blueprint/master-plan/TODO as authoritative. Historical planning documents may remain for recordkeeping, but they are not instructions unless explicitly incorporated into this document.
+## 1. Authority
 
-## 1. Mission
+This document is the **single canonical source of truth for active Windows-AI development**.
 
-Windows-AI is a Windows-first, locally runnable and cloud-capable AI platform intended to become an extensible AI control layer for Windows. It combines conversational AI, multiple model providers, local models, agents, RAG/search, automation, plugins, Windows integration, security, IoT, XR, and a polished desktop experience.
+Every AI coding agent working in this repository MUST read `AGENTS.md` and then this file before making development decisions.
 
-The goal is a real, usable product—not a collection of demos or documentation. Prefer working production implementation over speculative architecture.
+Do not create or follow competing active blueprints, roadmaps, master plans, or AI development plans. Historical planning documents may remain for reference, but they do not override this document.
 
-## 2. Development Rules
+If an older document conflicts with this blueprint, this blueprint wins.
 
-1. **Read this file first.** Before coding, determine which section of this blueprint the task advances.
-2. **User instructions win.** Direct instructions in the current task override this document where they conflict.
-3. **Implement; do not merely plan.** When asked to develop, modify the repository with production-quality code/configuration instead of only creating issues or plans.
-4. **Preserve existing functionality and public APIs** unless the task explicitly requires a breaking change.
-5. **Reuse existing architecture.** Inspect the repository and extend existing systems instead of creating duplicate managers, services, registries, or packaging systems.
-6. **Security by default.** Never hard-code credentials, tokens, API keys, private data, or signing secrets. Keep privileged Windows operations controlled and auditable.
-7. **Windows first.** The primary target is supported Windows 10/11 environments. Cross-platform code is welcome when it improves maintainability without compromising Windows functionality.
-8. **Tests are not the current priority.** Unless the user explicitly asks for tests, do not make test creation the focus of a development task. Run only checks that are intrinsically necessary to build or validate a change when appropriate.
-9. **Documentation should describe reality.** Update concise product/developer documentation when implementation changes make it necessary, but do not create parallel planning documents.
-10. **Keep the repository coherent.** Avoid dead code, duplicate implementations, placeholder features presented as complete, and unnecessary dependencies.
+## 2. Development Mission
 
-## 3. Product Architecture
+Build Windows-AI into a production-quality, Windows-first AI platform that combines:
+
+- Multiple cloud and local AI providers
+- Local model support
+- Multi-agent orchestration
+- RAG, search, memory, and knowledge systems
+- Windows and Windows-OS control
+- Plugin architecture and marketplace
+- Automation and workflows
+- IoT/device integrations
+- Desktop GUI
+- Mobile and XR expansion
+- Strong security and permission boundaries
+- Reliable Windows packaging, installation, updating, and distribution
+
+The goal is not merely to maintain a chatbot. Windows-AI should become an extensible AI control layer for Windows.
+
+## 3. Core Development Rules
+
+1. **Build first.** Prioritize production implementation over planning, reports, and administrative work.
+2. **Use the existing architecture.** Inspect the repository before adding anything. Reuse existing components and APIs instead of creating duplicates.
+3. **Preserve working functionality.** Changes must fit the existing architecture and avoid unnecessary breaking changes.
+4. **One plan.** New active development direction belongs in this file.
+5. **No competing instructions.** AI-specific instruction files should point agents here rather than define another project plan.
+6. **No unnecessary tests during active development.** Testing is intentionally deferred until the final development phase described below.
+7. **Do not spend development time writing test suites, expanding test coverage, running test campaigns, or building test infrastructure during the implementation phases unless a test/build step is absolutely required to make the production implementation work.
+8. **Security remains mandatory.** Deferring testing does not authorize adding credentials, secrets, unsafe defaults, or deliberately insecure architecture.
+9. **Keep documentation proportional.** Update this blueprint when the product direction or major implementation status changes; do not create duplicate planning documents.
+10. **Finish implementation before validation.** The final testing/validation phase happens after the planned product functionality is implemented.
+
+## 4. Product Architecture
 
 ### Core
-- Python/FastAPI backend and service layer.
-- Central orchestration for AI requests, agents, plugins, configuration, credentials, tasks, and automation.
-- Unified abstractions so the application can switch AI providers without rewriting higher-level features.
 
-### AI Providers
-Support cloud and local providers through a common interface, including existing integrations such as OpenAI, Anthropic, Google, Mistral, Cohere, Groq, Ollama, and other providers already supported by the repository.
+- Unified application orchestration
+- Configuration management
+- Credential management
+- Plugin manager and registry
+- Agent manager
+- Task/workflow system
+- Event system
+
+### AI Layer
+
+Support a provider-agnostic interface for cloud and local AI, including the existing provider integrations and local runtimes such as Ollama where supported.
+
+### Backend
+
+FastAPI-based services provide the stable backend interface for the desktop application, agents, plugins, search, automation, and integrations.
 
 ### Desktop
-- Electron-based Windows desktop application.
-- Chat and AI interaction.
-- Model/provider selection.
-- Agent management.
-- Workflow/automation controls.
-- Plugin/marketplace experience.
-- System tray, notifications, settings, and Windows-native integration where appropriate.
 
-### Agents
-- Agent manager and task execution.
-- Multi-agent orchestration where useful.
-- Controlled tool/plugin access.
-- Clear permission boundaries for privileged operations.
+Electron is the primary desktop interface. It should expose chat, models, agents, workflows, plugins, marketplace functionality, settings, notifications, and Windows-AI controls.
 
 ### Plugins
-Plugins are the primary extensibility mechanism. Continue expanding the existing plugin architecture and categories rather than bypassing it with one-off integrations. Plugin discovery, lifecycle management, configuration, permissions, and marketplace capabilities should remain compatible with the core architecture.
 
-### Search and RAG
-- Local file/document indexing.
-- Universal/local/remote search.
-- Embeddings and vector storage.
-- Retrieval and re-ranking.
-- RAG integration with agents and conversations.
+The plugin system is the primary extensibility mechanism. Plugins should integrate capabilities without unnecessarily modifying core services.
 
-### Automation
-Support event/time/file/application/system/webhook/device triggers, workflows, scheduling, watchers, and AI-driven actions through the existing automation architecture.
+### Search / RAG / Memory
+
+Build toward unified local/remote search, document processing, embeddings, vector storage, retrieval, RAG, and persistent AI knowledge.
+
+### Agents
+
+Support task-oriented agents and multi-agent orchestration with controlled capabilities and clear permission boundaries.
 
 ### Windows Integration
-Windows-AI should be able to safely work with Windows applications, files, processes, shell/system capabilities, clipboard, notifications, settings, and other OS functionality through controlled interfaces/plugins rather than unrestricted access wherever practical.
+
+Provide controlled access to Windows applications, files, processes, system functions, clipboard, notifications, automation, and other supported OS capabilities.
+
+### Automation
+
+Support triggers, workflows, scheduled actions, watchers, webhooks, device events, and AI-driven conditions.
 
 ### IoT
-Continue the existing device architecture for MQTT, Matter, Zigbee, Home Assistant, Tuya, Ring, Nest, Hue, BLE, and other supported adapters as the codebase matures.
 
-### XR and Mobile
-XR integrations should use appropriate abstractions such as OpenXR/WebXR/SteamVR. The mobile companion should evolve as a companion/control surface for Windows-AI rather than becoming a separate competing product.
+Continue the planned MQTT, Matter, Zigbee, Home Assistant, Bluetooth/BLE, and other device integrations where practical.
+
+### XR / Mobile
+
+Continue these as expansion areas after the core Windows product is mature.
 
 ### Security
-Maintain encrypted credential handling, environment-variable support, RBAC/permissions, sandboxing where applicable, auditability, secure defaults, and safe handling of privileged actions.
 
-## 4. Zero-Configuration Goal
+Maintain credential protection, permissions/RBAC, sandboxing, auditing, encryption, safe configuration, and controlled system capabilities throughout development.
 
-The product should move toward an install-and-use experience:
+## 5. Development Priorities
 
-`Install → Detect system → Detect capabilities/providers → Configure sensible defaults → Start Windows-AI`
+### Phase A — Core Product Completion
 
-Advanced users must still be able to override automatic configuration.
+Finish and integrate remaining core functionality across:
 
-## 5. Distribution and Release
+- Core orchestration
+- Backend/API
+- AI providers
+- Agents
+- Plugins
+- Search/RAG/memory
+- Configuration
+- Security
 
-The Windows distribution stack is a major current development priority:
+### Phase B — Desktop Experience
 
-- PyInstaller packaging for the Python/backend components.
-- Electron packaging/build integration.
-- NSIS installer and upgrade/uninstall/repair behavior.
-- Portable ZIP distribution.
-- MSIX packaging where practical.
-- Automatic updater/release integration.
-- GitHub Actions/tag-based release automation.
-- Reproducible, clearly versioned release artifacts.
+Continue production implementation of:
 
-Target release flow:
+- Electron GUI
+- AI chat experience
+- Agent interface
+- Workflow interface
+- Plugin management
+- Marketplace
+- System tray and notifications
+- Settings and configuration
+- Accessibility and Windows-specific integrations
 
-`Git tag → CI build → backend/package build → Electron package → installer/portable/MSIX artifacts → GitHub Release`
+### Phase C — Windows Intelligence and Automation
 
-Reuse existing scripts and configuration. Do not create parallel packaging systems.
+Expand the AI's controlled ability to:
 
-## 6. Current Development Priority
+- Understand the Windows environment
+- Operate supported applications
+- Manage files and system resources
+- Execute approved actions
+- Automate workflows
+- Respond to events
+- Coordinate agents and plugins
 
-When no more specific user task is given, prioritize unfinished production work in this order:
+### Phase D — Distribution
 
-1. Finish and harden core Windows-AI functionality.
-2. Finish the Electron desktop experience and important missing integrations.
-3. Strengthen AI providers, agents, plugins, search/RAG, and automation.
-4. Deepen safe Windows integration.
-5. Finish production Windows distribution: PyInstaller, Electron packaging, NSIS, portable ZIP, MSIX, updater, and release automation.
-6. Mature IoT, mobile, XR, marketplace, and other expansion areas.
-7. Improve performance, reliability, UX, documentation, and maintainability as implementation demands.
+Make Windows-AI a polished distributable Windows application:
 
-## 7. Definition of Done for Development
+- PyInstaller backend packaging
+- Electron production packaging
+- NSIS installer
+- Uninstaller and upgrade handling
+- Portable ZIP distribution
+- MSIX packaging where practical
+- Runtime asset handling
+- Versioning
+- GitHub release automation
+- Update mechanism
 
-A feature is considered implemented when the actual repository contains the required production code/configuration, it integrates with the existing architecture, it is wired into the appropriate entry points/builds, and documentation is updated only where needed. Do not mark a feature complete merely because a plan, stub, or issue exists.
+### Phase E — Expansion
 
-## 8. Planning Policy
+After the core Windows product is implemented, continue:
 
-This file replaces the role of separate active blueprints, roadmaps, master plans, and TODO plans. New strategic direction must be incorporated here rather than creating another competing plan.
+- IoT ecosystem
+- Mobile companion
+- XR/AR/VR
+- Expanded provider ecosystem
+- Expanded plugin ecosystem
+- Marketplace ecosystem
 
-Historical documents under `docs/planning/`, `docs/master_plan/`, and similar directories are reference/history only. They must not override this document.
+## 6. TESTING POLICY — DEFERRED UNTIL THE END
 
-If an old document conflicts with this blueprint, follow this file and, when useful, update the old document to point here rather than reviving its conflicting instructions.
+**Testing is intentionally removed from the active development workflow.**
 
-## 9. AI Agent Startup Protocol
+During Phases A–E:
 
-At the start of every repository task:
+- Do not create new test suites as a development priority.
+- Do not expand test coverage.
+- Do not spend sessions fixing unrelated test failures.
+- Do not run broad test campaigns.
+- Do not make test metrics a completion criterion for implementation work.
+- Do not let old testing plans dictate development priorities.
 
-1. Find `/AI_BLUEPRINT.md`.
-2. Read it completely enough to understand the relevant architecture and current priority.
-3. Inspect the repository for the existing implementation.
-4. Identify the smallest coherent production change that advances the requested goal.
-5. Implement the change directly.
-6. Avoid creating another roadmap/blueprint/master-plan/TODO unless the user explicitly asks for historical documentation.
-7. Report what was actually changed; never claim work that was only planned.
+Existing tests may remain in the repository as historical/deferred material. They are not the active development focus.
 
-## 10. Canonical Reference
+### Final Validation Phase — Only After Development Is Complete
 
-**Canonical blueprint:** `/AI_BLUEPRINT.md`
+Once the implementation roadmap is substantially complete, testing becomes a dedicated final phase.
 
-Any AI instruction file in this repository should point to this file. If an AI system supports repository instruction files, those files should tell the agent to read this document before working.
+That final phase will cover, as appropriate:
+
+- Unit tests
+- Integration tests
+- End-to-end tests
+- GUI tests
+- API tests
+- Plugin tests
+- Agent/workflow tests
+- Security validation
+- Packaging/install/update validation
+- Windows 10/11 compatibility
+- Performance and reliability validation
+- Release-candidate validation
+
+At that point, failures found through testing should be fixed before declaring Windows-AI production-ready.
+
+**Important:** Deferring testing is a sequencing decision, not permission to knowingly introduce insecure behavior or intentionally break existing functionality.
+
+## 7. AI AGENT WORKFLOW
+
+Every AI working on this repository should follow this sequence:
+
+1. Read `AGENTS.md`.
+2. Read `AI_BLUEPRINT.md`.
+3. Inspect the current repository implementation relevant to the requested task.
+4. Determine whether the requested work advances an active phase.
+5. Implement the production code/configuration directly.
+6. Reuse existing components and avoid duplication.
+7. Do not start a separate planning document unless explicitly requested by the owner.
+8. Do not prioritize testing during the active implementation phases.
+9. Update this blueprint only when a major product direction, architectural decision, or phase status genuinely changes.
+10. Clearly report what was actually implemented.
+
+## 8. Completion Definition
+
+Windows-AI is not considered finished merely because the individual components exist. The product must eventually operate as a cohesive Windows application:
+
+```text
+Install
+  ↓
+Configure / Detect Environment
+  ↓
+Start Windows-AI
+  ↓
+Desktop AI Interface
+  ↓
+Models + Agents + Plugins
+  ↓
+Search + RAG + Memory
+  ↓
+Windows Control + Automation
+  ↓
+Integrations
+  ↓
+Packaging + Updates + Releases
+  ↓
+Final Validation
+  ↓
+Production Release
+```
+
+The final validation/testing phase occurs **after implementation is complete**, not throughout the active build phase.
+
+## 9. Historical Documentation
+
+Older documents under `docs/`, including previous roadmaps, blueprints, TODO lists, completion reports, security test reports, CI/CD reports, and session reports, are historical/reference material unless explicitly promoted into this blueprint.
+
+They must not be treated as competing active instructions.
+
+When historical documentation conflicts with this blueprint, follow this file.
+
+## 10. Owner Direction
+
+The repository owner has explicitly directed that Windows-AI should be actively **developed first and tested at the end**. AI agents must respect that sequencing unless the owner changes it.
