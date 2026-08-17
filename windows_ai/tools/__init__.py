@@ -3,6 +3,7 @@
 from .models import ToolDefinition, ToolCall, ToolResult, ToolPermission
 from .registry import ToolRegistry
 from .router import ToolRouter
+from .runtime import get_tool_registry, get_tool_router
 
 __all__ = [
     "ToolDefinition",
@@ -11,4 +12,6 @@ __all__ = [
     "ToolPermission",
     "ToolRegistry",
     "ToolRouter",
+    "get_tool_registry",
+    "get_tool_router",
 ]
