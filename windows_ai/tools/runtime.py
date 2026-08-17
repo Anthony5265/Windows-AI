@@ -4,11 +4,12 @@ from __future__ import annotations
 from .builtins import builtin_tools
 from .registry import ToolRegistry
 from .router import ToolRouter
+from .windows import windows_tools
 
 
 def create_default_registry() -> ToolRegistry:
     registry = ToolRegistry()
-    registry.register_many(builtin_tools())
+    registry.register_many([*builtin_tools(), *windows_tools()])
     return registry
 
 
