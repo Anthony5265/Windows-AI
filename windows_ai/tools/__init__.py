@@ -1,17 +1,17 @@
-"""Unified tool/action layer for Windows-AI."""
-
-from .models import ToolDefinition, ToolCall, ToolResult, ToolPermission
+"""Canonical Windows-AI tool/action subsystem."""
+from .factory import create_registry, create_router
+from .models import ToolCall, ToolDefinition, ToolPermission, ToolResult
 from .registry import ToolRegistry
-from .router import ToolRouter
-from .runtime import get_tool_registry, get_tool_router
+from .router import ToolPermissionError, ToolRouter
 
 __all__ = [
-    "ToolDefinition",
     "ToolCall",
-    "ToolResult",
+    "ToolDefinition",
     "ToolPermission",
+    "ToolResult",
     "ToolRegistry",
     "ToolRouter",
-    "get_tool_registry",
-    "get_tool_router",
+    "ToolPermissionError",
+    "create_registry",
+    "create_router",
 ]
