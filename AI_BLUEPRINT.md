@@ -1,261 +1,987 @@
-# Windows-AI — Canonical AI Development Blueprint
+# Windows-AI — Canonical Product & Development Blueprint
+
+> **This is the single source of truth for active Windows-AI development.**
+>
+> Every AI coding agent must read `AGENTS.md`, then this file, before modifying the repository.
 
 ## 1. Authority
 
-This document is the **single canonical source of truth for active Windows-AI development**.
+This document replaces competing active roadmaps, blueprints, master plans, and AI development plans. Historical documents may remain for reference, but they do not override this blueprint.
 
-Every AI coding agent working in this repository MUST read `AGENTS.md` and then this file before making development decisions.
+If any older document conflicts with this file, **this file wins**.
 
-Do not create or follow competing active blueprints, roadmaps, master plans, or AI development plans. Historical planning documents may remain for reference, but they do not override this document.
+The project owner has explicitly directed: **develop first; test at the end.**
 
-If an older document conflicts with this blueprint, this blueprint wins.
+---
 
-## 2. Development Mission
+# 2. Product Vision
 
-Build Windows-AI into a production-quality, Windows-first AI platform that combines:
+Windows-AI is being built as a **Windows-first, locally runnable AI control layer** that combines AI models, agents, tools, plugins, memory, search, automation, computer use, Windows control, external services, devices, and a polished desktop experience into one extensible platform.
 
-- Multiple cloud and local AI providers
-- Local model support
-- Multi-agent orchestration
-- RAG, search, memory, and knowledge systems
-- Windows and Windows-OS control
-- Plugin architecture and marketplace
-- Automation and workflows
-- IoT/device integrations
-- Desktop GUI
-- Mobile and XR expansion
-- Strong security and permission boundaries
-- Reliable Windows packaging, installation, updating, and distribution
+The finished product should feel less like a chatbot and more like an **AI operating layer for Windows**.
 
-The goal is not merely to maintain a chatbot. Windows-AI should become an extensible AI control layer for Windows.
+A user should be able to install Windows-AI, have it detect and configure the computer, select local or cloud intelligence, interact naturally, and safely delegate real work to agents and tools.
 
-## 3. Core Development Rules
+Core goals:
 
-1. **Build first.** Prioritize production implementation over planning, reports, and administrative work.
-2. **Use the existing architecture.** Inspect the repository before adding anything. Reuse existing components and APIs instead of creating duplicates.
-3. **Preserve working functionality.** Changes must fit the existing architecture and avoid unnecessary breaking changes.
-4. **One plan.** New active development direction belongs in this file.
-5. **No competing instructions.** AI-specific instruction files should point agents here rather than define another project plan.
-6. **No unnecessary tests during active development.** Testing is intentionally deferred until the final development phase described below.
-7. **Do not spend development time writing test suites, expanding test coverage, running test campaigns, or building test infrastructure during the implementation phases unless a test/build step is absolutely required to make the production implementation work.
-8. **Security remains mandatory.** Deferring testing does not authorize adding credentials, secrets, unsafe defaults, or deliberately insecure architecture.
-9. **Keep documentation proportional.** Update this blueprint when the product direction or major implementation status changes; do not create duplicate planning documents.
-10. **Finish implementation before validation.** The final testing/validation phase happens after the planned product functionality is implemented.
+- Local-first and privacy-aware operation
+- Cloud AI when useful
+- Offline capability where practical
+- Natural-language computer control
+- Multi-agent work delegation
+- Extensible tools, plugins, and MCP
+- Persistent search, RAG, and memory
+- Windows automation
+- Developer/coding workflows
+- IoT/device integration
+- Reliable packaging, updating, and distribution
+- Secure, permission-controlled execution
 
-## 4. Product Architecture
+---
 
-### Core
+# 3. Finished Product Capabilities
 
-- Unified application orchestration
-- Configuration management
-- Credential management
-- Plugin manager and registry
-- Agent manager
-- Task/workflow system
-- Event system
+Windows-AI should ultimately provide:
 
-### AI Layer
+- Natural-language chat and commands
+- Text, image, audio, voice, document, and video understanding where supported
+- Local and cloud model selection
+- Model routing and fallback
+- Short-term and long-term memory
+- Project/workspace memory
+- RAG and semantic search
+- File and document understanding
+- Windows application launching and control
+- File/folder operations
+- Process and service operations
+- System settings and supported OS actions
+- Clipboard operations
+- Screenshots and screen understanding
+- Keyboard/mouse/computer-use automation where supported
+- Voice input and text-to-speech
+- Notifications
+- Web interaction through approved tools
+- Code generation and repository assistance
+- Git/GitHub workflows
+- Long-running/background agents
+- Scheduled automation
+- Event-driven workflows
+- Plugin and marketplace ecosystem
+- MCP client/server integration
+- IoT/device control
+- Mobile companion capabilities
+- XR/AR/VR expansion
+- Secure permissions and approvals
+- Self-contained Windows distribution and updates
 
-Support a provider-agnostic interface for cloud and local AI, including the existing provider integrations and local runtimes such as Ollama where supported.
+Capabilities must be implemented through controlled architecture rather than unrestricted arbitrary access.
 
-### Backend
+---
 
-FastAPI-based services provide the stable backend interface for the desktop application, agents, plugins, search, automation, and integrations.
+# 4. System Architecture
 
-### Desktop
+The target architecture is:
 
-Electron is the primary desktop interface. It should expose chat, models, agents, workflows, plugins, marketplace functionality, settings, notifications, and Windows-AI controls.
+```text
+                         WINDOWS-AI
+                              │
+                 ┌────────────┴────────────┐
+                 │                         │
+              Desktop                  Backend
+              Electron                 FastAPI
+                 │                         │
+                 └────────────┬────────────┘
+                              │
+                       AI Orchestrator
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+       Model Router       Agent Manager       Memory
+          │                   │                   │
+    ┌─────┼─────┐       ┌─────┼─────┐       ┌────┼────┐
+    │     │     │       │     │     │       │    │    │
+  Local Cloud Hybrid  Agents Tasks Teams  Short Long RAG
+          │                   │                   │
+          └───────────────────┼───────────────────┘
+                              │
+                        Unified Tool Layer
+                              │
+             ┌────────────────┼────────────────┐
+             │                │                │
+          Built-ins         Plugins            MCP
+             │                │                │
+             └────────────────┼────────────────┘
+                              │
+                       Permission Layer
+                              │
+              ┌───────────────┼────────────────┐
+              │               │                │
+           Windows          Web             Devices
+              │               │                │
+              └───────────────┼────────────────┘
+                              │
+                         Event / Result
+                              │
+                              ▼
+                              AI
+```
 
-### Plugins
+The major architectural principle is that **AI intelligence, agents, plugins, MCP, and Windows/device capabilities converge through a unified tool/action layer**.
 
-The plugin system is the primary extensibility mechanism. Plugins should integrate capabilities without unnecessarily modifying core services.
+---
 
-### Search / RAG / Memory
+# 5. Unified Tool & Action Architecture
 
-Build toward unified local/remote search, document processing, embeddings, vector storage, retrieval, RAG, and persistent AI knowledge.
+This is a central subsystem and must be treated as such.
 
-### Agents
+Every executable capability should be representable as a tool/action with:
 
-Support task-oriented agents and multi-agent orchestration with controlled capabilities and clear permission boundaries.
+- Name and description
+- Input schema
+- Output schema
+- Capability category
+- Permission requirements
+- Risk level
+- Availability conditions
+- Provider/plugin/MCP ownership
+- Timeout/resource policy
+- Audit metadata
 
-### Windows Integration
+Execution flow:
 
-Provide controlled access to Windows applications, files, processes, system functions, clipboard, notifications, automation, and other supported OS capabilities.
+```text
+AI Request
+   ↓
+Orchestrator
+   ↓
+Tool Router
+   ↓
+Capability Discovery
+   ↓
+Permission / Policy Check
+   ↓
+Approval if required
+   ↓
+Tool Execution
+   ↓
+Result / Error
+   ↓
+Audit Event
+   ↓
+AI / Agent
+```
 
-### Automation
+The tool layer must support built-in tools, plugins, MCP tools, Windows tools, web tools, developer tools, automation tools, and device tools without requiring separate execution architectures.
 
-Support triggers, workflows, scheduled actions, watchers, webhooks, device events, and AI-driven conditions.
+---
 
-### IoT
+# 6. AI Provider & Model Layer
 
-Continue the planned MQTT, Matter, Zigbee, Home Assistant, Bluetooth/BLE, and other device integrations where practical.
+Use a provider-agnostic interface.
 
-### XR / Mobile
+Support existing and future cloud providers and local runtimes, including where practical:
 
-Continue these as expansion areas after the core Windows product is mature.
+- OpenAI
+- Anthropic
+- Google
+- Mistral
+- Cohere
+- Groq
+- Ollama
+- Other compatible local model runtimes
 
-### Security
+The model layer should provide:
 
-Maintain credential protection, permissions/RBAC, sandboxing, auditing, encryption, safe configuration, and controlled system capabilities throughout development.
+- Model discovery
+- Provider discovery
+- Model capability metadata
+- Context limits
+- Vision/audio/tool capability metadata
+- Model routing
+- Fallback
+- Privacy preference
+- Offline preference
+- Cost/performance preference
+- Local-first preference
+- Provider health/status
+- Streaming
 
-## 5. Development Priorities
+Model routing should support:
 
-### Phase A — Core Product Completion
+```text
+Request
+  ↓
+Policy / Preferences
+  ↓
+Model Router
+  ├── Local
+  ├── Cloud
+  └── Hybrid
+```
 
-Finish and integrate remaining core functionality across:
+---
 
-- Core orchestration
-- Backend/API
-- AI providers
+# 7. Memory Architecture
+
+Memory is a first-class subsystem.
+
+Support distinct layers where appropriate:
+
+- Conversation/short-term memory
+- Long-term user memory
+- Agent memory
+- Project/workspace memory
+- Semantic/vector memory
+- Structured memory
+- Retrieved knowledge
+- Ephemeral task state
+
+Memory must support:
+
+- Storage
+- Retrieval
+- Ranking
+- Summarization
+- Deduplication
+- User inspection
+- Editing/deletion
+- Privacy controls
+- Workspace isolation
+- Agent isolation where required
+
+The user must retain control over persistent memory.
+
+---
+
+# 8. Agent Architecture
+
+Agents are specialized AI workers operating through the unified tool layer.
+
+Target hierarchy:
+
+```text
+Master Orchestrator
+        ↓
+Agent Manager
+        ↓
+Specialized Agents
+        ↓
+Tools / Plugins / MCP
+        ↓
+Windows / Web / APIs / Devices
+```
+
+Agent capabilities should include:
+
+- Agent profiles
+- System instructions
+- Tool permissions
+- Model selection
+- Memory assignment
+- Workspace assignment
+- Task state
+- Background execution
+- Scheduling
+- Parallel execution
+- Agent-to-agent communication
+- Delegation
+- Human approval gates
+- Cancellation
+- Recovery
+- Result aggregation
+
+Agents must not bypass the permission architecture.
+
+---
+
+# 9. MCP Architecture
+
+MCP is a first-class extensibility layer.
+
+Windows-AI should support an MCP client architecture and, where useful, MCP server capabilities.
+
+Target support includes:
+
+- MCP server discovery/configuration
+- Local MCP servers
+- Remote MCP servers
+- Tool registration
+- Resource registration
+- Prompt registration
+- Authentication
+- Permission mapping
+- Server lifecycle
+- Health/status
+- Version compatibility
+- Secure credential handling
+
+MCP capabilities must enter the same unified tool/action and permission architecture as native tools and plugins.
+
+---
+
+# 10. Plugin Platform
+
+Plugins are a primary extension mechanism.
+
+The plugin architecture should define:
+
+- Manifest
+- Metadata
+- Versioning
+- Dependencies
+- Capabilities
+- Permissions
+- Configuration
+- Lifecycle hooks
+- Tool registration
+- Event registration
+- UI integration
+- Storage boundaries
+- Compatibility rules
+- Updates
+- Disable/uninstall behavior
+- Trust/signing model where practical
+
+Plugins must use stable APIs and should not duplicate core services.
+
+---
+
+# 11. Marketplace
+
+The marketplace should eventually distribute:
+
+- Plugins
+- Agents
+- Tools
+- MCP servers/configurations
+- Models or model configurations
+- Workflows
+- Extensions
+- Themes
+
+Marketplace requirements include:
+
+- Discovery
+- Categories
+- Search
+- Versioning
+- Compatibility metadata
+- Installation/update/uninstall
+- Trust/signing information
+- Permissions disclosure
+- Ratings/reviews where appropriate
+- Local/offline package installation where practical
+
+---
+
+# 12. Windows Integration
+
+Windows-AI should provide controlled capabilities for:
+
+- Applications
+- Files/folders
+- Processes
+- Services
+- Clipboard
+- Notifications
+- Windows settings
+- Power/session operations
+- Networking where authorized
+- Shell/terminal
+- System information
+- Hardware information
+- Supported Windows APIs
+
+Capabilities must be exposed through the tool/action layer and governed by permissions.
+
+---
+
+# 13. Computer-Use System
+
+Computer use is distinct from ordinary Windows APIs and should be treated as its own subsystem.
+
+Target flow:
+
+```text
+Observe screen
+     ↓
+Understand UI
+     ↓
+Plan action
+     ↓
+Permission / approval
+     ↓
+Click / type / scroll / interact
+     ↓
+Observe result
+     ↓
+Continue or finish
+```
+
+Support, where technically practical:
+
+- Screenshots
+- Vision models
+- UI element detection
+- Mouse control
+- Keyboard control
+- Window management
+- Application awareness
+- Action verification
+- Safe stopping
+- Human takeover
+
+High-risk actions should require explicit approval according to policy.
+
+---
+
+# 14. Multimodal System
+
+The AI layer should support a unified multimodal interface for:
+
+- Text
+- Images
+- Screenshots
+- Audio
+- Speech
+- Video
+- Documents
+- OCR
+- Vision
+- Speech-to-text
+- Text-to-speech
+
+Provider capabilities should determine which modalities are available for each model.
+
+---
+
+# 15. Search, RAG & Knowledge
+
+Build toward unified:
+
+- Local search
+- Remote/web search
+- File indexing
+- Document processing
+- OCR
+- Chunking
+- Embeddings
+- Vector databases
+- Hybrid retrieval
+- Re-ranking
+- RAG
+- Knowledge collections
+- Workspace knowledge
+
+The system should make relevant information available to agents through the same controlled tool architecture.
+
+---
+
+# 16. Workspace / Project System
+
+A workspace represents an isolated context for a user/project.
+
+```text
+Workspace
+├── Files
+├── Instructions
+├── Memory
+├── Agents
+├── Tools
+├── MCP servers
+├── Plugins
+├── Models
+└── Workflows
+```
+
+Workspaces should support:
+
+- Creation/deletion
+- Isolation
+- Project instructions
+- Context discovery
+- Memory boundaries
+- Tool permissions
+- Agent assignment
+- Git repository association
+- Workspace-specific configuration
+
+---
+
+# 17. Developer & Coding Platform
+
+Windows-AI should be a serious AI development environment.
+
+Target capabilities:
+
+- Git integration
+- GitHub integration
+- Repository discovery
+- Repository indexing
+- Code search
+- Code understanding
+- Code generation
+- Code editing
+- Terminal integration
+- Branch management
+- Commit creation
+- Pull requests
+- Issues
+- CI/CD interaction
+- IDE integration
+- Coding agents
+- MCP development tools
+
+The system must preserve repository safety and permission boundaries.
+
+---
+
+# 18. Automation & Workflows
+
+Support:
+
+- Scheduled triggers
+- File triggers
+- Application events
+- System events
+- Webhooks
+- Device events
+- AI conditions
+- Manual triggers
+
+Workflow architecture:
+
+```text
+Trigger
+  ↓
+Condition / Policy
+  ↓
+Workflow
+  ↓
+Agent / Tools
+  ↓
+Actions
+  ↓
+Results / Events
+```
+
+Workflows should be persistent, inspectable, editable, cancellable, and permission-aware.
+
+---
+
+# 19. Security & Permissions
+
+Security is mandatory throughout development even though broad testing is deferred.
+
+Define permissions for capabilities such as:
+
+```text
+READ
+WRITE
+EXECUTE
+NETWORK
+SYSTEM
+ADMIN
+CREDENTIALS
+DEVICE
+AUTOMATION
+```
+
+Permissions apply to:
+
+- Users
 - Agents
 - Plugins
-- Search/RAG/memory
-- Configuration
-- Security
+- Tools
+- MCP servers
+- Workflows
+- Applications
 
-### Phase B — Desktop Experience
+Security architecture should include:
 
-Continue production implementation of:
+- Credential protection
+- Encryption
+- RBAC/policies
+- Sandboxing where practical
+- Audit logs
+- Approval gates
+- Safe defaults
+- Secret isolation
+- Credential rotation support
+- Network controls
+- Plugin/MCP trust information
 
-- Electron GUI
-- AI chat experience
-- Agent interface
-- Workflow interface
-- Plugin management
-- Marketplace
-- System tray and notifications
-- Settings and configuration
-- Accessibility and Windows-specific integrations
+No feature should require committing credentials or secrets to source control.
 
-### Phase C — Windows Intelligence and Automation
+---
 
-Expand the AI's controlled ability to:
+# 20. Configuration & Zero-Config
 
-- Understand the Windows environment
-- Operate supported applications
-- Manage files and system resources
-- Execute approved actions
-- Automate workflows
-- Respond to events
-- Coordinate agents and plugins
+Windows-AI should automatically detect and configure as much as safely possible.
 
-### Phase D — Distribution
-
-Make Windows-AI a polished distributable Windows application:
-
-- PyInstaller backend packaging
-- Electron production packaging
-- NSIS installer
-- Uninstaller and upgrade handling
-- Portable ZIP distribution
-- MSIX packaging where practical
-- Runtime asset handling
-- Versioning
-- GitHub release automation
-- Update mechanism
-
-### Phase E — Expansion
-
-After the core Windows product is implemented, continue:
-
-- IoT ecosystem
-- Mobile companion
-- XR/AR/VR
-- Expanded provider ecosystem
-- Expanded plugin ecosystem
-- Marketplace ecosystem
-
-## 6. TESTING POLICY — DEFERRED UNTIL THE END
-
-**Testing is intentionally removed from the active development workflow.**
-
-During Phases A–E:
-
-- Do not create new test suites as a development priority.
-- Do not expand test coverage.
-- Do not spend sessions fixing unrelated test failures.
-- Do not run broad test campaigns.
-- Do not make test metrics a completion criterion for implementation work.
-- Do not let old testing plans dictate development priorities.
-
-Existing tests may remain in the repository as historical/deferred material. They are not the active development focus.
-
-### Final Validation Phase — Only After Development Is Complete
-
-Once the implementation roadmap is substantially complete, testing becomes a dedicated final phase.
-
-That final phase will cover, as appropriate:
-
-- Unit tests
-- Integration tests
-- End-to-end tests
-- GUI tests
-- API tests
-- Plugin tests
-- Agent/workflow tests
-- Security validation
-- Packaging/install/update validation
-- Windows 10/11 compatibility
-- Performance and reliability validation
-- Release-candidate validation
-
-At that point, failures found through testing should be fixed before declaring Windows-AI production-ready.
-
-**Important:** Deferring testing is a sequencing decision, not permission to knowingly introduce insecure behavior or intentionally break existing functionality.
-
-## 7. AI AGENT WORKFLOW
-
-Every AI working on this repository should follow this sequence:
-
-1. Read `AGENTS.md`.
-2. Read `AI_BLUEPRINT.md`.
-3. Inspect the current repository implementation relevant to the requested task.
-4. Determine whether the requested work advances an active phase.
-5. Implement the production code/configuration directly.
-6. Reuse existing components and avoid duplication.
-7. Do not start a separate planning document unless explicitly requested by the owner.
-8. Do not prioritize testing during the active implementation phases.
-9. Update this blueprint only when a major product direction, architectural decision, or phase status genuinely changes.
-10. Clearly report what was actually implemented.
-
-## 8. Completion Definition
-
-Windows-AI is not considered finished merely because the individual components exist. The product must eventually operate as a cohesive Windows application:
+Target flow:
 
 ```text
 Install
-  ↓
-Configure / Detect Environment
-  ↓
-Start Windows-AI
-  ↓
-Desktop AI Interface
-  ↓
-Models + Agents + Plugins
-  ↓
-Search + RAG + Memory
-  ↓
-Windows Control + Automation
-  ↓
-Integrations
-  ↓
-Packaging + Updates + Releases
-  ↓
+ ↓
+Detect OS
+ ↓
+Detect CPU/GPU/RAM
+ ↓
+Detect models/runtimes
+ ↓
+Detect providers
+ ↓
+Load safe configuration
+ ↓
+Start services
+ ↓
+Ready
+```
+
+Configuration layers should support:
+
+- System/global
+- User
+- Workspace/project
+- Agent
+- Plugin
+- Provider/model
+- Environment variables
+- Secrets
+
+Define and document configuration precedence so behavior is predictable.
+
+---
+
+# 21. Offline-First Capability
+
+Windows-AI should remain useful without Internet access where technically practical.
+
+Offline functionality should include:
+
+- Local models
+- Local embeddings
+- Local RAG
+- Local memory
+- Local search
+- Windows control
+- Local tools/plugins
+- Local automation
+
+Cloud-dependent features should degrade gracefully rather than breaking the entire application.
+
+---
+
+# 22. Desktop Experience
+
+Electron is the primary desktop interface.
+
+Target areas:
+
+- Chat
+- Model selection
+- Agents
+- Workspaces
+- Memory
+- Search/RAG
+- Tools
+- Plugins
+- Marketplace
+- MCP
+- Workflows
+- Settings
+- Notifications
+- System tray
+- Logs/activity
+- Permission prompts
+- Accessibility
+- Windows-specific features
+
+Customization should support themes, layouts, shortcuts, voice settings, notifications, and agent/persona configuration where appropriate.
+
+---
+
+# 23. Observability
+
+Build an internal observability layer for:
+
+- Application logs
+- Events
+- Agent activity
+- Tool execution
+- Plugin activity
+- MCP activity
+- API activity
+- Errors
+- Performance/resource usage
+- Workflow execution
+
+Users should be able to inspect meaningful activity while privacy-sensitive data remains protected.
+
+---
+
+# 24. IoT & Device Architecture
+
+IoT should use a common device gateway rather than unrelated implementations.
+
+```text
+Device Gateway
+ ↓
+Device Registry
+ ↓
+Capability Model
+ ↓
+Permission Layer
+ ↓
+Tool Layer
+ ↓
+AI / Automation
+```
+
+Support where practical:
+
+- MQTT
+- Matter
+- Zigbee
+- Home Assistant
+- Bluetooth/BLE
+- Other supported device APIs
+
+Devices should expose capabilities to agents through the same tool/action architecture.
+
+---
+
+# 25. Mobile Companion
+
+The mobile companion should eventually provide:
+
+- Remote AI access
+- Remote Windows-AI control
+- Notifications
+- Voice commands
+- Device pairing
+- Authentication
+- Camera/vision input
+- Clipboard/context synchronization where appropriate
+
+Mobile remains an expansion area after core Windows functionality is mature.
+
+---
+
+# 26. XR / AR / VR
+
+Spatial computing is an expansion area.
+
+Target technologies include:
+
+- OpenXR
+- WebXR
+- SteamVR
+
+XR features should reuse the same agent, tool, permission, and AI architectures instead of becoming a separate platform.
+
+---
+
+# 27. Distribution & Installation
+
+Windows-AI must become a polished Windows application with reliable distribution.
+
+Target artifacts:
+
+- PyInstaller backend/application components
+- Electron production package
+- NSIS installer
+- Portable ZIP
+- MSIX where practical
+- Uninstaller
+- Upgrade/repair behavior
+- Runtime asset handling
+- Versioning
+- GitHub Releases
+
+Target release flow:
+
+```text
+Version Tag
+ ↓
+Build
+ ↓
+Package
+ ↓
+Installer
+ ↓
+Portable ZIP
+ ↓
+MSIX
+ ↓
+Release Metadata
+ ↓
+GitHub Release
+```
+
+---
+
+# 28. Update & Recovery System
+
+The updater should eventually support:
+
+- Version discovery
+- Stable/beta/nightly channels where appropriate
+- Download verification
+- Installation
+- Configuration preservation
+- Database/migration handling
+- Rollback
+- Repair
+- Safe restart
+- Failed-update recovery
+
+Updates must not silently destroy user data or configuration.
+
+---
+
+# 29. Development Phases
+
+## Phase A — Core Platform
+
+Complete and integrate core orchestration, backend/API, providers, agents, tools, plugins, search/RAG/memory, configuration, and security.
+
+## Phase B — Desktop Product
+
+Complete the Electron experience, workspaces, agents, tools, plugins, marketplace, MCP, settings, notifications, accessibility, and Windows-specific UI.
+
+## Phase C — Windows Intelligence
+
+Expand controlled Windows operation, computer use, automation, workflows, background agents, and system integration.
+
+## Phase D — Distribution
+
+Complete PyInstaller, Electron packaging, NSIS, portable ZIP, MSIX, updater, versioning, and automated GitHub releases.
+
+## Phase E — Expansion
+
+Expand IoT, mobile, XR, provider ecosystem, plugin ecosystem, marketplace, and advanced multimodal capabilities.
+
+## Phase F — Final Validation
+
+Only after the implementation roadmap is substantially complete, perform comprehensive validation and testing.
+
+---
+
+# 30. TESTING POLICY — FINAL PHASE ONLY
+
+**Testing is intentionally deferred until the end of development.**
+
+During Phases A–E:
+
+- Do not create new test suites as normal feature work.
+- Do not expand test coverage.
+- Do not run broad test campaigns.
+- Do not spend development time fixing unrelated old test failures.
+- Do not use test metrics as active feature-completion requirements.
+- Do not allow historical testing plans to override this blueprint.
+
+A build or targeted validation command may be used only when intrinsically necessary to implement or package production functionality.
+
+### Final Validation
+
+After implementation is substantially complete, perform as appropriate:
+
+- Unit testing
+- Integration testing
+- End-to-end testing
+- GUI testing
+- API testing
+- Plugin testing
+- Agent/workflow testing
+- MCP testing
+- Security validation
+- Packaging/install/update validation
+- Windows 10/11 compatibility validation
+- Performance/reliability validation
+- Release-candidate validation
+
+**Develop first. Validate at the end.**
+
+Deferring testing does not permit intentionally insecure code, secrets in source control, or deliberate unnecessary breakage.
+
+---
+
+# 31. AI Agent Development Workflow
+
+Every AI coding agent must:
+
+1. Read `AGENTS.md`.
+2. Read this `AI_BLUEPRINT.md`.
+3. Inspect the existing implementation relevant to the task.
+4. Identify the correct subsystem and reuse existing architecture.
+5. Implement production functionality directly.
+6. Avoid duplicate systems.
+7. Respect security and permission boundaries.
+8. Avoid creating competing planning documents.
+9. Do not prioritize testing during Phases A–E.
+10. Update this blueprint only when major architecture, product direction, or phase status changes.
+11. Clearly report what was actually changed.
+
+If an AI agent encounters an older roadmap or blueprint that conflicts with this document, it must follow this document.
+
+---
+
+# 32. Completion Definition
+
+Windows-AI is complete when it operates as a cohesive product rather than a collection of disconnected components:
+
+```text
+Install
+ ↓
+Detect / Configure
+ ↓
+Start
+ ↓
+Desktop AI
+ ↓
+Models + Memory
+ ↓
+Agents + Tools
+ ↓
+Plugins + MCP
+ ↓
+Search + RAG
+ ↓
+Windows Control + Computer Use
+ ↓
+Automation + Workflows
+ ↓
+Developer Platform
+ ↓
+IoT / Integrations
+ ↓
+Packaging + Updates
+ ↓
 Final Validation
-  ↓
+ ↓
 Production Release
 ```
 
-The final validation/testing phase occurs **after implementation is complete**, not throughout the active build phase.
+Completion means the architecture works together, capabilities are discoverable, permissions are enforced, data/configuration are protected, and the product can be installed and used as a cohesive Windows AI platform.
 
-## 9. Historical Documentation
+---
 
-Older documents under `docs/`, including previous roadmaps, blueprints, TODO lists, completion reports, security test reports, CI/CD reports, and session reports, are historical/reference material unless explicitly promoted into this blueprint.
+# 33. Historical Documentation Rule
 
-They must not be treated as competing active instructions.
+Older documents under `docs/`, previous roadmaps, TODO files, completion reports, testing reports, CI/CD reports, session notes, and archived agent plans are **historical/reference material** unless their content is deliberately incorporated into this blueprint.
 
-When historical documentation conflicts with this blueprint, follow this file.
+They do not create additional active requirements.
 
-## 10. Owner Direction
+Do not resurrect old plans simply because they exist in the repository.
 
-The repository owner has explicitly directed that Windows-AI should be actively **developed first and tested at the end**. AI agents must respect that sequencing unless the owner changes it.
+---
+
+# 34. Owner Direction
+
+The current owner direction is:
+
+> **One blueprint. One development direction. Build the product first. Testing comes at the end.**
+
+This directive governs AI-assisted development until the owner explicitly changes it.
