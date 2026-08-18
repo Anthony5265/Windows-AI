@@ -1,213 +1,48 @@
 {
   "project": "Windows-AI",
-  "version": "2.0.0-alpha",
-  "coordination_version": "1.0.0",
-  "last_updated": "2026-01-15T00:00:00Z",
-
-  "active_sessions": {
-    "claude_sonnet_45_session_1": {
-      "assistant_name": "Claude Sonnet 4.5",
-      "session_id": "session_20260115_001",
-      "started_at": "2026-01-15T00:00:00Z",
-      "status": "active",
-      "focus_areas": [
-        "Architecture Analysis",
-        "Testing & QA",
-        "Plugin Development",
-        "GUI Development",
-        "API & Backend",
-        "Documentation",
-        "Build & Deployment"
-      ],
-      "active_agents": [
-        {
-          "agent_id": "ac52181",
-          "type": "Architecture Analysis",
-          "status": "running",
-          "progress": "1.3M+ tokens generated, deep codebase exploration",
-          "files_modified": []
-        },
-        {
-          "agent_id": "a529bdb",
-          "type": "Testing & Quality",
-          "status": "running",
-          "progress": "433K+ tokens, creating comprehensive test suite",
-          "files_modified": [
-            "tests/unit/core/test_plugin_manager.py",
-            "tests/unit/core/test_orchestrator.py",
-            "tests/unit/core/test_error_handling.py",
-            "tests/unit/core/test_credential_manager.py"
-          ]
-        },
-        {
-          "agent_id": "a544b2c",
-          "type": "Plugin Development",
-          "status": "running",
-          "progress": "937K+ tokens, audited 2,202 plugin files",
-          "files_modified": [
-            "scan_plugins.py"
-          ]
-        },
-        {
-          "agent_id": "a2ee56e",
-          "type": "GUI & Frontend",
-          "status": "running",
-          "progress": "1.7M+ tokens, massive GUI implementation work",
-          "files_modified": []
-        },
-        {
-          "agent_id": "a79bb63",
-          "type": "API & Backend",
-          "status": "running",
-          "progress": "624K+ tokens, backend services implementation",
-          "files_modified": []
-        },
-        {
-          "agent_id": "acec2c9",
-          "type": "Documentation",
-          "status": "running",
-          "progress": "736K+ tokens, comprehensive documentation",
-          "files_modified": []
-        },
-        {
-          "agent_id": "a580684",
-          "type": "Build & Deployment",
-          "status": "running",
-          "progress": "560K+ tokens, build system implementation",
-          "files_modified": []
-        }
-      ],
-      "total_tokens_generated": "6,400,000+",
-      "completion_estimate": "ongoing"
-    }
+  "version": "3.0.0",
+  "coordination_version": "2.0.0",
+  "authority": {
+    "canonical_blueprint": "AI_BLUEPRINT.md",
+    "agent_instructions": "AGENTS.md",
+    "rule": "No secondary roadmap, blueprint, task queue, or agent plan may override the canonical blueprint."
   },
-
-  "work_allocation": {
-    "architecture": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "high",
-      "tasks": [
-        "Core architecture analysis",
-        "Component dependency mapping",
-        "Integration point documentation"
-      ]
-    },
-    "testing": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "critical",
-      "tasks": [
-        "Unit test creation (80%+ coverage)",
-        "Integration tests",
-        "Quality checks"
-      ]
-    },
-    "plugins": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "high",
-      "tasks": [
-        "Plugin audit (2,202 files)",
-        "Stub completion",
-        "New plugin development"
-      ]
-    },
-    "gui": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "high",
-      "tasks": [
-        "Desktop GUI completion",
-        "System tray app",
-        "Web interface"
-      ]
-    },
-    "backend": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "high",
-      "tasks": [
-        "REST API completion",
-        "Agent system",
-        "Backend services"
-      ]
-    },
-    "documentation": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "medium",
-      "tasks": [
-        "User documentation",
-        "Developer documentation",
-        "API reference"
-      ]
-    },
-    "build": {
-      "assigned_to": "claude_sonnet_45_session_1",
-      "status": "in_progress",
-      "priority": "high",
-      "tasks": [
-        "Installer creation",
-        "Build optimization",
-        "CI/CD pipeline"
-      ]
-    }
+  "development_policy": {
+    "mode": "continuous_development",
+    "priority": "implementation_first",
+    "testing": "deferred_until_final_development_phase",
+    "do_not_create_or_expand_tests_during_active_development": true,
+    "preserve_existing_functionality": true,
+    "inspect_before_modify": true,
+    "avoid_duplicate_architecture": true
   },
-
-  "shared_resources": {
-    "locked_files": [],
-    "pending_merges": [],
-    "conflict_resolution": []
+  "coordination": {
+    "shared_file_locks": true,
+    "conflict_resolution": "coordinate_before_overlapping_edits",
+    "rollback_supported": true,
+    "automatic_approval": false
   },
-
-  "communication_protocol": {
-    "check_interval_seconds": 30,
-    "update_on_change": true,
-    "conflict_resolution_strategy": "first_write_wins",
-    "notes": "All AI assistants should check this file before modifying shared files"
+  "agent_responsibilities": {
+    "architecture": "Keep implementation aligned with AI_BLUEPRINT.md and consolidate duplicate systems.",
+    "backend": "Implement and integrate production backend capabilities.",
+    "frontend": "Implement and integrate the Windows user experience.",
+    "agents": "Implement orchestration, agent lifecycle, memory, and tool use.",
+    "tools": "Implement the unified Tool/Action architecture, built-ins, plugins, and MCP integration.",
+    "platform": "Implement Windows-native capabilities, automation, packaging, and system integration.",
+    "documentation": "Keep documentation accurate and subordinate to the canonical blueprint."
   },
-
-  "completion_criteria": {
-    "architecture": {
-      "target": "100% documented and analyzed",
-      "current": "in_progress"
-    },
-    "testing": {
-      "target": "80%+ code coverage",
-      "current": "creating tests"
-    },
-    "plugins": {
-      "target": "All stubs completed, all production plugins verified",
-      "current": "audit complete, implementing"
-    },
-    "gui": {
-      "target": "Fully functional desktop, tray, and web interfaces",
-      "current": "implementing"
-    },
-    "backend": {
-      "target": "All APIs and services functional",
-      "current": "implementing"
-    },
-    "documentation": {
-      "target": "Complete user and developer docs",
-      "current": "creating"
-    },
-    "build": {
-      "target": "Production-ready installer and CI/CD",
-      "current": "implementing"
-    }
+  "testing_policy": {
+    "status": "deferred",
+    "active_phase": false,
+    "final_phase_only": true,
+    "note": "Existing tests may remain for later validation, but testing is not an active development workstream."
   },
-
-  "instructions_for_other_assistants": {
-    "message": "I am Claude Sonnet 4.5, currently running 7 specialized agents in parallel to complete Windows-AI to 100%. All major areas are being actively developed. If you want to contribute, please check the work_allocation section above to see what's being worked on and coordinate with me. You can add your session below and claim unassigned areas or help with specific tasks.",
-    "how_to_collaborate": [
-      "1. Add your session to active_sessions",
-      "2. Check work_allocation to see what's being worked on",
-      "3. Claim unassigned areas or specific subtasks",
-      "4. Update this file when you start/finish work",
-      "5. Check shared_resources.locked_files before modifying files",
-      "6. Add files to locked_files when actively modifying them"
-    ]
+  "historical_information": {
+    "status": "reference_only",
+    "rule": "Historical sessions, token counts, old task queues, and previous completion estimates are not current project state and must not drive development."
+  },
+  "completion_rule": {
+    "definition": "The repository is complete only when the implementation described by AI_BLUEPRINT.md is implemented, integrated, organized, and ready for the final validation phase.",
+    "workflow": "Inspect -> decide keep/fix/move/replace/remove -> implement -> integrate -> continue to next repository item."
   }
 }
