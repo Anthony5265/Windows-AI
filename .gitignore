@@ -1,19 +1,54 @@
-# Executables and build artifacts
-*.exe
-*.dll
-dist/
-dist-packaged/
-build/
-*.egg-info/
-
-# Node modules and dependencies  
-node_modules/
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Large packaged applications
-apps/gui/dist-packaged/
-apps/gui/dist/
+# Node / frontend
+node_modules/
+.npm/
+.pnpm-store/
+*.tsbuildinfo
+
+# Build and distribution
+build/
+dist/
+dist-packaged/
+*.exe
+*.msi
+*.dll
+*.pyd
+*.whl
+
+# Runtime and local application state
+.env
+.env.*
+!.env.example
+.windows-ai/local/
+.windows-ai/runtime/
+*.log
+
+# Local databases / caches
+chroma_db/
+embedding_cache/
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE / OS
+.vscode/*.local.json
+.idea/
+.DS_Store
+Thumbs.db
 nul
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
