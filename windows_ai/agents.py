@@ -1,43 +1,39 @@
-"""Agent interfaces and base implementations for Windows AI."""
+"""Compatibility agent interfaces for Windows-AI.
+
+The canonical runtime lives in :mod:`windows_ai.agent_runtime`. This module
+keeps the older domain-agent protocol available for integrations that still
+use it without introducing a second application-level agent registry.
+"""
 
 from __future__ import annotations
 
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 
 class Agent(Protocol):
-    """Protocol describing the lifecycle of an agent."""
+    """Minimal lifecycle contract for legacy/domain integrations."""
 
-    def setup(self) -> None:
-        """Prepare resources needed by the agent."""
+    def setup(self) -> None: ...
 
-    def train(self, data: Any) -> Any:
-        """Train the agent with ``data``."""
+    def train(self, data: Any) -> Any: ...
 
-    def execute(self, task: Any) -> Any:
-        """Execute ``task`` and return a result."""
+    def execute(self, task: Any) -> Any: ...
 
-    def teardown(self) -> None:
-        """Release resources held by the agent."""
+    def teardown(self) -> None: ...
 
 
 class DomainAgent:
-    """Simple agent that delegates work to a domain module.
+    """Adapter around a domain module's planning/execution functions."""
 
-    The ``domain`` object is expected to expose the functions
-    ``input_processor``, ``task_planner``, ``executor`` and
-    ``result_aggregator``.  This mirrors the placeholder design used in
-    :mod:`domains` modules and provides a minimal but functional example of
-    how agents can leverage those capabilities.
-    """
-
-    def __init__(self, domain: Any):
+    def __init__(self, domain: Any) -> None:
         self.domain = domain
         self._trained_plan: Any | None = None
 
-    # Lifecycle -------------------------------------------------------------
     def setup(self) -> None:
-        """No-op setup for the basic agent."""
+        """Prepare the domain adapter when the domain exposes setup."""
+        setup = getattr(self.domain, "setup", None)
+        if callable(setup):
+            setup()
 
     def train(self, data: Any) -> Any:
         processed = self.domain.input_processor(data)
@@ -52,3 +48,6 @@ class DomainAgent:
 
     def teardown(self) -> None:
         self._trained_plan = None
+        teardown = getattr(self.domain, "teardown", None)
+        if callable(teardown):
+            teardown()
