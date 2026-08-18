@@ -30,21 +30,27 @@ class WindowsAIRuntime:
         return self.model_router
 
     def start(self) -> "WindowsAIRuntime":
+        """Start the runtime; repeated calls are intentionally idempotent."""
         self._started = True
         return self
 
     def stop(self) -> None:
+        """Stop the runtime and prevent new application operations."""
         self._started = False
 
     @property
     def started(self) -> bool:
         return self._started
 
-    def register_tool(self, tool: ToolDefinition) -> ToolDefinition:
-        return self.tools.register(tool)
+    def _ensure_started(self) -> None:
+        if not self._started:
+            raise RuntimeError("Windows-AI runtime is not started")
 
-    def register_agent(self, agent: AgentDefinition) -> AgentDefinition:
-        return self.agents.register(agent)
+    def register_tool(self, tool: ToolDefinition, *, replace: bool = False) -> ToolDefinition:
+        return self.tools.register(tool, replace=replace)
+
+    def register_agent(self, agent: AgentDefinition, *, replace: bool = False) -> AgentDefinition:
+        return self.agents.register(agent, replace=replace)
 
     def register_provider(self, provider: ProviderDefinition, *, replace: bool = False) -> None:
         self.providers.register(provider, replace=replace)
@@ -56,8 +62,7 @@ class WindowsAIRuntime:
         message: str,
         metadata: Mapping[str, Any] | None = None,
     ) -> ModelResponse:
-        if not self._started:
-            self.start()
+        self._ensure_started()
         return await self.agents.run_turn(
             agent_id=agent_id,
             message=message,
@@ -72,6 +77,7 @@ class WindowsAIRuntime:
         actor: str = "system",
         approved: bool = False,
     ) -> Any:
+        self._ensure_started()
         return await self.tool_router.execute(
             tool_name,
             dict(arguments or {}),
