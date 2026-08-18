@@ -5,7 +5,7 @@ Feature point triangulation, camera matrix estimation, point cloud
 generation from stereo pairs, mesh surface reconstruction approximation.
 Uses only stdlib + numpy.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Dict, Any, Optional, Tuple
 import logging
 import uuid
@@ -79,7 +79,6 @@ def _harris_corners(gray: np.ndarray, k: float = 0.04,
     Ixx = Ix * Ix
     Iyy = Iy * Iy
     Ixy = Ix * Iy
-    # Gaussian weighting via box blur
     w = 5
     for M in (Ixx, Iyy, Ixy):
         _box_blur_inplace(M, w)
@@ -120,10 +119,18 @@ def match_features(gray1: np.ndarray, gray2: np.ndarray,
                    max_points: int = 300) -> Tuple[np.ndarray, np.ndarray]:
     """Match Harris corners between two images via NCC.
     Returns (pts1, pts2) each (M, 2) in (row, col) format."""
+    if gray1.ndim != 2 or gray2.ndim != 2:
+        raise ValueError("match_features expects two 2-D grayscale images")
+    if patch_size < 3 or patch_size % 2 == 0:
+        raise ValueError("patch_size must be an odd integer >= 3")
+    if ncc_thresh < -1.0 or ncc_thresh > 1.0:
+        raise ValueError("ncc_thresh must be between -1 and 1")
+    if max_points <= 0:
+        raise ValueError("max_points must be positive")
+
     kp1 = _harris_corners(gray1, max_points=max_points)
     kp2 = _harris_corners(gray2, max_points=max_points)
     half = patch_size // 2
-    h, w = gray1.shape
 
     def _valid(pts, shape):
         return pts[(pts[:, 0] >= half) & (pts[:, 0] < shape[0] - half) &
@@ -135,19 +142,23 @@ def match_features(gray1: np.ndarray, gray2: np.ndarray,
         return np.zeros((0, 2)), np.zeros((0, 2))
 
     matched1, matched2 = [], []
+    used_kp2 = set()
     for pt1 in kp1:
         r1, c1 = pt1
         p1 = gray1[r1 - half:r1 + half + 1, c1 - half:c1 + half + 1]
         best_score, best_idx = -1.0, -1
         for j, pt2 in enumerate(kp2):
+            if j in used_kp2:
+                continue
             r2, c2 = pt2
             p2 = gray2[r2 - half:r2 + half + 1, c2 - half:c2 + half + 1]
             s = _ncc_match(p1, p2)
             if s > best_score:
                 best_score, best_idx = s, j
-        if best_score >= ncc_thresh:
+        if best_idx >= 0 and best_score >= ncc_thresh:
             matched1.append(pt1)
             matched2.append(kp2[best_idx])
+            used_kp2.add(best_idx)
     if not matched1:
         return np.zeros((0, 2)), np.zeros((0, 2))
     return np.array(matched1), np.array(matched2)
@@ -158,8 +169,16 @@ def triangulate_points(P1: np.ndarray, P2: np.ndarray,
     """Linear triangulation via DLT for each pair of correspondences.
     pts are (N, 2) in (x, y) = (col, row) convention for projection.
     Returns (N, 3) world coordinates."""
+    pts1 = np.asarray(pts1, dtype=np.float64)
+    pts2 = np.asarray(pts2, dtype=np.float64)
+    P1 = np.asarray(P1, dtype=np.float64)
+    P2 = np.asarray(P2, dtype=np.float64)
+    if P1.shape != (3, 4) or P2.shape != (3, 4):
+        raise ValueError("camera projection matrices must have shape (3, 4)")
+    if pts1.ndim != 2 or pts2.ndim != 2 or pts1.shape != pts2.shape or pts1.shape[1] != 2:
+        raise ValueError("point arrays must both have shape (N, 2)")
     N = pts1.shape[0]
-    points_3d = np.zeros((N, 3))
+    points_3d = np.zeros((N, 3), dtype=np.float64)
     for i in range(N):
         x1, y1 = pts1[i]
         x2, y2 = pts2[i]
@@ -177,7 +196,12 @@ def triangulate_points(P1: np.ndarray, P2: np.ndarray,
 
 def estimate_fundamental(pts1: np.ndarray, pts2: np.ndarray) -> np.ndarray:
     """8-point algorithm for fundamental matrix. pts (N,2) in (x,y)."""
-    assert pts1.shape[0] >= 8
+    pts1 = np.asarray(pts1, dtype=np.float64)
+    pts2 = np.asarray(pts2, dtype=np.float64)
+    if pts1.ndim != 2 or pts2.ndim != 2 or pts1.shape != pts2.shape or pts1.shape[1] != 2:
+        raise ValueError("point arrays must both have shape (N, 2)")
+    if pts1.shape[0] < 8:
+        raise ValueError("at least 8 point correspondences are required")
     N = pts1.shape[0]
     A = np.zeros((N, 9))
     for i in range(N):
@@ -192,11 +216,18 @@ def estimate_fundamental(pts1: np.ndarray, pts2: np.ndarray) -> np.ndarray:
 
 
 def essential_from_fundamental(F: np.ndarray, K: np.ndarray) -> np.ndarray:
+    F = np.asarray(F, dtype=np.float64)
+    K = np.asarray(K, dtype=np.float64)
+    if F.shape != (3, 3) or K.shape != (3, 3):
+        raise ValueError("F and K must both have shape (3, 3)")
     return K.T @ F @ K
 
 
 def decompose_essential(E: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
     """Return up to 4 (R, t) candidates from essential matrix."""
+    E = np.asarray(E, dtype=np.float64)
+    if E.shape != (3, 3):
+        raise ValueError("essential matrix E must have shape (3, 3)")
     U, _, Vt = np.linalg.svd(E)
     if np.linalg.det(U) < 0:
         U = -U
@@ -212,13 +243,22 @@ def decompose_essential(E: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
 def reconstruct_stereo(gray1: np.ndarray, gray2: np.ndarray,
                        K: Optional[np.ndarray] = None) -> PointCloud:
     """Full SfM pipeline for a stereo pair."""
+    gray1 = np.asarray(gray1, dtype=np.float64)
+    gray2 = np.asarray(gray2, dtype=np.float64)
+    if gray1.ndim != 2 or gray2.ndim != 2:
+        raise ValueError("reconstruct_stereo expects two 2-D grayscale images")
+    if gray1.shape != gray2.shape:
+        raise ValueError("stereo images must have identical dimensions")
     if K is None:
         K = _default_intrinsic(gray1.shape[1], gray1.shape[0])
+    else:
+        K = np.asarray(K, dtype=np.float64)
+        if K.shape != (3, 3):
+            raise ValueError("intrinsic matrix K must have shape (3, 3)")
     pts1_rc, pts2_rc = match_features(gray1, gray2, max_points=200)
     if pts1_rc.shape[0] < 8:
         logger.warning("Not enough matches for reconstruction")
         return PointCloud(points=np.zeros((0, 3)))
-    # Convert (row, col) -> (x, y)
     pts1_xy = pts1_rc[:, ::-1].astype(np.float64)
     pts2_xy = pts2_rc[:, ::-1].astype(np.float64)
     F = estimate_fundamental(pts1_xy, pts2_xy)
@@ -239,7 +279,11 @@ def reconstruct_stereo(gray1: np.ndarray, gray2: np.ndarray,
 def approximate_mesh(cloud: PointCloud, grid_res: int = 32) -> Dict[str, np.ndarray]:
     """Simple voxel-grid surface approximation.
     Returns vertices and triangle indices."""
-    pts = cloud.points
+    if grid_res < 2:
+        raise ValueError("grid_res must be at least 2")
+    pts = np.asarray(cloud.points, dtype=np.float64)
+    if pts.ndim != 2 or pts.shape[1] != 3:
+        raise ValueError("cloud.points must have shape (N, 3)")
     if len(pts) == 0:
         return {"vertices": np.zeros((0, 3)), "triangles": np.zeros((0, 3), dtype=int)}
     mn = pts.min(axis=0)
@@ -277,15 +321,22 @@ class Reconstruction3DSystem:
         logger.info("Reconstruction3D initialized")
 
     def set_intrinsic(self, K: np.ndarray) -> None:
+        K = np.asarray(K, dtype=np.float64)
+        if K.shape != (3, 3):
+            raise ValueError("intrinsic matrix K must have shape (3, 3)")
+        if not np.all(np.isfinite(K)):
+            raise ValueError("intrinsic matrix K must contain finite values")
         self.K = K.copy()
 
     def process(self, input_data: Any) -> Reconstruction3DResult:
         """Process a stereo pair supplied as a dict with 'left' and 'right' gray images."""
         if isinstance(input_data, dict):
-            left = np.asarray(input_data.get("left", np.zeros((64, 64))), dtype=np.float64)
-            right = np.asarray(input_data.get("right", np.zeros((64, 64))), dtype=np.float64)
+            if "left" not in input_data or "right" not in input_data:
+                raise ValueError("input_data must contain 'left' and 'right' images")
+            left = np.asarray(input_data["left"], dtype=np.float64)
+            right = np.asarray(input_data["right"], dtype=np.float64)
         else:
-            left = right = np.zeros((64, 64), dtype=np.float64)
+            raise TypeError("input_data must be a dict containing 'left' and 'right' images")
         cloud = reconstruct_stereo(left, right, K=self.K)
         mesh = approximate_mesh(cloud)
         result = Reconstruction3DResult(
