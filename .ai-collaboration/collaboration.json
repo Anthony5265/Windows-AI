@@ -1,144 +1,50 @@
 {
+  "version": "3.0-canonical-blueprint",
   "status": "active",
-  "agents": {
-    "PluginFactory-Agent": {
-      "responsibilities": [
-        "plugin_creation",
-        "template_generation",
-        "marketplace_management"
-      ],
-      "status": "active",
-      "role": "ecosystem_expansion"
-    },
-    "APISmith-Agent": {
-      "responsibilities": [
-        "api_implementation",
-        "documentation",
-        "sdk_generation"
-      ],
-      "status": "active",
-      "role": "api_development"
-    },
-    "PerformanceHunter-Agent": {
-      "responsibilities": [
-        "profiling",
-        "benchmarking",
-        "optimization"
-      ],
-      "status": "active",
-      "role": "performance"
-    },
-    "CodeOptimizer-Agent": {
-      "responsibilities": [
-        "module_optimization",
-        "import_fixing",
-        "code_quality"
-      ],
-      "status": "active",
-      "role": "core_development"
-    },
-    "TestBuilder-Agent": {
-      "responsibilities": [
-        "test_generation",
-        "coverage_improvement",
-        "security_testing"
-      ],
-      "status": "active",
-      "role": "quality_assurance"
-    },
-    "claude-github-copilot": {
-      "responsibilities": [
-        "task_coordination",
-        "multi_agent_orchestration",
-        "architecture_review"
-      ],
-      "status": "active",
-      "current_task": "initialize_system",
-      "role": "lead_orchestrator"
-    }
-  },
-  "version": "2.0-multi-agent",
-  "task_queue": [
-    {
-      "priority": "P0",
-      "status": "completed",
-      "assigned_to": "CodeOptimizer-Agent",
-      "id": "reorg_root",
-      "description": "Clean up root directory: Move docs, scripts, tests to appropriate subfolders (59 -> 15 files)."
-    },
-    {
-      "priority": "P0",
-      "status": "completed",
-      "assigned_to": "TestBuilder-Agent",
-      "id": "quick_win_tests",
-      "description": "Implement 10 Quick-Win tests to boost coverage from 1.76% to ~34%."
-    },
-    {
-      "priority": "P0",
-      "status": "completed",
-      "assigned_to": "CodeOptimizer-Agent",
-      "id": "config_consolidation",
-      "description": "Create UnifiedConfig system and migrate 23+ scattered config files."
-    },
-    {
-      "priority": "P0",
-      "status": "completed",
-      "assigned_to": "TestBuilder-Agent",
-      "id": "security_tests",
-      "description": "Implement P0 security tests (sandbox, auth, encryption)."
-    },
-    {
-      "priority": "P1",
-      "status": "in-progress",
-      "assigned_to": "CodeOptimizer-Agent",
-      "id": "fix_broken_imports",
-      "description": "Fix broken imports in GUI modules (chat, renderer, plugin_browser)."
-    },
-    {
-      "priority": "P1",
-      "status": "in-progress",
-      "assigned_to": "PluginFactory-Agent",
-      "id": "expand_plugin_ecosystem",
-      "description": "Create 20+ new plugin templates and documentation for marketplace growth."
-    },
-    {
-      "priority": "P1",
-      "status": "in-progress",
-      "assigned_to": "APISmith-Agent",
-      "id": "api_enhancement",
-      "description": "Enhance REST API, Python API, and CLI with comprehensive docs."
-    },
-    {
-      "priority": "P2",
-      "status": "pending",
-      "assigned_to": "PerformanceHunter-Agent",
-      "id": "performance_optimization",
-      "description": "Profile and optimize core modules for improved speed."
-    }
-  ],
-  "timestamp_created": "2026-01-15T23:29:57Z",
-  "collaboration_rules": {
-    "commit_strategy": "squash_merge_with_agent_tags",
-    "sandbox_mode": "disabled_for_approved_agents",
-    "rollback_enabled": true,
-    "auto_approve_threshold": "all_changes_approved_automatically",
-    "branch_prefix": "agent/"
-  },
-  "development_mode": {
-    "auto_approve": true,
-    "auto_commit": true,
-    "parallel_execution": true,
-    "continuous_integration": true,
-    "sandbox_enabled": false,
-    "p0_completed_at": "2026-01-15T23:40:35Z",
-    "p1_started_at": "2026-01-15T23:40:35Z"
-  },
   "project": "Windows-AI",
-  "completed_tasks": [
-    {
-      "files_moved": 10,
-      "timestamp": "2026-01-15T23:32:30Z",
-      "id": "reorg_root"
-    }
-  ]
+  "source_of_truth": "AI_BLUEPRINT.md",
+  "agent_entrypoint": "AGENTS.md",
+  "development_policy": {
+    "mode": "continuous-development",
+    "build_first": true,
+    "testing_phase": "final",
+    "no_active_testing_work": true,
+    "do_not_create_or_prioritize_tests_during_development": true,
+    "do_not_treat_historical_plans_as_authoritative": true
+  },
+  "rules": [
+    "Read AI_BLUEPRINT.md before making repository changes.",
+    "Follow AGENTS.md for AI-agent operating instructions.",
+    "Treat AI_BLUEPRINT.md as the only canonical product and technical plan.",
+    "Historical roadmaps, blueprints, TODOs, coordination records, and reports are reference material only unless explicitly incorporated into AI_BLUEPRINT.md.",
+    "Inspect existing code before creating new architecture or duplicating functionality.",
+    "Prefer integration and cleanup over parallel competing implementations.",
+    "Keep the repository organized by responsibility and remove obsolete duplication when safe.",
+    "Build production functionality continuously; do not stop for a testing campaign.",
+    "Testing and final validation are deferred until the development-complete phase."
+  ],
+  "agent_roles": {
+    "lead_orchestrator": "Coordinate work against AI_BLUEPRINT.md and prevent conflicting implementations.",
+    "core_development": "Implement and integrate core Windows-AI functionality.",
+    "api_development": "Implement and integrate API, SDK, and service interfaces.",
+    "plugin_development": "Implement plugin, marketplace, and extension capabilities.",
+    "performance": "Optimize implementation when it directly advances production readiness.",
+    "documentation": "Keep canonical documentation synchronized with implemented behavior."
+  },
+  "prohibited_active_roles": [
+    "test-generation",
+    "coverage-expansion",
+    "test-only-security-work",
+    "benchmark-only-work"
+  ],
+  "task_queue": {
+    "policy": "derive_active_work_from_AI_BLUEPRINT.md",
+    "historical_tasks": "not_authoritative"
+  },
+  "collaboration": {
+    "parallel_execution": true,
+    "auto_commit": true,
+    "rollback_enabled": true,
+    "branch_prefix": "agent/"
+  }
 }
