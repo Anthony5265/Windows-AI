@@ -1,0 +1,62 @@
+name: Feature request
+description: Propose a product or developer-platform improvement for Windows-AI.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests should describe a real user or developer problem and the outcome you want Windows-AI to achieve.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem or limitation are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / user story
+      description: Describe the desired outcome from the user's perspective.
+      placeholder: As a user, I want... so that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe how you think Windows-AI should solve the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the observable conditions that would make this feature complete.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches or workarounds have you considered?
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I have searched for an existing feature request describing the same idea.
+          required: true
+        - label: This request is consistent with the Windows-AI project direction and canonical blueprint.
+          required: true
