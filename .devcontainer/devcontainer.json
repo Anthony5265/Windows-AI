@@ -1,8 +1,31 @@
 {
-  "name": "Windows AI",
+  "name": "Windows-AI Development",
   "build": {
     "dockerfile": "../Dockerfile",
     "context": ".."
+  },
+  "remoteUser": "root",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.analysis.typeCheckingMode": "basic",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.ruff": "explicit"
+        }
+      }
+    }
+  },
+  "postCreateCommand": "python -m pip install --no-cache-dir -r requirements.txt",
+  "containerEnv": {
+    "WINDOWS_AI_DEV_CONTAINER": "1"
   }
 }
-
