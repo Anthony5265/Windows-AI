@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Feature requests should describe a real user or developer problem and the outcome you want Windows-AI to achieve.
+        Feature requests should describe a real problem, the desired outcome, and observable completion criteria. Check the canonical `AI_BLUEPRINT.md` before proposing work that changes project architecture or direction.
 
   - type: textarea
     id: problem
@@ -30,7 +30,7 @@ body:
     id: proposal
     attributes:
       label: Proposed behavior
-      description: Describe how you think Windows-AI should solve the problem.
+      description: Describe the desired behavior without assuming an implementation unless implementation details are important.
     validations:
       required: true
 
@@ -38,7 +38,7 @@ body:
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: List the observable conditions that would make this feature complete.
+      description: List observable conditions that define completion. Formal testing belongs to the final validation phase, not active feature development.
       placeholder: |
         - [ ] ...
         - [ ] ...
@@ -58,5 +58,7 @@ body:
       options:
         - label: I have searched for an existing feature request describing the same idea.
           required: true
-        - label: This request is consistent with the Windows-AI project direction and canonical blueprint.
+        - label: I have checked the canonical AI_BLUEPRINT.md for conflicts with this proposal.
+          required: true
+        - label: I have not included passwords, API keys, tokens, or other secrets.
           required: true
