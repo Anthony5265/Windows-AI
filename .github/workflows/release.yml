@@ -7,18 +7,20 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 0.5.0)'
+        description: Version to release (for example, 0.5.0)
         required: true
       prerelease:
-        description: 'Is this a pre-release?'
+        description: Is this a pre-release?
         required: false
         default: 'false'
+
+env:
+  PYTHON_VERSION: '3.11'
 
 jobs:
   build-release:
     name: Build Release Installer
     runs-on: windows-latest
-
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -30,8 +32,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -57,42 +59,46 @@ jobs:
           } else {
             $version = "0.5.0"
           }
-          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-          echo "Release version: $version"
+          "VERSION=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Release version: $version"
 
+      # Release-time validation is intentionally kept here because the project
+      # reserves comprehensive validation for the final release phase.
       - name: Validate provider setup preflight
         shell: pwsh
         run: |
           $providerSetupPath = Join-Path $env:RUNNER_TEMP "provider-setup.json"
           .\install\run-provider-preflight.ps1 -OutputPath $providerSetupPath
           .\install\validate-provider-setup.ps1 -SetupPlanPath $providerSetupPath
-          Write-Host "Provider setup preflight validated: $providerSetupPath"
 
       - name: Build installer
         shell: pwsh
         run: |
           .\install\build-installer.ps1 -DownloadRuntimes -Version "${{ steps.version.outputs.VERSION }}"
 
-      - name: Sign installer
+      - name: Sign installer when configured
         shell: pwsh
+        env:
+          SIGNING_CERT_BASE64: ${{ secrets.SIGNING_CERT_BASE64 }}
+          SIGNING_CERT_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
         run: |
-          if ("${{ secrets.SIGNING_CERT_BASE64 }}" -ne "") {
-            $cert = [Convert]::FromBase64String('${{ secrets.SIGNING_CERT_BASE64 }}')
+          if ($env:SIGNING_CERT_BASE64) {
+            $cert = [Convert]::FromBase64String($env:SIGNING_CERT_BASE64)
             [IO.File]::WriteAllBytes('cert.pfx', $cert)
-
-            .\install\signing\sign-installer.ps1 `
-              -InstallerPath "dist\WindowsAI-Setup-${{ steps.version.outputs.VERSION }}.exe" `
-              -CertificatePath "cert.pfx" `
-              -CertificatePassword "${{ secrets.SIGNING_CERT_PASSWORD }}"
-
-            Remove-Item cert.pfx -Force
-            Write-Host "Installer signed successfully"
+            try {
+              .\install\signing\sign-installer.ps1 `
+                -InstallerPath "dist\WindowsAI-Setup-${{ steps.version.outputs.VERSION }}.exe" `
+                -CertificatePath "cert.pfx" `
+                -CertificatePassword $env:SIGNING_CERT_PASSWORD
+            } finally {
+              Remove-Item cert.pfx -Force -ErrorAction SilentlyContinue
+            }
           } else {
             Write-Warning "No signing certificate configured"
           }
         continue-on-error: true
 
-      - name: Calculate checksums and create manifest files
+      - name: Calculate checksum and create manifests
         shell: pwsh
         working-directory: dist
         run: |
@@ -109,17 +115,12 @@ jobs:
           }
 
           $sha256 = (Get-FileHash $installerFile -Algorithm SHA256).Hash
-          $md5 = (Get-FileHash $installerFile -Algorithm MD5).Hash
           $size = (Get-Item $installerFile).Length
           $releaseDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
           $isPrerelease = "${{ github.event.inputs.prerelease }}" -eq "true"
 
-          @"
-          SHA-256: $sha256
-          MD5: $md5
-          Size: $size bytes
-          Download: $downloadUrl
-          "@ | Out-File -FilePath "$installerFile.checksums.txt"
+          "SHA-256: $sha256`nSize: $size bytes`nDownload: $downloadUrl" |
+            Out-File -FilePath "$installerFile.checksums.txt" -Encoding utf8
 
           $releaseInfo = [ordered]@{
             version = $version
@@ -128,56 +129,43 @@ jobs:
             downloadUrl = $downloadUrl
             releaseUrl = $releaseUrl
             sha256 = $sha256
-            md5 = $md5
             size = $size
             prerelease = $isPrerelease
           }
           $releaseInfo | ConvertTo-Json -Depth 10 | Out-File -FilePath "release-info.json" -Encoding utf8
 
-          $latestManifest = [ordered]@{
+          [ordered]@{
             current_version = $version
             latest = $releaseInfo
             generated_at = $releaseDate
-          }
-          $latestManifest | ConvertTo-Json -Depth 10 | Out-File -FilePath "latest-release.json" -Encoding utf8
+          } | ConvertTo-Json -Depth 10 | Out-File -FilePath "latest-release.json" -Encoding utf8
 
-          Write-Host "Checksums calculated and release manifests created"
-
-      - name: Generate changelog
+      - name: Generate release notes
         id: changelog
         shell: pwsh
         run: |
           $changelog = @"
-          ## What's New in v${{ steps.version.outputs.VERSION }}
+          ## Windows-AI v${{ steps.version.outputs.VERSION }}
 
-          ### Features
-          - Complete installer hardening and code signing
-          - Auto-update system with version management
-          - Rollback functionality with system snapshots
-          - Automated testing infrastructure
-          - CI/CD pipeline with GitHub Actions
-
-          ### Improvements
-          - Enhanced security with digital signatures
-          - Improved update experience
-          - Better error handling and recovery
-          - Provider setup preflight validation for CLI and Ollama detection
-          - Hardware-aware Ollama target catalog for first-run setup
+          ### Release
+          - Production Windows installer
+          - Digital signing when configured
+          - Auto-update and rollback support
+          - Provider setup preflight validation
+          - Hardware-aware provider setup
 
           ### Installation
-          Download and run the installer. No additional dependencies required.
+          Download and run the Windows installer. Follow the setup prompts to configure Windows-AI and its providers.
 
-          ### Notes
-          - Windows 10 or later (64-bit) required
-          - Administrator privileges required for installation
-          - Auto-update is enabled by default
+          ### Requirements
+          - Windows 10 or later (64-bit)
+          - Administrator privileges may be required for installation
           "@
 
-          $changelog | Out-File -FilePath "RELEASE_NOTES.md"
-
-          echo "CHANGELOG<<EOF" >> $env:GITHUB_OUTPUT
-          echo "$changelog" >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          $changelog | Out-File -FilePath "RELEASE_NOTES.md" -Encoding utf8
+          "CHANGELOG<<EOF" >> $env:GITHUB_OUTPUT
+          $changelog >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
         id: create_release
@@ -186,7 +174,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          release_name: Windows AI v${{ steps.version.outputs.VERSION }}
+          release_name: Windows-AI v${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           prerelease: ${{ github.event.inputs.prerelease == 'true' }}
@@ -201,7 +189,7 @@ jobs:
           asset_name: WindowsAI-Setup-${{ steps.version.outputs.VERSION }}.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload checksums to release
+      - name: Upload checksum to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -236,15 +224,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-release
     if: always()
-
     steps:
       - name: Release summary
         run: |
-          echo "### Release Complete :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version**: v${{ needs.build-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Release has been published to GitHub Releases." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[View Release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build-release.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Complete :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Version**: v${{ needs.build-release.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tag**: ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release has been published to GitHub Releases." >> "$GITHUB_STEP_SUMMARY"
