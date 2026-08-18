@@ -1,40 +1,33 @@
 #!/usr/bin/env python3
-"""
-Setup configuration for Windows AI
-"""
+"""Packaging configuration for Windows-AI."""
 
-from setuptools import setup, find_packages
 from pathlib import Path
 
-# Read the README
-this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text(encoding='utf-8')
+from setuptools import find_packages, setup
 
-# Read requirements from file, filtering out comment lines and -r include lines
-def read_requirements(filename):
-    """Read requirements from file"""
-    req_path = this_directory / filename
-    if req_path.exists():
-        with open(req_path) as f:
-            return [
-                line.strip() for line in f
-                if line.strip()
-                and not line.startswith('#')
-                and not line.startswith('-r ')
-                and not line.startswith('--')
-            ]
-    return []
+ROOT = Path(__file__).parent
 
-# Core requirements
-install_requires = read_requirements('requirements.txt')
+
+def read_requirements(filename: str) -> list[str]:
+    """Read install requirements while ignoring comments and include directives."""
+    path = ROOT / filename
+    if not path.exists():
+        return []
+
+    requirements: list[str] = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or line.startswith(("-r ", "--")):
+            continue
+        requirements.append(line)
+    return requirements
+
 
 setup(
     name="windows-ai",
     version="2.0.0a1",
-    author="Windows AI Team",
-    author_email="windows-ai@example.com",
-    description="AI Integration Platform for Windows",
-    long_description=long_description,
+    description="Windows-first AI platform for models, agents, tools, automation, and Windows integration",
+    long_description=(ROOT / "README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     url="https://github.com/Anthony5265/Windows-AI",
     project_urls={
@@ -42,19 +35,19 @@ setup(
         "Documentation": "https://github.com/Anthony5265/Windows-AI/tree/main/docs",
         "Source Code": "https://github.com/Anthony5265/Windows-AI",
     },
-    packages=find_packages(include=['windows_ai', 'windows_ai.*']),
+    packages=find_packages(include=["windows_ai", "windows_ai.*"]),
     include_package_data=True,
     package_data={
-        'windows_ai': [
-            'plugins/**/*.py',
-            'config/**/*.yaml',
-            'config/**/*.json',
+        "windows_ai": [
+            "plugins/**/*.py",
+            "config/**/*.yaml",
+            "config/**/*.json",
         ],
     },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
@@ -63,15 +56,9 @@ setup(
         "Operating System :: Microsoft :: Windows",
     ],
     python_requires=">=3.10",
-    install_requires=install_requires,
-    extras_require={
-        'dev': read_requirements('requirements-dev.txt'),
-    },
-    entry_points={
-        'console_scripts': [
-            'windows-ai=windows_ai.__main__:main',
-        ],
-    },
-    keywords='ai windows automation plugins integration',
+    install_requires=read_requirements("requirements.txt"),
+    extras_require={"dev": read_requirements("requirements-dev.txt")},
+    entry_points={"console_scripts": ["windows-ai=windows_ai.__main__:main"]},
+    keywords=["ai", "windows", "agents", "automation", "plugins", "mcp"],
     zip_safe=False,
 )
