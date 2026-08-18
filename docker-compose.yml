@@ -1,6 +1,5 @@
-# Docker Compose for Windows AI Development Environment
-
-version: '3.9'
+# Local container environment for Windows-AI services.
+# Production deployments must provide secrets through an external secret store or environment.
 
 services:
   windows-ai:
@@ -12,20 +11,26 @@ services:
       - "8001:8001"
       - "5000:5000"
     environment:
-      - PYTHONUNBUFFERED=1
-      - WINDOWS_AI_ENV=development
-      - API_HOST=0.0.0.0
-      - API_PORT=8000
+      PYTHONUNBUFFERED: "1"
+      WINDOWS_AI_ENV: "development"
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "${POSTGRES_USER:-windows_ai}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the stack}"
+      POSTGRES_DB: "${POSTGRES_DB:-windows_ai}"
     volumes:
       - ./windows_ai:/app/windows_ai
       - ./marketplace:/app/marketplace
-      - ./plugins:/app/plugins
       - ./config:/app/config
     networks:
       - windows-ai-network
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
@@ -39,15 +44,20 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=windows_ai
-      - POSTGRES_PASSWORD=dev_password
-      - POSTGRES_DB=windows_ai
+      POSTGRES_USER: "${POSTGRES_USER:-windows_ai}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the stack}"
+      POSTGRES_DB: "${POSTGRES_DB:-windows_ai}"
     ports:
       - "5432:5432"
     networks:
       - windows-ai-network
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -55,8 +65,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:?Set MINIO_ROOT_USER before starting the stack}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD before starting the stack}"
     command: server /data --console-address ":9001"
     networks:
       - windows-ai-network
