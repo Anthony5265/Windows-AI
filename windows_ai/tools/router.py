@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from .models import ToolCall, ToolPermission, ToolResult
+from .permissions import PermissionPolicy
 from .registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
@@ -28,10 +29,12 @@ class ToolRouter:
         self,
         registry: ToolRegistry,
         *,
+        permission_policy: PermissionPolicy | None = None,
         approval_callback: ApprovalCallback | None = None,
         audit_callback: AuditCallback | None = None,
     ) -> None:
         self.registry = registry
+        self.permission_policy = permission_policy or PermissionPolicy()
         self.approval_callback = approval_callback
         self.audit_callback = audit_callback
 
@@ -42,7 +45,7 @@ class ToolRouter:
         if not tool.enabled:
             return ToolResult.fail(call, f"Tool is disabled: {call.tool_name}")
 
-        missing = frozenset(tool.permissions - call.approved_permissions)
+        missing = self.permission_policy.missing(call, tool.permissions)
         if missing:
             approved = False
             if self.approval_callback is not None:
