@@ -7,14 +7,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a problem. Please provide enough detail to reproduce and investigate it.
+        Thanks for helping improve Windows-AI. Please provide the smallest useful reproduction and remove all secrets or private information before submitting.
 
   - type: textarea
     id: summary
     attributes:
       label: What happened?
-      description: Describe the problem clearly and concisely.
-      placeholder: Tell us what went wrong.
+      description: Describe the problem and its user-visible impact.
+      placeholder: Tell us what went wrong and what you were trying to accomplish.
     validations:
       required: true
 
@@ -22,7 +22,7 @@ body:
     id: steps
     attributes:
       label: Steps to reproduce
-      description: Provide the smallest reliable sequence of steps.
+      description: Provide the smallest reliable sequence that reproduces the problem.
       placeholder: |
         1. Start Windows-AI...
         2. Open...
@@ -51,6 +51,7 @@ body:
     id: version
     attributes:
       label: Windows-AI version or commit
+      description: Include a release version or commit SHA when known.
       placeholder: e.g. main @ abc1234
 
   - type: input
@@ -62,8 +63,8 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Relevant logs or screenshots
-      description: Remove secrets, API keys, tokens, and other private information before posting.
+      label: Relevant logs, screenshots, or error messages
+      description: Redact passwords, API keys, tokens, personal data, and other sensitive information.
       render: text
 
   - type: checkboxes
