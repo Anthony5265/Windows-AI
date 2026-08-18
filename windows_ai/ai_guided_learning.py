@@ -1,13 +1,8 @@
-"""
-AI-Guided Learning Paths for Developers
-
-Personalized learning paths for developers based on skills.
-"""
-
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+"""AI-guided learning paths for developers."""
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import List, Dict, Any, Optional
 import json
 import logging
 import uuid
@@ -17,73 +12,83 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AiGuidedLearningResult:
-    """Result from AiGuidedLearning"""
     result_id: str
     status: str
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class AiGuidedLearning:
-    """
-    AiGuidedLearning
+    """Store and retrieve deterministic learning-plan processing results."""
 
-    AI-Guided Learning Paths for Developers
-    """
+    STATE_VERSION = 1
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        self._state_file = self.data_dir / "ai_guided_learning_state.json"
         self.results: List[AiGuidedLearningResult] = []
         self._load_state()
-        logger.info("AiGuidedLearning initialized")
 
     def process(self, input_data: Dict[str, Any]) -> AiGuidedLearningResult:
-        """Main processing function"""
+        if not isinstance(input_data, dict):
+            raise TypeError("input_data must be a dictionary")
         result = AiGuidedLearningResult(
             result_id=str(uuid.uuid4()),
             status="success",
-            data={"processed": True, "input": input_data}
+            data={"processed": True, "input": dict(input_data)},
         )
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in AiGuidedLearning")
         return result
 
     def get_results(self) -> List[AiGuidedLearningResult]:
-        """Get all results"""
-        return self.results
+        """Return a snapshot so callers cannot mutate internal state."""
+        return list(self.results)
 
-    def _save_state(self):
+    def _save_state(self) -> None:
+        payload = {
+            "version": self.STATE_VERSION,
+            "results": [
+                {**asdict(result), "timestamp": result.timestamp.isoformat()}
+                for result in self.results
+            ],
+        }
+        temporary = self._state_file.with_suffix(".tmp")
+        temporary.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        temporary.replace(self._state_file)
+
+    def _load_state(self) -> None:
+        if not self._state_file.exists():
+            return
         try:
-            data = {"results_count": len(self.results)}
-            with open(self.data_dir / "ai_guided_learning_state.json", "w") as f:
-                json.dump(data, f, indent=2)
-        except Exception as e:
-            logger.error(f"Failed to save state: {e}")
+            payload = json.loads(self._state_file.read_text(encoding="utf-8"))
+            if payload.get("version") != self.STATE_VERSION:
+                logger.warning("Ignoring unsupported AI-guided-learning state version")
+                return
+            loaded: List[AiGuidedLearningResult] = []
+            for item in payload.get("results", []):
+                loaded.append(
+                    AiGuidedLearningResult(
+                        result_id=str(item["result_id"]),
+                        status=str(item["status"]),
+                        data=dict(item.get("data", {})),
+                        timestamp=datetime.fromisoformat(item["timestamp"]),
+                    )
+                )
+            self.results = loaded
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            logger.warning("Ignoring unreadable AI-guided-learning state: %s", exc)
 
-    def _load_state(self):
-        try:
-            state_file = self.data_dir / "ai_guided_learning_state.json"
-            if state_file.exists():
-                with open(state_file, "r") as f:
-                    data = json.load(f)
-                logger.info(f"Loaded {data.get('results_count', 0)} results")
-        except Exception as e:
-            logger.error(f"Failed to load state: {e}")
 
-
-# Global instance
 _ai_guided_learning: Optional[AiGuidedLearning] = None
 
 
 def get_ai_guided_learning() -> Optional[AiGuidedLearning]:
-    """Get global instance"""
     return _ai_guided_learning
 
 
 def initialize_ai_guided_learning(data_dir: Path) -> AiGuidedLearning:
-    """Initialize system"""
     global _ai_guided_learning
     _ai_guided_learning = AiGuidedLearning(data_dir)
     return _ai_guided_learning
