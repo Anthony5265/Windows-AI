@@ -4,77 +4,63 @@
 
 Before changing this repository, read:
 
-1. `AI_BLUEPRINT.md` — the **single source of truth** for Windows-AI product direction, architecture, priorities, and completion criteria.
+1. `AI_BLUEPRINT.md` — the single source of truth for product direction, architecture, priorities, and completion criteria.
 2. `AGENTS.md` — the required operating rules for AI coding agents.
 
-Do not treat `BLUEPRINT.md`, `ROADMAP.md`, historical plans, old task queues, reports, or generated planning documents as competing sources of truth. Historical material is reference-only unless its requirements have been incorporated into `AI_BLUEPRINT.md`.
+Historical plans, old roadmaps, task queues, reports, and generated planning documents are reference material only. Do not create or follow a competing master plan.
 
 ## Development mode
 
 Windows-AI is in active implementation.
 
 - Build production functionality first.
-- Inspect existing code before creating new architecture.
-- Prefer integrating, repairing, consolidating, and extending existing systems over creating parallel implementations.
-- Preserve compatible behavior unless the canonical blueprint requires a deliberate change.
-- Keep code organized by responsibility.
-- Remove obsolete duplication when it is safe to do so.
-- Keep documentation aligned with implemented behavior.
+- Start with the existing repository structure and understand it before introducing architecture.
+- Prefer repairing, integrating, consolidating, and extending existing systems over parallel implementations.
+- Keep responsibilities separated and public interfaces coherent.
+- Remove obsolete duplication when safe and update documentation/configuration when behavior changes.
+- Continue implementation when work is requested; do not stop at a plan when repository tooling permits the implementation.
+
+## Required file-by-file workflow
+
+When performing a repository-wide audit, process directories and files in deterministic repository order:
+
+1. Inspect the current file and its surrounding module.
+2. Determine its purpose and dependencies.
+3. Decide whether it should be kept, corrected, consolidated, moved, replaced, or removed.
+4. Make the smallest coherent production change required.
+5. Preserve required behavior and update references when moving or removing files.
+6. Continue to the next file without skipping unrelated repository areas.
+
+Do not claim a repository-wide audit is complete until every repository item in scope has been reviewed.
 
 ## Testing policy
 
 **Testing is deferred until the final development phase.**
 
-During active development, do not create or prioritize test suites, coverage work, benchmark-only work, or test campaigns. A validation/build command may be used when it is intrinsically necessary to implement or package production functionality, but testing is not an active completion gate.
+Do not create, expand, or prioritize test suites, coverage targets, benchmark-only work, or testing campaigns during active implementation. Build/package validation may be used only when it is intrinsically required to implement production functionality.
 
-Final validation will occur only after the implementation is substantially complete.
+Final validation and comprehensive testing happen after implementation is substantially complete.
 
-## Repository workflow
+## Architecture
 
-For every change:
+Follow `AI_BLUEPRINT.md`. Windows-AI has one canonical runtime and one unified Tool/Action architecture spanning built-in tools, plugins, MCP, agents, providers, workspaces, Windows capabilities, and services.
 
-1. Read `AI_BLUEPRINT.md`.
-2. Read the relevant existing implementation.
-3. Determine whether the capability already exists.
-4. Reuse or integrate existing architecture when possible.
-5. Implement the smallest coherent production change that advances the canonical architecture.
-6. Update affected documentation or configuration when behavior changes.
-7. Keep the repository free of obsolete duplicate plans and implementations.
-
-## Architecture principles
-
-Windows-AI uses the canonical architecture defined by `AI_BLUEPRINT.md`, including:
-
-- Canonical application runtime
-- Agent orchestration
-- Provider/model abstraction
-- Unified Tool/Action architecture
-- Permission and execution boundaries
-- Built-in tools
-- Plugin ecosystem
-- MCP integration
-- Workspace/project context
-- Memory and knowledge systems
-- Windows-native capabilities
-- API/service interfaces
-- Local, cloud, and hybrid model routing
-
-Do not introduce a second runtime, competing tool registry, competing agent system, or another master blueprint without an explicit architectural decision incorporated into `AI_BLUEPRINT.md`.
+Do not introduce a second runtime, competing tool registry, competing agent system, or another master blueprint without first making an explicit architectural decision in `AI_BLUEPRINT.md`.
 
 ## AI-agent behavior
 
-Do not invent repository state. Inspect it.
-
-Do not claim a feature is complete merely because a file or interface exists. Follow the implementation and integration requirements in `AI_BLUEPRINT.md`.
-
-Do not stop at planning when implementation is requested. Continue through the repository's active development scope using the available repository tooling.
+- Inspect repository state; never invent it.
+- Follow existing interfaces before creating new ones.
+- Integrate new functionality into the canonical runtime and architecture.
+- Do not declare functionality complete merely because a file or interface exists; follow its integration path.
+- Do not use historical planning artifacts as current authority.
 
 ## Security
 
-Never commit credentials, API keys, tokens, passwords, private keys, or machine-specific secrets. Do not disable security controls merely to make development easier.
+Never commit credentials, API keys, tokens, passwords, private keys, or machine-specific secrets. Preserve security boundaries and permission checks.
 
 ## Completion
 
-The project is considered development-complete only when the implementation required by `AI_BLUEPRINT.md` is substantially present, integrated, documented, and production-ready. Comprehensive testing and final validation happen afterward as a dedicated final phase.
+Development is complete only when the implementation required by `AI_BLUEPRINT.md` is substantially implemented, integrated, organized, documented, and production-ready. Comprehensive testing and final validation are a separate final phase.
 
 **Canonical rule: Develop first. Validate at the end.**
