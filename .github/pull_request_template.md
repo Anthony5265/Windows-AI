@@ -6,19 +6,19 @@
 
 <!-- Identify the relevant capability or architectural area in AI_BLUEPRINT.md. -->
 
-## Implementation
+## Implementation review
 
-- [ ] Existing implementation was inspected before adding new architecture.
+- [ ] Existing implementation was inspected before adding architecture.
 - [ ] Existing functionality was reused or integrated where appropriate.
-- [ ] Obsolete or duplicate implementation was removed when safe.
-- [ ] Documentation/configuration was updated when behavior changed.
+- [ ] Duplicate or obsolete implementation was removed when safe.
+- [ ] Affected documentation/configuration was updated when behavior changed.
 - [ ] No secrets, credentials, or machine-specific settings were added.
 
-## Validation
+## Validation policy
 
-Testing is intentionally deferred during active development. Do not treat test coverage as a merge requirement until the final validation phase.
+Comprehensive testing is deferred during active development and is not a merge gate. Final validation/testing occurs only after implementation is substantially complete.
 
-<!-- Mention only implementation/build validation that was intrinsically necessary for this change. -->
+<!-- Mention only implementation/build checks that were intrinsically necessary for the production change. -->
 
 ## Related work
 
