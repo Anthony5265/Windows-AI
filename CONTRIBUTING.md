@@ -1,121 +1,90 @@
-# Contributing to Windows AI
+# Contributing to Windows-AI
 
-Thank you for helping improve Windows AI! This guide covers everything you need to get started.
+Thank you for helping improve Windows-AI. This repository is a Windows-first AI platform with a Python core, desktop applications, agents, tools, integrations, and extensibility layers.
 
-## Quick Start
+## Source of truth
 
-1. **Fork & clone** the repository
-2. **Install** dependencies: `pip install -e ".[dev]"` or `pip install -r requirements.txt && pip install -r requirements-test.txt`
-3. **Run tests**: `python -m pytest tests/test_*.py -q --timeout=30`
-4. **Make changes**, add tests, push, and open a PR
+Before making changes, read [`AI_BLUEPRINT.md`](AI_BLUEPRINT.md). It is the **single canonical blueprint** for active development.
 
-## Development Setup
+Also read [`AGENTS.md`](AGENTS.md) for repository-wide AI-agent and development rules.
+
+Do not create or follow competing blueprints, roadmaps, or active development plans unless the repository owner explicitly requests one.
+
+## Development workflow
+
+1. Fork or clone the repository.
+2. Install the appropriate runtime dependencies for the area you are changing.
+3. Inspect the existing implementation before introducing new architecture.
+4. Prefer extending or consolidating existing systems over creating duplicates.
+5. Keep changes focused, production-oriented, and compatible with the canonical architecture.
+6. Update documentation when behavior, APIs, configuration, or architecture changes.
+7. Open a pull request with a clear description of the change.
+
+## Python setup
 
 ```bash
-# Clone your fork
-git clone https://github.com/<your-username>/Windows-AI.git
-cd Windows-AI
+python -m venv .venv
 
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate   # Windows
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
 
-# Install dependencies
 pip install -r requirements.txt
-pip install -r requirements-test.txt
-
-# Verify the setup
-python -m pytest tests/test_quick_wins.py -v
+pip install -r requirements-dev.txt
 ```
 
-## Code Style
-
-- **Python 3.9+** — use type hints everywhere
-- **Line length**: 120 characters max
-- **Imports**: standard library → third-party → local, each group separated by a blank line
-- **Docstrings**: Google style (`Args:`, `Returns:`, `Raises:`)
-- **Error handling**: Always catch exceptions gracefully — the system must never crash from a plugin error
-
-## Making Changes
-
-### Adding a Plugin
-
-1. Create a file in `windows_ai/plugins/builtin/<category>/`
-2. Inherit from `Plugin` (from `windows_ai.plugins.base`)
-3. Implement `async execute(self, **kwargs) -> Dict[str, Any]`
-4. Add `plugin = YourPlugin()` at module level (required for discovery)
-5. Write tests in `tests/`
-
-### Adding an Integration Manager
-
-1. Create a file in `windows_ai/integrations/`
-2. Class takes no constructor arguments (`__init__(self)`)
-3. Implement `async initialize(self)` (returns None, sets `self._initialized = True`)
-4. Register in `windows_ai/integrations/__init__.py`
-5. Write tests
-
-### Adding an API Route
-
-1. Create a route file in `windows_ai/api/`
-2. Use FastAPI `APIRouter` with appropriate prefix and tags
-3. Wire the router into `windows_ai/api/server.py`
-4. Write tests
-
-## Testing
+## Node setup
 
 ```bash
-# Run all tests
-python -m pytest tests/test_*.py -q --timeout=30
-
-# Run specific test file
-python -m pytest tests/test_core_systems.py -v
-
-# Run with coverage
-python -m pytest tests/ --cov=windows_ai --cov-report=term-missing
-
-# Run only unit tests (fast)
-python -m pytest tests/ -m unit -q
+npm install
 ```
 
-### Test Conventions
+The repository contains multiple application workspaces under `apps/`; use the workspace-specific commands documented by the application you are changing.
 
-- **File naming**: `tests/test_<module>.py`
-- **Markers**: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`, `@pytest.mark.slow`, `@pytest.mark.critical`
-- **Async tests**: use `@pytest.mark.asyncio` — the project uses `asyncio_mode = auto`
-- **Mocking**: prefer `unittest.mock.patch` and `pytest-mock` over monkey-patching
+## Code style
 
-## Pull Request Guidelines
+- Follow the repository `.editorconfig`.
+- Python: use type hints where practical and keep imports organized.
+- Prefer small, cohesive modules over growing monolithic entry points.
+- Use existing exception, logging, configuration, permission, and tool abstractions.
+- Do not silently introduce credentials, tokens, or machine-specific paths.
+- Avoid unnecessary breaking API changes.
 
-- **Keep PRs focused** — one feature or fix per PR
-- **Include tests** when altering runtime code
-- **Update docs**: ROADMAP.md, CHANGELOG.md, and relevant docstrings
-- **Commit messages**: follow [Conventional Commits](https://www.conventionalcommits.org/) — `feat:`, `fix:`, `docs:`, `test:`, `chore:`
-- **Branch naming**: `feat/<description>`, `fix/<description>`, `docs/<description>`
+## Adding functionality
 
-## Issue Reporting
+### Tools
 
-- Use clear reproduction steps and expected vs. actual behavior
-- Include Python version, OS, and relevant configuration
-- Attach logs if available (check `~/.windows_ai/logs/`)
+New AI-callable capabilities should use the unified tool architecture under `windows_ai/tools/` whenever the capability is intended to be invoked by an agent or model.
 
-## Architecture Overview
+### Plugins
 
-See `BLUEPRINT.md` for the full architecture. Key principles:
+Use the existing plugin manager, lifecycle, validation, and permission systems rather than creating a second plugin runtime.
 
-- **Zero Configuration**: auto-detect everything; smart defaults
-- **Graceful Degradation**: never crash — log errors and continue
-- **Freedom First**: security features are OFF by default; users opt-in
-- **Modular Design**: managers are independent and lazy-loaded
+### API routes
 
-## Security
+Use the existing FastAPI API architecture and register routes through the established API/server structure.
 
-- Follow the "Freedom First" philosophy: restrictive features default to OFF
-- Never commit secrets or API keys
-- Use `windows_ai/security/` modules for crypto, RBAC, and sandboxing
-- Report security vulnerabilities via GitHub Security Advisories (not public issues)
+### Agents
 
-## License
+Use the existing agent/runtime architecture and route tool execution through the canonical tool router.
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+## Testing policy
 
+Testing is intentionally **deferred during the active implementation phase** according to the project blueprint.
+
+Do not turn ordinary feature work into a test-writing campaign, expand test coverage as a development objective, or treat historical test plans as current product requirements.
+
+Testing remains part of the project and will be performed comprehensively during the **final validation phase** after implementation is substantially complete.
+
+When final validation begins, the repository's existing test, security, performance, packaging, API, GUI, and compatibility infrastructure should be brought up to the required release standard.
+
+## Pull requests
+
+Every pull request should explain:
+
+- What changed.
+- Why it changed.
+- Which architectural area it affects.
+- Any migration or configuration implications.
+- Any documentation that was updated.
+
+Keep unrelated cleanup out of focused feature changes unless the cleanup is necessary to preserve architectural consistency.
