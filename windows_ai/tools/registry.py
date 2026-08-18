@@ -1,4 +1,4 @@
-"""Thread-safe-ish in-process registry for every Windows-AI tool source."""
+"""Thread-safe registry for every Windows-AI tool source."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from threading import RLock
 from typing import Any
 
 from .models import ToolDefinition
+from .validation import validate_tool_definition
 
 
 class ToolRegistry:
@@ -17,8 +18,7 @@ class ToolRegistry:
         self._lock = RLock()
 
     def register(self, tool: ToolDefinition, *, replace: bool = False) -> ToolDefinition:
-        if not tool.name or not tool.name.strip():
-            raise ValueError("Tool name cannot be empty")
+        validate_tool_definition(tool)
         with self._lock:
             if tool.name in self._tools and not replace:
                 raise ValueError(f"Tool already registered: {tool.name}")
