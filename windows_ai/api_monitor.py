@@ -1,15 +1,11 @@
-"""
-Real-time API Monitoring & Analytics
+"""Real-time API monitoring and analytics."""
 
-Real-time monitoring and analytics for API usage patterns.
-"""
-
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from datetime import datetime
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 import json
 import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -17,73 +13,71 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ApiMonitorResult:
-    """Result from ApiMonitor"""
     result_id: str
     status: str
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ApiMonitor:
-    """
-    ApiMonitor
+    """Collect and persist API-monitoring results."""
 
-    Real-time API Monitoring & Analytics
-    """
+    STATE_VERSION = 1
 
     def __init__(self, data_dir: Path):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.results: List[ApiMonitorResult] = []
         self._load_state()
-        logger.info("ApiMonitor initialized")
 
     def process(self, input_data: Dict[str, Any]) -> ApiMonitorResult:
-        """Main processing function"""
-        result = ApiMonitorResult(
-            result_id=str(uuid.uuid4()),
-            status="success",
-            data={"processed": True, "input": input_data}
-        )
+        if not isinstance(input_data, dict):
+            raise TypeError("input_data must be a dictionary")
+        result = ApiMonitorResult(str(uuid.uuid4()), "success", {"processed": True, "input": dict(input_data)})
         self.results.append(result)
         self._save_state()
-        logger.info(f"Processed request in ApiMonitor")
         return result
 
     def get_results(self) -> List[ApiMonitorResult]:
-        """Get all results"""
-        return self.results
+        return list(self.results)
 
-    def _save_state(self):
+    def _save_state(self) -> None:
+        state = {"version": self.STATE_VERSION, "results": [self._serialize(r) for r in self.results]}
+        target = self.data_dir / "api_monitor_state.json"
+        temp = target.with_suffix(".tmp")
+        temp.write_text(json.dumps(state, indent=2, sort_keys=True), encoding="utf-8")
+        temp.replace(target)
+
+    @staticmethod
+    def _serialize(result: ApiMonitorResult) -> Dict[str, Any]:
+        item = asdict(result)
+        item["timestamp"] = result.timestamp.astimezone(timezone.utc).isoformat()
+        return item
+
+    def _load_state(self) -> None:
+        target = self.data_dir / "api_monitor_state.json"
+        if not target.exists():
+            return
         try:
-            data = {"results_count": len(self.results)}
-            with open(self.data_dir / "api_monitor_state.json", "w") as f:
-                json.dump(data, f, indent=2)
-        except Exception as e:
-            logger.error(f"Failed to save state: {e}")
-
-    def _load_state(self):
-        try:
-            state_file = self.data_dir / "api_monitor_state.json"
-            if state_file.exists():
-                with open(state_file, "r") as f:
-                    data = json.load(f)
-                logger.info(f"Loaded {data.get('results_count', 0)} results")
-        except Exception as e:
-            logger.error(f"Failed to load state: {e}")
+            state = json.loads(target.read_text(encoding="utf-8"))
+            if state.get("version") != self.STATE_VERSION:
+                return
+            restored = []
+            for item in state.get("results", []):
+                restored.append(ApiMonitorResult(item["result_id"], item["status"], dict(item["data"]), datetime.fromisoformat(item["timestamp"])))
+            self.results = restored
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+            logger.warning("Ignoring invalid API monitor state: %s", target)
 
 
-# Global instance
 _api_monitor: Optional[ApiMonitor] = None
 
 
 def get_api_monitor() -> Optional[ApiMonitor]:
-    """Get global instance"""
     return _api_monitor
 
 
 def initialize_api_monitor(data_dir: Path) -> ApiMonitor:
-    """Initialize system"""
     global _api_monitor
     _api_monitor = ApiMonitor(data_dir)
     return _api_monitor
