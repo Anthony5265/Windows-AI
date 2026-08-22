@@ -1,96 +1,94 @@
-"""Middleware for API server"""
+"""Middleware for the Windows AI API server."""
+
+import logging
+import os
+import time
+from collections import defaultdict
+from threading import Lock
 
 from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-import time
-import logging
 
 logger = logging.getLogger(__name__)
 
+
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """Middleware for logging all requests"""
+    """Log request lifecycle without exposing query-string credentials."""
 
     async def dispatch(self, request: Request, call_next):
-        start_time = time.time()
-
-        # Log request
-        logger.info(f"Request: {request.method} {request.url.path}")
-
-        # Process request
-        response = await call_next(request)
-
-        # Log response
-        process_time = time.time() - start_time
-        logger.info(f"Response: {response.status_code} ({process_time:.3f}s)")
-
-        # Add timing header
-        response.headers["X-Process-Time"] = str(process_time)
-
+        start_time = time.monotonic()
+        logger.info("Request: %s %s", request.method, request.url.path)
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception("Unhandled request error: %s %s", request.method, request.url.path)
+            raise
+        process_time = time.monotonic() - start_time
+        logger.info("Response: %s (%.3fs)", response.status_code, process_time)
+        response.headers["X-Process-Time"] = f"{process_time:.6f}"
         return response
 
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Middleware for rate limiting (simple implementation)"""
+    """Simple in-process per-client sliding-window rate limiter."""
 
     def __init__(self, app, max_requests: int = 100, window: int = 60):
         super().__init__(app)
+        if max_requests <= 0 or window <= 0:
+            raise ValueError("max_requests and window must be positive")
         self.max_requests = max_requests
         self.window = window
-        self.requests = {}
+        self.requests = defaultdict(list)
+        self._lock = Lock()
 
     async def dispatch(self, request: Request, call_next):
-        # Get client IP
         client_ip = request.client.host if request.client else "unknown"
-
-        # Clean old requests
-        current_time = time.time()
-        self.requests = {
-            ip: [t for t in times if current_time - t < self.window]
-            for ip, times in self.requests.items()
-        }
-
-        # Check rate limit
-        if client_ip in self.requests:
-            if len(self.requests[client_ip]) >= self.max_requests:
+        current_time = time.monotonic()
+        with self._lock:
+            for ip, times in list(self.requests.items()):
+                retained = [t for t in times if current_time - t < self.window]
+                if retained:
+                    self.requests[ip] = retained
+                else:
+                    self.requests.pop(ip, None)
+            timestamps = self.requests[client_ip]
+            if len(timestamps) >= self.max_requests:
+                retry_after = max(1, int(self.window - (current_time - timestamps[0])) + 1)
                 return Response(
                     content="Rate limit exceeded",
                     status_code=429,
-                    headers={"Retry-After": str(self.window)}
+                    headers={
+                        "Retry-After": str(retry_after),
+                        "X-RateLimit-Limit": str(self.max_requests),
+                        "X-RateLimit-Remaining": "0",
+                    },
                 )
-
-        # Add request timestamp
-        if client_ip not in self.requests:
-            self.requests[client_ip] = []
-        self.requests[client_ip].append(current_time)
-
-        # Process request
+            timestamps.append(current_time)
+            remaining = max(0, self.max_requests - len(timestamps))
         response = await call_next(request)
-
-        # Add rate limit headers
         response.headers["X-RateLimit-Limit"] = str(self.max_requests)
-        response.headers["X-RateLimit-Remaining"] = str(
-            self.max_requests - len(self.requests.get(client_ip, []))
-        )
-
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
         return response
 
+
 def setup_cors(app):
-    """Setup CORS middleware"""
+    """Configure CORS from an explicit environment allow-list."""
+    configured = [
+        item.strip()
+        for item in os.getenv("WINDOWS_AI_CORS_ORIGINS", "").split(",")
+        if item.strip()
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # In production, specify exact origins
+        allow_origins=configured,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+
 def setup_middleware(app):
-    """Setup all middleware"""
-    # CORS
+    """Install the API middleware stack."""
     setup_cors(app)
-
-    # Logging
     app.add_middleware(LoggingMiddleware)
-
-    # Rate limiting (disabled by default, enable in production)
-    # app.add_middleware(RateLimitMiddleware, max_requests=100, window=60)
