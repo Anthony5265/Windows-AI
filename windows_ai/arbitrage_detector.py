@@ -1,10 +1,19 @@
 """
-ArbitrageDetector — Real implementation for Windows AI.
-Provides arbitrage detector capabilities with production-ready algorithms.
+ArbitrageDetector — deterministic analysis facade for Windows AI.
+
+Provides structured transaction/market-text analysis without fabricating
+confidence or risk values when no quantitative market data is supplied.
 """
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, Tuple
-import logging, math, uuid
+from typing import List, Dict, Any, Optional
+import hashlib
+import json
+import logging
+import math
+import os
+import tempfile
+import uuid
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,19 +26,22 @@ class ArbitrageDetectorResult:
 
 
 class ArbitrageDetectorSystem:
-    """ArbitrageDetector system with real algorithmic implementation."""
+    """Arbitrage analysis system with deterministic, auditable behavior."""
 
     def __init__(self, data_dir):
         self.data_dir = data_dir
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        if not self.data_dir.is_dir():
+            raise ValueError("data_dir must be a directory")
+        self._state_file = self.data_dir / "arbitrage_detector_state.json"
         self.results: List[ArbitrageDetectorResult] = []
-        self._config = {"initialized": True, "version": "1.0.0"}
+        self._config = {"initialized": True, "version": "1.1.0"}
         self._cache = {}
+        self._load_state()
         logger.info("ArbitrageDetector initialized")
 
     def _hash_transaction(self, tx_data):
-        import hashlib
-        return hashlib.sha256(str(tx_data).encode()).hexdigest()
+        return hashlib.sha256(str(tx_data).encode("utf-8")).hexdigest()
 
     def _analyze_transfer_graph(self, transactions):
         graph = {}
@@ -41,6 +53,8 @@ class ArbitrageDetectorSystem:
         return graph
 
     def _detect_cycles(self, graph, max_depth=10):
+        if max_depth < 2:
+            raise ValueError("max_depth must be at least 2")
         cycles = []
         for start in list(graph.keys())[:100]:
             visited = set()
@@ -62,30 +76,29 @@ class ArbitrageDetectorSystem:
         score = 50.0
         if not address_history:
             return score
-        amounts = [tx.get("amount", 0) for tx in address_history]
+        amounts = [float(tx.get("amount", 0)) for tx in address_history]
         avg_amount = sum(amounts) / len(amounts) if amounts else 0
         max_amount = max(amounts) if amounts else 0
-        if max_amount > avg_amount * 10:
+        if avg_amount > 0 and max_amount > avg_amount * 10:
             score += 20
-        frequency = len(address_history)
-        if frequency > 100:
+        if len(address_history) > 100:
             score += 10
         unique_counterparties = len(set(tx.get("to", "") for tx in address_history))
         if unique_counterparties > 50:
             score += 10
-        return min(100, max(0, score))
+        return min(100.0, max(0.0, score))
 
     def _moving_average_price(self, prices, window=20):
-        result = []
-        for i in range(len(prices)):
-            start = max(0, i - window + 1)
-            result.append(sum(prices[start:i+1]) / (i - start + 1))
-        return result
+        if window < 1:
+            raise ValueError("window must be positive")
+        return [sum(prices[max(0, i - window + 1):i + 1]) / (i - max(0, i - window + 1) + 1) for i in range(len(prices))]
 
     def _rsi(self, prices, period=14):
+        if period < 1:
+            raise ValueError("period must be positive")
         if len(prices) < period + 1:
             return [50.0] * len(prices)
-        deltas = [prices[i] - prices[i-1] for i in range(1, len(prices))]
+        deltas = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
         gains = [max(0, d) for d in deltas]
         losses = [max(0, -d) for d in deltas]
         avg_gain = sum(gains[:period]) / period
@@ -94,54 +107,107 @@ class ArbitrageDetectorSystem:
         for i in range(period, len(deltas)):
             avg_gain = (avg_gain * (period - 1) + gains[i]) / period
             avg_loss = (avg_loss * (period - 1) + losses[i]) / period
-            rs = avg_gain / (avg_loss + 1e-10)
-            rsi.append(100 - 100 / (1 + rs))
+            if avg_loss == 0:
+                value = 100.0 if avg_gain > 0 else 50.0
+            else:
+                rs = avg_gain / avg_loss
+                value = 100 - 100 / (1 + rs)
+            rsi.append(value)
         return rsi
 
     def _bollinger_bands(self, prices, window=20, num_std=2):
-        n = len(prices)
+        if window < 1 or num_std < 0:
+            raise ValueError("window must be positive and num_std non-negative")
         upper, lower, mid = [], [], []
-        for i in range(n):
+        for i in range(len(prices)):
             start = max(0, i - window + 1)
-            w = prices[start:i+1]
-            m = sum(w) / len(w)
-            std = (sum((x-m)**2 for x in w) / len(w)) ** 0.5
-            mid.append(m)
-            upper.append(m + num_std * std)
-            lower.append(m - num_std * std)
+            w = prices[start:i + 1]
+            mean = sum(w) / len(w)
+            std = (sum((x - mean) ** 2 for x in w) / len(w)) ** 0.5
+            mid.append(mean)
+            upper.append(mean + num_std * std)
+            lower.append(mean - num_std * std)
         return upper, mid, lower
 
     def _portfolio_metrics(self, returns):
         if not returns:
             return {"sharpe": 0, "volatility": 0, "max_drawdown": 0}
         mean_r = sum(returns) / len(returns)
-        vol = (sum((r - mean_r)**2 for r in returns) / len(returns)) ** 0.5
-        sharpe = mean_r / (vol + 1e-10) * (252 ** 0.5)
+        vol = (sum((r - mean_r) ** 2 for r in returns) / len(returns)) ** 0.5
+        sharpe = mean_r / vol * (252 ** 0.5) if vol > 0 else 0.0
         cumulative = [1.0]
         for r in returns:
             cumulative.append(cumulative[-1] * (1 + r))
         peak = cumulative[0]
-        max_dd = 0
-        for val in cumulative:
-            peak = max(peak, val)
-            dd = (peak - val) / peak
-            max_dd = max(max_dd, dd)
+        max_dd = 0.0
+        for value in cumulative:
+            peak = max(peak, value)
+            if peak > 0:
+                max_dd = max(max_dd, (peak - value) / peak)
         return {"sharpe": sharpe, "volatility": vol, "max_drawdown": max_dd}
 
     def process(self, text: str) -> ArbitrageDetectorResult:
-        """Process input and return structured result."""
-        import random as _rnd
-        _rnd.seed(hash(text) % 2**32)
+        """Analyze a text/transaction payload deterministically."""
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
+        text = text.strip()
+        if not text:
+            raise ValueError("text must not be empty")
 
-        # Build result from actual processing
+        tokens = [token for token in text.split() if token]
+        keyword_set = {token.lower().strip(".,:;()[]{}") for token in tokens}
+        risk = 0.0
+        recommendations: List[str] = []
+        if keyword_set & {"risk", "fraud", "scam", "suspicious"}:
+            risk += 0.35
+            recommendations.append("Review transaction counterparties and pricing before acting.")
+        if keyword_set & {"arbitrage", "spread", "price", "exchange"}:
+            recommendations.append("Compare executable prices, fees, slippage, and settlement latency across venues.")
+        if not recommendations:
+            recommendations.append("Provide structured venue prices or transfer data for arbitrage analysis.")
+
         result = ArbitrageDetectorResult(
             result_id=str(uuid.uuid4()),
-            analysis={"status": "processed", "confidence": 0.9 + _rnd.random() * 0.09},
-            recommendations=self._tokenize(text) if hasattr(self, "_tokenize") else text.split()[:5],
-            risk_score=0.85 + _rnd.random() * 0.14,
+            analysis={"status": "processed", "token_count": len(tokens), "input_hash": self._hash_transaction(text)},
+            recommendations=recommendations,
+            risk_score=min(1.0, max(0.0, risk)),
         )
         self.results.append(result)
+        self._save_state()
         return result
+
+    def _save_state(self) -> None:
+        payload = {"version": 1, "results": [{"result_id": r.result_id, "analysis": r.analysis, "recommendations": r.recommendations, "risk_score": r.risk_score} for r in self.results]}
+        fd, temporary = tempfile.mkstemp(prefix=".arbitrage.", dir=self.data_dir, text=True)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, indent=2, ensure_ascii=False)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self._state_file)
+        except Exception:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
+            raise
+
+    def _load_state(self) -> None:
+        if not self._state_file.exists():
+            return
+        try:
+            with self._state_file.open("r", encoding="utf-8") as handle:
+                state = json.load(handle)
+            if state.get("version") != 1:
+                return
+            self.results = [ArbitrageDetectorResult(
+                result_id=str(item["result_id"]),
+                analysis=dict(item.get("analysis", {})),
+                recommendations=[str(v) for v in item.get("recommendations", [])],
+                risk_score=min(1.0, max(0.0, float(item["risk_score"]))),
+            ) for item in state.get("results", [])]
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            logger.warning("Ignoring invalid arbitrage detector state: %s", exc)
 
 
 _arbitrage_detector: Optional[ArbitrageDetectorSystem] = None
