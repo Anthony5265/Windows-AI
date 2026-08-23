@@ -2,34 +2,34 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install only the native libraries required to build/runtime dependencies.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Install Python dependencies before copying application source for better layer reuse.
 COPY requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application
+# Copy the canonical application components.
 COPY windows_ai/ ./windows_ai/
 COPY marketplace/ ./marketplace/
 COPY config/ ./config/
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Run the service as an unprivileged user.
+RUN useradd --create-home --uid 1000 appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
-# Expose ports
 EXPOSE 8000 8001 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+# Use Python's standard library for the health check so it does not depend on
+# an optional third-party HTTP client being installed.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()" || exit 1
 
-# Run application
-ENV PYTHONUNBUFFERED=1
 CMD ["python", "-m", "windows_ai"]
