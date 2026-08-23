@@ -4,7 +4,8 @@
     "dockerfile": "../Dockerfile",
     "context": ".."
   },
-  "remoteUser": "root",
+  "remoteUser": "appuser",
+  "containerUser": "appuser",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "workspaceFolder": "/workspace",
   "customizations": {
@@ -24,7 +25,7 @@
       }
     }
   },
-  "postCreateCommand": "python -m pip install --no-cache-dir -r requirements.txt",
+  "postCreateCommand": "python -m pip install --user --no-cache-dir -r requirements.txt",
   "containerEnv": {
     "WINDOWS_AI_DEV_CONTAINER": "1"
   }
